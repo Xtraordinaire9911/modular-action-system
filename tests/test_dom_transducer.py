@@ -2,7 +2,6 @@
 
 from src.perception.dom_transducer import PageAffordanceModel, parse_html
 
-
 _SAMPLE_HTML = """
 <html>
 <head><title>Booking</title></head>

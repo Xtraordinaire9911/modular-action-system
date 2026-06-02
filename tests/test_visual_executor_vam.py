@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import pytest
-
-from src.contracts.types import Observation, SkillCall
 from src.effectors.visual_executor import VisualExecutor
 from src.perception.som_parser import BoundingBox, VisualMark
 from src.vam.vam_adapter import EpistemicProbingAction, VamAdapter
 from src.vam.vam_payload import VAMRecoveryPayload
+
+from src.contracts.types import Observation, SkillCall
 
 
 def _mark(mid: str, label: str, conf: float = 0.95) -> VisualMark:

@@ -1,6 +1,5 @@
 """Unit tests for src/perception/som_parser.py."""
 
-from src.contracts.types import Affordance
 from src.perception.som_parser import (
     BoundingBox,
     VisualGroundingResult,
@@ -8,6 +7,8 @@ from src.perception.som_parser import (
     marks_from_affordances,
     select_mark,
 )
+
+from src.contracts.types import Affordance
 
 
 def _make_mark(mid: str, label: str, conf: float = 1.0) -> VisualMark:

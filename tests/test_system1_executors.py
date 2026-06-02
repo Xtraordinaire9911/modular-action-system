@@ -5,13 +5,13 @@ All network calls are patched so these run cleanly in CI.
 
 from __future__ import annotations
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.contracts.types import Observation, SkillCall
+import pytest
 from src.effectors.dom_executor import DomExecutor
 from src.effectors.wot_executor import WotExecutor
 
+from src.contracts.types import Observation, SkillCall
 
 _THERMOSTAT_TD = {
     "@context": ["https://www.w3.org/2019/wot/td/v1"],

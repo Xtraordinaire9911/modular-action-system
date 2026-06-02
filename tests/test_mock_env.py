@@ -3,7 +3,6 @@
 import json
 
 import pytest
-
 from env.node_wot_server.app import app as wot_app
 from env.react_dashboard.app import app as dashboard_app
 
