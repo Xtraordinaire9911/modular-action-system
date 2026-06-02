@@ -7,7 +7,6 @@ route through without ever reading raw HTML.
 
 from __future__ import annotations
 
-import re
 from html.parser import HTMLParser
 from typing import Any
 
