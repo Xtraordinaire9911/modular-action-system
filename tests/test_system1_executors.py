@@ -42,6 +42,7 @@ _THERMOSTAT_TD = {
 
 # ── DomExecutor tests ─────────────────────────────────────────────────────────
 
+
 class TestDomExecutorNoPlaywright:
     """Tests that run when Playwright is not installed."""
 
@@ -77,6 +78,7 @@ class TestDomExecutorNoPlaywright:
 
 
 # ── WotExecutor tests ─────────────────────────────────────────────────────────
+
 
 class TestWotExecutor:
 
