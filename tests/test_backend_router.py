@@ -1,9 +1,8 @@
 """Unit tests for the backend confidence tracker and router."""
 
-import pytest
 from src.backend_router.backend_confidence import BackendConfidenceTracker
-from src.backend_router.router import BackendRouter, RoutingDecision
-from src.contracts.types import Condition, SkillCall, SkillTuple
+from src.backend_router.router import BackendRouter
+from src.contracts.types import SkillCall, SkillTuple
 
 
 def _make_skill_tuple(allowed: list[str], preferred: list[str]) -> SkillTuple:

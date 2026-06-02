@@ -1,10 +1,10 @@
 """Unit tests for src/perception/td_affordance_parser.py."""
 
 import json
-import pathlib
+
 import pytest
 
-from src.perception.td_affordance_parser import parse_td, parse_td_file, TDParseError
+from src.perception.td_affordance_parser import TDParseError, parse_td, parse_td_file
 
 
 _THERMOSTAT_TD = {

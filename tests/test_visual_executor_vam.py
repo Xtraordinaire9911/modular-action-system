@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-import pytest  # type: ignore[reportMissingImports]
+import pytest
+
 from src.contracts.types import Observation, SkillCall
 from src.effectors.visual_executor import VisualExecutor
 from src.perception.som_parser import BoundingBox, VisualMark

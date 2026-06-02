@@ -1,7 +1,6 @@
 """Unit tests for src/perception/dom_transducer.py."""
 
-import pytest
-from src.perception.dom_transducer import parse_html, PageAffordanceModel
+from src.perception.dom_transducer import PageAffordanceModel, parse_html
 
 
 _SAMPLE_HTML = """
@@ -29,9 +28,9 @@ def test_parse_returns_pam():
 def test_interactive_elements_extracted():
     pam = parse_html(_SAMPLE_HTML)
     labels = [a.label for a in pam.affordances]
-    assert any("room" in l.lower() for l in labels)
-    assert any("time" in l.lower() or "time" in l.lower() for l in labels)
-    assert any("book" in l.lower() for l in labels)
+    assert any("room" in lbl.lower() for lbl in labels)
+    assert any("time" in lbl.lower() or "time" in lbl.lower() for lbl in labels)
+    assert any("book" in lbl.lower() for lbl in labels)
 
 
 def test_script_tags_stripped():
