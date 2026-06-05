@@ -148,11 +148,7 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
     )
     report.add(
         "VGA",
-        sum(
-            1
-            for case in dataset.visual_grounding_cases
-            if case.selected_mark_id == case.expected_mark_id
-        ),
+        sum(1 for case in dataset.visual_grounding_cases if case.selected_mark_id == case.expected_mark_id),
         len(dataset.visual_grounding_cases),
     )
 

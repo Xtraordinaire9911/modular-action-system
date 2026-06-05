@@ -8,9 +8,7 @@ from src.verification.precondition_checker import PreconditionChecker
 
 def test_cognitive_map_merges_observation_and_execution_delta():
     cognitive_map = CognitiveMap(task_id="task_1")
-    cognitive_map.update_from_observation(
-        Observation(device_states={"thermostat_A": {"online": True}})
-    )
+    cognitive_map.update_from_observation(Observation(device_states={"thermostat_A": {"online": True}}))
     cognitive_map.record_execution_result(
         ExecutionResult(
             skill_id="set_temperature",

@@ -1,4 +1,4 @@
-"""Runtime precondition checks """
+"""Runtime precondition checks"""
 
 from __future__ import annotations
 

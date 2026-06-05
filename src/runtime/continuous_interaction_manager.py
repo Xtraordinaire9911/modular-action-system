@@ -1,4 +1,4 @@
-"""Main runtime orchestration skeleton """
+"""Main runtime orchestration skeleton"""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from typing import Protocol
 
 from src.contracts.types import ExecutionResult, Observation, SkillCall, SkillTuple
 from src.recovery.human_escalation import HumanEscalationPolicy
+from src.recovery.reroute_policy import ReroutePolicy
 from src.recovery.retry_policy import RetryPolicy
 from src.recovery.rollback_policy import RollbackPolicy
-from src.recovery.reroute_policy import ReroutePolicy
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.state_machine import RuntimeState
 from src.safety.unsafe_action_detector import UnsafeActionDetector
@@ -18,8 +18,7 @@ from src.verification.precondition_checker import PreconditionChecker
 
 
 class Executor(Protocol):
-    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
-        ...
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult: ...
 
 
 @dataclass
@@ -80,7 +79,9 @@ class ContinuousInteractionManager:
             retry = self.retry_policy.decide(result, attempt=1)
             if retry.should_retry:
                 self.state = RuntimeState.RECOVERING
-                return RuntimeStepResult(self.state, result, recovery_tier=1, selected_backend=backend, reason=retry.reason)
+                return RuntimeStepResult(
+                    self.state, result, recovery_tier=1, selected_backend=backend, reason=retry.reason
+                )
 
             reroute = self.reroute_policy.decide(
                 skill_tuple,
@@ -100,7 +101,9 @@ class ContinuousInteractionManager:
 
             escalation = self.escalation_policy.decide(skill_tuple, automated_options_exhausted=True)
             self.state = RuntimeState.ESCALATED if escalation.should_escalate else RuntimeState.FAILED
-            return RuntimeStepResult(self.state, result, recovery_tier=4, selected_backend=backend, reason=escalation.reason)
+            return RuntimeStepResult(
+                self.state, result, recovery_tier=4, selected_backend=backend, reason=escalation.reason
+            )
 
         self.state = RuntimeState.VERIFYING
         if not self.postconditions.passes(skill_tuple.postconditions, self.cognitive_map):

@@ -23,7 +23,14 @@ def test_aggregate_metrics_computes_core_rates():
         ],
         recovery_cases=[
             RecoveryCase("t1", "timeout", expected_tier=1, triggered_tier=1, recovery_success=True, final_success=True),
-            RecoveryCase("t2", "postcondition_failed", expected_tier=3, triggered_tier=2, recovery_success=False, final_success=False),
+            RecoveryCase(
+                "t2",
+                "postcondition_failed",
+                expected_tier=3,
+                triggered_tier=2,
+                recovery_success=False,
+                final_success=False,
+            ),
         ],
         routing_cases=[
             RoutingCase("t1", selected_backend="wot", expected_backend="wot"),
