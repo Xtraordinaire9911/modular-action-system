@@ -59,3 +59,49 @@ def test_cognitive_map_tracks_current_skill_and_conflicts():
 
     assert cognitive_map.current_skill is not None
     assert conflict in cognitive_map.unresolved_conflicts()
+
+
+def test_precondition_checker_supports_compound_param_predicates():
+    cognitive_map = CognitiveMap(task_id="task_1")
+    cognitive_map.set_current_skill(SkillCall("set_temperature", {"target": 22}))
+    checker = PreconditionChecker()
+
+    results = checker.check(
+        [Condition("target >= 16 and target <= 30")],
+        cognitive_map,
+    )
+
+    assert results[0].passed
+    assert results[0].observed == [22, 22]
+    assert results[0].expected == [16, 30]
+
+
+def test_postcondition_checker_resolves_rhs_params_reference():
+    cognitive_map = CognitiveMap(task_id="task_1")
+    cognitive_map.set_current_skill(SkillCall("set_temperature", {"target": 22}))
+    cognitive_map.device_states = {"thermostat": {"target_temperature": 22}}
+    checker = PostconditionChecker()
+
+    results = checker.check(
+        [Condition("thermostat.target_temperature == params.target")],
+        cognitive_map,
+    )
+
+    assert results[0].passed
+    assert results[0].observed == 22
+    assert results[0].expected == 22
+
+
+def test_compound_param_predicate_fails_when_out_of_range():
+    cognitive_map = CognitiveMap(task_id="task_1")
+    cognitive_map.set_current_skill(SkillCall("set_temperature", {"target": 35}))
+    checker = PreconditionChecker()
+
+    results = checker.check(
+        [Condition("target >= 16 and target <= 30")],
+        cognitive_map,
+    )
+
+    assert not results[0].passed
+    assert results[0].observed == [35, 35]
+    assert results[0].expected == [16, 30]

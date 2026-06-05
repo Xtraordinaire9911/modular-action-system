@@ -41,10 +41,22 @@ _OPS: dict[str, Callable[[Any, Any], bool]] = {
 def evaluate_condition(condition: Condition, cognitive_map: CognitiveMap) -> ConditionResult:
     predicate = condition.predicate.strip()
     try:
-        path, op, expected = _split_predicate(predicate)
+        parts = _split_compound(predicate)
+        if len(parts) > 1:
+            results = [evaluate_condition(Condition(part, condition.description), cognitive_map) for part in parts]
+            return ConditionResult(
+                condition=condition,
+                passed=all_passed(results),
+                observed=[result.observed for result in results],
+                expected=[result.expected for result in results],
+                reason="; ".join(result.reason for result in results if result.reason),
+            )
+
+        path, op, expected_raw = _split_predicate(predicate)
         observed = _resolve_path(cognitive_map, path)
         if op is None:
             return ConditionResult(condition=condition, passed=bool(observed), observed=observed)
+        expected = _resolve_value(cognitive_map, expected_raw)
         passed = _OPS[op](observed, expected)
         return ConditionResult(condition=condition, passed=passed, observed=observed, expected=expected)
     except Exception as exc:
@@ -59,12 +71,36 @@ def all_passed(results: list[ConditionResult]) -> bool:
     return all(result.passed for result in results)
 
 
-def _split_predicate(predicate: str) -> tuple[str, str | None, Any]:
+def _split_compound(predicate: str) -> list[str]:
+    return [part.strip() for part in predicate.split(" and ") if part.strip()]
+
+
+def _split_predicate(predicate: str) -> tuple[str, str | None, str]:
     for op in ("==", "!=", ">=", "<=", ">", "<"):
         if op in predicate:
             left, right = predicate.split(op, 1)
-            return left.strip(), op, _parse_value(right.strip())
-    return predicate, None, None
+            return left.strip(), op, right.strip()
+    return predicate, None, ""
+
+
+def _resolve_value(cognitive_map: CognitiveMap, raw: str) -> Any:
+    if _looks_like_path(raw):
+        try:
+            return _resolve_path(cognitive_map, raw)
+        except KeyError:
+            pass
+    return _parse_value(raw)
+
+
+def _looks_like_path(raw: str) -> bool:
+    lowered = raw.lower()
+    if lowered in ("true", "false", "none", "null"):
+        return False
+    try:
+        ast.literal_eval(raw)
+        return False
+    except Exception:
+        return raw.replace("_", "").replace(".", "").isalnum()
 
 
 def _parse_value(raw: str) -> Any:
@@ -87,10 +123,14 @@ def _resolve_path(cognitive_map: CognitiveMap, path: str) -> Any:
         "device_states": cognitive_map.device_states,
         "page_state": cognitive_map.page_state,
         "visual_state": cognitive_map.visual_state,
+        "params": cognitive_map.current_skill.params if cognitive_map.current_skill else {},
     }
 
     if parts[0] in roots:
         value = roots[parts[0]]
+        parts = parts[1:]
+    elif cognitive_map.current_skill and parts[0] in cognitive_map.current_skill.params:
+        value = cognitive_map.current_skill.params[parts[0]]
         parts = parts[1:]
     else:
         value = cognitive_map.device_states
