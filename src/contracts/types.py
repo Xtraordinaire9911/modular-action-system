@@ -77,7 +77,7 @@ class Affordance:
     safety_level: str = "low"
 
 
-# ── Execution result (owned by Member B, consumed by Member C) ───────────────
+# ── Execution result (owned by Member B, consumed by runtime control) ───────────────
 
 
 @dataclass
@@ -91,7 +91,7 @@ class ExecutionResult:
     raw_observation_delta: dict[str, Any] = field(default_factory=dict)
 
 
-# ── Observation (owned by Member C) ──────────────────────────────────────────
+# ── Observation (owned by runtime control) ──────────────────────────────────────────
 
 
 @dataclass
