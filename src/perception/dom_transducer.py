@@ -153,7 +153,9 @@ class PageAffordanceModel:
         self.affordances = affordances
 
     def __repr__(self) -> str:
-        return f"PageAffordanceModel(page_id={self.page_id!r}, n={len(self.affordances)})"
+        return (
+            f"PageAffordanceModel(page_id={self.page_id!r}, n={len(self.affordances)})"
+        )
 
     def find_by_label(self, text: str) -> Affordance | None:
         text_lower = text.lower()
