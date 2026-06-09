@@ -14,6 +14,10 @@ class ContractViolationError(RuntimeError):
     pass
 
 
+class SensoryConflictError(RuntimeError):
+    """Raised when digital and physical observations disagree enough to block System 1."""
+
+
 # ── Skill-level contracts (owned by Member A, consumed by all) ───────────────
 
 
@@ -77,7 +81,67 @@ class Affordance:
     safety_level: str = "low"
 
 
-# ── Execution result (owned by Member B, consumed by runtime control) ───────────────
+# Member A: cognitive map and epistemic arbitration contracts
+
+
+@dataclass
+class SemanticSceneGraphNode:
+    node_id: str
+    kind: str
+    label: str
+    sources: list[str]
+    attributes: dict[str, Any] = field(default_factory=dict)
+    source_values: dict[str, Any] = field(default_factory=dict)
+    confidence: float = 1.0
+
+
+@dataclass
+class SemanticSceneGraphEdge:
+    source_id: str
+    relation: str
+    target_id: str
+    confidence: float = 1.0
+
+
+@dataclass
+class SemanticSceneGraph:
+    task_id: str
+    nodes: list[SemanticSceneGraphNode] = field(default_factory=list)
+    edges: list[SemanticSceneGraphEdge] = field(default_factory=list)
+
+
+@dataclass
+class SensoryConflict:
+    conflict_id: str
+    node_id: str
+    state_key: str
+    sources: list[str]
+    values: dict[str, Any]
+    severity: Literal["low", "medium", "high"] = "medium"
+    resolved: bool = False
+    recommended_probe: str = "repoll_sensor"
+
+
+@dataclass
+class ArbiterDecision:
+    allow_system1: bool
+    reason: str
+    conflicts: list[SensoryConflict] = field(default_factory=list)
+    recommended_backend: str | None = None
+    recommended_probe: str | None = None
+
+
+@dataclass
+class System2RecoveryRequest:
+    failed_skill: SkillCall | None
+    reason: str
+    conflicts: list[SensoryConflict] = field(default_factory=list)
+    scene_graph_snapshot: dict[str, Any] = field(default_factory=dict)
+    allowed_probes: list[str] = field(default_factory=lambda: ["refresh_page", "repoll_sensor", "reroute_backend"])
+    prompt: str = ""
+
+
+# ── Execution result (owned by Member B, consumed by Member C) ───────────────
 
 
 @dataclass
