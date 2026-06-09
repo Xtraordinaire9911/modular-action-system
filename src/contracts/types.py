@@ -155,7 +155,7 @@ class ExecutionResult:
     raw_observation_delta: dict[str, Any] = field(default_factory=dict)
 
 
-# ── Observation (owned by Member C) ──────────────────────────────────────────
+# ── Observation (owned by runtime control) ──────────────────────────────────────────
 
 
 @dataclass
