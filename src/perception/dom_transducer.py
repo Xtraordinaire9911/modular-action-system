@@ -75,11 +75,15 @@ class _InteractiveParser(HTMLParser):
 
 def _build_locator(node: dict[str, Any]) -> dict[str, Any]:
     """Return the most stable CSS selector for a node, preferring id."""
+
+    def _escape_attr(value: str) -> str:
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
     if node["id"]:
-        return {"selector": f"#{node['id']}"}
+        return {"selector": f'[id="{_escape_attr(node["id"])}"]'}
     if node["name"]:
         tag = node["tag"]
-        return {"selector": f"{tag}[name='{node['name']}']"}
+        return {"selector": f'{tag}[name="{_escape_attr(node["name"])}"]'}
     if node["class"]:
         first_cls = node["class"].split()[0]
         return {"selector": f"{node['tag']}.{first_cls}"}
