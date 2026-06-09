@@ -41,9 +41,12 @@ def _rate_limit(td: dict[str, Any]) -> str | None:
 
 
 def _first_href(forms: list[dict[str, Any]]) -> str:
-    if not forms:
-        return ""
-    return forms[0].get("href", "")
+    if not isinstance(forms, list) or not forms:
+        raise TDParseError("TD affordance must include a non-empty forms array")
+    href = forms[0].get("href")
+    if not href:
+        raise TDParseError("TD form missing href")
+    return href
 
 
 def _http_method(forms: list[dict[str, Any]]) -> str:
