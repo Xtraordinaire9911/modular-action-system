@@ -37,6 +37,7 @@ class _InteractiveParser(HTMLParser):
         self._depth = 0
         self._skip_depth: int | None = None
         self._nodes: list[dict[str, Any]] = []
+        self._interactive_stack: list[tuple[str, int]] = []
 
     # ------------------------------------------------------------------
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -59,11 +60,25 @@ class _InteractiveParser(HTMLParser):
             "placeholder": attr_map.get("placeholder", ""),
             "class": attr_map.get("class", ""),
             "href": attr_map.get("href", ""),
+            "text": "",
             "data_attrs": {k: v for k, v in attr_map.items() if k.startswith("data-")},
         }
         self._nodes.append(node)
+        self._interactive_stack.append((tag, len(self._nodes) - 1))
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth is not None or not self._interactive_stack:
+            return
+        text = data.strip()
+        if not text:
+            return
+        _, node_index = self._interactive_stack[-1]
+        node = self._nodes[node_index]
+        node["text"] = f'{node["text"]} {text}'.strip()
 
     def handle_endtag(self, tag: str) -> None:
+        if self._interactive_stack and self._interactive_stack[-1][0] == tag:
+            self._interactive_stack.pop()
         if self._skip_depth is not None and self._depth == self._skip_depth:
             self._skip_depth = None
         self._depth -= 1
@@ -110,7 +125,7 @@ def _infer_action(node: dict[str, Any]) -> str:
 
 
 def _infer_label(node: dict[str, Any]) -> str:
-    for key in ("aria_label", "placeholder", "name", "id"):
+    for key in ("aria_label", "placeholder", "name", "id", "text"):
         val = node.get(key, "")
         if val:
             return str(val)
