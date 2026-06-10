@@ -80,11 +80,7 @@ class EpistemicArbiter:
             raise SensoryConflictError(f"System 1 blocked by sensory conflict: {conflict_keys}")
 
     def _low_confidence_nodes(self, graph: SemanticSceneGraph) -> list[SemanticSceneGraphNode]:
-        return [
-            node
-            for node in graph.nodes
-            if node.kind != "state" and node.confidence < self.confidence_threshold
-        ]
+        return [node for node in graph.nodes if node.kind != "state" and node.confidence < self.confidence_threshold]
 
 
 def _distinct_values(source_values: dict[str, Any]) -> set[tuple[str, str]]:

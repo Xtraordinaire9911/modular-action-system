@@ -18,7 +18,6 @@ from src.contracts.types import (
     System2RecoveryRequest,
 )
 
-
 DEFAULT_PROBES = ["refresh_page", "repoll_sensor", "reroute_backend", "escalate_human"]
 
 
