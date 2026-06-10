@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 from typing import Any
 
@@ -12,10 +11,12 @@ from evaluation.recovery_eval import write_recovery_metrics
 from src.runtime.cognitive_map import CognitiveMap, Entity, RuntimeAffordance, StateAssertion
 from src.verification.conflict_detector import EpistemicArbiter
 
+DEMO_TIMESTAMP_MS = 1_781_000_000_000
+
 
 def _event(task_id: str, skill_id: str, event_type: str, backend: str | None, details: dict[str, Any]) -> dict:
     return {
-        "timestamp_ms": int(time.time() * 1000),
+        "timestamp_ms": DEMO_TIMESTAMP_MS,
         "task_id": task_id,
         "skill_id": skill_id,
         "event_type": event_type,
