@@ -7,7 +7,7 @@ blocks automatic execution and asks System 2 to resolve uncertainty first.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from src.contracts.types import (
     ArbiterDecision,
@@ -16,6 +16,8 @@ from src.contracts.types import (
     SensoryConflict,
     SensoryConflictError,
 )
+
+Severity = Literal["low", "medium", "high"]
 
 
 class EpistemicArbiter:
@@ -97,7 +99,7 @@ def _normalize_value(value: Any) -> tuple[str, str]:
     return ("text", str(value).strip().lower())
 
 
-def _severity_for(state_key: str) -> str:
+def _severity_for(state_key: str) -> Severity:
     high_risk_terms = ("occupancy", "ready", "readiness", "power", "booking")
     if any(term in state_key for term in high_risk_terms):
         return "high"

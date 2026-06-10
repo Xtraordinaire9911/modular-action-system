@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from src.runtime.cognitive_map import CognitiveMap, Conflict, StateAssertion
+
+Severity = Literal["low", "medium", "high"]
 
 
 @dataclass
@@ -17,7 +19,7 @@ class SemanticConsistencyRule:
     depends_on_entity_id: str
     depends_on_attribute: str
     depends_on_value: Any
-    severity: str = "high"
+    severity: Severity = "high"
 
 
 @dataclass
@@ -286,7 +288,7 @@ def _latest_by_source(assertions: list[StateAssertion]) -> dict[str, StateAssert
     return latest
 
 
-def _severity(conflict_mass: float) -> str:
+def _severity(conflict_mass: float) -> Severity:
     if conflict_mass >= 2.0:
         return "high"
     if conflict_mass >= 1.0:
