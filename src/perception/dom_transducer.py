@@ -8,13 +8,11 @@ route through without ever reading raw HTML.
 from __future__ import annotations
 
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, Literal
 
 from src.contracts.types import Affordance
 
-_INTERACTIVE_TAGS = frozenset(
-    ["a", "button", "input", "select", "textarea", "label", "form", "option"]
-)
+_INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea", "label", "form", "option"])
 _STRIP_TAGS = frozenset(["script", "style", "meta", "link", "noscript", "head"])
 _ARIA_ACTION_MAP = {
     "button": "click",
@@ -153,9 +151,7 @@ class PageAffordanceModel:
         self.affordances = affordances
 
     def __repr__(self) -> str:
-        return (
-            f"PageAffordanceModel(page_id={self.page_id!r}, n={len(self.affordances)})"
-        )
+        return f"PageAffordanceModel(page_id={self.page_id!r}, n={len(self.affordances)})"
 
     def find_by_label(self, text: str) -> Affordance | None:
         text_lower = text.lower()
@@ -199,7 +195,7 @@ def parse_html(html: str, page_id: str = "page") -> PageAffordanceModel:
     return PageAffordanceModel(page_id=page_id, affordances=affordances)
 
 
-def _map_tag_to_type(node: dict[str, Any]) -> str:
+def _map_tag_to_type(node: dict[str, Any]) -> Literal["button", "input", "property", "action", "event", "sensor"]:
     tag = node["tag"]
     itype = node.get("type", "").lower()
     if tag in ("button",) or itype in ("submit", "button"):

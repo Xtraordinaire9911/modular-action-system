@@ -7,7 +7,7 @@ blocks automatic execution and asks System 2 to resolve uncertainty first.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from src.contracts.types import (
     ArbiterDecision,
@@ -16,6 +16,8 @@ from src.contracts.types import (
     SensoryConflict,
     SensoryConflictError,
 )
+
+Severity = Literal["low", "medium", "high"]
 
 
 class EpistemicArbiter:
@@ -80,11 +82,7 @@ class EpistemicArbiter:
             raise SensoryConflictError(f"System 1 blocked by sensory conflict: {conflict_keys}")
 
     def _low_confidence_nodes(self, graph: SemanticSceneGraph) -> list[SemanticSceneGraphNode]:
-        return [
-            node
-            for node in graph.nodes
-            if node.kind != "state" and node.confidence < self.confidence_threshold
-        ]
+        return [node for node in graph.nodes if node.kind != "state" and node.confidence < self.confidence_threshold]
 
 
 def _distinct_values(source_values: dict[str, Any]) -> set[tuple[str, str]]:
@@ -101,7 +99,7 @@ def _normalize_value(value: Any) -> tuple[str, str]:
     return ("text", str(value).strip().lower())
 
 
-def _severity_for(state_key: str) -> str:
+def _severity_for(state_key: str) -> Severity:
     high_risk_terms = ("occupancy", "ready", "readiness", "power", "booking")
     if any(term in state_key for term in high_risk_terms):
         return "high"
