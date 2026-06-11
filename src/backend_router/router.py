@@ -75,16 +75,22 @@ class BackendRouter:
             )
 
         scores: dict[str, float] = {}
+        weight_sum = self._lc + self._lr + self._ll
+        if weight_sum <= 0:
+            raise ValueError("routing weights must sum to a positive value")
+
         for backend in candidates:
             stats = self._tracker.get_stats(backend)
             cost = _COST_DEFAULTS.get(backend, 1.0)
             reliability_penalty = 1.0 - stats.reliability
             latency_norm = min(stats.latency / _LATENCY_NORM, 1.0)
-            score = self._lc * cost + self._lr * reliability_penalty + self._ll * latency_norm
+            score = (
+                self._lc * cost + self._lr * reliability_penalty + self._ll * latency_norm
+            ) / weight_sum
             scores[backend] = score
 
         best = min(scores, key=lambda b: scores[b])
-        confidence = 1.0 - scores[best]
+        confidence = max(0.0, min(1.0, 1.0 - scores[best]))
 
         reason = (
             f"scored {best}={scores[best]:.3f} among {list(scores.keys())}"
