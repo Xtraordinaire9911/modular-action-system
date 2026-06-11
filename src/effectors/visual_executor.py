@@ -49,7 +49,7 @@ class VisualExecutor(ExecutorBase):
         aff = Affordance(
             id=f"vis_{grounding.mark_id}",
             source="VISUAL",
-            type="button",
+            type="input" if value is not None else "button",
             label=grounding.label,
             action="type" if value is not None else "click",
             locator={"mark_id": grounding.mark_id, "bbox": grounding.bbox, "center": list(grounding.center)},
