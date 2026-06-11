@@ -60,14 +60,19 @@ def parse_rate_limit(raw: Any) -> RateLimit | None:
             return None
         count, unit = int(m.group(1)), m.group(2).lower()
         window = _WINDOW_SECONDS.get(unit) or _WINDOW_SECONDS.get(unit.rstrip("s"))
-        return RateLimit(count, window) if window else None
+        if not window or count <= 0:
+            return None
+        return RateLimit(count, window)
     if isinstance(raw, dict):
         if "window_seconds" in raw and "max_requests" in raw:
-            return RateLimit(int(raw["max_requests"]), int(raw["window_seconds"]))
+            max_r = int(raw["max_requests"])
+            win = int(raw["window_seconds"])
+            return RateLimit(max_r, win) if max_r > 0 and win > 0 else None
         if "max" in raw and "window" in raw:
             unit = str(raw["window"]).lower()
             window = _WINDOW_SECONDS.get(unit, _WINDOW_SECONDS.get(unit.rstrip("s"), 0))
-            return RateLimit(int(raw["max"]), window) if window else None
+            max_r = int(raw["max"])
+            return RateLimit(max_r, window) if window and max_r > 0 else None
     return None
 
 
