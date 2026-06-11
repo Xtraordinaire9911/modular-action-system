@@ -162,5 +162,4 @@ def marks_from_affordances(affordances: list[Any]) -> list[VisualMark]:
                 confidence=aff.confidence,
             )
         )
-        )
     return marks
