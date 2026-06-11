@@ -34,8 +34,7 @@ jobs:
         run: black --check .
 
       - name: Type check (mypy)
-        run: mypy src/ --ignore-missing-imports || true
-
+        run: mypy src/ --ignore-missing-imports
       - name: Tests (pytest)
         run: |
           if [ -f pyproject.toml ]; then

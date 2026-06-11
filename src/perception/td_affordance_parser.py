@@ -1,22 +1,16 @@
-"""WoT Hypermedia Affordance Parser — runtime TD ingestion (advisor §4).
+"""WoT Thing Description affordance parser.
 
-Implements the Hypermedia Affordances Recognition Pattern: the agent knows only
-TD *seed URLs* and parses W3C Thing Descriptions **at runtime** to discover
-device capabilities. Nothing about device endpoints is hard-coded — every
-``href``/method/contentType is read out of the TD's ``forms`` (HATEOAS), and the
-``securityDefinitions`` + rate-limit annotations are extracted dynamically.
-
-Each interaction affordance (property read/write, action, event) becomes a
-unified ``Affordance`` with ``source="WOT"`` so it routes through the same
-contract as DOM and Visual affordances. Property affordances additionally yield
-``StateAssertion`` sources used for empirical postcondition checking.
-
-Pure-stdlib; the executor (``wot_executor``) performs the actual HTTP.
+Parses W3C TD JSON-LD at runtime so device endpoints, HTTP methods,
+securityDefinitions, and rate limits come from hypermedia forms instead of
+hard-coded assumptions. The primary API returns a ThingAffordanceModel; legacy
+helpers returning plain affordance lists remain for earlier PRs and demos.
 """
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from src.contracts.types import Affordance
@@ -28,7 +22,6 @@ from src.perception.wot_security import (
     parse_security_definitions,
 )
 
-# Default HTTP method per WoT operation when a form omits htv:methodName.
 _DEFAULT_METHOD = {
     "readproperty": "GET",
     "writeproperty": "PUT",
@@ -44,10 +37,12 @@ _OP_ACTION = {
 }
 
 
+class TDParseError(ValueError):
+    pass
+
+
 @dataclass
 class StateAssertionSource:
-    """Where a device property lives, so postcondition checks can read it back."""
-
     thing_id: str
     property: str
     href: str
@@ -66,8 +61,6 @@ class StateAssertionSource:
 
 @dataclass
 class ThingAffordanceModel:
-    """All affordances + provenance discovered from one Thing Description."""
-
     thing_id: str
     title: str
     affordances: list[Affordance]
@@ -91,78 +84,132 @@ def _resolve_href(base: str, href: str) -> str:
         return href
     if href.startswith(("http://", "https://", "coap://", "mqtt://")):
         return href
-    if base:
-        return base.rstrip("/") + "/" + href.lstrip("/")
-    return href
+    return base.rstrip("/") + "/" + href.lstrip("/") if base else href
+
+
+def _declared_ops(form: dict[str, Any]) -> list[str]:
+    declared = form.get("op")
+    return [declared] if isinstance(declared, str) else list(declared or [])
 
 
 def _first_form(forms: list[dict[str, Any]], ops: tuple[str, ...]) -> dict[str, Any] | None:
-    """Pick the form whose declared op matches; fall back to the first form."""
     for form in forms:
-        declared = form.get("op")
-        names = [declared] if isinstance(declared, str) else list(declared or [])
-        if any(o in names for o in ops):
+        if any(op in _declared_ops(form) for op in ops):
             return form
-    return forms[0] if forms else None
+    return None
+
+
+def _schema_of(prop: dict[str, Any]) -> dict[str, Any]:
+    return {k: prop[k] for k in ("type", "minimum", "maximum", "enum", "readOnly", "writeOnly") if k in prop}
+
+
+def _security_summary(security: SecurityScheme | None) -> dict[str, Any]:
+    if security is None:
+        return {"scheme": "nosec", "in": "", "name": ""}
+    return {"scheme": security.scheme, "in": security.location, "name": security.field_name}
+
+
+def _rate_state(rate_limit: RateLimit | None) -> dict[str, Any] | None:
+    if rate_limit is None:
+        return None
+    return {
+        "max_requests": rate_limit.max_requests,
+        "window_seconds": rate_limit.window_seconds,
+        "min_interval_ms": round(rate_limit.min_interval_ms, 2),
+    }
 
 
 class TdAffordanceParser:
     """Parse a single Thing Description into a ThingAffordanceModel."""
 
     def parse(self, td: dict[str, Any]) -> ThingAffordanceModel:
-        if not isinstance(td, dict) or "title" not in td and "id" not in td:
-            raise ValueError("malformed Thing Description: missing id/title")
+        if not isinstance(td, dict):
+            raise TDParseError("TD must be a JSON object")
+        if "id" not in td and "title" not in td:
+            raise TDParseError("TD must have at least 'id' or 'title'")
 
         thing_id = str(td.get("id") or td.get("title"))
         title = str(td.get("title", thing_id))
         base = str(td.get("base", ""))
         schemes = parse_security_definitions(td)
         security = active_scheme(td, schemes)
-        thing_rate = parse_rate_limit(td.get("rateLimit") or td.get("wot:rateLimit"))
+        thing_rate = parse_rate_limit(td.get("rateLimit") or td.get("wot:rateLimit") or td.get("rate_limit"))
 
         affordances: list[Affordance] = []
         state_sources: list[StateAssertionSource] = []
 
-        # ── Properties (read / write) ────────────────────────────────────────
         for prop_name, prop in (td.get("properties") or {}).items():
-            forms = prop.get("forms") or []
+            forms = list(prop.get("forms") or [])
             read_only = bool(prop.get("readOnly", False))
             write_only = bool(prop.get("writeOnly", False))
-            read_form = _first_form(forms, ("readproperty",))
-            if read_form is not None:
+            has_explicit_ops = any("op" in form for form in forms)
+            read_form = _first_form(forms, ("readproperty", "observeproperty"))
+            if read_form is None and forms and not has_explicit_ops:
+                read_form = forms[0]
+            if read_form is not None and not write_only:
                 href = _resolve_href(base, read_form.get("href", ""))
                 method = _method_for("readproperty", read_form)
                 state_sources.append(StateAssertionSource(thing_id, prop_name, href, method, read_only))
             if not read_only:
-                w_form = _first_form(forms, ("writeproperty",)) or (forms[0] if forms else None)
-                if w_form is not None:
+                write_form = _first_form(forms, ("writeproperty",))
+                if write_form is None and forms and not has_explicit_ops:
+                    write_form = forms[0]
+                if write_form is not None:
                     affordances.append(
                         self._affordance(
-                            thing_id, prop_name, "writeproperty", w_form, base,
-                            input_schema=_schema_of(prop), security=security,
-                            rate_limit=parse_rate_limit(w_form.get("rateLimit")) or thing_rate,
+                            thing_id,
+                            prop_name,
+                            "writeproperty",
+                            write_form,
+                            base,
+                            input_schema=_schema_of(prop),
+                            security=security,
+                            rate_limit=parse_rate_limit(write_form.get("rateLimit")) or thing_rate,
                             type_="property",
+                            extra_state={"read_only": read_only, "write_only": write_only},
                         )
                     )
-            _ = write_only  # reserved for write-only sensors
 
-        # ── Actions ──────────────────────────────────────────────────────────
         for action_name, action in (td.get("actions") or {}).items():
-            forms = action.get("forms") or []
-            form = _first_form(forms, ("invokeaction",))
+            form = _first_form(list(action.get("forms") or []), ("invokeaction",))
             if form is None:
                 continue
             affordances.append(
                 self._affordance(
-                    thing_id, action_name, "invokeaction", form, base,
-                    input_schema=action.get("input"), security=security,
+                    thing_id,
+                    action_name,
+                    "invokeaction",
+                    form,
+                    base,
+                    input_schema=action.get("input"),
+                    output_schema=action.get("output"),
+                    security=security,
                     rate_limit=parse_rate_limit(form.get("rateLimit")) or thing_rate,
                     type_="action",
                     safety_level=str(action.get("safety_level", "low")),
                 )
             )
 
-        events = list((td.get("events") or {}).keys())
+        events: list[str] = []
+        for event_name, event in (td.get("events") or {}).items():
+            events.append(event_name)
+            form = _first_form(list(event.get("forms") or []), ("subscribeevent",))
+            if form is None:
+                continue
+            affordances.append(
+                self._affordance(
+                    thing_id,
+                    f"{event_name}_event",
+                    "subscribeevent",
+                    form,
+                    base,
+                    input_schema=event.get("data"),
+                    security=security,
+                    rate_limit=parse_rate_limit(form.get("rateLimit")) or thing_rate,
+                    type_="event",
+                )
+            )
+
         return ThingAffordanceModel(
             thing_id=thing_id,
             title=title,
@@ -186,47 +233,63 @@ class TdAffordanceParser:
         security: SecurityScheme | None,
         rate_limit: RateLimit | None,
         type_: str,
+        output_schema: dict[str, Any] | None = None,
         safety_level: str = "low",
+        extra_state: dict[str, Any] | None = None,
     ) -> Affordance:
-        href = _resolve_href(base, form.get("href", ""))
+        href = _resolve_href(base, str(form.get("href", "")))
         if not href:
-            raise ValueError(f"affordance {thing_id}.{name} has no href (HATEOAS violation)")
-        method = _method_for(op, form)
+            raise TDParseError(f"affordance {thing_id}.{name} has no href")
         state: dict[str, Any] = {
             "input_schema": input_schema or {},
             "content_type": form.get("contentType", "application/json"),
             "security": security.scheme if security else "nosec",
+            "security_definition": _security_summary(security),
         }
+        if output_schema is not None:
+            state["output_schema"] = output_schema
         if rate_limit is not None:
-            state["rate_limit"] = {
-                "max_requests": rate_limit.max_requests,
-                "window_seconds": rate_limit.window_seconds,
-                "min_interval_ms": round(rate_limit.min_interval_ms, 2),
-            }
+            state["rate_limit"] = _rate_state(rate_limit)
+        if extra_state:
+            state.update(extra_state)
         return Affordance(
             id=f"wot_{thing_id}_{name}",
             source="WOT",
-            type="action" if type_ == "action" else "property",
-            label=name,
+            type="action" if type_ == "action" else "event" if type_ == "event" else "property",
+            label=name.removesuffix("_event"),
             action=_OP_ACTION.get(op, "invoke"),
-            locator={"thing_id": thing_id, "href": href, "method": method},
+            locator={"thing_id": thing_id, "href": href, "method": _method_for(op, form)},
             confidence=1.0,
             state=state,
             safety_level=safety_level,
         )
 
 
-def _schema_of(prop: dict[str, Any]) -> dict[str, Any]:
-    return {k: prop[k] for k in ("type", "minimum", "maximum", "enum") if k in prop}
-
-
 def parse_things(tds: list[dict[str, Any]]) -> list[ThingAffordanceModel]:
-    """Parse a batch of discovered TDs, skipping malformed ones gracefully."""
     parser = TdAffordanceParser()
     models: list[ThingAffordanceModel] = []
     for td in tds:
         try:
             models.append(parser.parse(td))
-        except (ValueError, KeyError, TypeError, AttributeError):
-            continue  # malformed TD → recovery layer is informed via missing affordance
+        except (TDParseError, ValueError, KeyError, TypeError):
+            continue
     return models
+
+
+def parse_td(td: dict[str, Any]) -> list[Affordance]:
+    """Backward-compatible plain-affordance parser."""
+    if "@context" not in td:
+        raise TDParseError("TD missing @context field")
+    return TdAffordanceParser().parse(td).affordances
+
+
+def parse_td_file(path: str | Path) -> list[Affordance]:
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    return parse_td(data)
+
+
+def parse_td_directory(directory: str | Path) -> dict[str, list[Affordance]]:
+    result: dict[str, list[Affordance]] = {}
+    for path in sorted(Path(directory).glob("*.td.json")):
+        result[path.stem] = parse_td_file(path)
+    return result
