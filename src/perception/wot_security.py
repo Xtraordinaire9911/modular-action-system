@@ -78,7 +78,10 @@ def parse_rate_limit(raw: Any) -> RateLimit | None:
 def parse_security_definitions(td: dict[str, Any]) -> dict[str, SecurityScheme]:
     """Map every entry of ``securityDefinitions`` into a typed SecurityScheme."""
     out: dict[str, SecurityScheme] = {}
-    for name, definition in (td.get("securityDefinitions") or {}).items():
+    raw_defs = td.get("securityDefinitions") or {}
+    if not isinstance(raw_defs, dict):
+        return out
+    for name, definition in raw_defs.items():
         scheme = str(definition.get("scheme", "nosec")).lower()
         location = str(definition.get("in", "header")).lower()
         field_name = definition.get("name") or ("Authorization" if location == "header" else "access_token")
