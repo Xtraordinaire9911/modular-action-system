@@ -96,7 +96,9 @@ def _annotate_cv2(screenshot_bytes: bytes, marks: list[VisualMark]) -> bytes:
             cv2.LINE_AA,
         )
 
-    _, buf = cv2.imencode(".png", img)
+    ok, buf = cv2.imencode(".png", img)
+    if not ok:
+        raise SomParseError("cv2 could not encode annotated image as PNG")
     return buf.tobytes()
 
 
