@@ -128,13 +128,19 @@ class TdAffordanceParser:
             forms = prop.get("forms") or []
             read_only = bool(prop.get("readOnly", False))
             write_only = bool(prop.get("writeOnly", False))
+            has_explicit_ops = any("op" in f for f in forms)
+
             read_form = _first_form(forms, ("readproperty",))
+            if read_form is None and forms and not has_explicit_ops:
+                read_form = forms[0]
             if read_form is not None:
                 href = _resolve_href(base, read_form.get("href", ""))
                 method = _method_for("readproperty", read_form)
                 state_sources.append(StateAssertionSource(thing_id, prop_name, href, method, read_only))
             if not read_only:
-                w_form = _first_form(forms, ("writeproperty",)) or (forms[0] if forms else None)
+                w_form = _first_form(forms, ("writeproperty",))
+                if w_form is None and forms and not has_explicit_ops:
+                    w_form = forms[0]
                 if w_form is not None:
                     affordances.append(
                         self._affordance(
