@@ -28,7 +28,7 @@ DEFAULT_COST = {"wot": 0.1, "dom": 0.3, "visual": 1.0}
 # Backends enabled per evaluation variant.
 MODE_BACKENDS = {
     "full": {"dom", "wot", "visual"},
-    "no-recovery": {"dom", "wot", "visual"},
+    "no-recovery": {"dom", "wot"},
     "dom-only": {"dom"},
     "wot-only": {"wot"},
     "vam-only": {"visual"},
