@@ -90,7 +90,9 @@ class VamAdapter:
         select_mark() with the failed skill's label hint so unit tests
         exercise the recovery path without a GPU.
         """
-        if not self.is_available() or self._model is None:
+        if not self.is_available():
+            return None
+        if self._model is None:
             return self._mock_recover(payload, marks)
         return self._vlm_recover(payload, marks)
 
