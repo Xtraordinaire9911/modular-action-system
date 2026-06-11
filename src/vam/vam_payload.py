@@ -1,12 +1,4 @@
-"""VAM recovery payload — the exact structured input passed to System 2.
-
-The assessment (§2.1) demands we show *precisely* what is handed to the VAM when
-the recovery cascade escalates. This dataclass is that contract: it carries the
-failed skill, why it failed, the screenshot, the Page Affordance Model, a
-Cognitive-Map snapshot, the candidate Set-of-Marks affordances, and the prior
-attempts — everything the supervisor needs to pick a *mark id* (not a raw
-coordinate) without re-deriving the world from scratch.
-"""
+"""Structured payload passed to the VAM/System-2 recovery path."""
 
 from __future__ import annotations
 
@@ -34,11 +26,21 @@ class VAMRecoveryPayload:
             "page_affordance_model": self.page_affordance_model,
             "cognitive_map_snapshot": self.cognitive_map_snapshot,
             "candidate_affordances": [
-                {"id": a.id, "source": a.source, "label": a.label, "locator": a.locator, "confidence": a.confidence}
-                for a in self.candidate_affordances
+                {
+                    "id": affordance.id,
+                    "source": affordance.source,
+                    "label": affordance.label,
+                    "locator": affordance.locator,
+                    "confidence": affordance.confidence,
+                }
+                for affordance in self.candidate_affordances
             ],
             "previous_attempts": [
-                {"backend": r.backend_used, "success": r.success, "failure_reason": r.failure_reason}
-                for r in self.previous_attempts
+                {
+                    "backend": result.backend_used,
+                    "success": result.success,
+                    "failure_reason": result.failure_reason,
+                }
+                for result in self.previous_attempts
             ],
         }

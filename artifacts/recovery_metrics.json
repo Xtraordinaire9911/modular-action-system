@@ -1,0 +1,84 @@
+{
+  "rows": [
+    {
+      "definition": "Average primitive action latency in milliseconds",
+      "metric": "ATL",
+      "value": 43.333333333333336
+    },
+    {
+      "definition": "Backend Routing Accuracy = correct backend selections / routing decisions",
+      "metric": "BRA",
+      "value": 0.0
+    },
+    {
+      "definition": "Conflict Resolution Rate = resolved conflicts / detected conflicts",
+      "metric": "CRR",
+      "value": 0.0
+    },
+    {
+      "definition": "Mean Task Latency in milliseconds",
+      "metric": "MTL",
+      "value": 140.0
+    },
+    {
+      "definition": "Postcondition Check Rate = checked required postconditions / required postconditions",
+      "metric": "PCR",
+      "value": 0.0
+    },
+    {
+      "definition": "Postcondition Success Rate = passed postcondition checks / checked postconditions",
+      "metric": "PCS",
+      "value": 0.0
+    },
+    {
+      "definition": "Recovery Tier Accuracy = cases with expected tier selected / failure cases",
+      "metric": "RTA",
+      "value": 1.0
+    },
+    {
+      "definition": "Recovery Utilization Rate = tasks with recovery triggered / total tasks",
+      "metric": "RUR",
+      "value": 0.5
+    },
+    {
+      "definition": "Recovered tasks / recovery-triggered cases",
+      "metric": "RecoverySuccessRate",
+      "value": 1.0
+    },
+    {
+      "definition": "Task Success Rate = successful tasks / total tasks",
+      "metric": "TSR",
+      "value": 1.0
+    },
+    {
+      "definition": "Unsafe Action Rate = unsafe executed actions / attempted task actions",
+      "metric": "UAR",
+      "value": 0.0
+    },
+    {
+      "definition": "Visual Grounding Accuracy = correct visual mark selections / visual grounding attempts",
+      "metric": "VGA",
+      "value": 0.0
+    },
+    {
+      "definition": "World-state Disagreement Success Rate = resolved injected conflicts / injected conflicts",
+      "metric": "WDSR",
+      "value": 0.0
+    }
+  ],
+  "values": {
+    "ATL": 43.333333333333336,
+    "BRA": 0.0,
+    "CRR": 0.0,
+    "MTL": 140.0,
+    "PCR": 0.0,
+    "PCS": 0.0,
+    "RTA": 1.0,
+    "RUR": 0.5,
+    "RecoverySuccessRate": 1.0,
+    "TSR": 1.0,
+    "UAR": 0.0,
+    "VGA": 0.0,
+    "WDSR": 0.0
+  }
+}
