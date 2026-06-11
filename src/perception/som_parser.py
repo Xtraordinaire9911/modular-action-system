@@ -147,13 +147,20 @@ def marks_from_affordances(affordances: list[Any]) -> list[VisualMark]:
         bbox_data = aff.locator.get("bbox")
         if bbox_data is None:
             continue
-        x, y, x2, y2 = bbox_data
+        try:
+            x, y, x2, y2 = map(int, bbox_data)
+        except (TypeError, ValueError) as e:
+            raise SomParseError(f"affordance bbox must be [x, y, x2, y2], got: {bbox_data!r}") from e
+
+        x1, x2 = (x, x2) if x <= x2 else (x2, x)
+        y1, y2 = (y, y2) if y <= y2 else (y2, y)
         marks.append(
             VisualMark(
                 mark_id=f"M{idx:03d}",
                 label=aff.label,
-                bbox=BoundingBox(x=x, y=y, w=x2 - x, h=y2 - y),
+                bbox=BoundingBox(x=x1, y=y1, w=x2 - x1, h=y2 - y1),
                 confidence=aff.confidence,
             )
+        )
         )
     return marks
