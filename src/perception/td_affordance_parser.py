@@ -97,13 +97,13 @@ def _resolve_href(base: str, href: str) -> str:
 
 
 def _first_form(forms: list[dict[str, Any]], ops: tuple[str, ...]) -> dict[str, Any] | None:
-    """Pick the form whose declared op matches; fall back to the first form."""
+    """Pick the first form whose declared op matches; return None if none match."""
     for form in forms:
         declared = form.get("op")
         names = [declared] if isinstance(declared, str) else list(declared or [])
         if any(o in names for o in ops):
             return form
-    return forms[0] if forms else None
+    return None
 
 
 class TdAffordanceParser:
