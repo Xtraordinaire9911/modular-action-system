@@ -96,7 +96,7 @@ def _first_form(forms: list[dict[str, Any]], ops: tuple[str, ...]) -> dict[str, 
     for form in forms:
         if any(op in _declared_ops(form) for op in ops):
             return form
-    return forms[0] if forms else None
+    return None
 
 
 def _schema_of(prop: dict[str, Any]) -> dict[str, Any]:
@@ -142,13 +142,18 @@ class TdAffordanceParser:
             forms = list(prop.get("forms") or [])
             read_only = bool(prop.get("readOnly", False))
             write_only = bool(prop.get("writeOnly", False))
+            has_explicit_ops = any("op" in form for form in forms)
             read_form = _first_form(forms, ("readproperty", "observeproperty"))
+            if read_form is None and forms and not has_explicit_ops:
+                read_form = forms[0]
             if read_form is not None and not write_only:
                 href = _resolve_href(base, read_form.get("href", ""))
                 method = _method_for("readproperty", read_form)
                 state_sources.append(StateAssertionSource(thing_id, prop_name, href, method, read_only))
             if not read_only:
-                write_form = _first_form(forms, ("writeproperty",)) or (forms[0] if forms else None)
+                write_form = _first_form(forms, ("writeproperty",))
+                if write_form is None and forms and not has_explicit_ops:
+                    write_form = forms[0]
                 if write_form is not None:
                     affordances.append(
                         self._affordance(
