@@ -1,0 +1,31 @@
+{
+  "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
+  "@type": "Thing",
+  "id": "occupancy_A",
+  "title": "occupancy",
+  "description": "Occupancy sensor for Room A. Physical-state source used to arbitrate against the booking dashboard (advisor §13.1 percept-conflict case).",
+  "base": "http://localhost:8080/occupancy",
+  "securityDefinitions": {"nosec_sc": {"scheme": "nosec"}},
+  "security": "nosec_sc",
+  "rateLimit": "120/min",
+  "properties": {
+    "occupied": {
+      "type": "boolean",
+      "readOnly": true,
+      "observable": true,
+      "forms": [{"op": "readproperty", "href": "/properties/occupied", "htv:methodName": "GET"}]
+    },
+    "peopleCount": {
+      "type": "integer",
+      "minimum": 0,
+      "readOnly": true,
+      "forms": [{"op": "readproperty", "href": "/properties/peopleCount", "htv:methodName": "GET"}]
+    }
+  },
+  "events": {
+    "occupancyChanged": {
+      "data": {"type": "boolean"},
+      "forms": [{"op": "subscribeevent", "href": "/events/occupancyChanged", "subprotocol": "longpoll"}]
+    }
+  }
+}

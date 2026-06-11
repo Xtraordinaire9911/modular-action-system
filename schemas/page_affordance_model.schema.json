@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tum.de/action-system/schemas/page_affordance_model.schema.json",
+  "title": "PageAffordanceModel",
+  "description": "Output of the DOM Transduction Pattern: a compressed, task-relevant page view.",
+  "type": "object",
+  "required": ["page_id", "url", "affordances"],
+  "properties": {
+    "page_id": {"type": "string"},
+    "url": {"type": "string"},
+    "captured_at_ms": {"type": "integer"},
+    "raw_node_count": {"type": "integer", "minimum": 0},
+    "kept_node_count": {"type": "integer", "minimum": 0},
+    "compression_ratio": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "affordances": {
+      "type": "array",
+      "items": {"$ref": "affordance.schema.json"}
+    }
+  },
+  "additionalProperties": false
+}

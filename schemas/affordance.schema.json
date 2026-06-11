@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tum.de/action-system/schemas/affordance.schema.json",
+  "title": "Affordance",
+  "description": "Unified affordance for DOM nodes, visual UI targets, and WoT capabilities (Member B).",
+  "type": "object",
+  "required": ["id", "source", "type", "label", "action", "locator", "confidence"],
+  "properties": {
+    "id": {"type": "string"},
+    "source": {"enum": ["DOM", "VISUAL", "WOT"]},
+    "type": {"enum": ["button", "input", "property", "action", "event", "sensor"]},
+    "label": {"type": "string"},
+    "action": {
+      "enum": ["click", "type", "select", "submit", "invoke", "read_property", "write_property", "subscribe"]
+    },
+    "locator": {
+      "type": "object",
+      "description": "Backend-specific grounding: CSS selector, visual mark_id+bbox, or WoT thing_id+href+method.",
+      "additionalProperties": true
+    },
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "state": {"type": "object", "additionalProperties": true},
+    "safety_level": {"enum": ["low", "medium", "high"]}
+  },
+  "additionalProperties": false
+}

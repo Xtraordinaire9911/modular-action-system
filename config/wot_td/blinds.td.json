@@ -1,0 +1,31 @@
+{
+  "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
+  "@type": "Thing",
+  "id": "blinds_A",
+  "title": "blinds",
+  "description": "Motorised window blinds for Room A.",
+  "base": "http://localhost:8080/blinds",
+  "securityDefinitions": {"basic_sc": {"scheme": "basic", "in": "header"}},
+  "security": "basic_sc",
+  "rateLimit": "30/min",
+  "properties": {
+    "position": {
+      "type": "integer",
+      "unit": "percent",
+      "minimum": 0,
+      "maximum": 100,
+      "readOnly": false,
+      "forms": [
+        {"op": "readproperty", "href": "/properties/position", "htv:methodName": "GET"},
+        {"op": "writeproperty", "href": "/properties/position", "htv:methodName": "PUT"}
+      ]
+    }
+  },
+  "actions": {
+    "setPosition": {
+      "safety_level": "medium",
+      "input": {"type": "integer", "minimum": 0, "maximum": 100},
+      "forms": [{"op": "invokeaction", "href": "/actions/setPosition", "htv:methodName": "POST"}]
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
+  "@type": "Thing",
+  "id": "thermostat_A",
+  "title": "thermostat",
+  "description": "Smart thermostat for Room A.",
+  "base": "http://localhost:8080/thermostat",
+  "securityDefinitions": {
+    "apikey_sc": {"scheme": "apikey", "in": "header", "name": "X-API-Key"}
+  },
+  "security": "apikey_sc",
+  "rateLimit": "60/min",
+  "properties": {
+    "targetTemperature": {
+      "type": "number",
+      "unit": "degC",
+      "minimum": 16,
+      "maximum": 30,
+      "readOnly": false,
+      "forms": [
+        {"op": "readproperty", "href": "/properties/targetTemperature", "htv:methodName": "GET"},
+        {"op": "writeproperty", "href": "/properties/targetTemperature", "htv:methodName": "PUT"}
+      ]
+    },
+    "currentTemperature": {
+      "type": "number",
+      "unit": "degC",
+      "readOnly": true,
+      "forms": [{"op": "readproperty", "href": "/properties/currentTemperature", "htv:methodName": "GET"}]
+    }
+  },
+  "actions": {
+    "setTargetTemperature": {
+      "description": "Set the room target temperature.",
+      "safety_level": "low",
+      "input": {"type": "number", "minimum": 16, "maximum": 30},
+      "forms": [{"op": "invokeaction", "href": "/actions/setTargetTemperature", "htv:methodName": "POST", "rateLimit": "30/min"}]
+    }
+  }
+}

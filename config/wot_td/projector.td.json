@@ -1,0 +1,29 @@
+{
+  "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
+  "@type": "Thing",
+  "id": "projector_A",
+  "title": "projector",
+  "description": "Ceiling projector for Room A.",
+  "base": "http://localhost:8080/projector",
+  "securityDefinitions": {"nosec_sc": {"scheme": "nosec"}},
+  "security": "nosec_sc",
+  "rateLimit": "60/min",
+  "properties": {
+    "power": {
+      "type": "string",
+      "enum": ["on", "off"],
+      "readOnly": false,
+      "forms": [
+        {"op": "readproperty", "href": "/properties/power", "htv:methodName": "GET"},
+        {"op": "writeproperty", "href": "/properties/power", "htv:methodName": "PUT"}
+      ]
+    }
+  },
+  "actions": {
+    "setPower": {
+      "safety_level": "low",
+      "input": {"type": "string", "enum": ["on", "off"]},
+      "forms": [{"op": "invokeaction", "href": "/actions/setPower", "htv:methodName": "POST"}]
+    }
+  }
+}
