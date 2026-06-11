@@ -91,8 +91,7 @@ class CostAwareRouter:
             candidate_backends=sorted(viable, key=lambda b: scores[b]),
             routing_reason=(
                 f"min-cost backend among {sorted(viable)}; "
-                f"c={self._cost.get(best):.2f} r={self._tracker.reliability(best):.2f}"
-            ),
+                f"c={self._cost.get(best, 0.5):.2f} r={self._tracker.reliability(best):.2f}"
             score=round(scores[best], 4),
             confidence=available[best].confidence,
             scores={b: round(s, 4) for b, s in scores.items()},
