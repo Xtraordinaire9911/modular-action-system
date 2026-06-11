@@ -82,9 +82,13 @@ def get_brightness():
 def set_brightness():
     body = request.get_json(force=True)
     value = body.get("brightness", body.get("value"))
-    if value is None or not (0 <= int(value) <= 100):
+    try:
+        value_i = int(value)
+    except (TypeError, ValueError):
+        return jsonify({"error": "brightness must be an integer 0–100"}), 422
+    if not (0 <= value_i <= 100):
         return jsonify({"error": "brightness must be 0–100"}), 422
-    _state["lights"]["brightness"] = int(value)
+    _state["lights"]["brightness"] = value_i
     _update_readiness()
     return jsonify({"brightness": _state["lights"]["brightness"]})
 
