@@ -122,7 +122,7 @@ class System1ReflexLibrary:
         result = executor(affordance, value=value, skill_id=skill.skill_id)
         latency = (clock() - start) * 1000.0
         entry = self._cache.setdefault((skill.skill_id, affordance.source), ReflexEntry(affordance=affordance))
-        entry.record(result.latency_ms or latency)
+        entry.record(latency)
 
         escalate, esc_reason = self.needs_system2(
             affordance=affordance,
