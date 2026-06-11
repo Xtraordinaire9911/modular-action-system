@@ -195,7 +195,7 @@ def parse_html(html: str, page_id: str = "page") -> PageAffordanceModel:
     return PageAffordanceModel(page_id=page_id, affordances=affordances)
 
 
-def _map_tag_to_type(node: dict[str, Any]) -> Literal["button", "input"]:
+def _map_tag_to_type(node: dict[str, Any]) -> Literal["button", "input", "property", "action", "event", "sensor"]:
     tag = node["tag"]
     itype = node.get("type", "").lower()
     if tag in ("button",) or itype in ("submit", "button"):
