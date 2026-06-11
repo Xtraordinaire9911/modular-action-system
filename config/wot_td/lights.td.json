@@ -1,25 +1,31 @@
 {
-  "@context": ["https://www.w3.org/2019/wot/td/v1"],
+  "@context": ["https://www.w3.org/2022/wot/td/v1.1"],
   "@type": "Thing",
   "id": "lights_A",
-  "title": "Smart Lighting Room A",
-  "securityDefinitions": {
-    "nosec_sc": {"scheme": "nosec"}
-  },
+  "title": "lights",
+  "description": "Dimmable lighting for Room A.",
+  "base": "http://localhost:8080/lights",
+  "securityDefinitions": {"nosec_sc": {"scheme": "nosec"}},
   "security": "nosec_sc",
+  "rateLimit": "60/min",
   "properties": {
     "brightness": {
       "type": "integer",
+      "unit": "percent",
       "minimum": 0,
       "maximum": 100,
       "readOnly": false,
-      "forms": [{"href": "http://localhost:5001/lights/properties/brightness"}]
+      "forms": [
+        {"op": "readproperty", "href": "/properties/brightness", "htv:methodName": "GET"},
+        {"op": "writeproperty", "href": "/properties/brightness", "htv:methodName": "PUT"}
+      ]
     }
   },
   "actions": {
     "setBrightness": {
+      "safety_level": "low",
       "input": {"type": "integer", "minimum": 0, "maximum": 100},
-      "forms": [{"href": "http://localhost:5001/lights/actions/setBrightness", "htv:methodName": "POST"}]
+      "forms": [{"op": "invokeaction", "href": "/actions/setBrightness", "htv:methodName": "POST"}]
     }
   }
 }

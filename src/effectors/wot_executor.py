@@ -1,22 +1,15 @@
-"""WoT executor — async HTTP client for W3C Thing Description endpoints.
-
-Parses Thing Descriptions at runtime (via td_affordance_parser) and invokes
-actions or reads properties through their forms hrefs. Hard-coded endpoints
-are explicitly forbidden; every URL is taken from the parsed Affordance.
-
-Rate limits declared in the TD are honoured via a per-thing token bucket.
-"""
+"""WoT executor using TD-derived href/method bindings."""
 
 from __future__ import annotations
 
 import asyncio
 import time
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable
 
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
-from src.effectors.executor_base import ExecutorBase
-from src.perception.td_affordance_parser import parse_td
+from src.perception.td_affordance_parser import StateAssertionSource, TdAffordanceParser
+from src.perception.wot_security import SecurityScheme, build_auth
 
 try:
     import httpx  # type: ignore
@@ -25,24 +18,41 @@ try:
 except ImportError:
     _HTTPX_AVAILABLE = False
 
+SendFn = Callable[..., tuple[int, Any]]
 
-_SKILL_TO_AFFORDANCE_ID: dict[str, str] = {
+_SKILL_TO_AFFORDANCE_ID = {
     "turn_on_projector": "wot_projector_A_setPower",
     "set_temperature": "wot_thermostat_A_setTargetTemperature",
     "set_lighting": "wot_lights_A_setBrightness",
     "verify_readiness": "wot_readiness_check",
 }
-
-_SKILL_TO_PAYLOAD_KEY: dict[str, str] = {
+_SKILL_TO_PAYLOAD_KEY = {
     "turn_on_projector": "power",
     "set_temperature": "targetTemperature",
     "set_lighting": "brightness",
 }
 
 
-class _RateLimiter:
-    """Simple per-thing token bucket (minimum interval between calls)."""
+class RateLimitExceeded(RuntimeError):
+    """Raised when a synchronous call would breach a TD-declared interval."""
 
+
+class _MinIntervalGate:
+    def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
+        self._last: dict[str, float] = {}
+        self._clock = clock
+
+    def check(self, thing_id: str, min_interval_ms: float) -> None:
+        if min_interval_ms <= 0:
+            return
+        now = self._clock()
+        last = self._last.get(thing_id)
+        if last is not None and (now - last) * 1000.0 < min_interval_ms:
+            raise RateLimitExceeded(f"{thing_id}: min interval {min_interval_ms:.0f}ms not elapsed")
+        self._last[thing_id] = now
+
+
+class _AsyncRateLimiter:
     def __init__(self, min_interval_s: float = 0.1) -> None:
         self._last: dict[str, float] = defaultdict(float)
         self._interval = min_interval_s
@@ -54,151 +64,203 @@ class _RateLimiter:
         self._last[thing_id] = time.monotonic()
 
 
-class WotExecutor(ExecutorBase):
-    """Execute skills by invoking WoT Thing Description action endpoints."""
+def _httpx_send(method: str, url: str, **kwargs: Any) -> tuple[int, Any]:
+    if not _HTTPX_AVAILABLE:
+        raise RuntimeError("httpx not installed")
+    timeout = kwargs.pop("timeout_s", 2.0)
+    response = httpx.request(method, url, timeout=timeout, **kwargs)
+    content_type = response.headers.get("content-type", "")
+    body: Any = response.json() if "application/json" in content_type else response.text
+    return response.status_code, body
+
+
+class WotExecutor:
+    backend = "wot"
 
     def __init__(
         self,
         tds: list[dict[str, Any]] | None = None,
-        timeout_s: float = 3.0,
+        *,
+        send: SendFn | None = None,
+        credentials: dict[str, str] | None = None,
+        security_by_thing: dict[str, SecurityScheme] | None = None,
+        timeout_ms: int = 2000,
+        timeout_s: float | None = None,
+        gate: _MinIntervalGate | None = None,
     ) -> None:
-        self._timeout = timeout_s
+        self._send = send or _httpx_send
+        self._credentials = credentials or {}
+        self._security = security_by_thing or {}
+        self._timeout_ms = int((timeout_s * 1000) if timeout_s is not None else timeout_ms)
         self._affordances: dict[str, Affordance] = {}
-        self._rate_limiter = _RateLimiter()
+        self._state_sources: dict[tuple[str, str], StateAssertionSource] = {}
+        self._gate = gate or _MinIntervalGate()
+        self._async_rate_limiter = _AsyncRateLimiter()
         if tds:
             self.load_tds(tds)
 
+    def execute(
+        self,
+        target: Affordance | SkillCall,
+        observation: Observation | None = None,
+        *,
+        value: Any | None = None,
+        skill_id: str = "",
+    ) -> ExecutionResult | Any:
+        if isinstance(target, SkillCall):
+            return self._execute_skill(target, observation or Observation())
+        return self._execute_affordance(target, value=value, skill_id=skill_id)
+
+    def _execute_affordance(self, affordance: Affordance, *, value: Any | None, skill_id: str = "") -> ExecutionResult:
+        start = time.perf_counter()
+        try:
+            delta = self._run_affordance(affordance, value)
+            return ExecutionResult(
+                skill_id=skill_id or affordance.id,
+                backend_used=self.backend,
+                success=True,
+                latency_ms=round((time.perf_counter() - start) * 1000.0, 3),
+                confidence=affordance.confidence,
+                raw_observation_delta=delta,
+            )
+        except Exception as exc:
+            return ExecutionResult(
+                skill_id=skill_id or affordance.id,
+                backend_used=self.backend,
+                success=False,
+                latency_ms=round((time.perf_counter() - start) * 1000.0, 3),
+                confidence=affordance.confidence,
+                failure_reason=f"{type(exc).__name__}: {exc}",
+            )
+
+    def _run_affordance(self, affordance: Affordance, value: Any | None) -> dict[str, Any]:
+        href = affordance.locator.get("href")
+        method = str(affordance.locator.get("method", "GET")).upper()
+        thing_id = str(affordance.locator.get("thing_id", affordance.id))
+        if not href:
+            raise ValueError(f"{affordance.id}: TD form has no href")
+
+        rate = affordance.state.get("rate_limit") or {}
+        self._gate.check(thing_id, float(rate.get("min_interval_ms", 0.0)))
+
+        scheme = self._security.get(thing_id)
+        headers, params = build_auth(scheme, self._credentials.get(thing_id))
+        content_type = affordance.state.get("content_type", "application/json")
+        if content_type:
+            headers = {**headers, "Content-Type": str(content_type)}
+        body = None if affordance.action == "read_property" else value
+        status, parsed = self._send(
+            method,
+            href,
+            json=body,
+            headers=headers,
+            params=params,
+            timeout_s=self._timeout_ms / 1000.0,
+        )
+        if status >= 400:
+            raise RuntimeError(f"WoT {method} {href} returned HTTP {status}")
+        if affordance.action == "read_property":
+            return {"thing_id": thing_id, "property": affordance.label, "value": parsed}
+        return {"thing_id": thing_id, "action": affordance.label, "result": parsed, "sent": value}
+
     def load_tds(self, tds: list[dict[str, Any]]) -> None:
-        """Parse a list of TD dicts and index their affordances by id."""
+        parser = TdAffordanceParser()
         for td in tds:
-            for aff in parse_td(td):
-                self._affordances[aff.id] = aff
+            model = parser.parse(td)
+            for affordance in model.affordances:
+                self._affordances[affordance.id] = affordance
+            for source in model.state_sources:
+                self._state_sources[(source.thing_id, source.property)] = source
+            if model.security is not None:
+                self._security.setdefault(model.thing_id, model.security)
 
     def get_affordance(self, aff_id: str) -> Affordance | None:
         return self._affordances.get(aff_id)
 
-    # ------------------------------------------------------------------
-    # ExecutorBase interface
-    # ------------------------------------------------------------------
-
     async def probe_availability(self) -> bool:
-        if not _HTTPX_AVAILABLE or not self._affordances:
+        if not _HTTPX_AVAILABLE or not (self._affordances or self._state_sources):
             return False
-        first = next(iter(self._affordances.values()))
-        href = first.locator.get("href", "")
+        href = ""
+        if self._affordances:
+            href = next(iter(self._affordances.values())).locator.get("href", "")
+        elif self._state_sources:
+            href = next(iter(self._state_sources.values())).href
         if not href:
             return False
         base = "/".join(href.split("/")[:3])
         try:
             async with httpx.AsyncClient(timeout=2.0) as client:
-                resp = await client.get(base)
-                return resp.status_code < 500
+                response = await client.get(base)
+            return response.status_code < 500
         except Exception:
             return False
 
-    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
-        t0 = time.monotonic()
-        aff_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id)
-
-        if aff_id is None:
-            return ExecutionResult(
-                skill_id=skill_call.skill_id,
-                backend_used="wot",
-                success=False,
-                latency_ms=0.0,
-                confidence=0.0,
-                failure_reason=f"no WoT affordance mapping for skill '{skill_call.skill_id}'",
-            )
-
-        aff = self._affordances.get(aff_id)
-        if aff is None:
-            return ExecutionResult(
-                skill_id=skill_call.skill_id,
-                backend_used="wot",
-                success=False,
-                latency_ms=0.0,
-                confidence=0.0,
-                failure_reason=f"affordance '{aff_id}' not loaded; call load_tds() first",
-            )
+    async def _execute_skill(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        start = time.monotonic()
+        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id)
+        if affordance_id is None:
+            return self._skill_failure(skill_call, start, f"no WoT affordance mapping for skill '{skill_call.skill_id}'")
+        affordance = self._affordances.get(affordance_id)
+        if affordance is None:
+            return self._skill_failure(skill_call, start, f"affordance '{affordance_id}' not loaded; call load_tds() first")
+        if not _HTTPX_AVAILABLE:
+            return self._skill_failure(skill_call, start, "httpx not installed")
 
         payload_key = _SKILL_TO_PAYLOAD_KEY.get(skill_call.skill_id)
-        payload = {}
+        payload: Any = {}
         if payload_key and payload_key in skill_call.params:
             payload = {payload_key: skill_call.params[payload_key]}
         elif skill_call.skill_id == "turn_on_projector":
             payload = {"power": "on"}
 
-        thing_id = aff.locator.get("thing_id", "unknown")
-        href = aff.locator.get("href", "")
-        method = aff.locator.get("method", "POST").upper()
-
-        if not _HTTPX_AVAILABLE:
-            return ExecutionResult(
-                skill_id=skill_call.skill_id,
-                backend_used="wot",
-                success=False,
-                latency_ms=0.0,
-                confidence=0.0,
-                failure_reason="httpx not installed",
-            )
-
+        thing_id = str(affordance.locator.get("thing_id", "unknown"))
+        href = str(affordance.locator.get("href", ""))
+        method = str(affordance.locator.get("method", "POST")).upper()
         try:
-            await self._rate_limiter.acquire(thing_id)
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                if method == "POST":
-                    resp = await client.post(href, json=payload)
-                else:
-                    resp = await client.get(href)
-            latency = (time.monotonic() - t0) * 1000
-            if resp.status_code >= 400:
-                return ExecutionResult(
-                    skill_id=skill_call.skill_id,
-                    backend_used="wot",
-                    success=False,
-                    latency_ms=latency,
-                    confidence=0.0,
-                    failure_reason=f"HTTP {resp.status_code}: {resp.text[:200]}",
-                )
-            obs_delta = {}
+            await self._async_rate_limiter.acquire(thing_id)
+            async with httpx.AsyncClient(timeout=self._timeout_ms / 1000.0) as client:
+                response = await client.request(method, href, json=payload if method != "GET" else None)
+            latency = (time.monotonic() - start) * 1000.0
+            if response.status_code >= 400:
+                return self._skill_failure(skill_call, start, f"HTTP {response.status_code}: {response.text[:200]}")
             try:
-                obs_delta = resp.json()
+                delta = response.json()
             except Exception:
-                pass
+                delta = {}
             return ExecutionResult(
                 skill_id=skill_call.skill_id,
-                backend_used="wot",
+                backend_used=self.backend,
                 success=True,
                 latency_ms=latency,
                 confidence=1.0,
-                raw_observation_delta=obs_delta,
+                raw_observation_delta=delta,
             )
         except Exception as exc:
-            latency = (time.monotonic() - t0) * 1000
-            return ExecutionResult(
-                skill_id=skill_call.skill_id,
-                backend_used="wot",
-                success=False,
-                latency_ms=latency,
-                confidence=0.0,
-                failure_reason=str(exc),
-            )
+            return self._skill_failure(skill_call, start, str(exc))
 
-    # ------------------------------------------------------------------
-    # Read-only property helper
-    # ------------------------------------------------------------------
+    def _skill_failure(self, skill_call: SkillCall, start: float, reason: str) -> ExecutionResult:
+        return ExecutionResult(
+            skill_id=skill_call.skill_id,
+            backend_used=self.backend,
+            success=False,
+            latency_ms=(time.monotonic() - start) * 1000.0,
+            confidence=0.0,
+            failure_reason=reason,
+        )
 
     async def read_property(self, thing_id: str, property_name: str) -> Any:
-        """Read a TD property and return the parsed JSON value, or None."""
-        aff_id = f"wot_{thing_id}_{property_name}"
-        aff = self._affordances.get(aff_id)
-        if aff is None or not _HTTPX_AVAILABLE:
+        if not _HTTPX_AVAILABLE:
             return None
-        href = aff.locator.get("href", "")
+        source = self._state_sources.get((thing_id, property_name))
+        affordance = self._affordances.get(f"wot_{thing_id}_{property_name}")
+        href = source.href if source else (affordance.locator.get("href", "") if affordance else "")
+        if not href:
+            return None
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                resp = await client.get(href)
-            if resp.status_code < 400:
-                return resp.json()
+            async with httpx.AsyncClient(timeout=self._timeout_ms / 1000.0) as client:
+                response = await client.get(href)
+            if response.status_code < 400:
+                return response.json()
         except Exception:
             pass
         return None

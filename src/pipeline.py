@@ -1,8 +1,9 @@
-"""Top-level runtime entry point used by the Docker image.
+"""Top-level runtime smoke entry point.
 
-The full planner/perception/effectors stack is integrated through feature
-branches. This module keeps the production command runnable today by wiring a
-small smoke episode through the runtime control layer.
+The Week-6 demo has concrete DOM/WoT/Visual perception and executor modules;
+this file deliberately keeps a tiny deterministic orchestration smoke test for
+CI so runtime state-machine changes can be verified without a browser or Docker.
+Use ``run_demo.py`` plus ``env/docker-compose.yml`` for the smart-room demo.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from src.runtime.continuous_interaction_manager import ContinuousInteractionMana
 
 
 class NoOpExecutor:
-    """Executor used only for pipeline smoke runs before real backends are wired."""
+    """Executor used only for CI smoke runs that avoid browser/Docker services."""
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         _ = observation
@@ -79,8 +80,8 @@ def main() -> None:
     parser.add_argument("--task-id", default="pipeline_smoke_task")
     args = parser.parse_args()
 
-    # Until the planner and concrete executors are merged, the runnable entry
-    # point is the smoke pipeline. --smoke is accepted for explicit CI usage.
+    # --smoke is accepted for explicit CI usage; this entry point intentionally
+    # avoids live services so it stays deterministic.
     _ = args.smoke
     summary = asyncio.run(run_smoke_pipeline(task_id=args.task_id))
     print(json.dumps(summary, indent=2, sort_keys=True))

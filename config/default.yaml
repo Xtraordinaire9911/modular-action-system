@@ -17,5 +17,6 @@ vam:
   device: "cpu"
 
 mock_env:
-  web_url: "http://localhost:5000"
-  wot_url: "http://localhost:5001"
+  web_url: "http://localhost:3000"
+  wot_url: "http://localhost:8080"
+  control_url: "http://localhost:8081"
