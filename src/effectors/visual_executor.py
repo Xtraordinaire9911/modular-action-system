@@ -64,11 +64,12 @@ class VisualExecutor(ExecutorBase):
         t0 = time.monotonic()
         label = _SKILL_TO_LABEL.get(skill_call.skill_id)
         if label is None:
+            latency = (time.monotonic() - t0) * 1000
             return ExecutionResult(
                 skill_id=skill_call.skill_id,
                 backend_used="visual",
                 success=False,
-                latency_ms=0.0,
+                latency_ms=latency,
                 confidence=0.0,
                 failure_reason=f"no visual label mapping for skill '{skill_call.skill_id}'",
             )
