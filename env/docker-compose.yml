@@ -1,0 +1,25 @@
+# Smart-room demo environment: React dashboard + node-wot servient.
+# `docker compose -f env/docker-compose.yml up` brings up the full testbed.
+# The agent runtime attaches an isolated Playwright context (PiP isolation,
+# advisor §9.2) — see src/perception/browser_session.py.
+services:
+  wot_server:
+    build: ./node_wot_server
+    container_name: smartroom_wot
+    ports:
+      - "8080:8080" # WoT Things + TDs
+      - "8081:8081" # failure-injection control plane
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/thermostat', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  dashboard:
+    build: ./react_dashboard
+    container_name: smartroom_dashboard
+    ports:
+      - "3000:3000" # React booking UI
+    depends_on:
+      wot_server:
+        condition: service_healthy
