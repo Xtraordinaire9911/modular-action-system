@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tum.de/action-system/schemas/visual_grounding_result.schema.json",
+  "title": "VisualGroundingResult",
+  "description": "Set-of-Marks selection: the VAM/System-2 returns a mark_id, never raw coordinates.",
+  "type": "object",
+  "required": ["mark_id", "label", "bbox", "confidence"],
+  "properties": {
+    "mark_id": {"type": "string", "pattern": "^M[0-9]+$"},
+    "label": {"type": "string"},
+    "bbox": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4},
+    "center": {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2},
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+  },
+  "additionalProperties": false
+}

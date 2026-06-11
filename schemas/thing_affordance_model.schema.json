@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tum.de/action-system/schemas/thing_affordance_model.schema.json",
+  "title": "ThingAffordanceModel",
+  "description": "Output of runtime W3C Thing Description parsing (Hypermedia Affordances pattern).",
+  "type": "object",
+  "required": ["thing_id", "title", "affordances", "state_sources"],
+  "properties": {
+    "thing_id": {"type": "string"},
+    "title": {"type": "string"},
+    "base": {"type": "string"},
+    "events": {"type": "array", "items": {"type": "string"}},
+    "security": {
+      "type": ["object", "null"],
+      "properties": {
+        "name": {"type": "string"},
+        "scheme": {"enum": ["nosec", "basic", "bearer", "apikey", "digest", "oauth2"]},
+        "location": {"enum": ["header", "query", "body", "cookie"]},
+        "field_name": {"type": "string"}
+      }
+    },
+    "rate_limit": {
+      "type": ["object", "null"],
+      "properties": {
+        "max_requests": {"type": "integer", "minimum": 1},
+        "window_seconds": {"type": "integer", "minimum": 1}
+      }
+    },
+    "state_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["thing_id", "property", "href", "method", "read_only"],
+        "properties": {
+          "thing_id": {"type": "string"},
+          "property": {"type": "string"},
+          "href": {"type": "string"},
+          "method": {"type": "string"},
+          "read_only": {"type": "boolean"}
+        }
+      }
+    },
+    "affordances": {"type": "array", "items": {"$ref": "affordance.schema.json"}}
+  },
+  "additionalProperties": false
+}
