@@ -91,14 +91,14 @@ class WotExecutor(ExecutorBase):
             headers = {**headers, "Content-Type": content_type}
 
         body = None if affordance.action in ("read_property",) else value
-        status, parsed = self._send(
-            method,
-            href,
-            json=body,
-            headers=headers,
-            params=params,
-            timeout_s=self._timeout_ms / 1000.0,
-        )
+        send_kw: dict[str, Any] = {
+            "headers": headers,
+            "params": params,
+            "timeout_s": self._timeout_ms / 1000.0,
+        }
+        if body is not None:
+            send_kw["json"] = body
+        status, parsed = self._send(method, href, **send_kw)
         if status >= 400:
             raise RuntimeError(f"WoT {method} {href} returned HTTP {status}")
         if affordance.action == "read_property":
