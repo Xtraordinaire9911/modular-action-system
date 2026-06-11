@@ -3,9 +3,9 @@
 Selects the best available backend for a given SkillCall using the
 scoring function:  b* = argmin_b ( λ1*cost_b + λ2*(1-reliability_b) + λ3*latency_b )
 
-λ values are loaded from config/default.yaml and can be overridden per task.
-The router respects the allowed_backends and preferred_backends fields from
-the SkillTuple and the backend availability reported by each executor.
+λ values are provided via the constructor (defaults shown) and may be overridden by callers.
+The router filters candidates by allowed_backends and annotates decisions when the selected backend is preferred.
+The router also respects backend availability reported by each executor.
 """
 
 from __future__ import annotations
