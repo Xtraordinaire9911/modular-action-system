@@ -1,11 +1,4 @@
-"""Per-backend reliability/latency tracker feeding the cost-aware router.
-
-Reliability is an exponential moving average (EMA) of success, so a backend that
-starts failing (e.g. DOM after a redeploy, WoT during a timeout storm) is
-down-weighted by the router within a few observations and recovers as it starts
-succeeding again. This is the empirical signal behind Trace-Based Skill
-Evolution: backend statistics learned from execution traces.
-"""
+"""Backend confidence tracking for routing decisions."""
 
 from __future__ import annotations
 
@@ -14,25 +7,57 @@ from dataclasses import dataclass
 
 @dataclass
 class BackendStats:
-    reliability: float = 0.8  # prior: optimistic but not certain
+    backend: str = ""
+    reliability: float = 0.8
     mean_latency_ms: float = 100.0
     samples: int = 0
+    alpha: float = 0.3
+    latency_alpha: float = 0.3
+
+    def update(self, success: bool, latency_ms: float) -> None:
+        self.samples += 1
+        self.reliability = (1 - self.alpha) * self.reliability + self.alpha * (1.0 if success else 0.0)
+        self.mean_latency_ms = (1 - self.latency_alpha) * self.mean_latency_ms + self.latency_alpha * latency_ms
+
+    @property
+    def ema_success(self) -> float:
+        return self.reliability
+
+    @property
+    def ema_latency_ms(self) -> float:
+        return self.mean_latency_ms
+
+    @property
+    def latency(self) -> float:
+        return self.mean_latency_ms
+
+    @property
+    def total_calls(self) -> int:
+        return self.samples
 
 
 class BackendConfidenceTracker:
+    """EMA reliability/latency store with both B-103 and develop API names."""
+
     def __init__(self, *, alpha: float = 0.3, latency_alpha: float = 0.3) -> None:
         self._alpha = alpha
         self._latency_alpha = latency_alpha
         self._stats: dict[str, BackendStats] = {}
 
     def _stat(self, backend: str) -> BackendStats:
-        return self._stats.setdefault(backend, BackendStats())
+        if backend not in self._stats:
+            self._stats[backend] = BackendStats(
+                backend=backend,
+                alpha=self._alpha,
+                latency_alpha=self._latency_alpha,
+            )
+        return self._stats[backend]
 
     def update(self, backend: str, *, success: bool, latency_ms: float) -> None:
-        s = self._stat(backend)
-        s.reliability = (1 - self._alpha) * s.reliability + self._alpha * (1.0 if success else 0.0)
-        s.mean_latency_ms = (1 - self._latency_alpha) * s.mean_latency_ms + self._latency_alpha * latency_ms
-        s.samples += 1
+        self._stat(backend).update(success, latency_ms)
+
+    def record(self, backend: str, success: bool, latency_ms: float) -> None:
+        self.update(backend, success=success, latency_ms=latency_ms)
 
     def reliability(self, backend: str) -> float:
         return self._stat(backend).reliability
@@ -40,8 +65,18 @@ class BackendConfidenceTracker:
     def mean_latency(self, backend: str) -> float:
         return self._stat(backend).mean_latency_ms
 
+    def get_stats(self, backend: str) -> BackendStats:
+        return self._stat(backend)
+
+    def all_stats(self) -> dict[str, BackendStats]:
+        return dict(self._stats)
+
     def snapshot(self) -> dict[str, dict[str, float]]:
         return {
-            b: {"reliability": round(s.reliability, 4), "mean_latency_ms": round(s.mean_latency_ms, 2), "samples": s.samples}
-            for b, s in self._stats.items()
+            backend: {
+                "reliability": round(stats.reliability, 4),
+                "mean_latency_ms": round(stats.mean_latency_ms, 2),
+                "samples": stats.samples,
+            }
+            for backend, stats in self._stats.items()
         }

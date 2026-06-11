@@ -1,4 +1,4 @@
-# React smart-room dashboard (Vite dev/preview server for the demo).
+# React smart-room dashboard (Vite preview server for the demo).
 FROM node:20-slim
 
 WORKDIR /app

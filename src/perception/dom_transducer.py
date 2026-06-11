@@ -1,40 +1,33 @@
-"""DOM Transducer — implements the DOM Transduction Pattern (advisor §5.1).
+"""DOM Transduction Pattern: raw HTML -> compact Page Affordance Model.
 
-Answers the advisor's direct question *"How will you process the DOM?"*:
-
-    raw HTML  ──▶  strip script/style/tracking  ──▶  keep interactable nodes
-              ──▶  derive stable selector + role + label + state
-              ──▶  Page Affordance Model (list[Affordance], source="DOM")
-
-The reasoning core never sees raw HTML, which avoids the context-bloat /
-token-exhaustion failure mode flagged in the assessment. The transducer is
-pure-stdlib (``html.parser``) so it runs in well under the System-1 latency
-budget and needs no browser to unit-test.
-
-Selector preference (most → least stable) drives the confidence score so the
-router can prefer DOM grounding only when a robust locator exists:
-
-    #id  >  [data-testid=...]  >  [name=...]  >  tag:nth-of-type
+The reasoning core should consume stable affordances, not raw markup. This
+module strips noisy tags, keeps interactive/ARIA nodes, derives selectors,
+labels, actions, state, and optional visual bbox hints, then emits the shared
+Affordance contract used by System 1 and the router.
 """
 
 from __future__ import annotations
 
 from html.parser import HTMLParser
-from typing import Any
+from typing import Any, Literal
 
 from src.contracts.types import Affordance
 from src.perception.page_affordance_model import PageAffordanceModel
 
-_INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea"])
+_INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea", "label", "form", "option"])
 _STRIP_TAGS = frozenset(["script", "style", "meta", "link", "noscript", "head", "svg"])
-
-# HTML tag / ARIA role  →  primitive action the executor can perform.
-_TAG_ACTION = {
+_ARIA_ACTION_MAP = {
     "button": "click",
-    "a": "click",
-    "select": "select",
-    "textarea": "type",
+    "link": "click",
+    "textbox": "type",
+    "combobox": "select",
+    "listbox": "select",
+    "checkbox": "click",
+    "radio": "click",
+    "spinbutton": "type",
+    "searchbox": "type",
 }
+_TAG_ACTION = {"button": "click", "a": "click", "select": "select", "textarea": "type"}
 _INPUT_TYPE_ACTION = {
     "text": "type",
     "number": "type",
@@ -52,13 +45,11 @@ _INPUT_TYPE_ACTION = {
     "reset": "click",
 }
 _AFFORDANCE_TYPE = {"click": "button", "type": "input", "select": "input"}
-
-# Selector strategy → confidence. Stable hooks score high; positional ones low.
-_SELECTOR_CONFIDENCE = {"id": 1.0, "testid": 0.97, "name": 0.85, "positional": 0.55}
+_SELECTOR_CONFIDENCE = {"id": 1.0, "testid": 0.97, "name": 0.85, "class": 0.7, "positional": 0.55}
 
 
 class _InteractiveParser(HTMLParser):
-    """Single-pass collector of interactive elements with their attributes."""
+    """Single-pass collector for interactable DOM nodes."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -77,19 +68,18 @@ class _InteractiveParser(HTMLParser):
             return
         if self._skip_depth is not None:
             return
+
         attr = {k: (v or "") for k, v in attrs}
-        if attr.get("hidden") is not None or attr.get("aria-hidden") == "true":
+        role = attr.get("role", "")
+        if "hidden" in attr or attr.get("aria-hidden") == "true":
             return
-        if tag in _INTERACTIVE_TAGS:
-            self._tag_counts[tag] = self._tag_counts.get(tag, 0) + 1
-            node = {
-                "tag": tag,
-                "attr": attr,
-                "nth": self._tag_counts[tag],
-                "text_parts": [],
-            }
-            self.nodes.append(node)
-            self._open.append(node)
+        if tag not in _INTERACTIVE_TAGS and role not in _ARIA_ACTION_MAP:
+            return
+
+        self._tag_counts[tag] = self._tag_counts.get(tag, 0) + 1
+        node = {"tag": tag, "attr": attr, "nth": self._tag_counts[tag], "text_parts": []}
+        self.nodes.append(node)
+        self._open.append(node)
 
     def handle_endtag(self, tag: str) -> None:
         if self._skip_depth is not None and self._depth == self._skip_depth:
@@ -105,50 +95,59 @@ class _InteractiveParser(HTMLParser):
                 self._open[-1]["text_parts"].append(text)
 
 
+def _escape_attr(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
+
 def _selector_for(node: dict[str, Any]) -> tuple[str, float]:
-    """Return (css_selector, confidence) using the most stable hook available."""
     attr, tag = node["attr"], node["tag"]
     if attr.get("id"):
         return f"#{attr['id']}", _SELECTOR_CONFIDENCE["id"]
     if attr.get("data-testid"):
-        return f"[data-testid='{attr['data-testid']}']", _SELECTOR_CONFIDENCE["testid"]
+        return f"[data-testid='{_escape_attr(attr['data-testid'])}']", _SELECTOR_CONFIDENCE["testid"]
     if attr.get("name"):
-        return f"{tag}[name='{attr['name']}']", _SELECTOR_CONFIDENCE["name"]
+        return f"{tag}[name='{_escape_attr(attr['name'])}']", _SELECTOR_CONFIDENCE["name"]
+    if attr.get("class"):
+        return f"{tag}.{attr['class'].split()[0]}", _SELECTOR_CONFIDENCE["class"]
     return f"{tag}:nth-of-type({node['nth']})", _SELECTOR_CONFIDENCE["positional"]
 
 
 def _label_for(node: dict[str, Any]) -> str:
     attr = node["attr"]
-    for key in ("aria-label", "value", "placeholder", "title", "alt"):
+    for key in ("aria-label", "value", "placeholder", "title", "alt", "name", "id"):
         if attr.get(key):
             return attr[key].strip()
     text = " ".join(node["text_parts"]).strip()
-    if text:
-        return text
-    return attr.get("name") or attr.get("id") or node["tag"]
+    return text or node["tag"]
 
 
 def _action_for(node: dict[str, Any]) -> str:
     attr, tag = node["attr"], node["tag"]
+    role = attr.get("role", "")
+    if role in _ARIA_ACTION_MAP:
+        return _ARIA_ACTION_MAP[role]
     if tag == "input":
         return _INPUT_TYPE_ACTION.get(attr.get("type", "text").lower(), "type")
     return _TAG_ACTION.get(tag, "click")
 
 
 def _bbox_from_attrs(attr: dict[str, str]) -> list[int] | None:
-    """Read an optional ``data-bbox='x,y,w,h'`` hint emitted by the dashboard."""
     raw = attr.get("data-bbox")
     if not raw:
         return None
     try:
         parts = [int(float(p)) for p in raw.split(",")]
-        return parts if len(parts) == 4 else None
     except ValueError:
         return None
+    return parts if len(parts) == 4 else None
+
+
+def _map_action_to_type(action: str) -> Literal["button", "input", "property", "action", "event", "sensor"]:
+    return _AFFORDANCE_TYPE.get(action, "button")  # type: ignore[return-value]
 
 
 class DomTransducer:
-    """Convert raw HTML (or accessibility-augmented HTML) into a PAM."""
+    """Convert HTML/accessibility-augmented HTML into a PAM."""
 
     def transduce(
         self,
@@ -166,8 +165,8 @@ class DomTransducer:
         for node in parser.nodes:
             attr = node["attr"]
             action = _action_for(node)
-            selector, conf = _selector_for(node)
-            disabled = attr.get("disabled") is not None or attr.get("aria-disabled") == "true"
+            selector, confidence = _selector_for(node)
+            disabled = "disabled" in attr or attr.get("aria-disabled") == "true"
             locator: dict[str, Any] = {"selector": selector, "strategy": "css"}
             bbox = _bbox_from_attrs(attr)
             if bbox is not None:
@@ -176,11 +175,11 @@ class DomTransducer:
                 Affordance(
                     id=f"dom_{node['tag']}_{node['nth']}",
                     source="DOM",
-                    type=_AFFORDANCE_TYPE.get(action, "button"),  # type: ignore[arg-type]
+                    type=_map_action_to_type(action),
                     label=_label_for(node),
                     action=action,
                     locator=locator,
-                    confidence=0.0 if disabled else conf,
+                    confidence=0.0 if disabled else confidence,
                     state={"enabled": not disabled, "visible": True},
                     safety_level="low",
                 )
@@ -197,5 +196,15 @@ class DomTransducer:
 
 
 def transduce(html: str, **kwargs: Any) -> PageAffordanceModel:
-    """Module-level convenience wrapper."""
+    """Module-level convenience wrapper for the new API."""
     return DomTransducer().transduce(html, **kwargs)
+
+
+def parse_html(html: str, page_id: str = "page") -> PageAffordanceModel:
+    """Backward-compatible wrapper kept for earlier PR tests/demo scripts."""
+    return DomTransducer().transduce(html, page_id=page_id)
+
+
+def reset_id_counter() -> None:
+    """Backward-compatible no-op; IDs are deterministic per parser instance."""
+    return None
