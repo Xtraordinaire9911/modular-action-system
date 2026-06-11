@@ -227,6 +227,6 @@ def parse_things(tds: list[dict[str, Any]]) -> list[ThingAffordanceModel]:
     for td in tds:
         try:
             models.append(parser.parse(td))
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError, AttributeError):
             continue  # malformed TD → recovery layer is informed via missing affordance
     return models
