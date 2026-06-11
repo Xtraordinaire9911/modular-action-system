@@ -47,7 +47,7 @@ _SKILL_TO_DOM_STEPS: dict[str, list[dict[str, Any]]] = {
 class DomExecutor:
     backend = "dom"
 
-    def __init__(self, page: PageLike | None = None, base_url: str = "http://localhost:5000") -> None:
+    def __init__(self, page: PageLike | None = None, base_url: str = "http://localhost:3000") -> None:
         if isinstance(page, str):
             base_url, page = page, None
         self._page: Any = page
