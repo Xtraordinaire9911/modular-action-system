@@ -1,0 +1,152 @@
+[
+  {
+    "backend": null,
+    "details": {
+      "failure_injection": "wot_state_mismatch"
+    },
+    "event_type": "task_started",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "params": {
+        "room": "A",
+        "target": 22
+      }
+    },
+    "event_type": "skill_started",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "passed": true
+    },
+    "event_type": "precondition_checked",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "reason": "preferred physical backend"
+    },
+    "event_type": "backend_selected",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "action": "invoke",
+      "success": true
+    },
+    "event_type": "primitive_executed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "conflicts": [
+        {
+          "attribute": "targetTemperature",
+          "conflict_mass": 2.0,
+          "conflict_type": "targetTemperature_mismatch",
+          "decision": null,
+          "description": "Conflicting targetTemperature assertions for thermostat_A: {'dom': 20, 'wot': 24}; support={'20': 0.8, '24': 1.0}",
+          "entity_id": "thermostat_A",
+          "id": "thermostat_A.targetTemperature",
+          "resolved": false,
+          "severity": "high",
+          "sources": [
+            "dom",
+            "wot"
+          ],
+          "values": {
+            "dom": 20,
+            "wot": 24
+          }
+        }
+      ],
+      "halt_system1": true
+    },
+    "event_type": "conflict_detected",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "actual": 24,
+      "expected": 22,
+      "passed": false
+    },
+    "event_type": "postcondition_checked",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "policy": "active_perception_then_retry"
+    },
+    "event_type": "recovery_triggered",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "action": "read_property",
+      "success": true
+    },
+    "event_type": "primitive_executed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "actual": 22,
+      "expected": 22,
+      "passed": true
+    },
+    "event_type": "postcondition_checked",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "final_status": "recovered"
+    },
+    "event_type": "skill_completed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "ready": true
+    },
+    "event_type": "task_completed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_recovery",
+    "timestamp_ms": 1781000000000
+  }
+]

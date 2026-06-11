@@ -1,0 +1,101 @@
+[
+  {
+    "backend": null,
+    "details": {
+      "goal": "Prepare Room A for 14:00"
+    },
+    "event_type": "task_started",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "params": {
+        "room": "A",
+        "target": 22
+      }
+    },
+    "event_type": "skill_started",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "entities": [
+        "thermostat_A"
+      ]
+    },
+    "event_type": "cognitive_map_updated",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "passed": true
+    },
+    "event_type": "precondition_checked",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "affordance_id": "wot_thermostat_A_setTargetTemperature",
+      "reason": "WoT affordance available"
+    },
+    "event_type": "backend_selected",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "action": "invoke",
+      "success": true
+    },
+    "event_type": "primitive_executed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "actual": 22,
+      "expected": 22,
+      "passed": true
+    },
+    "event_type": "postcondition_checked",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": "wot",
+    "details": {
+      "final_status": "success"
+    },
+    "event_type": "skill_completed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  },
+  {
+    "backend": null,
+    "details": {
+      "ready": true
+    },
+    "event_type": "task_completed",
+    "skill_id": "set_temperature",
+    "task_id": "prepare_room_A_1400_normal",
+    "timestamp_ms": 1781000000000
+  }
+]
