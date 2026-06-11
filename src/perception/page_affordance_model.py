@@ -46,6 +46,19 @@ class PageAffordanceModel:
     def by_id(self, affordance_id: str) -> Affordance | None:
         return next((a for a in self.affordances if a.id == affordance_id), None)
 
+    def find_by_label(self, text: str) -> Affordance | None:
+        text_lower = text.strip().lower()
+        for affordance in self.affordances:
+            if text_lower in affordance.label.strip().lower():
+                return affordance
+        return None
+
+    def find_by_selector(self, selector: str) -> Affordance | None:
+        for affordance in self.affordances:
+            if affordance.locator.get("selector") == selector:
+                return affordance
+        return None
+
     def clickable(self) -> list[Affordance]:
         return [a for a in self.affordances if a.action == "click"]
 

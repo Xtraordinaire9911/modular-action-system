@@ -22,10 +22,10 @@ src/
   effectors/      DOM / WoT / Visual executors, System-1 reflexes  [Member B]
   backend_router/ confidence scoring and routing logic             [Member B+C]
   vam/            VAM adapter and recovery payload                 [Member B]
-  runtime/        Cognitive Map, Continuous Interaction Manager    [Member C]
-  verification/   pre/postcondition checkers, conflict detector    [Member C]
-  recovery/       four-tier recovery cascade                       [Member C]
-  safety/         rate limiter, unsafe-action detector             [Member C]
+  runtime/        Cognitive Map, Continuous Interaction Manager    [Runtime]
+  verification/   pre/postcondition checkers, conflict detector    [Runtime]
+  recovery/       four-tier recovery cascade                       [Runtime]
+  safety/         rate limiter, unsafe-action detector             [Runtime]
 config/
   default.yaml    runtime knobs (lambdas, timeouts)
   skills_seed.json  initial five smart-room skills
