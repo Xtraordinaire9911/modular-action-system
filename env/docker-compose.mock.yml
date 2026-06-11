@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  react_dashboard:
+    build:
+      context: ./react_dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    networks:
+      - mock_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  node_wot_server:
+    build:
+      context: ./node_wot_server
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    networks:
+      - mock_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  mock_net:
+    driver: bridge
