@@ -58,10 +58,14 @@ def get_current_temperature():
 def set_target_temperature():
     body = request.get_json(force=True)
     value = body.get("targetTemperature", body.get("value"))
-    if value is None or not (16 <= float(value) <= 30):
+    try:
+        value_f = float(value)
+    except (TypeError, ValueError):
+        return jsonify({"error": "value must be a number in range [16, 30]"}), 422
+    if not (16 <= value_f <= 30):
         return jsonify({"error": "value out of range [16, 30]"}), 422
-    _state["thermostat"]["targetTemperature"] = float(value)
-    _state["thermostat"]["currentTemperature"] = float(value)
+    _state["thermostat"]["targetTemperature"] = value_f
+    _state["thermostat"]["currentTemperature"] = value_f
     _update_readiness()
     return jsonify({"targetTemperature": _state["thermostat"]["targetTemperature"]})
 
