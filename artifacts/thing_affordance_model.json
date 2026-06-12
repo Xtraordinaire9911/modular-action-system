@@ -1,0 +1,265 @@
+[
+  {
+    "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+    "title": "thermostat",
+    "affordances": [
+      {
+        "id": "wot_urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4_targetTemperature",
+        "source": "WOT",
+        "type": "property",
+        "label": "targetTemperature",
+        "action": "write_property",
+        "locator": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "href": "http://localhost:8080/thermostat/properties/targetTemperature",
+          "method": "PUT"
+        },
+        "confidence": 1.0,
+        "state": {
+          "input_schema": {
+            "type": "number",
+            "minimum": 16,
+            "maximum": 30,
+            "readOnly": false,
+            "writeOnly": false
+          },
+          "content_type": "application/json",
+          "security": "nosec",
+          "security_definition": {
+            "scheme": "nosec",
+            "in": "header",
+            "name": "Authorization"
+          },
+          "read_only": false,
+          "write_only": false
+        },
+        "safety_level": "low"
+      },
+      {
+        "id": "wot_urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4_setTargetTemperature",
+        "source": "WOT",
+        "type": "action",
+        "label": "setTargetTemperature",
+        "action": "invoke",
+        "locator": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "href": "http://localhost:8080/thermostat/actions/setTargetTemperature",
+          "method": "POST"
+        },
+        "confidence": 1.0,
+        "state": {
+          "input_schema": {
+            "type": "number",
+            "minimum": 16,
+            "maximum": 30
+          },
+          "content_type": "application/json",
+          "security": "nosec",
+          "security_definition": {
+            "scheme": "nosec",
+            "in": "header",
+            "name": "Authorization"
+          }
+        },
+        "safety_level": "low"
+      }
+    ],
+    "state_sources": [
+      {
+        "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+        "property": "targetTemperature",
+        "href": "http://localhost:8080/thermostat/properties/targetTemperature",
+        "method": "GET",
+        "read_only": false
+      },
+      {
+        "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+        "property": "currentTemperature",
+        "href": "http://localhost:8080/thermostat/properties/currentTemperature",
+        "method": "GET",
+        "read_only": true
+      }
+    ],
+    "security": {
+      "name": "nosec_sc",
+      "scheme": "nosec",
+      "location": "header",
+      "field_name": "Authorization"
+    },
+    "rate_limit": null,
+    "base": "",
+    "events": []
+  },
+  {
+    "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+    "title": "lights",
+    "affordances": [
+      {
+        "id": "wot_urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760_brightness",
+        "source": "WOT",
+        "type": "property",
+        "label": "brightness",
+        "action": "write_property",
+        "locator": {
+          "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+          "href": "http://localhost:8080/lights/properties/brightness",
+          "method": "PUT"
+        },
+        "confidence": 1.0,
+        "state": {
+          "input_schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "readOnly": false,
+            "writeOnly": false
+          },
+          "content_type": "application/json",
+          "security": "nosec",
+          "security_definition": {
+            "scheme": "nosec",
+            "in": "header",
+            "name": "Authorization"
+          },
+          "read_only": false,
+          "write_only": false
+        },
+        "safety_level": "low"
+      },
+      {
+        "id": "wot_urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760_setBrightness",
+        "source": "WOT",
+        "type": "action",
+        "label": "setBrightness",
+        "action": "invoke",
+        "locator": {
+          "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+          "href": "http://localhost:8080/lights/actions/setBrightness",
+          "method": "POST"
+        },
+        "confidence": 1.0,
+        "state": {
+          "input_schema": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "content_type": "application/json",
+          "security": "nosec",
+          "security_definition": {
+            "scheme": "nosec",
+            "in": "header",
+            "name": "Authorization"
+          }
+        },
+        "safety_level": "low"
+      }
+    ],
+    "state_sources": [
+      {
+        "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+        "property": "brightness",
+        "href": "http://localhost:8080/lights/properties/brightness",
+        "method": "GET",
+        "read_only": false
+      }
+    ],
+    "security": {
+      "name": "nosec",
+      "scheme": "nosec",
+      "location": "header",
+      "field_name": "Authorization"
+    },
+    "rate_limit": null,
+    "base": "",
+    "events": []
+  },
+  {
+    "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+    "title": "projector",
+    "affordances": [
+      {
+        "id": "wot_urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b_power",
+        "source": "WOT",
+        "type": "property",
+        "label": "power",
+        "action": "write_property",
+        "locator": {
+          "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+          "href": "http://localhost:8080/projector/properties/power",
+          "method": "PUT"
+        },
+        "confidence": 1.0,
+        "state": {
+          "input_schema": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off"
+            ],
+            "readOnly": false,
+            "writeOnly": false
+          },
+          "content_type": "application/json",
+          "security": "nosec",
+          "security_definition": {
+            "scheme": "nosec",
+            "in": "header",
+            "name": "Authorization"
+          },
+          "read_only": false,
+          "write_only": false
+        },
+        "safety_level": "low"
+      },
+      {
+        "id": "wot_urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b_setPower",
+        "source": "WOT",
+        "type": "action",
+        "label": "setPower",
+        "action": "invoke",
+        "locator": {
+          "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+          "href": "http://localhost:8080/projector/actions/setPower",
+          "method": "POST"
+        },
+        "confidence": 1.0,
+        "state": {
+          "input_schema": {
+            "type": "string",
+            "enum": [
+              "on",
+              "off"
+            ]
+          },
+          "content_type": "application/json",
+          "security": "nosec",
+          "security_definition": {
+            "scheme": "nosec",
+            "in": "header",
+            "name": "Authorization"
+          }
+        },
+        "safety_level": "low"
+      }
+    ],
+    "state_sources": [
+      {
+        "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+        "property": "power",
+        "href": "http://localhost:8080/projector/properties/power",
+        "method": "GET",
+        "read_only": false
+      }
+    ],
+    "security": {
+      "name": "nosec",
+      "scheme": "nosec",
+      "location": "header",
+      "field_name": "Authorization"
+    },
+    "rate_limit": null,
+    "base": "",
+    "events": []
+  }
+]

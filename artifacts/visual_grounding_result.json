@@ -1,0 +1,29 @@
+{
+  "marks": [
+    {
+      "mark_id": "M000",
+      "label": "Book Room",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 110,
+        "h": 32
+      },
+      "confidence": 0.7,
+      "extra": {}
+    },
+    {
+      "mark_id": "M001",
+      "label": "Readiness",
+      "bbox": {
+        "x": 20,
+        "y": 610,
+        "w": 680,
+        "h": 84
+      },
+      "confidence": 0.7,
+      "extra": {}
+    }
+  ],
+  "marked_screenshot": "artifacts\\marked_screenshot.png"
+}

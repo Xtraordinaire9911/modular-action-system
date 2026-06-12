@@ -88,6 +88,12 @@ class BrowserSession:
     def screenshot(self, path: str | None = None) -> bytes:
         return self._page.screenshot(path=path) if path else self._page.screenshot()
 
+    def evaluate(self, expression: str, arg: Any | None = None) -> Any:
+        evaluator = getattr(self._page, "evaluate", None)
+        if evaluator is None:
+            return None
+        return evaluator(expression, arg) if arg is not None else evaluator(expression)
+
     # ── action: PageLike (DOM executor) ──────────────────────────────────────
     def click(self, selector: str) -> None:
         self._page.click(selector)

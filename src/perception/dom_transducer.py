@@ -16,6 +16,7 @@ from src.perception.page_affordance_model import PageAffordanceModel
 
 _INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea", "label", "form", "option"])
 _STRIP_TAGS = frozenset(["script", "style", "meta", "link", "noscript", "head", "svg"])
+_VOID_STRIP_TAGS = frozenset(["meta", "link"])
 _ARIA_ACTION_MAP = {
     "button": "click",
     "link": "click",
@@ -64,9 +65,14 @@ class _InteractiveParser(HTMLParser):
         self._depth += 1
         self.total_nodes += 1
         if self._skip_depth is None and tag in _STRIP_TAGS:
+            if tag in _VOID_STRIP_TAGS:
+                self._depth = max(0, self._depth - 1)
+                return
             self._skip_depth = self._depth
             return
         if self._skip_depth is not None:
+            if tag in _VOID_STRIP_TAGS:
+                self._depth = max(0, self._depth - 1)
             return
 
         attr = {k: (v or "") for k, v in attrs}
@@ -93,6 +99,11 @@ class _InteractiveParser(HTMLParser):
             text = data.strip()
             if text:
                 self._open[-1]["text_parts"].append(text)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
+        if tag not in _VOID_STRIP_TAGS:
+            self.handle_endtag(tag)
 
 
 def _escape_attr(value: str) -> str:
