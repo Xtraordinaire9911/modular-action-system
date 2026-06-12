@@ -199,10 +199,14 @@ class WotExecutor:
         start = time.monotonic()
         affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id)
         if affordance_id is None:
-            return self._skill_failure(skill_call, start, f"no WoT affordance mapping for skill '{skill_call.skill_id}'")
+            return self._skill_failure(
+                skill_call, start, f"no WoT affordance mapping for skill '{skill_call.skill_id}'"
+            )
         affordance = self._affordances.get(affordance_id)
         if affordance is None:
-            return self._skill_failure(skill_call, start, f"affordance '{affordance_id}' not loaded; call load_tds() first")
+            return self._skill_failure(
+                skill_call, start, f"affordance '{affordance_id}' not loaded; call load_tds() first"
+            )
         if not _HTTPX_AVAILABLE:
             return self._skill_failure(skill_call, start, "httpx not installed")
 

@@ -110,7 +110,8 @@ class VisualExecutor:
         if not _PLAYWRIGHT_AVAILABLE or self._page is None:
             return False
         try:
-            await self._page.evaluate("1 + 1")
+            page: Any = self._page
+            await page.evaluate("1 + 1")
             return True
         except Exception:
             return False
@@ -131,13 +132,16 @@ class VisualExecutor:
                 failure_reason="visual_confidence_low",
             )
         if not _PLAYWRIGHT_AVAILABLE or self._page is None:
-            return self._skill_failure(skill_call, start, "Playwright not available or executor not started", result.confidence)
+            return self._skill_failure(
+                skill_call, start, "Playwright not available or executor not started", result.confidence
+            )
         try:
+            page: Any = self._page
             cx, cy = result.center or (
                 result.bbox[0] + (result.bbox[2] - result.bbox[0]) // 2,
                 result.bbox[1] + (result.bbox[3] - result.bbox[1]) // 2,
             )
-            await self._page.mouse.click(cx, cy)
+            await page.mouse.click(cx, cy)
             return ExecutionResult(
                 skill_id=skill_call.skill_id,
                 backend_used=self.backend,
@@ -148,7 +152,9 @@ class VisualExecutor:
         except Exception as exc:
             return self._skill_failure(skill_call, start, str(exc), 0.0)
 
-    def _skill_failure(self, skill_call: SkillCall, start: float, reason: str, confidence: float = 0.0) -> ExecutionResult:
+    def _skill_failure(
+        self, skill_call: SkillCall, start: float, reason: str, confidence: float = 0.0
+    ) -> ExecutionResult:
         return ExecutionResult(
             skill_id=skill_call.skill_id,
             backend_used=self.backend,

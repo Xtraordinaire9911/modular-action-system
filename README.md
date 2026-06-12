@@ -1,6 +1,6 @@
 # Modular Action System Architecture
 
-Week-6 smart-room demo for the TUM Automatic Agents Praktikum. The repository
+Smart-room demo for the TUM Automatic Agents Praktikum. The repository
 shows how an agent can perceive and act across three surfaces without hard-coded
 UI or device assumptions:
 
@@ -14,35 +14,18 @@ architecture requested for this week: DOM Transduction Pattern -> PAM -> runtime
 Cognitive Map, System-1 reflex execution, backend routing, pre/postcondition
 checks, recovery hooks, and failure-injection evaluation.
 
-## Current Git State
+## Current Release State
 
-`main` should only receive code after `develop` contains the integrated demo and
-the checks below pass. At the time this README was prepared, the Week-6 member-B
-work lives in PR branches `feature/B-101` through `feature/B-105`; those branches
-must be merged into `develop` before `develop` is promoted to `main`.
+`main` contains the integrated Week-6 smart-room demo release. The member-B
+branches B-101 through B-105 were integrated through `develop` first, then
+promoted to `main` after the Python test suite and deterministic demo runner
+passed.
 
-Recommended merge order into `develop`:
+For future work, keep using this branch discipline:
 
-```bash
-feature/B-101-perception-affordance-layer
-feature/B-102-system1-effectors-vam
-feature/B-103-cost-aware-router
-feature/B-104-node-wot-react-env
-feature/B-105-backend-eval-failure-injection
-```
-
-After all five are on `develop`:
-
-```bash
-git checkout develop
-git pull origin develop
-uv run --with pytest pytest
-python run_demo.py
-git checkout main
-git pull origin main
-git merge --no-ff develop
-git push origin main
-```
+- feature branches merge into `develop`;
+- `develop` is the integration branch for cross-member testing;
+- `main` is only updated from a verified `develop` release.
 
 ## Quick Start
 
@@ -109,7 +92,7 @@ python run_demo.py --probe-env
 
 The `environment.all_ok` field should be `true` when Docker services are up.
 
-## What To Show The Tutor
+## Demo
 
 1. Open http://localhost:3000.
    Show the concrete DOM surface: booking inputs, Book Room button, thermostat,

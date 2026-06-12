@@ -122,9 +122,7 @@ class BackendRouter:
     ) -> RoutingDecision:
         exclude = exclude or []
         candidates = [
-            backend
-            for backend in skill_tuple.allowed_backends
-            if backend in available and backend not in exclude
+            backend for backend in skill_tuple.allowed_backends if backend in available and backend not in exclude
         ]
         if not candidates:
             return RoutingDecision(

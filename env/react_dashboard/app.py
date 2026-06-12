@@ -14,7 +14,7 @@ from __future__ import annotations
 import copy
 from typing import Any
 
-from flask import Flask, jsonify, redirect, render_template_string, request  # type: ignore
+from flask import Flask, jsonify, render_template_string, request  # type: ignore
 
 app = Flask(__name__)
 

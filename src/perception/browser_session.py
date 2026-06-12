@@ -18,7 +18,7 @@ module unit-tests with a fake page and never needs a real browser in CI.
 
 from __future__ import annotations
 
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from src.perception.dom_transducer import DomTransducer
 from src.perception.page_affordance_model import PageAffordanceModel
@@ -53,7 +53,7 @@ class BrowserSession:
         context = browser.new_context()  # ← isolation boundary (PiP analogue)
         page = context.new_page()
         page.goto(url)
-        return cls(page, url=url, _owner=(pw, browser, context))
+        return cls(cast(_PageDriver, page), url=url, _owner=(pw, browser, context))
 
     def open(self, url: str) -> None:
         self._url = url

@@ -9,8 +9,6 @@ Run with:  python env/node_wot_server/app.py
 from __future__ import annotations
 
 import copy
-import json
-from pathlib import Path
 from typing import Any
 
 from flask import Flask, jsonify, request  # type: ignore

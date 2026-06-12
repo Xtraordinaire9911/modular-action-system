@@ -1,27 +1,39 @@
-# ── builder stage: installs dev deps, runs lint + tests ─────────────────────
+# Builder stage: install dependencies and run the same checks as CI.
 FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+COPY evaluation/ ./evaluation/
+COPY scripts/ ./scripts/
+COPY tests/ ./tests/
+COPY config/ ./config/
+COPY artifacts/ ./artifacts/
+COPY run_demo.py ./
+
 RUN pip install --upgrade pip && \
     pip install -e ".[dev]"
 
-COPY . .
-
 RUN ruff check . && \
     black --check . && \
-    pytest --tb=short -q
+    mypy src/ --ignore-missing-imports && \
+    pytest --tb=short -q && \
+    python run_demo.py
 
-# ── runner stage: minimal production image ───────────────────────────────────
+# Runner stage: minimal Python image for the runtime smoke entry point.
 FROM python:3.11-slim AS runner
 
 WORKDIR /app
 
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+COPY evaluation/ ./evaluation/
+COPY config/ ./config/
+COPY artifacts/ ./artifacts/
+COPY run_demo.py ./
+
 RUN pip install --upgrade pip && \
     pip install -e "."
-
-COPY src/ ./src/
 
 CMD ["python", "-m", "src.pipeline"]

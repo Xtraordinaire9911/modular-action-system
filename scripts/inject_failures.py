@@ -31,22 +31,36 @@ class FailureSpec:
 
 # Canonical perturbation catalogue (advisor §9 + environment_demo §B2/B4).
 CATALOGUE: list[FailureSpec] = [
-    FailureSpec("visual_misclick", DOM, "1", "retry same backend resolves transient misclick",
-                {"fault": "visual_misclick"}),
-    FailureSpec("dom_selector_mutation", DOM, "2", "DOM selector fails → reroute to Visual SoM",
-                {"fault": "selector_mutation"}),
-    FailureSpec("layout_shift", DOM, "2", "moved control → reroute to Visual SoM",
-                {"fault": "layout_shift"}),
-    FailureSpec("wot_timeout", WOT, "2", "WoT times out → reroute to DOM dashboard fallback",
-                {"type": "timeout", "delay_ms": 1500}),
-    FailureSpec("postcondition_mismatch", WOT, "3", "HTTP 200 but state unchanged → rollback + replan",
-                {"type": "postcondition_mismatch"}),
-    FailureSpec("backend_offline", WOT, "2->4", "reroute; escalate if no backend remains",
-                {"type": "offline"}),
-    FailureSpec("malformed_td", WOT, "2->4", "malformed TD → reroute / escalate",
-                {"type": "malformed"}),
-    FailureSpec("perceptual_conflict", WOT, "arb->4", "dashboard booked vs sensor occupied → arbitrate, escalate",
-                {"type": "postcondition_mismatch"}),
+    FailureSpec(
+        "visual_misclick", DOM, "1", "retry same backend resolves transient misclick", {"fault": "visual_misclick"}
+    ),
+    FailureSpec(
+        "dom_selector_mutation", DOM, "2", "DOM selector fails → reroute to Visual SoM", {"fault": "selector_mutation"}
+    ),
+    FailureSpec("layout_shift", DOM, "2", "moved control → reroute to Visual SoM", {"fault": "layout_shift"}),
+    FailureSpec(
+        "wot_timeout",
+        WOT,
+        "2",
+        "WoT times out → reroute to DOM dashboard fallback",
+        {"type": "timeout", "delay_ms": 1500},
+    ),
+    FailureSpec(
+        "postcondition_mismatch",
+        WOT,
+        "3",
+        "HTTP 200 but state unchanged → rollback + replan",
+        {"type": "postcondition_mismatch"},
+    ),
+    FailureSpec("backend_offline", WOT, "2->4", "reroute; escalate if no backend remains", {"type": "offline"}),
+    FailureSpec("malformed_td", WOT, "2->4", "malformed TD → reroute / escalate", {"type": "malformed"}),
+    FailureSpec(
+        "perceptual_conflict",
+        WOT,
+        "arb->4",
+        "dashboard booked vs sensor occupied → arbitrate, escalate",
+        {"type": "postcondition_mismatch"},
+    ),
 ]
 
 _BY_TYPE = {spec.failure_type: spec for spec in CATALOGUE}
@@ -69,11 +83,17 @@ def robustness_plan() -> list[dict[str, Any]]:
     ]
 
 
-def apply(failure_type: str, *, thing: str = "thermostat", control_url: str = "http://localhost:8081") -> dict[str, Any]:
+def apply(
+    failure_type: str, *, thing: str = "thermostat", control_url: str = "http://localhost:8081"
+) -> dict[str, Any]:
     """Activate one WoT fault on the live control plane (lazy httpx)."""
     spec = _BY_TYPE[failure_type]
     if spec.side != WOT:
-        return {"side": DOM, "dashboard_query": spec.control_payload, "note": "set via dashboard URL / window.__injectFault"}
+        return {
+            "side": DOM,
+            "dashboard_query": spec.control_payload,
+            "note": "set via dashboard URL / window.__injectFault",
+        }
     import httpx  # lazy
 
     payload = {"thing": thing, **(spec.control_payload or {})}

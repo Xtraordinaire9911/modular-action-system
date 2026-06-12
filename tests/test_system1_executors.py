@@ -36,8 +36,7 @@ class FakePointer:
 
 
 def _dom_aff(action="click", enabled=True):
-    return Affordance("dom_book", "DOM", "button", "Book", action,
-                      {"selector": "#book"}, 1.0, {"enabled": enabled})
+    return Affordance("dom_book", "DOM", "button", "Book", action, {"selector": "#book"}, 1.0, {"enabled": enabled})
 
 
 # ── DOM executor ──────────────────────────────────────────────────────────────
@@ -63,9 +62,14 @@ def test_dom_executor_disabled_element_fails_gracefully():
 # ── WoT executor ──────────────────────────────────────────────────────────────
 def _wot_aff(method="POST", rate_ms=0.0):
     return Affordance(
-        "wot_thermostat_A_setTargetTemperature", "WOT", "action", "setTargetTemperature", "invoke",
+        "wot_thermostat_A_setTargetTemperature",
+        "WOT",
+        "action",
+        "setTargetTemperature",
+        "invoke",
         {"thing_id": "thermostat_A", "href": "http://h/actions/set", "method": method},
-        1.0, {"content_type": "application/json", "rate_limit": {"min_interval_ms": rate_ms}},
+        1.0,
+        {"content_type": "application/json", "rate_limit": {"min_interval_ms": rate_ms}},
     )
 
 
@@ -102,8 +106,15 @@ def test_wot_executor_enforces_rate_limit():
 # ── Visual executor ─────────────────────────────────────────────────────────
 def test_visual_executor_clicks_bbox_center():
     pointer = FakePointer()
-    aff = Affordance("vis_M0", "VISUAL", "button", "Book", "click",
-                     {"mark_id": "M0", "bbox": [410, 220, 110, 40], "center": [465, 240]}, 0.93)
+    aff = Affordance(
+        "vis_M0",
+        "VISUAL",
+        "button",
+        "Book",
+        "click",
+        {"mark_id": "M0", "bbox": [410, 220, 110, 40], "center": [465, 240]},
+        0.93,
+    )
     res = VisualExecutor(pointer).execute(aff)
     assert res.success and pointer.clicks == [(465, 240)]
 

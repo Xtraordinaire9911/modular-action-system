@@ -36,16 +36,22 @@ def test_wot_discovery_rate_full_on_compliant_tds():
         "security": "nosec_sc",
         "properties": {
             "targetTemperature": {
-                "type": "number", "readOnly": False,
+                "type": "number",
+                "readOnly": False,
                 "forms": [
                     {"op": "readproperty", "href": "/p/t", "htv:methodName": "GET"},
                     {"op": "writeproperty", "href": "/p/t", "htv:methodName": "PUT"},
                 ],
             },
-            "currentTemperature": {"type": "number", "readOnly": True,
-                                   "forms": [{"op": "readproperty", "href": "/p/c"}]},
+            "currentTemperature": {
+                "type": "number",
+                "readOnly": True,
+                "forms": [{"op": "readproperty", "href": "/p/c"}],
+            },
         },
-        "actions": {"setTargetTemperature": {"forms": [{"op": "invokeaction", "href": "/a/s", "htv:methodName": "POST"}]}},
+        "actions": {
+            "setTargetTemperature": {"forms": [{"op": "invokeaction", "href": "/a/s", "htv:methodName": "POST"}]}
+        },
     }
     # expected: 1 writable + 2 readable + 1 action = 4; discovered: 1 write aff + 1 action + 2 state sources = 4
     report = evaluate_corpus([td])
