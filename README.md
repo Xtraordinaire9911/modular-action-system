@@ -1,6 +1,6 @@
 # Modular Action System Architecture
 
-Week-6 smart-room demo for the TUM Automatic Agents Praktikum. The repository
+Smart-room demo for the TUM Automatic Agents Praktikum. The repository
 shows how an agent can perceive and act across three surfaces without hard-coded
 UI or device assumptions:
 
@@ -92,7 +92,7 @@ python run_demo.py --probe-env
 
 The `environment.all_ok` field should be `true` when Docker services are up.
 
-## What To Show The Tutor
+## Demo
 
 1. Open http://localhost:3000.
    Show the concrete DOM surface: booking inputs, Book Room button, thermostat,
