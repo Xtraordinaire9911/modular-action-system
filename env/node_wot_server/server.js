@@ -94,8 +94,10 @@ function buildDefs() {
       td: {
         "@context": "https://www.w3.org/2022/wot/td/v1.1",
         title: "thermostat",
-        securityDefinitions: { apikey_sc: { scheme: "apikey", in: "header", name: "X-API-Key" } },
-        security: "apikey_sc",
+        // Thingweb's HTTP server exposes nosec Things in this demo environment.
+        // Parser unit tests and config/wot_td fixtures still cover apikey/basic.
+        securityDefinitions: { nosec_sc: { scheme: "nosec" } },
+        security: "nosec_sc",
         properties: {
           targetTemperature: { type: "number", minimum: 16, maximum: 30 },
           currentTemperature: { type: "number", readOnly: true },
@@ -135,8 +137,8 @@ function buildDefs() {
       td: {
         "@context": "https://www.w3.org/2022/wot/td/v1.1",
         title: "blinds",
-        securityDefinitions: { basic_sc: { scheme: "basic", in: "header" } },
-        security: "basic_sc",
+        securityDefinitions: { nosec_sc: { scheme: "nosec" } },
+        security: "nosec_sc",
         properties: { position: { type: "integer", minimum: 0, maximum: 100 } },
         actions: { setPosition: { input: { type: "integer", minimum: 0, maximum: 100 } } },
       },
