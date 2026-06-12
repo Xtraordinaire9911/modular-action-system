@@ -1,41 +1,44 @@
-# Smart-Room Demo Environment (Member B)
+# Smart-Room Demo Environment
 
-Runnable vertical-slice testbed for the modular action system. Replaces the
-earlier custom Flask mock with a **W3C-compliant node-wot servient** (advisor
-§9.1) plus a **React** booking/control dashboard, so perception is exercised
-against real Thing Descriptions and a real DOM.
+Runnable vertical-slice testbed for the modular action system. It combines a
+node-wot servient with a React booking/control dashboard, so perception is
+exercised against real Thing Descriptions and a real DOM.
 
-```
+```bash
 docker compose -f env/docker-compose.yml up --build
 ```
 
-| Service      | URL                              | Role                                   |
-|--------------|----------------------------------|----------------------------------------|
-| dashboard    | http://localhost:3000            | React booking UI (DOM backend surface) |
-| wot_server   | http://localhost:8080/<thing>    | node-wot Things + TDs (WoT backend)    |
-| control      | http://localhost:8081            | failure-injection control plane        |
+| Service | URL | Role |
+| --- | --- | --- |
+| dashboard | http://localhost:3000 | React booking UI, the DOM backend surface |
+| wot_server | http://localhost:8080/<thing> | node-wot Things and TDs, the WoT backend |
+| control | http://localhost:8081 | failure-injection control plane |
 
-## Devices (advisor §3.1 concrete device list)
+## Devices
 
-`thermostat` (apikey-secured), `lights`, `projector`, `blinds` (basic-auth),
-`occupancy` (read-only sensor — the physical-state source for the booked-vs-
-occupied conflict in advisor §13.1). Their canonical TDs live in
-[`config/wot_td/`](../config/wot_td) and are parsed **at runtime** by
-`src/perception/td_affordance_parser.py` (no hard-coded endpoints).
+The live node-wot servient exposes `thermostat`, `lights`, `projector`,
+`blinds`, and `occupancy` with `nosec`. This is intentional: the Thingweb HTTP
+binding used by this demo only exposes `nosec` Things reliably. The parser and
+evaluator still cover `apikey` and `basic` security schemes through
+`config/wot_td/` fixtures and unit tests.
 
-## Perception & action surfaces
+The important demo property remains true: endpoints are not hard-coded into the
+agent. `src/perception/td_affordance_parser.py` parses TD forms, hrefs, methods,
+schemas, rate limits, and security metadata at runtime.
 
-- **DOM** — the agent attaches an isolated Playwright context
-  (`src/perception/browser_session.py`, the web analogue of PiP isolation) and
-  runs the DOM Transducer over the live page → Page Affordance Model.
-- **WoT** — `td_affordance_parser` ingests each TD's forms/href/method,
-  `securityDefinitions`, and rate limits; `wot_executor` invokes them.
-- **Visual** — `som_parser` overlays numbered marks on the screenshot; the VAM
-  selects a `mark_id`, never a raw coordinate.
+## Perception And Action Surfaces
 
-## Failure injection (Chaos Monkey, advisor §11.1)
+- DOM: the agent attaches an isolated Playwright context
+  (`src/perception/browser_session.py`) and runs the DOM Transducer over the live
+  page to produce a Page Affordance Model.
+- WoT: `td_affordance_parser` ingests TD forms/href/method/security/rate-limit
+  metadata; `wot_executor` invokes the resulting affordances.
+- Visual: `som_parser` overlays numbered marks on a screenshot; the VAM selects
+  a `mark_id`, never a raw coordinate.
 
-WoT side (control plane on :8081):
+## Failure Injection
+
+WoT side, via the control plane on port 8081:
 
 ```bash
 curl -XPOST localhost:8081/failure -d '{"thing":"thermostat","type":"timeout","delay_ms":1500}'
@@ -44,10 +47,17 @@ curl -XPOST localhost:8081/failure -d '{"thing":"lights","type":"offline"}'
 curl -XPOST localhost:8081/reset
 ```
 
-DOM side (browser): `?fault=layout_shift,selector_mutation,stale_temperature`
-in the dashboard URL, or `window.__injectFault("selector_mutation")` from
-Playwright. See `scripts/inject_failures.py` for the driver that maps each
-fault to the recovery tier it should trigger.
+DOM side:
 
-> Production note: node-wot is the canonical WoT backend. The control plane and
-> dashboard fault hooks exist only for evaluation and are disabled by `/reset`.
+```text
+http://localhost:3000/?fault=layout_shift,selector_mutation,stale_temperature
+```
+
+or from Playwright:
+
+```javascript
+window.__injectFault("selector_mutation")
+```
+
+See `scripts/inject_failures.py` for the mapping from fault type to expected
+recovery tier.
