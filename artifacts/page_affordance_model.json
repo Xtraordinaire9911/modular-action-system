@@ -1,0 +1,94 @@
+{
+  "page_id": "smart_room_dashboard",
+  "url": "http://localhost:3000",
+  "affordances": [
+    {
+      "id": "dom_label_1",
+      "source": "DOM",
+      "type": "button",
+      "label": "Room",
+      "action": "click",
+      "locator": {
+        "selector": "label:nth-of-type(1)",
+        "strategy": "css"
+      },
+      "confidence": 0.55,
+      "state": {
+        "enabled": true,
+        "visible": true
+      },
+      "safety_level": "low"
+    },
+    {
+      "id": "dom_input_1",
+      "source": "DOM",
+      "type": "input",
+      "label": "A",
+      "action": "type",
+      "locator": {
+        "selector": "[data-testid='room-input']",
+        "strategy": "css"
+      },
+      "confidence": 0.97,
+      "state": {
+        "enabled": true,
+        "visible": true
+      },
+      "safety_level": "low"
+    },
+    {
+      "id": "dom_label_2",
+      "source": "DOM",
+      "type": "button",
+      "label": "Time",
+      "action": "click",
+      "locator": {
+        "selector": "label:nth-of-type(2)",
+        "strategy": "css"
+      },
+      "confidence": 0.55,
+      "state": {
+        "enabled": true,
+        "visible": true
+      },
+      "safety_level": "low"
+    },
+    {
+      "id": "dom_input_2",
+      "source": "DOM",
+      "type": "input",
+      "label": "14:00",
+      "action": "type",
+      "locator": {
+        "selector": "[data-testid='time-input']",
+        "strategy": "css"
+      },
+      "confidence": 0.97,
+      "state": {
+        "enabled": true,
+        "visible": true
+      },
+      "safety_level": "low"
+    },
+    {
+      "id": "dom_button_1",
+      "source": "DOM",
+      "type": "button",
+      "label": "Book Room",
+      "action": "click",
+      "locator": {
+        "selector": "[data-testid='book-room-button']",
+        "strategy": "css"
+      },
+      "confidence": 0.97,
+      "state": {
+        "enabled": true,
+        "visible": true
+      },
+      "safety_level": "low"
+    }
+  ],
+  "captured_at_ms": 0,
+  "raw_node_count": 37,
+  "kept_node_count": 5
+}

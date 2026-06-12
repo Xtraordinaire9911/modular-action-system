@@ -1,0 +1,248 @@
+{
+  "task_id": "prepare_room_A_1400_live",
+  "envs": {
+    "react_dashboard": "http://localhost:3000",
+    "node_wot_server": "http://localhost:8080",
+    "failure_control_plane": "http://localhost:8081",
+    "playwright_browser_session": "isolated chromium context"
+  },
+  "acceptance": {
+    "react_dashboard_accessible": true,
+    "node_wot_tds_accessible": true,
+    "playwright_isolated_browser_running": true,
+    "dom_transducer_outputs_pam": true,
+    "td_parser_outputs_wot_affordances": true,
+    "som_outputs_marked_screenshot": true,
+    "system1_executes_normal_path": true,
+    "failure_injected": true,
+    "verifier_detects_issue": true,
+    "recovery_triggered": true,
+    "trace_and_artifacts_exported": true
+  },
+  "trace": [
+    {
+      "skill_id": "confirm_booking.room",
+      "backend": "dom",
+      "execution_result": {
+        "skill_id": "confirm_booking.room",
+        "backend_used": "dom",
+        "success": true,
+        "latency_ms": 27.188,
+        "confidence": 0.97,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "selector": "[data-testid='room-input']",
+          "typed": "A"
+        }
+      }
+    },
+    {
+      "skill_id": "confirm_booking.time",
+      "backend": "dom",
+      "execution_result": {
+        "skill_id": "confirm_booking.time",
+        "backend_used": "dom",
+        "success": true,
+        "latency_ms": 20.921,
+        "confidence": 0.97,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "selector": "[data-testid='time-input']",
+          "typed": "14:00"
+        }
+      }
+    },
+    {
+      "skill_id": "confirm_booking.submit",
+      "backend": "dom",
+      "execution_result": {
+        "skill_id": "confirm_booking.submit",
+        "backend_used": "dom",
+        "success": true,
+        "latency_ms": 44.03,
+        "confidence": 0.97,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "selector": "[data-testid='book-room-button']",
+          "clicked": true
+        }
+      }
+    },
+    {
+      "skill_id": "turn_on_projector",
+      "backend": "wot",
+      "execution_result": {
+        "skill_id": "turn_on_projector",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 116.79,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+          "action": "setPower",
+          "result": "",
+          "sent": "on"
+        }
+      }
+    },
+    {
+      "skill_id": "set_temperature",
+      "backend": "wot",
+      "execution_result": {
+        "skill_id": "set_temperature",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 26.353,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "action": "setTargetTemperature",
+          "result": "",
+          "sent": 22
+        }
+      }
+    },
+    {
+      "skill_id": "dim_lights",
+      "backend": "wot",
+      "execution_result": {
+        "skill_id": "dim_lights",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 27.959,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+          "action": "setBrightness",
+          "result": "",
+          "sent": 40
+        }
+      }
+    },
+    {
+      "skill_id": "verify_readiness",
+      "backend": "verifier",
+      "postcondition_result": "pass",
+      "dashboard_text": "READY",
+      "state": {
+        "thermostat": {
+          "targetTemperature": 22,
+          "currentTemperature": 22
+        },
+        "lights": {
+          "brightness": 40
+        },
+        "projector": {
+          "power": "on"
+        },
+        "blinds": {
+          "position": 100
+        },
+        "occupancy": {
+          "occupied": false,
+          "peopleCount": 0
+        }
+      }
+    },
+    {
+      "skill_id": "set_temperature.injected_failure",
+      "backend": "wot",
+      "execution_result": {
+        "skill_id": "set_temperature.injected_failure",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 15.653,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "action": "setTargetTemperature",
+          "result": "",
+          "sent": 24
+        }
+      }
+    },
+    {
+      "skill_id": "set_temperature.recovery_retry",
+      "backend": "wot",
+      "execution_result": {
+        "skill_id": "set_temperature.recovery_retry",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 31.918,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "action": "setTargetTemperature",
+          "result": "",
+          "sent": 24
+        }
+      }
+    },
+    {
+      "skill_id": "recovery_cascade",
+      "backend": "verifier",
+      "failure_detected": true,
+      "recovery_action": "clear_injected_fault_then_retry_wot",
+      "execution_before_recovery": {
+        "skill_id": "set_temperature.injected_failure",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 15.653,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "action": "setTargetTemperature",
+          "result": "",
+          "sent": 24
+        }
+      },
+      "execution_after_recovery": {
+        "skill_id": "set_temperature.recovery_retry",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 31.918,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "action": "setTargetTemperature",
+          "result": "",
+          "sent": 24
+        }
+      },
+      "postcondition_result": "pass"
+    }
+  ],
+  "final_state": {
+    "thermostat": {
+      "targetTemperature": 24,
+      "currentTemperature": 24
+    },
+    "lights": {
+      "brightness": 40
+    },
+    "projector": {
+      "power": "on"
+    },
+    "blinds": {
+      "position": 100
+    },
+    "occupancy": {
+      "occupied": false,
+      "peopleCount": 0
+    }
+  },
+  "artifacts": {
+    "page_affordance_model": "artifacts\\page_affordance_model.json",
+    "thing_affordance_model": "artifacts\\thing_affordance_model.json",
+    "visual_grounding_result": "artifacts\\visual_grounding_result.json",
+    "marked_screenshot": "artifacts\\marked_screenshot.png",
+    "live_trace": "artifacts\\demo_trace_live.json"
+  }
+}
