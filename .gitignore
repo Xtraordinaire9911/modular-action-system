@@ -18,6 +18,7 @@ htmlcov/
 results/
 logs/
 screenshots/
+.external_envs/
 
 # Local paper / presentation artifacts
 local_docs/

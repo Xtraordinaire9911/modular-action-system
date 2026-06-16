@@ -1,0 +1,97 @@
+root: .external_envs
+envs:
+  playwright:
+    role: browser execution substrate
+    homepage: https://playwright.dev/
+    install:
+      - uv run playwright install chromium
+    smoke:
+      - uv run python -c "from playwright.sync_api import sync_playwright; print('playwright import ok')"
+    notes:
+      - Already used by the local smart-room live agent.
+      - Provides isolated browser contexts for CUA session isolation.
+
+  browser_use:
+    role: reference web-agent framework
+    homepage: https://github.com/browser-use/browser-use
+    repo: https://github.com/browser-use/browser-use.git
+    install:
+      - uv pip install browser-use
+    smoke:
+      - uv run python -c "import browser_use; print('browser-use import ok')"
+    notes:
+      - Framework reference for DOM compression, browser state, and action loops.
+      - Not a benchmark website by itself.
+
+  miniwob_plusplus:
+    role: System 1 reflex benchmark
+    homepage: https://miniwob.farama.org/
+    repo: https://github.com/Farama-Foundation/miniwob-plusplus.git
+    install:
+      - git clone https://github.com/Farama-Foundation/miniwob-plusplus.git .external_envs/miniwob-plusplus
+    smoke:
+      - test-path .external_envs/miniwob-plusplus
+    notes:
+      - Lightweight GUI/web task benchmark for click/type reflex skills.
+      - Good first external env before WebArena-scale setup.
+
+  webarena:
+    role: realistic web benchmark
+    homepage: https://webarena.dev/
+    repo: https://github.com/web-arena-x/webarena.git
+    install:
+      - git clone https://github.com/web-arena-x/webarena.git .external_envs/webarena
+      - cd .external_envs/webarena && pip install -r requirements.txt
+      - cd .external_envs/webarena && playwright install
+      - cd .external_envs/webarena && pip install -e .
+    smoke:
+      - test-path .external_envs/webarena
+    notes:
+      - Self-hostable realistic web environment with strict execution-based evaluation.
+      - Full website containers/images are intentionally not vendored in this repo.
+
+  visualwebarena:
+    role: multimodal web benchmark
+    homepage: https://jykoh.com/vwa
+    repo: https://github.com/web-arena-x/visualwebarena.git
+    install:
+      - git clone https://github.com/web-arena-x/visualwebarena.git .external_envs/visualwebarena
+    smoke:
+      - test-path .external_envs/visualwebarena
+    notes:
+      - Extends WebArena with visually grounded tasks and Set-of-Marks style prompting.
+      - Requires local setup of benchmark sites for real evaluation.
+
+  osworld:
+    role: desktop/OS-level CUA benchmark
+    homepage: https://os-world.github.io/
+    repo: https://github.com/xlang-ai/OSWorld.git
+    install:
+      - git clone https://github.com/xlang-ai/OSWorld.git .external_envs/OSWorld
+    smoke:
+      - test-path .external_envs/OSWorld
+    notes:
+      - Real computer environment benchmark, heavier than web-only envs.
+      - Full evaluation needs VM/cloud/desktop environment assets configured from upstream docs.
+
+  skyvern:
+    role: industrial web automation reference
+    homepage: https://github.com/Skyvern-AI/skyvern
+    repo: https://github.com/Skyvern-AI/skyvern.git
+    install:
+      - git clone https://github.com/Skyvern-AI/skyvern.git .external_envs/skyvern
+    smoke:
+      - test-path .external_envs/skyvern
+    notes:
+      - Reference implementation for robust workflow automation and exception handling.
+
+  lavague:
+    role: LAM / NL-to-browser-action reference
+    homepage: https://github.com/lavague-ai/LaVague
+    repo: https://github.com/lavague-ai/LaVague.git
+    install:
+      - git clone https://github.com/lavague-ai/LaVague.git .external_envs/LaVague
+    smoke:
+      - test-path .external_envs/LaVague
+    notes:
+      - Reference implementation for translating natural language instructions into browser actions.
