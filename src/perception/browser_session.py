@@ -45,7 +45,7 @@ class BrowserSession:
 
     # ── lifecycle ────────────────────────────────────────────────────────────
     @classmethod
-    def launch(cls, url: str, *, headless: bool = True) -> "BrowserSession":
+    def launch(cls, url: str, *, headless: bool = True, action_timeout_ms: int = 8000) -> "BrowserSession":
         """Start Playwright, open a fresh isolated context, and navigate."""
         from playwright.sync_api import sync_playwright  # lazy
 
@@ -53,6 +53,9 @@ class BrowserSession:
         browser = pw.chromium.launch(headless=headless)
         context = browser.new_context()  # ← isolation boundary (PiP analogue)
         page = context.new_page()
+        # Cap action waits so a mistargeted click fails fast instead of hanging
+        # the default 30s (e.g. clicking a non-actionable element).
+        page.set_default_timeout(action_timeout_ms)
         last_error: Exception | None = None
         for _ in range(5):
             try:
