@@ -9,7 +9,8 @@ build/
 venv/
 .env
 *.env
-.external_envs/
+.cc-history/
+.codex-history/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
