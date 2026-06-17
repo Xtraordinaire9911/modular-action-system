@@ -92,7 +92,7 @@ class WebBenchmarkAdapter:
             backend_counts[result.backend_used] = backend_counts.get(result.backend_used, 0) + 1
             executed += 1
             if not result.success:
-                failure = result.failure_reason
+                failure = result.failure_reason or "execution failed"
                 break
 
         solved = failure is None and self.is_solved(task)
