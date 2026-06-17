@@ -71,6 +71,7 @@ _FLASH_JS = """
 # JS: find a descendant of `scope` with exact text, tag it, return its selector or null.
 _TAG_JS = (
     "(a)=>{const sc=document.querySelector(a.scope)||document;"
+    "const prior=document.getElementById('__cua_target'); if(prior) prior.removeAttribute('id');"
     "const el=[...sc.querySelectorAll(a.tag)].find(e=>e.textContent.trim()===a.text);"
     "if(!el)return null;el.id='__cua_target';return '#__cua_target';}"
 )
