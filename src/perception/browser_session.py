@@ -18,6 +18,7 @@ module unit-tests with a fake page and never needs a real browser in CI.
 
 from __future__ import annotations
 
+import time
 from typing import Any, Protocol, cast
 
 from src.perception.dom_transducer import DomTransducer
@@ -44,7 +45,7 @@ class BrowserSession:
 
     # ── lifecycle ────────────────────────────────────────────────────────────
     @classmethod
-    def launch(cls, url: str, *, headless: bool = True) -> "BrowserSession":
+    def launch(cls, url: str, *, headless: bool = True, action_timeout_ms: int = 8000) -> "BrowserSession":
         """Start Playwright, open a fresh isolated context, and navigate."""
         from playwright.sync_api import sync_playwright  # lazy
 
@@ -52,7 +53,23 @@ class BrowserSession:
         browser = pw.chromium.launch(headless=headless)
         context = browser.new_context()  # ← isolation boundary (PiP analogue)
         page = context.new_page()
-        page.goto(url)
+        # Cap action waits so a mistargeted click fails fast instead of hanging
+        # the default 30s (e.g. clicking a non-actionable element).
+        page.set_default_timeout(action_timeout_ms)
+        last_error: Exception | None = None
+        for _ in range(5):
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=10_000)
+                last_error = None
+                break
+            except Exception as exc:
+                last_error = exc
+                time.sleep(1.0)
+        if last_error is not None:
+            context.close()
+            browser.close()
+            pw.stop()
+            raise last_error
         return cls(cast(_PageDriver, page), url=url, _owner=(pw, browser, context))
 
     def open(self, url: str) -> None:
@@ -87,6 +104,12 @@ class BrowserSession:
 
     def screenshot(self, path: str | None = None) -> bytes:
         return self._page.screenshot(path=path) if path else self._page.screenshot()
+
+    def evaluate(self, expression: str, arg: Any | None = None) -> Any:
+        evaluator = getattr(self._page, "evaluate", None)
+        if evaluator is None:
+            return None
+        return evaluator(expression, arg) if arg is not None else evaluator(expression)
 
     # ── action: PageLike (DOM executor) ──────────────────────────────────────
     def click(self, selector: str) -> None:

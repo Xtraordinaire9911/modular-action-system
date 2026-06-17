@@ -1,0 +1,117 @@
+root: .external_envs
+# Each env: role/homepage/repo + install (bootstrap commands), smoke (check
+# commands; `test-path <p>` just verifies a checkout exists), run (human-facing
+# hints for visibly driving the agent on it via scripts/run_agent_on_env.py).
+envs:
+  playwright:
+    role: browser execution substrate
+    homepage: https://playwright.dev/
+    install:
+      - uv run playwright install chromium
+    smoke:
+      - uv run python -c "from playwright.sync_api import sync_playwright; print('playwright import ok')"
+    run:
+      - Substrate for every headed run; no task of its own.
+    notes:
+      - Provides isolated browser contexts for CUA session isolation.
+
+  browser_use:
+    role: reference web-agent framework
+    homepage: https://github.com/browser-use/browser-use
+    repo: https://github.com/browser-use/browser-use.git
+    install:
+      - uv pip install browser-use
+    smoke:
+      - uv run python -c "import browser_use; print('browser-use import ok')"
+    run:
+      - Reference framework; can itself drive a headed agent on any live site.
+    notes:
+      - Framework reference for DOM compression, browser state, and action loops.
+
+  miniwob_plusplus:
+    role: System 1 reflex benchmark (research, lightweight, fully visual)
+    homepage: https://miniwob.farama.org/
+    repo: https://github.com/Farama-Foundation/miniwob-plusplus.git
+    install:
+      - git clone https://github.com/Farama-Foundation/miniwob-plusplus.git .external_envs/miniwob-plusplus
+      - uv pip install miniwob
+    smoke:
+      - test-path .external_envs/miniwob-plusplus
+      - uv run python -c "import miniwob; print('miniwob import ok')"
+    run:
+      - 'One command (auto free port, avoids WinError 10013):  uv run python scripts/run_agent_on_env.py --serve .external_envs/miniwob-plusplus/miniwob/html --path miniwob/click-button.html --goal "click button ONE" --headed --pause-at-end'
+      - 'Official visual:  uv run python -c "import gymnasium,miniwob; e=gymnasium.make(''miniwob/click-test-v1'',render_mode=''human''); e.reset(); import time; time.sleep(8)"'
+    notes:
+      - Lightweight click/type reflex tasks; best first external env, no Docker.
+
+  webarena:
+    role: realistic web benchmark (self-hosted, Docker, heavy)
+    homepage: https://webarena.dev/
+    repo: https://github.com/web-arena-x/webarena.git
+    install:
+      - git clone https://github.com/web-arena-x/webarena.git .external_envs/webarena
+      - cd .external_envs/webarena && uv pip install -r requirements.txt
+      - cd .external_envs/webarena && uv pip install -e .
+    smoke:
+      - test-path .external_envs/webarena
+    run:
+      - Host a site container per upstream README (e.g. shopping on :7770), then
+      - 'uv run python scripts/run_agent_on_env.py --url http://localhost:7770 --goal "search product" --headed'
+    notes:
+      - Full site Docker images (GitLab/Reddit/Shopping/CMS/Map) are large and not vendored.
+
+  visualwebarena:
+    role: multimodal web benchmark (self-hosted, Docker, heavy)
+    homepage: https://jykoh.com/vwa
+    repo: https://github.com/web-arena-x/visualwebarena.git
+    install:
+      - git clone https://github.com/web-arena-x/visualwebarena.git .external_envs/visualwebarena
+      - cd .external_envs/visualwebarena && uv pip install -r requirements.txt
+    smoke:
+      - test-path .external_envs/visualwebarena
+    run:
+      - Host the VWA sites per upstream README, then point the headed runner at the site URL.
+      - 'uv run python scripts/run_agent_on_env.py --url http://localhost:7770 --goal "..." --headed'
+    notes:
+      - Extends WebArena with visually grounded tasks and Set-of-Marks style prompting.
+
+  osworld:
+    role: desktop/OS-level CUA benchmark (VM, heaviest)
+    homepage: https://os-world.github.io/
+    repo: https://github.com/xlang-ai/OSWorld.git
+    install:
+      - git clone https://github.com/xlang-ai/OSWorld.git .external_envs/OSWorld
+      - cd .external_envs/OSWorld && uv pip install -r requirements.txt
+    smoke:
+      - test-path .external_envs/OSWorld
+    run:
+      - Desktop modality; visualize through the VM viewer / VNC, not the web runner.
+      - Follow upstream docs to provision the VMware/VirtualBox/Docker desktop image.
+    notes:
+      - Real computer environment; needs a VM/cloud desktop and is far heavier than web envs.
+
+  skyvern:
+    role: industrial web automation reference
+    homepage: https://github.com/Skyvern-AI/skyvern
+    repo: https://github.com/Skyvern-AI/skyvern.git
+    install:
+      - git clone https://github.com/Skyvern-AI/skyvern.git .external_envs/skyvern
+    smoke:
+      - test-path .external_envs/skyvern
+    run:
+      - Reference only; start its own UI per upstream docs to compare against our agent.
+    notes:
+      - Reference implementation for robust workflow automation and exception handling.
+
+  lavague:
+    role: LAM / NL-to-browser-action reference
+    homepage: https://github.com/lavague-ai/LaVague
+    repo: https://github.com/lavague-ai/LaVague.git
+    install:
+      - git clone https://github.com/lavague-ai/LaVague.git .external_envs/LaVague
+    smoke:
+      - test-path .external_envs/LaVague
+    run:
+      - Reference only for natural-language-to-action translation.
+    notes:
+      - Reference implementation for translating natural language instructions into browser actions.
