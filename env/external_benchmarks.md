@@ -53,6 +53,16 @@ Check which external envs are present:
 uv run python scripts/external_envs.py check miniwob_plusplus webarena visualwebarena
 ```
 
+Print how to visibly drive the agent on an env:
+
+```powershell
+uv run python scripts/external_envs.py run miniwob_plusplus webarena
+```
+
+> Full copy-paste setup + visual-run instructions (per environment, Windows/uv):
+> see [`env/RUNBOOK_external_envs.md`](RUNBOOK_external_envs.md). The unifying
+> path is `scripts/run_agent_on_env.py --url <any task/site URL> --headed`.
+
 ## Practical Demo Order
 
 For a reliable live presentation:

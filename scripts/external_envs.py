@@ -76,6 +76,16 @@ def check(manifest: dict[str, Any], selected: list[str]) -> int:
     return rc
 
 
+def show_run_hints(manifest: dict[str, Any], selected: list[str]) -> None:
+    """Print how to visibly drive the agent on each selected environment."""
+    for name in selected:
+        spec = manifest["envs"][name]
+        print(f"\n== {name}: {spec['role']} ==")
+        hints = spec.get("run") or ["No run hints; see notes/homepage."]
+        for hint in hints:
+            print(f"  {hint}")
+
+
 def resolve_selection(manifest: dict[str, Any], names: list[str], *, all_envs: bool) -> list[str]:
     available = env_names(manifest)
     if all_envs:
@@ -104,6 +114,10 @@ def main() -> None:
     chk.add_argument("env", nargs="*", help="Environment names from the manifest.")
     chk.add_argument("--all", action="store_true", help="Select all environments.")
 
+    runp = sub.add_parser("run", help="Print how to visibly drive the agent on each env.")
+    runp.add_argument("env", nargs="*", help="Environment names from the manifest.")
+    runp.add_argument("--all", action="store_true", help="Select all environments.")
+
     args = parser.parse_args()
     manifest = load_manifest(args.manifest)
     if args.cmd == "list":
@@ -114,6 +128,8 @@ def main() -> None:
         raise SystemExit(bootstrap(manifest, selected, execute=args.execute))
     if args.cmd == "check":
         raise SystemExit(check(manifest, selected))
+    if args.cmd == "run":
+        show_run_hints(manifest, selected)
 
 
 if __name__ == "__main__":
