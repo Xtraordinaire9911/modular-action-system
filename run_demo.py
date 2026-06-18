@@ -225,7 +225,7 @@ def run_live_agent_demo(
         execute_wot("set_temperature", "setTargetTemperature", 22)
         delay_for_demo()
         point_to("[data-testid='lighting-panel']", "WoT action: brightness 40%")
-        execute_wot("dim_lights", "setBrightness", 40)
+        execute_wot("set_lighting", "setBrightness", 40)
         delay_for_demo()
 
         time.sleep(2.0)

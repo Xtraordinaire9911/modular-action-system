@@ -9,9 +9,19 @@ from typing import Any
 from evaluation.metrics_aggregator import EvaluationDataset, PrimitiveAction, RecoveryCase, TaskOutcome
 from evaluation.recovery_eval import write_recovery_metrics
 from src.runtime.cognitive_map import CognitiveMap, Entity, RuntimeAffordance, StateAssertion
+from src.skill_library import expected_skill_calls, get_task_fixture, load_failure_profiles
 from src.verification.conflict_detector import EpistemicArbiter
 
 DEMO_TIMESTAMP_MS = 1_781_000_000_000
+DEMO_TASK_ID = "prepare_room_A_1400"
+
+
+def _demo_target_temperature() -> int:
+    """Read the target temperature for the demo task from the fixtures."""
+    for call in expected_skill_calls(DEMO_TASK_ID):
+        if call.skill_id == "set_temperature":
+            return int(call.params["target"])
+    raise ValueError(f"demo task fixture {DEMO_TASK_ID!r} has no set_temperature step")
 
 
 def _event(task_id: str, skill_id: str, event_type: str, backend: str | None, details: dict[str, Any]) -> dict:
@@ -45,12 +55,14 @@ def build_demo_cognitive_map(task_id: str = "prepare_room_A_1400") -> CognitiveM
 
 
 def run_normal_demo_trace() -> list[dict]:
-    task_id = "prepare_room_A_1400_normal"
+    fixture = get_task_fixture(DEMO_TASK_ID)
+    target = _demo_target_temperature()
+    task_id = f"{fixture.task_id}_normal"
     skill_id = "set_temperature"
     cmap = build_demo_cognitive_map(task_id)
     events = [
-        _event(task_id, skill_id, "task_started", None, {"goal": "Prepare Room A for 14:00"}),
-        _event(task_id, skill_id, "skill_started", None, {"params": {"room": "A", "target": 22}}),
+        _event(task_id, skill_id, "task_started", None, {"goal": fixture.user_goal}),
+        _event(task_id, skill_id, "skill_started", None, {"params": {"room": "A", "target": target}}),
         _event(task_id, skill_id, "cognitive_map_updated", None, {"entities": list(cmap.entities)}),
         _event(task_id, skill_id, "precondition_checked", None, {"passed": True}),
         _event(
@@ -66,7 +78,7 @@ def run_normal_demo_trace() -> list[dict]:
         StateAssertion(
             entity_id="thermostat_A",
             attribute="targetTemperature",
-            value=22,
+            value=target,
             source="wot",
         )
     )
@@ -77,7 +89,7 @@ def run_normal_demo_trace() -> list[dict]:
                 skill_id,
                 "postcondition_checked",
                 "wot",
-                {"passed": True, "expected": 22, "actual": 22},
+                {"passed": True, "expected": target, "actual": target},
             ),
             _event(task_id, skill_id, "skill_completed", "wot", {"final_status": "success"}),
             _event(task_id, skill_id, "task_completed", None, {"ready": True}),
@@ -87,18 +99,23 @@ def run_normal_demo_trace() -> list[dict]:
 
 
 def run_recovery_demo_trace() -> list[dict]:
-    task_id = "prepare_room_A_1400_recovery"
+    fixture = get_task_fixture(DEMO_TASK_ID)
+    target = _demo_target_temperature()
+    profile = next(p for p in load_failure_profiles() if p.failure_id == "sensory_contradiction")
+    dom_value = int(profile.extra["dom_value"])
+    wot_value = int(profile.extra["wot_value"])
+    task_id = f"{fixture.task_id}_recovery"
     skill_id = "set_temperature"
     cmap = build_demo_cognitive_map(task_id)
     events = [
         _event(task_id, skill_id, "task_started", None, {"failure_injection": "wot_state_mismatch"}),
-        _event(task_id, skill_id, "skill_started", None, {"params": {"room": "A", "target": 22}}),
+        _event(task_id, skill_id, "skill_started", None, {"params": {"room": "A", "target": target}}),
         _event(task_id, skill_id, "precondition_checked", None, {"passed": True}),
         _event(task_id, skill_id, "backend_selected", "wot", {"reason": "preferred physical backend"}),
         _event(task_id, skill_id, "primitive_executed", "wot", {"action": "invoke", "success": True}),
     ]
-    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 20, "dom"))
-    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 24, "wot"))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", dom_value, "dom"))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", wot_value, "wot"))
     conflicts = EpistemicArbiter({"targetTemperature": 2.0}).check(cmap)
     events.append(
         _event(
@@ -116,12 +133,12 @@ def run_recovery_demo_trace() -> list[dict]:
                 skill_id,
                 "postcondition_checked",
                 "wot",
-                {"passed": False, "expected": 22, "actual": 24},
+                {"passed": False, "expected": target, "actual": wot_value},
             ),
             _event(task_id, skill_id, "recovery_triggered", None, {"policy": "active_perception_then_retry"}),
         ]
     )
-    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 22, "wot"))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", target, "wot"))
     events.extend(
         [
             _event(task_id, skill_id, "primitive_executed", "wot", {"action": "read_property", "success": True}),
@@ -130,7 +147,7 @@ def run_recovery_demo_trace() -> list[dict]:
                 skill_id,
                 "postcondition_checked",
                 "wot",
-                {"passed": True, "expected": 22, "actual": 22},
+                {"passed": True, "expected": target, "actual": target},
             ),
             _event(task_id, skill_id, "skill_completed", "wot", {"final_status": "recovered"}),
             _event(task_id, skill_id, "task_completed", None, {"ready": True}),
