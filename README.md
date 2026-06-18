@@ -68,7 +68,30 @@ Use this path when the meeting room cannot run Docker. It still demonstrates the
 runtime trace shape, postcondition verification, conflict detection, and recovery
 metrics.
 
-### 3. Live smart-room environment
+### 3. External CUA benchmark demo (MiniWoB++ — visual, no Docker)
+
+Runs a curated suite of six multi-step browser tasks in a visible Chromium window.
+Each step is animated with a mauve arrow cursor, a fluorescent glowing trail, and
+an element highlight so every action is clearly legible to an audience.
+
+**Prerequisites (one-time):**
+
+```powershell
+git clone https://github.com/Farama-Foundation/miniwob-plusplus.git .external_envs/miniwob-plusplus
+uv pip install miniwob
+uv run playwright install chromium
+```
+
+**Run the demo:**
+
+```powershell
+uv run python scripts/run_miniwob_demo.py --step-delay 1.4 --pause-between --headed
+```
+
+A per-task success table is printed at the end. For full install/troubleshooting
+details see `env/RUNBOOK_external_envs.md` § A2.
+
+### 4. Live smart-room environment (Docker)
 
 Start the React dashboard and node-wot servient:
 
