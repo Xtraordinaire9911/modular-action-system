@@ -9,6 +9,8 @@ build/
 venv/
 .env
 *.env
+.cc-history/
+.codex-history/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
@@ -18,7 +20,9 @@ htmlcov/
 results/
 logs/
 screenshots/
+.external_envs/
 
 # Local paper / presentation artifacts
 local_docs/
 docs/
+*.png
