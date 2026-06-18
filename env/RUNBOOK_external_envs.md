@@ -92,7 +92,26 @@ uv pip install miniwob
 uv run python -c "import miniwob; print('miniwob import ok')"
 ```
 
-**Run OUR agent on a task, visibly (recommended — single command):**
+**▶ Run the curated demo suite (recommended — this is the main demo):**
+
+Six progressively harder multi-step tasks (type+submit, login form, password
+fields, read-and-click-link, ordered buttons, close dialog) run back to back.
+Each step is animated with a mauve arrow cursor, a fluorescent glowing trail,
+and an element highlight so an audience can follow every action in real time.
+
+```powershell
+uv run python scripts/run_miniwob_demo.py --step-delay 1.4 --pause-between --headed
+```
+
+- `--step-delay 1.4` — pause 1.4 s between visible actions (adjust to taste).
+- `--pause-between` — waits for Enter between tasks (good for live demos).
+- `--headed` — opens a real Chromium window (default; use `--headless` to suppress).
+- `--tasks enter-text login-user` — run only specific task stems (default: all 6).
+
+A per-task success table is printed at the end. Per-step screenshots land in
+`eval_outputs/external_runs/<timestamp>/`.
+
+**Run OUR agent on a single task (lower-level, generic runner):**
 
 ```powershell
 # See which tasks exist (filenames you can target)
@@ -104,8 +123,7 @@ Get-ChildItem .external_envs/miniwob-plusplus/miniwob/html/miniwob | Select-Obje
 uv run python scripts/run_agent_on_env.py --serve .external_envs/miniwob-plusplus/miniwob/html --path miniwob/click-button.html --goal "click button ONE" --headed --pause-at-end
 ```
 
-You will see Chromium open, the agent enumerate affordances, then click. Per-step
-screenshots land in `eval_outputs/external_runs/<timestamp>/`.
+You will see Chromium open, the agent enumerate affordances, then click.
 
 > Manual two-terminal alternative (only if you prefer it): serve with a port the
 > OS allows, e.g. `uv run python -m http.server 8123 --directory .external_envs/miniwob-plusplus/miniwob/html`,
