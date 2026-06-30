@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WebMail Pro — Inbox</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;color:#1e293b;height:100vh;display:flex;flex-direction:column}
+header{background:#1e293b;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+header .logo{font-size:1.15rem;font-weight:800;color:#818cf8}
+header .tagline{font-size:.78rem;color:#94a3b8;margin-left:auto}
+.app{display:flex;flex:1;overflow:hidden}
+#sidebar{width:200px;background:#f1f5f9;border-right:1px solid #e2e8f0;padding:16px 0;flex-shrink:0}
+.folder-item{padding:9px 20px;font-size:.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s}
+.folder-item:hover{background:#e2e8f0}
+.folder-item.active{background:#eef2ff;color:#4f46e5;font-weight:600}
+.folder-badge{margin-left:auto;background:#6366f1;color:#fff;font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:10px}
+#email-list{width:300px;border-right:1px solid #e2e8f0;overflow-y:auto;flex-shrink:0}
+#email-list-header{padding:12px 16px;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:1px solid #e2e8f0;background:#fff}
+.email-item{padding:14px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s;position:relative}
+.email-item:hover{background:#f8fafc}
+.email-item.selected{background:#eef2ff;border-left:3px solid #6366f1}
+.email-item.unread .email-subject{font-weight:700;color:#1e293b}
+.email-item.unread .email-sender{font-weight:700}
+.unread-dot{width:8px;height:8px;background:#6366f1;border-radius:50%;position:absolute;top:18px;left:4px;display:none}
+.email-item.unread .unread-dot{display:block}
+.email-sender{font-size:.88rem;color:#374151;margin-bottom:2px}
+.email-subject{font-size:.85rem;margin-bottom:3px;color:#374151}
+.email-preview{font-size:.78rem;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.email-time{font-size:.73rem;color:#94a3b8;position:absolute;top:14px;right:12px}
+#email-pane{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#email-header{padding:18px 24px 14px;border-bottom:1px solid #e2e8f0;background:#fff;flex-shrink:0}
+#email-subject-line{font-size:1.15rem;font-weight:700;margin-bottom:6px}
+#email-meta{font-size:.82rem;color:#64748b}
+#email-actions{padding:10px 24px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:8px;flex-shrink:0}
+#email-actions button{padding:7px 16px;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid;transition:all .15s}
+button#reply-btn{background:#6366f1;color:#fff;border-color:#6366f1}
+button#reply-btn:hover{background:#4f46e5}
+button#archive-btn{background:#fff;color:#374151;border-color:#d1d5db}
+button#archive-btn:hover{background:#f1f5f9}
+button#forward-btn{background:#fff;color:#374151;border-color:#d1d5db}
+button#forward-btn:hover{background:#f1f5f9}
+#email-body{padding:20px 24px;overflow-y:auto;flex:1;font-size:.92rem;line-height:1.65;color:#374151}
+#reply-panel{border-top:1px solid #e2e8f0;padding:16px 24px;background:#fff;flex-shrink:0}
+#reply-panel h4{font-size:.82rem;font-weight:600;color:#6366f1;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+textarea#reply-input{width:100%;padding:10px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:.88rem;font-family:inherit;line-height:1.5;resize:vertical;min-height:80px;outline:none;transition:border-color .15s;color:#1e293b}
+textarea#reply-input:focus{border-color:#6366f1}
+.reply-actions{display:flex;gap:8px;margin-top:10px}
+button#send-btn{padding:8px 22px;background:#6366f1;color:#fff;border:none;border-radius:7px;font-weight:600;cursor:pointer;font-size:.88rem;transition:background .15s}
+button#send-btn:hover{background:#4f46e5}
+button#discard-btn{padding:8px 14px;background:none;color:#64748b;border:1px solid #d1d5db;border-radius:7px;font-size:.88rem;cursor:pointer}
+.sent-notice{display:none;background:#dcfce7;color:#15803d;padding:8px 14px;border-radius:7px;font-size:.85rem;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">WebMail Pro</span>
+  <span class="tagline">Inbox &mdash; 1 unread</span>
+</header>
+<div class="app">
+  <nav id="sidebar" aria-label="Folders">
+    <div class="folder-item active">&#128231; Inbox <span class="folder-badge">1</span></div>
+    <div class="folder-item">&#9993; Sent</div>
+    <div class="folder-item">&#128196; Drafts</div>
+    <div class="folder-item">&#128465; Trash</div>
+  </nav>
+  <div id="email-list" aria-label="Email list">
+    <div id="email-list-header">Inbox</div>
+    <div class="email-item unread selected" data-id="alice" data-sender="Alice Chen" data-subject="Re: Project Update — Action System Demo" data-body="Hi,&lt;br&gt;&lt;br&gt;I reviewed the latest demo recording — the cursor trail effect looks fantastic! The periwinkle colour really stands out against the white background.&lt;br&gt;&lt;br&gt;Could we schedule a quick call this week to walk through the architecture? I want to make sure the WebArena integration is solid before the final presentation.&lt;br&gt;&lt;br&gt;Best,&lt;br&gt;Alice">
+      <div class="unread-dot"></div>
+      <div class="email-sender">Alice Chen</div>
+      <div class="email-subject">Re: Project Update — Action System Demo</div>
+      <div class="email-preview">I reviewed the latest demo recording — the cursor trail effect looks fantastic!</div>
+      <div class="email-time">10:42 AM</div>
+    </div>
+    <div class="email-item" data-id="bob" data-sender="Bob Smith" data-subject="Meeting tomorrow at 3pm" data-body="Hi,&lt;br&gt;&lt;br&gt;Just a reminder that we have a team meeting tomorrow at 3pm in Conference Room B. Please bring your weekly progress notes.&lt;br&gt;&lt;br&gt;See you there,&lt;br&gt;Bob">
+      <div class="unread-dot"></div>
+      <div class="email-sender">Bob Smith</div>
+      <div class="email-subject">Meeting tomorrow at 3pm</div>
+      <div class="email-preview">Just a reminder that we have a team meeting tomorrow at 3pm in Conference Room B.</div>
+      <div class="email-time">Yesterday</div>
+    </div>
+    <div class="email-item" data-id="system" data-sender="System Notifications" data-subject="Your weekly activity report" data-body="Here is your weekly activity summary:&lt;br&gt;&lt;br&gt;- Emails sent: 12&lt;br&gt;- Emails received: 28&lt;br&gt;- Storage used: 2.1 GB of 15 GB&lt;br&gt;&lt;br&gt;No action required.">
+      <div class="unread-dot"></div>
+      <div class="email-sender">System Notifications</div>
+      <div class="email-subject">Your weekly activity report</div>
+      <div class="email-preview">Here is your weekly activity summary...</div>
+      <div class="email-time">Mon</div>
+    </div>
+  </div>
+  <section id="email-pane" aria-label="Email content">
+    <div id="email-header">
+      <div id="email-subject-line">Re: Project Update — Action System Demo</div>
+      <div id="email-meta">From: <strong>Alice Chen</strong> &lt;alice@cs.tum.de&gt; &nbsp;|&nbsp; To: you &nbsp;|&nbsp; 10:42 AM</div>
+    </div>
+    <div id="email-actions">
+      <button id="reply-btn" aria-label="Reply to this email">Reply</button>
+      <button id="archive-btn" aria-label="Archive this email">Archive</button>
+      <button id="forward-btn" aria-label="Forward this email">Forward</button>
+    </div>
+    <div id="email-body">I reviewed the latest demo recording &mdash; the cursor trail effect looks fantastic! The periwinkle colour really stands out against the white background.<br><br>Could we schedule a quick call this week to walk through the architecture? I want to make sure the WebArena integration is solid before the final presentation.<br><br>Best,<br>Alice</div>
+    <div id="reply-panel">
+      <h4>Reply</h4>
+      <textarea id="reply-input" placeholder="Write your reply here..." aria-label="Reply message body"></textarea>
+      <div class="reply-actions">
+        <button id="send-btn" aria-label="Send reply">Send Reply</button>
+        <button id="discard-btn" aria-label="Discard reply">Discard</button>
+        <span class="sent-notice" id="sent-notice">&#10003; Message sent!</span>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+// Click email in list -> update pane content
+document.querySelectorAll('.email-item').forEach(function(item){
+  item.addEventListener('click',function(){
+    document.querySelectorAll('.email-item').forEach(function(i){i.classList.remove('selected');});
+    item.classList.add('selected');
+    item.classList.remove('unread');
+    document.getElementById('email-subject-line').textContent = item.getAttribute('data-subject');
+    document.getElementById('email-meta').innerHTML = 'From: <strong>'+item.getAttribute('data-sender')+'</strong> &nbsp;|&nbsp; To: you';
+    document.getElementById('email-body').innerHTML = item.getAttribute('data-body');
+    document.getElementById('reply-input').value='';
+    document.getElementById('sent-notice').style.display='none';
+    // update header unread count
+    var unreadCount = document.querySelectorAll('.email-item.unread').length;
+    document.querySelector('.tagline').textContent = unreadCount+' unread';
+    document.querySelector('.folder-badge').textContent = unreadCount||'';
+    if(!unreadCount) document.querySelector('.folder-badge').style.display='none';
+  });
+});
+
+document.getElementById('reply-btn').addEventListener('click',function(){
+  document.getElementById('reply-input').focus();
+  document.getElementById('reply-input').scrollIntoView({block:'center'});
+});
+
+document.getElementById('send-btn').addEventListener('click',function(){
+  var body = document.getElementById('reply-input').value.trim();
+  if(!body){alert('Please write a reply first.');return;}
+  var notice = document.getElementById('sent-notice');
+  notice.style.display='inline-flex';
+  document.getElementById('reply-input').value='';
+  setTimeout(function(){notice.style.display='none';},4000);
+});
+
+document.getElementById('archive-btn').addEventListener('click',function(){
+  var sel = document.querySelector('.email-item.selected');
+  if(sel){sel.style.opacity='0.35';sel.style.textDecoration='line-through';}
+});
+
+document.getElementById('discard-btn').addEventListener('click',function(){
+  document.getElementById('reply-input').value='';
+});
+</script>
+</body>
+</html>

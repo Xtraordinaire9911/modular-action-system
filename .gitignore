@@ -24,4 +24,5 @@ screenshots/
 
 # Local paper / presentation artifacts
 local_docs/
+docs/
 *.png
