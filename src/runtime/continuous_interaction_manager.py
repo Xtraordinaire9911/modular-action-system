@@ -3,14 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import Protocol
 
 from src.contracts.types import ExecutionResult, Observation, SkillCall, SkillTuple
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from src.skill_library.library import SkillLibrary
 from src.recovery.human_escalation import HumanEscalationPolicy
 from src.recovery.reroute_policy import ReroutePolicy
 from src.recovery.retry_policy import RetryPolicy
@@ -40,15 +35,11 @@ class ContinuousInteractionManager:
 
     def __init__(
         self,
-        skill_library: "SkillLibrary | Mapping[str, SkillTuple]",
+        skill_library: dict[str, SkillTuple],
         executors: dict[str, Executor],
         cognitive_map: CognitiveMap,
     ) -> None:
-        # Accept the typed SkillLibrary (single source of truth) or a plain
-        # mapping; normalize to a dict so lookups stay O(1) either way.
-        self.skill_library: dict[str, SkillTuple] = (
-            skill_library.as_dict() if hasattr(skill_library, "as_dict") else dict(skill_library)
-        )
+        self.skill_library = skill_library
         self.executors = executors
         self.cognitive_map = cognitive_map
         self.state = RuntimeState.IDLE
