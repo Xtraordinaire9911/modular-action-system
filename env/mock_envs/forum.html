@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TechTalk Forum</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+header{background:#1e293b;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+header .logo{font-size:1.2rem;font-weight:800;color:#818cf8}
+header .subtitle{font-size:.8rem;color:#94a3b8}
+main{max-width:900px;margin:24px auto;padding:0 16px;display:flex;gap:20px}
+#posts-col{flex:1}
+.section-title{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-bottom:12px}
+.post-card{background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;gap:12px;align-items:flex-start;transition:box-shadow .2s}
+.post-card:hover{box-shadow:0 3px 12px rgba(99,102,241,.13)}
+.vote-col{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:36px}
+.upvote-btn{width:32px;height:32px;border:1.5px solid #d1d5db;border-radius:7px;background:#fff;color:#64748b;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.upvote-btn:hover{border-color:#6366f1;color:#6366f1;background:#eef2ff}
+.upvote-btn.voted{background:#6366f1;color:#fff;border-color:#6366f1}
+.vote-count{font-size:.85rem;font-weight:700;color:#374151;font-family:monospace}
+.post-content{flex:1}
+.post-title{font-size:.97rem;font-weight:600;margin-bottom:4px;color:#1e293b;line-height:1.3}
+.post-meta{font-size:.75rem;color:#94a3b8;display:flex;gap:10px;align-items:center}
+.post-tag{background:#eef2ff;color:#6366f1;padding:2px 7px;border-radius:4px;font-size:.7rem;font-weight:600}
+.post-comments{color:#64748b}
+#new-post-col{width:300px;flex-shrink:0}
+#new-post-box{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.07);position:sticky;top:70px}
+#new-post-box h3{font-size:.95rem;font-weight:700;margin-bottom:14px;color:#1e293b;display:flex;align-items:center;gap:8px}
+#new-post-box h3::before{content:'';display:inline-block;width:4px;height:16px;background:#6366f1;border-radius:2px}
+label{display:block;font-size:.8rem;font-weight:600;color:#374151;margin-bottom:4px;margin-top:12px}
+label:first-of-type{margin-top:0}
+input#post-title{width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;font-family:inherit;outline:none;transition:border-color .15s;color:#1e293b}
+input#post-title:focus{border-color:#6366f1}
+textarea#post-content{width:100%;padding:8px 12px;border:1.5px solid #d1d5db;border-radius:7px;font-size:.85rem;font-family:inherit;line-height:1.5;resize:vertical;min-height:100px;outline:none;transition:border-color .15s;color:#1e293b}
+textarea#post-content:focus{border-color:#6366f1}
+button#submit-post-btn{width:100%;margin-top:14px;padding:10px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:.92rem;font-weight:700;cursor:pointer;transition:background .15s}
+button#submit-post-btn:hover{background:#4f46e5}
+.submit-success{display:none;margin-top:10px;background:#dcfce7;color:#15803d;padding:8px 12px;border-radius:7px;font-size:.82rem;font-weight:600;text-align:center}
+.new-post-highlight{animation:newpost .8s ease-out;border-left:3px solid #6366f1}
+@keyframes newpost{from{background:#eef2ff}to{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">TechTalk</span>
+  <span class="subtitle">The developer community forum</span>
+</header>
+<main>
+  <section id="posts-col" aria-label="Forum posts">
+    <div class="section-title">Hot Discussions</div>
+    <div id="post-list">
+      <article class="post-card">
+        <div class="vote-col">
+          <button class="upvote-btn" data-post="1" aria-label="Upvote post: AI agents are changing everything">&#9650;</button>
+          <span class="vote-count" id="votes-1">42</span>
+        </div>
+        <div class="post-content">
+          <div class="post-title">AI agents are changing everything — a practical breakdown</div>
+          <div class="post-meta">
+            <span class="post-tag">AI</span>
+            <span>by <strong>neural_nomad</strong></span>
+            <span class="post-comments">&#128172; 18 comments</span>
+            <span>3h ago</span>
+          </div>
+        </div>
+      </article>
+      <article class="post-card">
+        <div class="vote-col">
+          <button class="upvote-btn" data-post="2" aria-label="Upvote post: Best practices for browser automation">&#9650;</button>
+          <span class="vote-count" id="votes-2">28</span>
+        </div>
+        <div class="post-content">
+          <div class="post-title">Best practices for browser automation in 2025</div>
+          <div class="post-meta">
+            <span class="post-tag">DevOps</span>
+            <span>by <strong>selenium_sage</strong></span>
+            <span class="post-comments">&#128172; 9 comments</span>
+            <span>7h ago</span>
+          </div>
+        </div>
+      </article>
+      <article class="post-card">
+        <div class="vote-col">
+          <button class="upvote-btn" data-post="3" aria-label="Upvote post: New programming paradigms worth learning">&#9650;</button>
+          <span class="vote-count" id="votes-3">17</span>
+        </div>
+        <div class="post-content">
+          <div class="post-title">New programming paradigms worth learning this year</div>
+          <div class="post-meta">
+            <span class="post-tag">Learning</span>
+            <span>by <strong>code_curious</strong></span>
+            <span class="post-comments">&#128172; 5 comments</span>
+            <span>1d ago</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+  <aside id="new-post-col" aria-label="Create new post">
+    <div id="new-post-box">
+      <h3>New Post</h3>
+      <label for="post-title">Title</label>
+      <input type="text" id="post-title" placeholder="Enter a clear, specific title..." aria-label="Post title">
+      <label for="post-content">Content</label>
+      <textarea id="post-content" placeholder="Write your post here. Markdown supported." aria-label="Post content"></textarea>
+      <button id="submit-post-btn" aria-label="Submit new post">Post to Forum</button>
+      <div class="submit-success" id="submit-success">&#10003; Posted successfully!</div>
+    </div>
+  </aside>
+</main>
+<script>
+document.querySelectorAll('.upvote-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var post = btn.getAttribute('data-post');
+    var countEl = document.getElementById('votes-'+post);
+    if(btn.classList.contains('voted')){
+      // allow un-vote
+      btn.classList.remove('voted');
+      countEl.textContent = parseInt(countEl.textContent)-1;
+    } else {
+      btn.classList.add('voted');
+      countEl.textContent = parseInt(countEl.textContent)+1;
+    }
+  });
+});
+
+document.getElementById('submit-post-btn').addEventListener('click',function(){
+  var title = document.getElementById('post-title').value.trim();
+  var content = document.getElementById('post-content').value.trim();
+  if(!title){alert('Please enter a post title.');return;}
+  if(!content){alert('Please write some content.');return;}
+  // Prepend new post to the list
+  var list = document.getElementById('post-list');
+  var card = document.createElement('article');
+  card.className='post-card new-post-highlight';
+  card.innerHTML='<div class="vote-col"><button class="upvote-btn" aria-label="Upvote new post">&#9650;</button><span class="vote-count">1</span></div>'
+    +'<div class="post-content"><div class="post-title">'+title+'</div>'
+    +'<div class="post-meta"><span class="post-tag">New</span><span>by <strong>you</strong></span><span>just now</span></div></div>';
+  list.insertBefore(card,list.firstChild);
+  // Wire upvote for new card
+  card.querySelector('.upvote-btn').addEventListener('click',function(e){
+    var btn=e.currentTarget; var cnt=btn.closest('.vote-col').querySelector('.vote-count');
+    btn.classList.toggle('voted');
+    cnt.textContent=parseInt(cnt.textContent)+(btn.classList.contains('voted')?1:-1);
+  });
+  document.getElementById('post-title').value='';
+  document.getElementById('post-content').value='';
+  var notice = document.getElementById('submit-success');
+  notice.style.display='block';
+  setTimeout(function(){notice.style.display='none';},3500);
+});
+</script>
+</body>
+</html>
