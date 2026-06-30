@@ -92,12 +92,26 @@ uv pip install miniwob
 uv run python -c "import miniwob; print('miniwob import ok')"
 ```
 
-**▶ Run the curated demo suite (recommended — this is the main demo):**
+**▶ Run the full cross-environment fancy demo (recommended — best for live presentations):**
 
-Six progressively harder multi-step tasks (type+submit, login form, password
-fields, read-and-click-link, ordered buttons, close dialog) run back to back.
-Each step is animated with a mauve arrow cursor, a fluorescent glowing trail,
-and an element highlight so an audience can follow every action in real time.
+Spans MiniWoB++ academic tasks **and** three WebArena-style local mock environments
+(shopping, email, forum) in a single browser session. Each step is animated with a
+periwinkle (#8383ff) arrow cursor, a glowing trail, and an element highlight.
+Prints a colour-coded M1 cross-environment generalisation score table at the end.
+
+```powershell
+uv run python scripts/run_fancy_demo.py --headed --step-delay 1.3
+# Mock envs only (no MiniWoB++ clone needed):
+uv run python scripts/run_fancy_demo.py --headed --step-delay 1.3 --skip-miniwob
+```
+
+- `--step-delay 1.3` — pause between visible actions (adjust to taste).
+- `--skip-miniwob` — skip MiniWoB++ group; mock envs need only `playwright install chromium`.
+- `--headed` — opens a real Chromium window (default; `--headless` to suppress).
+- `--pause-between-groups` — waits for Enter between env groups (good for narrated demos).
+- `--pause-at-end` — hold browser open after all tasks complete.
+
+**▶ MiniWoB++ only (six curated tasks, no mock envs):**
 
 ```powershell
 uv run python scripts/run_miniwob_demo.py --step-delay 1.4 --pause-between --headed
