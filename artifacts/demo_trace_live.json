@@ -27,7 +27,7 @@
         "skill_id": "confirm_booking.room",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 66.347,
+        "latency_ms": 70.941,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -43,7 +43,7 @@
         "skill_id": "confirm_booking.time",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 20.702,
+        "latency_ms": 17.438,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -59,7 +59,7 @@
         "skill_id": "confirm_booking.submit",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 50.208,
+        "latency_ms": 38.201,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -75,7 +75,7 @@
         "skill_id": "turn_on_projector",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 533.293,
+        "latency_ms": 1066.169,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -93,7 +93,7 @@
         "skill_id": "set_temperature",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 397.831,
+        "latency_ms": 371.379,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -111,7 +111,7 @@
         "skill_id": "set_lighting",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 359.958,
+        "latency_ms": 462.52,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -154,7 +154,7 @@
         "skill_id": "set_temperature.pre_failure_drift",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 593.883,
+        "latency_ms": 649.008,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -172,7 +172,7 @@
         "skill_id": "set_temperature.injected_failure",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 533.991,
+        "latency_ms": 680.629,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -190,7 +190,7 @@
         "skill_id": "set_temperature.recovery_retry",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 554.119,
+        "latency_ms": 687.65,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -210,7 +210,7 @@
         "skill_id": "set_temperature.injected_failure",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 533.991,
+        "latency_ms": 680.629,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -224,7 +224,7 @@
         "skill_id": "set_temperature.recovery_retry",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 554.119,
+        "latency_ms": 687.65,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
