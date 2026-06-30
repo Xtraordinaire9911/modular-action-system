@@ -16,12 +16,14 @@ checks, recovery hooks, and failure-injection evaluation.
 
 ## Current Release State
 
-`main` contains the integrated Week-6 smart-room demo release. The member-B
-branches B-101 through B-105 were integrated through `develop` first, then
-promoted to `main` after the Python test suite and deterministic demo runner
-passed.
+`main` contains the integrated **Week-8** release.
 
-For future work, keep using this branch discipline:
+| Branch group | What it adds |
+|---|---|
+| B-101 – B-108 (Week 6) | DOM/WoT/Visual perception, System-1 effectors, cost-aware router, backend eval, browser-session retry |
+| B-109 (Week 7-8) | External CUA benchmark environments: MiniWoB++ (academic) + three WebArena-style local mock envs (shopping, email, forum); cross-environment fancy demo runner with periwinkle cursor trail, env badge overlay, and M1 generalisation score table |
+
+Branch discipline:
 
 - feature branches merge into `develop`;
 - `develop` is the integration branch for cross-member testing;
@@ -68,28 +70,39 @@ Use this path when the meeting room cannot run Docker. It still demonstrates the
 runtime trace shape, postcondition verification, conflict detection, and recovery
 metrics.
 
-### 3. External CUA benchmark demo (MiniWoB++ — visual, no Docker)
+### 3. External CUA benchmark demo (no Docker)
 
-Runs a curated suite of six multi-step browser tasks in a visible Chromium window.
-Each step is animated with a mauve arrow cursor, a fluorescent glowing trail, and
-an element highlight so every action is clearly legible to an audience.
+Two demo entry points, both in a visible Chromium window with a periwinkle arrow
+cursor, glowing trail, and per-action element highlight:
 
 **Prerequisites (one-time):**
 
 ```powershell
+uv run playwright install chromium
+# Only needed for the MiniWoB++ tasks:
 git clone https://github.com/Farama-Foundation/miniwob-plusplus.git .external_envs/miniwob-plusplus
 uv pip install miniwob
-uv run playwright install chromium
 ```
 
-**Run the demo:**
+**Full cross-environment fancy demo** (MiniWoB++ academic + WebArena-style mock envs):
+
+```powershell
+uv run python scripts/run_fancy_demo.py --headed --step-delay 1.3
+```
+
+Runs 3 MiniWoB++ tasks (login-user, click-dialog, click-link) plus 6 mock-env
+tasks across shopping, email, and forum surfaces, then prints a colour-coded M1
+cross-environment generalisation score table and saves per-task screenshots to
+`eval_outputs/external_runs/`. Add `--skip-miniwob` to demo the mock envs only
+(no MiniWoB++ clone required).
+
+**MiniWoB++ only:**
 
 ```powershell
 uv run python scripts/run_miniwob_demo.py --step-delay 1.4 --pause-between --headed
 ```
 
-A per-task success table is printed at the end. For full install/troubleshooting
-details see `env/RUNBOOK_external_envs.md` § A2.
+For full install/troubleshooting details see `env/RUNBOOK_external_envs.md` § A2.
 
 ### 4. Live smart-room environment (Docker)
 
@@ -181,6 +194,7 @@ The `environment.all_ok` field should be `true` when Docker services are up.
 | Experiment with SOTA ideas | SoM/VAM path follows OmniParser-style mark selection; code separates perception, grounding, execution, and recovery. |
 | WoT environment in Docker | `env/docker-compose.yml`, `env/node_wot_server/server.js`, `config/wot_td/*.td.json`. |
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
+| External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
 | PiP/session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
@@ -201,15 +215,27 @@ config/
   wot_td/                   Canonical TD fixtures
 env/
   docker-compose.yml        Canonical Week-6 Docker environment
+  mock_envs/                Self-contained HTML mock environments (Week 7)
+    shopping.html             WebArena-style e-commerce surface
+    email_inbox.html          WebArena-style email client surface
+    forum.html                WebArena-style discussion board surface
   node_wot_server/          node-wot servient + failure control plane
   react_dashboard/          React/Vite dashboard
+  RUNBOOK_external_envs.md  Setup and troubleshooting for external CUA benchmarks
 evaluation/
   backend_eval.py           Backend B1-B5 table harness + CLI baseline
+  cross_env_eval.py         Cross-environment M1 generalisation metric
   integration_eval.py       Deterministic normal/recovery traces
 scripts/
   inject_failures.py        Failure catalogue and live WoT fault injector
+  run_fancy_demo.py         Cross-environment fancy demo (MiniWoB++ + mock envs)
+  run_miniwob_demo.py       MiniWoB++-only curated demo suite
+  run_agent_on_env.py       Single-task agent runner with static file server
 src/
   backend_router/           Cost-aware routing and confidence tracking
+  benchmarks/               External CUA benchmark controllers and task suites
+    miniwob_tasks.py          MiniwobController, MockEnvController, DEMO_TASKS
+    mock_env_tasks.py         MockEnvTask definitions and solvers for mock envs
   contracts/                Shared dataclasses
   effectors/                DOM/WoT/Visual executors and System-1 reflexes
   perception/               DOM transducer, TD parser, SoM parser, browser session
@@ -218,7 +244,7 @@ src/
   safety/                   Unsafe-action/rate-limit helpers
   vam/                      VAM adapter and recovery payload
   verification/             Preconditions, postconditions, conflict detection
-tests/                      Unit and integration-smoke tests
+tests/                      Unit and integration-smoke tests (115 passing)
 ```
 
 ## Demo Troubleshooting
