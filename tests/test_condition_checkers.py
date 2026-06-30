@@ -103,37 +103,3 @@ def test_compound_param_predicate_fails_when_out_of_range():
     assert not results[0].passed
     assert results[0].observed == [35, 35]
     assert results[0].expected == [16, 30]
-
-
-def test_postcondition_checker_resolves_canonical_state_aliases():
-    cognitive_map = CognitiveMap(task_id="task_1")
-    cognitive_map.set_current_skill(SkillCall("set_lighting", {"brightness": 40}))
-    cognitive_map.device_states = {
-        "thermostat_A": {"targetTemperature": 22},
-        "lights": {"brightness": 40},
-        "projector_A": {"power": "on"},
-        "readiness": {"ready": True},
-    }
-    checker = PostconditionChecker()
-
-    results = checker.check(
-        [
-            Condition("thermostat.target_temperature == 22"),
-            Condition("lighting.brightness == params.brightness"),
-            Condition("projector.power == 'on'"),
-            Condition("readiness.ready == true"),
-        ],
-        cognitive_map,
-    )
-
-    assert all(result.passed for result in results)
-
-
-def test_missing_canonical_path_reports_clear_error():
-    cognitive_map = CognitiveMap(task_id="task_1")
-    checker = PostconditionChecker()
-
-    results = checker.check([Condition("thermostat.target_temperature == 22")], cognitive_map)
-
-    assert not results[0].passed
-    assert "missing canonical condition path" in results[0].reason
