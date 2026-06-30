@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
 from src.contracts.types import ExecutionResult, Observation, SkillCall, SkillTuple
@@ -32,6 +32,8 @@ class RuntimeStepResult:
     recovery_tier: int | None = None
     selected_backend: str = ""
     reason: str = ""
+    routing_reason: str = ""
+    conflict_ids: list[str] = field(default_factory=list)
 
 
 class ContinuousInteractionManager:
@@ -62,7 +64,14 @@ class ContinuousInteractionManager:
         self.safety = UnsafeActionDetector()
 
     async def run_skill(self, skill_call: SkillCall, observation: Observation) -> RuntimeStepResult:
-        skill_tuple = self.skill_library[skill_call.skill_id]
+        skill_tuple = self.skill_library.get(skill_call.skill_id)
+        if skill_tuple is None:
+            self.state = RuntimeState.FAILED
+            return RuntimeStepResult(
+                self.state,
+                None,
+                reason=f"unknown skill: {skill_call.skill_id}",
+            )
         self.cognitive_map.set_current_skill(skill_call)
         self.cognitive_map.update_from_observation(observation)
 
@@ -75,6 +84,7 @@ class ContinuousInteractionManager:
                 None,
                 recovery_tier=4,
                 reason=f"sensory conflict detected: {strongest.description}",
+                conflict_ids=[conflict.id for conflict in conflicts],
             )
 
         safety_decision = self.safety.decide(skill_call, skill_tuple)
@@ -88,13 +98,30 @@ class ContinuousInteractionManager:
             return RuntimeStepResult(self.state, None, recovery_tier=4, reason="precondition failed")
 
         self.state = RuntimeState.ROUTING
-        backend = self._select_backend(skill_call, skill_tuple)
+        backend, routing_reason = self._select_backend(skill_call, skill_tuple)
         if backend == "":
             self.state = RuntimeState.FAILED
-            return RuntimeStepResult(self.state, None, reason="no backend available")
+            return RuntimeStepResult(self.state, None, reason="no backend available", routing_reason=routing_reason)
 
         self.state = RuntimeState.EXECUTING
-        result = await self.executors[backend].execute(skill_call, observation)
+        try:
+            result = await self.executors[backend].execute(skill_call, observation)
+        except Exception as exc:
+            result = ExecutionResult(
+                skill_id=skill_call.skill_id,
+                backend_used=backend,
+                success=False,
+                latency_ms=0.0,
+                confidence=0.0,
+                failure_reason=f"executor_exception:{type(exc).__name__}",
+            )
+            return self._recover_from_result(
+                result,
+                skill_tuple,
+                failed_backend=backend,
+                tried_backends=[backend],
+                routing_reason=routing_reason,
+            )
         self.cognitive_map.record_execution_result(result)
 
         if not result.success:
@@ -103,6 +130,7 @@ class ContinuousInteractionManager:
                 skill_tuple,
                 failed_backend=backend,
                 tried_backends=[backend],
+                routing_reason=routing_reason,
             )
 
         self.state = RuntimeState.VERIFYING
@@ -122,28 +150,37 @@ class ContinuousInteractionManager:
                 failed_backend=backend,
                 tried_backends=[backend],
                 execution_result=result,
+                routing_reason=routing_reason,
             )
 
         self.state = RuntimeState.COMPLETED
-        return RuntimeStepResult(self.state, result, selected_backend=backend, reason="skill completed")
+        return RuntimeStepResult(
+            self.state,
+            result,
+            selected_backend=backend,
+            reason="skill completed",
+            routing_reason=routing_reason,
+        )
 
-    def _select_backend(self, skill_call: SkillCall, skill_tuple: SkillTuple) -> str:
+    def _select_backend(self, skill_call: SkillCall, skill_tuple: SkillTuple) -> tuple[str, str]:
         routing_decision = self.backend_router.select_backend(skill_call, self.cognitive_map)
         if (
             routing_decision.backend
             and routing_decision.backend in skill_tuple.allowed_backends
             and routing_decision.backend in self.executors
         ):
-            return routing_decision.backend
+            return routing_decision.backend, routing_decision.reason
 
         preferences = skill_call.preferred_backends or skill_tuple.preferred_backends
         for backend in preferences:
             if backend in skill_tuple.allowed_backends and backend in self.executors:
-                return backend
+                return backend, f"fallback preferred backend {backend}"
         for backend in skill_tuple.allowed_backends:
             if backend in self.executors:
-                return backend
-        return ""
+                return backend, f"fallback allowed backend {backend}"
+        if routing_decision.reason:
+            return "", routing_decision.reason
+        return "", "no allowed executor backend available"
 
     def _recover_from_result(
         self,
@@ -153,6 +190,7 @@ class ContinuousInteractionManager:
         failed_backend: str,
         tried_backends: list[str],
         execution_result: ExecutionResult | None = None,
+        routing_reason: str = "",
     ) -> RuntimeStepResult:
         recovery = self.recovery_cascade.decide(
             result,
@@ -180,4 +218,5 @@ class ContinuousInteractionManager:
             recovery_tier=recovery.recovery_tier,
             selected_backend=selected_backend,
             reason=recovery.reason,
+            routing_reason=routing_reason,
         )

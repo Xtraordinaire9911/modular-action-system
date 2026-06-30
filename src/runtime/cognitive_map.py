@@ -86,9 +86,13 @@ class CognitiveMap:
         self.touch()
 
     def update_affordances(self, affordances: list[ContractAffordance]) -> None:
+        runtime_affordances = [_runtime_affordance_from_contract(affordance) for affordance in affordances]
+        for affordance in runtime_affordances:
+            _validate_runtime_affordance(affordance)
         self.affordances = affordances
-        for affordance in affordances:
-            self.add_affordance(_runtime_affordance_from_contract(affordance))
+        for affordance in runtime_affordances:
+            affordance.confidence = _clamp_confidence(affordance.confidence)
+            self.runtime_affordances[affordance.id] = affordance
         self.touch()
 
     def add_entity(self, entity: Entity) -> None:
@@ -100,10 +104,7 @@ class CognitiveMap:
         self.touch()
 
     def add_affordance(self, affordance: RuntimeAffordance) -> None:
-        if not affordance.id.strip():
-            raise ValueError("affordance.id must be non-empty")
-        if not affordance.entity_id.strip():
-            raise ValueError("affordance.entity_id must be non-empty")
+        _validate_runtime_affordance(affordance)
         affordance.confidence = _clamp_confidence(affordance.confidence)
         self.runtime_affordances[affordance.id] = affordance
         self.touch()
@@ -249,6 +250,15 @@ class CognitiveMap:
 
 def _clamp_confidence(confidence: float) -> float:
     return max(0.0, min(1.0, confidence))
+
+
+def _validate_runtime_affordance(affordance: RuntimeAffordance) -> None:
+    if not affordance.id.strip():
+        raise ValueError("affordance.id must be non-empty")
+    if not affordance.entity_id.strip():
+        raise ValueError("affordance.entity_id must be non-empty")
+    if not affordance.action_name.strip():
+        raise ValueError("affordance.action_name must be non-empty")
 
 
 def _runtime_affordance_from_contract(affordance: ContractAffordance) -> RuntimeAffordance:

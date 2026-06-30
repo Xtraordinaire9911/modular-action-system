@@ -23,13 +23,21 @@ from src.verification.conflict_detector import EpistemicArbiter, SemanticConsist
 
 
 class _RecordingExecutor:
-    def __init__(self, backend: str, result: ExecutionResult | None = None) -> None:
+    def __init__(
+        self,
+        backend: str,
+        result: ExecutionResult | None = None,
+        exception: Exception | None = None,
+    ) -> None:
         self.backend = backend
         self.calls: list[SkillCall] = []
         self.result = result
+        self.exception = exception
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         self.calls.append(skill_call)
+        if self.exception is not None:
+            raise self.exception
         return self.result or ExecutionResult(
             skill_id=skill_call.skill_id,
             backend_used=self.backend,
@@ -508,6 +516,39 @@ def test_cognitive_map_adapts_contract_affordances_for_runtime_routing():
     assert affordance.grounding["selector"] == "#book"
 
 
+def test_cognitive_map_rejects_invalid_contract_affordance_without_partial_update():
+    cmap = CognitiveMap(task_id="task_contract_affordance_bad_case")
+    existing = Affordance(
+        id="dom_existing",
+        source="DOM",
+        type="button",
+        label="Book Room",
+        action="click",
+        locator={"selector": "#book", "entity_id": "booking_button", "skill_id": "confirm_booking"},
+        confidence=0.92,
+    )
+    cmap.update_affordances([existing])
+
+    with pytest.raises(ValueError):
+        cmap.update_affordances(
+            [
+                existing,
+                Affordance(
+                    id="",
+                    source="DOM",
+                    type="button",
+                    label="Broken",
+                    action="click",
+                    locator={"selector": "#broken"},
+                    confidence=0.5,
+                ),
+            ]
+        )
+
+    assert list(cmap.runtime_affordances) == ["dom_existing"]
+    assert cmap.affordances == [existing]
+
+
 def test_continuous_interaction_manager_blocks_system1_on_sensory_conflict():
     wot_executor = _RecordingExecutor("wot")
     manager = ContinuousInteractionManager(
@@ -529,6 +570,7 @@ def test_continuous_interaction_manager_blocks_system1_on_sensory_conflict():
     assert result.state == RuntimeState.ESCALATED
     assert result.recovery_tier == 4
     assert "sensory conflict detected" in result.reason
+    assert result.conflict_ids == ["thermostat_A.temperature"]
     assert wot_executor.calls == []
 
 
@@ -564,6 +606,7 @@ def test_continuous_interaction_manager_uses_runtime_backend_router_when_afforda
 
     assert result.state == RuntimeState.COMPLETED
     assert result.selected_backend == "dom"
+    assert result.routing_reason == "selected dom for confirm_booking"
     assert len(dom_executor.calls) == 1
     assert wot_executor.calls == []
 
@@ -587,8 +630,48 @@ def test_continuous_interaction_manager_falls_back_to_preferred_backend_without_
 
     assert result.state == RuntimeState.COMPLETED
     assert result.selected_backend == "wot"
+    assert result.routing_reason == "fallback preferred backend wot"
     assert len(wot_executor.calls) == 1
     assert dom_executor.calls == []
+
+
+def test_continuous_interaction_manager_handles_unknown_skill_without_crashing():
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill_tuple()},
+        {"wot": _RecordingExecutor("wot")},
+        CognitiveMap(task_id="task_unknown_skill"),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("missing_skill", {}), Observation()))
+
+    assert result.state == RuntimeState.FAILED
+    assert result.execution_result is None
+    assert result.reason == "unknown skill: missing_skill"
+
+
+def test_continuous_interaction_manager_converts_executor_exception_to_recovery_decision():
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom", "visual"],
+                preferred_backends=["dom"],
+            )
+        },
+        {
+            "dom": _RecordingExecutor("dom", exception=TimeoutError("playwright timed out")),
+            "visual": _RecordingExecutor("visual"),
+        },
+        CognitiveMap(task_id="task_executor_exception"),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+
+    assert result.state == RuntimeState.RECOVERING
+    assert result.recovery_tier == 2
+    assert result.selected_backend == "visual"
+    assert result.execution_result is not None
+    assert result.execution_result.failure_reason == "executor_exception:TimeoutError"
 
 
 def test_continuous_interaction_manager_uses_recovery_cascade_for_failures_and_postconditions():
