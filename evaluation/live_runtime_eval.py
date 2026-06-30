@@ -13,25 +13,26 @@ import json
 import time
 import urllib.error
 import urllib.request
-from threading import Thread
-from urllib.parse import urlparse, urlunparse
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from threading import Thread
 from typing import Any, Awaitable, Callable
+from urllib.parse import urlparse, urlunparse
+
+from playwright.async_api import async_playwright
 
 from src.contracts.types import Observation, SkillCall
 from src.effectors.dom_executor import DomExecutor
 from src.effectors.visual_executor import VisualExecutor
 from src.effectors.wot_executor import WotExecutor
-from src.perception.som_parser import BoundingBox, VisualMark, annotate_screenshot, marks_from_affordances
 from src.perception.dom_transducer import DomTransducer
+from src.perception.som_parser import BoundingBox, VisualMark, marks_from_affordances
 from src.perception.td_affordance_parser import TdAffordanceParser
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, RuntimeStepResult
 from src.runtime.state_machine import RuntimeState
 from src.skill_library import FailureProfile, TaskFixture, expected_skill_calls, get_task_fixture, load_failure_profiles
 from src.skill_library.library import load_skill_library
-from playwright.async_api import async_playwright
 
 
 def _get_json(url: str, *, timeout_s: float = 2.0) -> tuple[bool, Any]:

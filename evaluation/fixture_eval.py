@@ -19,7 +19,13 @@ from src.contracts.types import ExecutionResult, Observation, SkillCall
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, RuntimeStepResult
 from src.runtime.state_machine import RuntimeState
-from src.skill_library import expected_skill_calls, get_task_fixture, load_failure_profiles, load_skill_library, load_task_fixtures
+from src.skill_library import (
+    expected_skill_calls,
+    get_task_fixture,
+    load_failure_profiles,
+    load_skill_library,
+    load_task_fixtures,
+)
 
 
 @dataclass
