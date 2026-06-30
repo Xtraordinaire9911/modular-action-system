@@ -15,11 +15,11 @@ from typing import Any, Callable
 
 @dataclass
 class MockEnvTask:
-    name: str          # short identifier
-    env_label: str     # shown in the in-page badge and console
-    title: str         # human-facing description
-    html_path: str     # filename under env/mock_envs/
-    goal: str          # natural-language task objective
+    name: str  # short identifier
+    env_label: str  # shown in the in-page badge and console
+    title: str  # human-facing description
+    html_path: str  # filename under env/mock_envs/
+    goal: str  # natural-language task objective
     solve: Callable[[Any], None]
     # Text that must appear in page body (case-insensitive) to count as success.
     # Empty string means "no exception during solve" counts as success.
