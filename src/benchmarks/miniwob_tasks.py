@@ -20,12 +20,10 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
-# JS injected into the page to make each step legible: animate a cute arrow
-# cursor to the target with a fluorescent (mauve/lotus-pink-theme) glowing
-# trail, pulse an outline on the element, and show a floating caption. Returns
-# whether the selector resolved (callers skip safely on false). The cursor
-# persists across steps so it visibly travels between targets on the same page;
-# on a freshly loaded page it simply appears at the target (no misleading trail).
+# JS injected into the page: animate a periwinkle arrow cursor to the target
+# with a glowing trail, highlight the element, show a caption. Returns whether
+# the selector resolved (callers skip safely on false). Cursor persists across
+# steps on the same page; appears at target without trail on fresh page load.
 _FLASH_JS = """
 (a)=>{
   const el=document.querySelector(a.sel); if(!el) return false;
@@ -36,7 +34,7 @@ _FLASH_JS = """
     const st=document.createElement('style'); st.id='__cua_style';
     st.textContent='@keyframes __cua_fade{from{opacity:.9}to{opacity:0}}'
       +'.__cua_dot{position:fixed;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;'
-      +'background:radial-gradient(circle,#e8a0d0,#8383ff);box-shadow:0 0 8px 2px rgba(200,122,175,.85);'
+      +'background:radial-gradient(circle,#b0b0ff,#8383ff);box-shadow:0 0 8px 2px rgba(131,131,255,.85);'
       +'pointer-events:none;z-index:99998;animation:__cua_fade .6s ease-out forwards}';
     document.head.appendChild(st);
   }
@@ -44,7 +42,7 @@ _FLASH_JS = """
   if(!cur){
     cur=document.createElement('div'); cur.id='__cua_cursor';
     cur.style.cssText='position:fixed;z-index:100000;pointer-events:none;'
-      +'transition:left .5s ease,top .5s ease;filter:drop-shadow(0 0 6px rgba(200,122,175,.9));'
+      +'transition:left .5s ease,top .5s ease;filter:drop-shadow(0 0 6px rgba(131,131,255,.9));'
       +'left:'+tx+'px;top:'+ty+'px';
     cur.innerHTML='<svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15 '
       +'L12.5 22 L15 21 L11.5 14 L18 14 Z" fill="#8383ff" stroke="#fff" stroke-width="1.3" '
@@ -59,7 +57,7 @@ _FLASH_JS = """
   }
   cur.style.left=tx+'px'; cur.style.top=ty+'px';
   document.querySelectorAll('.__cua_hl').forEach(e=>{e.style.outline='';e.style.boxShadow='';e.classList.remove('__cua_hl')});
-  el.style.outline='3px solid #8383ff'; el.style.boxShadow='0 0 0 6px rgba(200,122,175,.25)'; el.classList.add('__cua_hl');
+  el.style.outline='3px solid #8383ff'; el.style.boxShadow='0 0 0 6px rgba(131,131,255,.25)'; el.classList.add('__cua_hl');
   const o=document.getElementById('__cua_cap'); if(o)o.remove();
   const c=document.createElement('div'); c.id='__cua_cap'; c.textContent=a.label;
   c.style.cssText='position:fixed;z-index:99999;left:16px;bottom:16px;background:#111;color:#fff;'
@@ -74,6 +72,19 @@ _TAG_JS = (
     "const prior=document.getElementById('__cua_target'); if(prior) prior.removeAttribute('id');"
     "const el=[...sc.querySelectorAll(a.tag)].find(e=>e.textContent.trim()===a.text);"
     "if(!el)return null;el.id='__cua_target';return '#__cua_target';}"
+)
+
+# JS: inject/update the env+task badge overlay (top-right corner, persists per page load).
+_BADGE_JS = (
+    "(a)=>{"
+    "let b=document.getElementById('__cua_badge');"
+    "if(!b){b=document.createElement('div');b.id='__cua_badge';"
+    "b.style.cssText='position:fixed;top:10px;right:10px;z-index:100001;"
+    "background:rgba(15,15,35,.9);color:#e2e8f0;font:bold 11px/1.6 monospace;"
+    "padding:6px 12px;border-radius:7px;border:1.5px solid #8383ff;"
+    "box-shadow:0 0 10px rgba(131,131,255,.45);pointer-events:none';"
+    "document.body.appendChild(b);}"
+    "b.innerHTML='<span style=\"color:#8383ff\">'+a.env+'</span><br>'+a.task;}"
 )
 
 
@@ -113,6 +124,13 @@ class MiniwobController:
             return float(self._s.evaluate("WOB_REWARD_GLOBAL") or 0.0)
         except Exception:
             return 0.0
+
+    def setup_badge(self, env_name: str, task_name: str) -> None:
+        """Inject/refresh the env+task overlay badge (top-right corner)."""
+        try:
+            self._s.evaluate(_BADGE_JS, {"env": env_name, "task": task_name})
+        except Exception:
+            pass  # badge is cosmetic; never fail the task for it
 
     # ── safe, visible primitives ───────────────────────────────────────────────
     def _highlight(self, css: str, label: str) -> bool:
@@ -155,6 +173,21 @@ class MiniwobController:
         self._s.click(selector)
         self._pause(0.5)
         return True
+
+
+class MockEnvController(MiniwobController):
+    """MiniwobController variant for non-MiniWoB pages (no #sync-task-cover gate,
+    no WOB_REWARD_GLOBAL). Reuses all highlight/fill/click primitives unchanged."""
+
+    def start(self) -> None:
+        # No START gate on mock pages — just pause briefly for the page to settle.
+        self._pause(0.3)
+
+    def query(self) -> str:
+        return ""  # goal is provided externally by the task spec
+
+    def reward(self) -> float:
+        return 0.0  # success evaluated by the runner, not a JS global
 
 
 # ── task solvers (each grounded in the real MiniWoB task HTML) ──────────────────
