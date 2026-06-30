@@ -87,6 +87,8 @@ class CognitiveMap:
 
     def update_affordances(self, affordances: list[ContractAffordance]) -> None:
         self.affordances = affordances
+        for affordance in affordances:
+            self.add_affordance(_runtime_affordance_from_contract(affordance))
         self.touch()
 
     def add_entity(self, entity: Entity) -> None:
@@ -247,6 +249,41 @@ class CognitiveMap:
 
 def _clamp_confidence(confidence: float) -> float:
     return max(0.0, min(1.0, confidence))
+
+
+def _runtime_affordance_from_contract(affordance: ContractAffordance) -> RuntimeAffordance:
+    source: SourceType
+    if affordance.source == "DOM":
+        source = "dom"
+    elif affordance.source == "VISUAL":
+        source = "visual"
+    else:
+        source = "wot"
+    locator = dict(affordance.locator)
+    state = dict(affordance.state)
+    action_name = str(locator.get("skill_id") or state.get("skill_id") or affordance.action)
+    skill_names = [action_name]
+    for candidate in (locator.get("skill_name"), state.get("skill_name")):
+        if isinstance(candidate, str) and candidate not in skill_names:
+            skill_names.append(candidate)
+    entity_id = str(
+        locator.get("entity_id")
+        or locator.get("thing_id")
+        or locator.get("target_id")
+        or state.get("entity_id")
+        or affordance.id
+    )
+    return RuntimeAffordance(
+        id=affordance.id,
+        source=source,
+        entity_id=entity_id,
+        action_name=action_name,
+        action_type=affordance.type,
+        confidence=affordance.confidence,
+        grounding={**locator, "label": affordance.label, "safety_level": affordance.safety_level},
+        input_schema=state.get("input_schema") if isinstance(state.get("input_schema"), dict) else None,
+        skill_names=skill_names,
+    )
 
 
 def _deep_merge(target: dict[str, Any], update: dict[str, Any]) -> None:
