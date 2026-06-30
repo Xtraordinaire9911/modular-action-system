@@ -78,7 +78,7 @@ def _summary_table(groups: list[dict]) -> None:
     for g in groups:
         ok = g["ok"]
         n = g["n"]
-        pct = 100*ok/n if n else 0
+        pct = 100 * ok / n if n else 0
         bar = ("█" * int(pct / 5)).ljust(20)
         label = g["label"][:32]
         total_ok += ok
@@ -86,7 +86,7 @@ def _summary_table(groups: list[dict]) -> None:
         colour = _GREEN if ok == n else (_YELLOW if ok else _RED)
         print(f"  {label:<33} {colour}{ok}/{n}  {pct:5.1f}%  {bar}{_R}")
     print(f"  {'─'*58}")
-    total_pct = 100*total_ok/total_all if total_all else 0
+    total_pct = 100 * total_ok / total_all if total_all else 0
     bar = ("█" * int(total_pct / 5)).ljust(20)
     colour = _GREEN if total_ok == total_all else (_YELLOW if total_ok else _RED)
     print(f"  {_BOLD}{'OVERALL (M1)':<33} {colour}{total_ok}/{total_all}  {total_pct:5.1f}%  {bar}{_R}")
@@ -95,8 +95,7 @@ def _summary_table(groups: list[dict]) -> None:
 
 def _run_miniwob_group(session: object, suite: list, step_delay: float, base_url: str, shots: Path) -> dict:
     """Run MiniWoB++ tasks; return group stats dict."""
-    ctrl = MiniwobController(session, step_delay=step_delay,
-                             narrate=lambda m: print(f"    {_DIM}{m}{_R}"))
+    ctrl = MiniwobController(session, step_delay=step_delay, narrate=lambda m: print(f"    {_DIM}{m}{_R}"))
     outcomes: list[dict] = []
     for idx, task in enumerate(suite, 1):
         session.open(f"{base_url}/{task.name}.html")
@@ -106,12 +105,10 @@ def _run_miniwob_group(session: object, suite: list, step_delay: float, base_url
         try:
             outcome = run_task(ctrl, task)
         except Exception as exc:
-            outcome = {"name": task.name, "success": False, "reward": 0.0,
-                       "utterance": "", "title": task.title}
+            outcome = {"name": task.name, "success": False, "reward": 0.0, "utterance": "", "title": task.title}
             print(f"    {_RED}[error] {exc}{_R}")
         elapsed = time.monotonic() - t0
-        _task_row(idx, len(suite), task.name, outcome["success"], elapsed,
-                  f"reward={outcome.get('reward', 0):.2f}")
+        _task_row(idx, len(suite), task.name, outcome["success"], elapsed, f"reward={outcome.get('reward', 0):.2f}")
         screenshot_path = shots / f"wob_{idx:02d}_{task.name}.png"
         try:
             session.screenshot(str(screenshot_path))
@@ -122,11 +119,11 @@ def _run_miniwob_group(session: object, suite: list, step_delay: float, base_url
     return {"label": "MiniWoB++ (academic benchmark)", "ok": ok, "n": len(outcomes)}
 
 
-def _run_mock_group(session: object, tasks: list, step_delay: float,
-                    base_url: str, env_label: str, shots: Path) -> dict:
+def _run_mock_group(
+    session: object, tasks: list, step_delay: float, base_url: str, env_label: str, shots: Path
+) -> dict:
     """Run a group of mock-env tasks sharing the same html_path; return group stats."""
-    ctrl = MockEnvController(session, step_delay=step_delay,
-                             narrate=lambda m: print(f"    {_DIM}{m}{_R}"))
+    ctrl = MockEnvController(session, step_delay=step_delay, narrate=lambda m: print(f"    {_DIM}{m}{_R}"))
     outcomes: list[dict] = []
     for idx, task in enumerate(tasks, 1):
         session.open(f"{base_url}/{task.html_path}")
@@ -194,19 +191,21 @@ def main() -> None:
             wob_base = f"http://127.0.0.1:{wob_port}/miniwob"
         else:
             print(f"  {_YELLOW}[warn] MiniWoB++ not found at {miniwob_dir} — skipping.{_R}")
-            print(f"  {_DIM}Install: git clone https://github.com/Farama-Foundation/miniwob-plusplus {miniwob_dir}{_R}\n")
+            print(
+                f"  {_DIM}Install: git clone https://github.com/Farama-Foundation/miniwob-plusplus {miniwob_dir}{_R}\n"
+            )
 
     # ── Select task suites ───────────────────────────────────────────────────────
     # Default MiniWoB++ subset: login-user, click-dialog, click-link (varied, audience-friendly)
     default_wob = ["login-user", "click-dialog", "click-link"]
-    wob_suite = [t for t in DEMO_TASKS
-                 if t.name in (args.miniwob_tasks if args.miniwob_tasks else default_wob)]
-    mock_suite = ([t for t in MOCK_TASKS if t.name in args.mock_tasks]
-                  if args.mock_tasks else MOCK_TASKS)
+    wob_suite = [t for t in DEMO_TASKS if t.name in (args.miniwob_tasks if args.miniwob_tasks else default_wob)]
+    mock_suite = [t for t in MOCK_TASKS if t.name in args.mock_tasks] if args.mock_tasks else MOCK_TASKS
 
     # ── Determine first URL (need one to open the browser) ───────────────────────
-    first_url = mock_base + "/" + mock_suite[0].html_path if mock_suite else (
-        wob_base + "/" + wob_suite[0].name + ".html" if wob_suite else mock_base
+    first_url = (
+        mock_base + "/" + mock_suite[0].html_path
+        if mock_suite
+        else (wob_base + "/" + wob_suite[0].name + ".html" if wob_suite else mock_base)
     )
 
     session = BrowserSession.launch(first_url, headless=not args.headed)

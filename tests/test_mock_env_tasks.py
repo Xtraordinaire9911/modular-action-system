@@ -49,6 +49,7 @@ class RecordingController:
 
 # ── task list structure ──────────────────────────────────────────────────────────
 
+
 def test_mock_tasks_nonempty_and_valid():
     assert len(MOCK_TASKS) == 6
     for t in MOCK_TASKS:
@@ -71,6 +72,7 @@ def test_mock_tasks_html_paths():
 
 
 # ── MockEnvController no-gate contract ──────────────────────────────────────────
+
 
 class FakeSession:
     """Minimal BrowserSession duck-type: no real browser, evaluate always returns None."""
@@ -117,6 +119,7 @@ def test_mock_controller_reward_is_zero():
 
 
 # ── solver call-sequence contracts ───────────────────────────────────────────────
+
 
 def test_shopping_add_checkout_sequence():
     c = RecordingController()
@@ -172,11 +175,12 @@ def test_forum_new_post_sequence():
 
 # ── success_text contract ────────────────────────────────────────────────────────
 
+
 def test_success_text_values():
     by_name = {t.name: t for t in MOCK_TASKS}
     assert by_name["shopping-add-checkout"].success_text == "order confirmed"
     assert by_name["shopping-search-add"].success_text == "order confirmed"
     assert "sent" in by_name["email-reply-alice"].success_text.lower()
-    assert by_name["email-archive-bob"].success_text == ""    # visual-only
-    assert by_name["forum-upvote"].success_text == ""         # visual-only
-    assert by_name["forum-new-post"].success_text != ""       # has token
+    assert by_name["email-archive-bob"].success_text == ""  # visual-only
+    assert by_name["forum-upvote"].success_text == ""  # visual-only
+    assert by_name["forum-new-post"].success_text != ""  # has token

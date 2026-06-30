@@ -1,0 +1,33 @@
+{
+  "_about": "Concrete skill calls (skill_id + params) for each demo task. The runtime turns each entry into a SkillCall. Skill ids must resolve against the typed SkillLibrary loaded from config/skills_seed.json. The 'set_lighting' skill is the canonical id for what the demo narrative calls 'dim the lights'.",
+  "sequences": {
+    "prepare_room_A_1400": [
+      { "skill_id": "confirm_booking", "params": { "room": "A", "time": "14:00" } },
+      { "skill_id": "turn_on_projector", "params": { "room": "A" } },
+      { "skill_id": "set_temperature", "params": { "room": "A", "target": 22 } },
+      { "skill_id": "set_lighting", "params": { "room": "A", "brightness": 40 } },
+      { "skill_id": "verify_readiness", "params": { "room": "A" } }
+    ],
+    "prepare_room_A_already_booked": [
+      { "skill_id": "confirm_booking", "params": { "room": "A", "time": "14:00" } },
+      { "skill_id": "turn_on_projector", "params": { "room": "A" } },
+      { "skill_id": "set_temperature", "params": { "room": "A", "target": 22 } },
+      { "skill_id": "set_lighting", "params": { "room": "A", "brightness": 40 } },
+      { "skill_id": "verify_readiness", "params": { "room": "A" } }
+    ],
+    "prepare_room_A_thermostat_conflict": [
+      { "skill_id": "confirm_booking", "params": { "room": "A", "time": "14:00" } },
+      { "skill_id": "turn_on_projector", "params": { "room": "A" } },
+      { "skill_id": "set_temperature", "params": { "room": "A", "target": 22 } },
+      { "skill_id": "set_lighting", "params": { "room": "A", "brightness": 40 } },
+      { "skill_id": "verify_readiness", "params": { "room": "A" } }
+    ],
+    "prepare_room_A_dom_selector_changed": [
+      { "skill_id": "confirm_booking", "params": { "room": "A", "time": "14:00" } },
+      { "skill_id": "turn_on_projector", "params": { "room": "A" } },
+      { "skill_id": "set_temperature", "params": { "room": "A", "target": 22 } },
+      { "skill_id": "set_lighting", "params": { "room": "A", "brightness": 40 } },
+      { "skill_id": "verify_readiness", "params": { "room": "A" } }
+    ]
+  }
+}
