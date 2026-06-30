@@ -48,9 +48,9 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Expected result for the integrated Week-6 branch: all tests pass. The current
-suite covers contracts, DOM/WoT/SoM perception, System-1 effectors, VAM adapter,
-router, recovery cascade, backend evaluation, and the runtime smoke path.
+Expected result: all tests pass. The current suite covers contracts,
+DOM/WoT/SoM perception, System-1 effectors, VAM adapter, router, recovery cascade,
+backend evaluation, runtime smoke path, and external CUA benchmark controllers.
 
 ### 2. Deterministic offline demo
 
@@ -214,7 +214,7 @@ config/
   skills_seed.json          Initial smart-room skills
   wot_td/                   Canonical TD fixtures
 env/
-  docker-compose.yml        Canonical Week-6 Docker environment
+  docker-compose.yml        Smart-room Docker environment (node-wot + React dashboard)
   mock_envs/                Self-contained HTML mock environments (Week 7)
     shopping.html             WebArena-style e-commerce surface
     email_inbox.html          WebArena-style email client surface
@@ -236,15 +236,18 @@ src/
   benchmarks/               External CUA benchmark controllers and task suites
     miniwob_tasks.py          MiniwobController, MockEnvController, DEMO_TASKS
     mock_env_tasks.py         MockEnvTask definitions and solvers for mock envs
-  contracts/                Shared dataclasses
+  contracts/                Shared dataclasses (Affordance, ExecutionResult, …)
   effectors/                DOM/WoT/Visual executors and System-1 reflexes
   perception/               DOM transducer, TD parser, SoM parser, browser session
+  planner/                  Epistemic arbiter, planning gate, System-2 recovery
   recovery/                 Retry/reroute/rollback/escalation policies
   runtime/                  State machine and runtime cognitive map
-  safety/                   Unsafe-action/rate-limit helpers
+  safety/                   Unsafe-action detector, rate limiter
+  skill_library/            Canonical skill definitions and fixture loader
   vam/                      VAM adapter and recovery payload
   verification/             Preconditions, postconditions, conflict detection
 tests/                      Unit and integration-smoke tests (115 passing)
+.external_envs/             Cloned external benchmark repos (MiniWoB++, WebArena, …)
 ```
 
 ## Demo Troubleshooting
@@ -258,4 +261,4 @@ tests/                      Unit and integration-smoke tests (115 passing)
 - If the dashboard loads but WoT values stay stale, check `http://localhost:8080/thermostat`
   and `http://localhost:8081/state`.
 - `env/docker-compose.mock.yml` and the Flask `app.py` files are legacy mock
-  artifacts from earlier branches. Use `env/docker-compose.yml` for Week-6.
+  artifacts from earlier branches. Use `env/docker-compose.yml` for the smart-room env.
