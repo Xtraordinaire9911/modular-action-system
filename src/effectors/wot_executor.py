@@ -40,7 +40,7 @@ _SKILL_TO_STATE_SPEC = {
     "turn_on_projector": ("projector", "power", "power", "on"),
     "set_temperature": ("thermostat", "target_temperature", "targetTemperature", "target"),
     "set_lighting": ("lighting", "brightness", "brightness", "brightness"),
-    "verify_readiness": ("readiness", "ready", "ready", True),
+    "verify_readiness": ("readiness", "ready", "ready", "ready"),
 }
 
 
