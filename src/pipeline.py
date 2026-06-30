@@ -16,6 +16,7 @@ from dataclasses import asdict
 from src.contracts.types import Condition, ExecutionResult, Observation, RollbackSpec, SkillCall, SkillTuple
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.skill_library import SkillLibrary
 
 
 class NoOpExecutor:
@@ -33,23 +34,25 @@ class NoOpExecutor:
         )
 
 
-def build_smoke_skill_library() -> dict[str, SkillTuple]:
-    return {
-        "pipeline_smoke": SkillTuple(
-            skill_id="pipeline_smoke",
-            description="Validate that runtime orchestration can execute one safe smoke skill.",
-            parameters_schema={},
-            preconditions=[],
-            postconditions=[Condition("device_states.pipeline.smoke_completed == true")],
-            allowed_backends=["noop"],
-            preferred_backends=["noop"],
-            rollback=RollbackSpec("pipeline_smoke_rollback", {}),
-            failure_modes={},
-            timeout_ms=1000,
-            safety_level="low",
-            irreversible=False,
-        )
-    }
+def build_smoke_skill_library() -> SkillLibrary:
+    return SkillLibrary(
+        [
+            SkillTuple(
+                skill_id="pipeline_smoke",
+                description="Validate that runtime orchestration can execute one safe smoke skill.",
+                parameters_schema={},
+                preconditions=[],
+                postconditions=[Condition("device_states.pipeline.smoke_completed == true")],
+                allowed_backends=["noop"],
+                preferred_backends=["noop"],
+                rollback=RollbackSpec("pipeline_smoke_rollback", {}),
+                failure_modes={},
+                timeout_ms=1000,
+                safety_level="low",
+                irreversible=False,
+            )
+        ]
+    )
 
 
 async def run_smoke_pipeline(task_id: str = "pipeline_smoke_task") -> dict:

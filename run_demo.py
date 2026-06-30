@@ -119,10 +119,14 @@ def _find_affordance(affordances: list[Affordance], *, label: str = "", selector
 
 
 def _read_state(control_url: str) -> dict[str, Any]:
-    ok, detail = _get_json(f"{control_url.rstrip('/')}/state")
-    if not ok or not isinstance(detail, dict):
-        raise RuntimeError(f"control plane state unavailable: {detail}")
-    return detail
+    last_detail: Any = None
+    for _ in range(60):
+        ok, detail = _get_json(f"{control_url.rstrip('/')}/state")
+        if ok and isinstance(detail, dict):
+            return detail
+        last_detail = detail
+        time.sleep(0.5)
+    raise RuntimeError(f"control plane state unavailable: {last_detail}")
 
 
 def _ready_from_state(state: dict[str, Any], booked: bool) -> bool:
@@ -225,7 +229,7 @@ def run_live_agent_demo(
         execute_wot("set_temperature", "setTargetTemperature", 22)
         delay_for_demo()
         point_to("[data-testid='lighting-panel']", "WoT action: brightness 40%")
-        execute_wot("dim_lights", "setBrightness", 40)
+        execute_wot("set_lighting", "setBrightness", 40)
         delay_for_demo()
 
         time.sleep(2.0)
@@ -245,17 +249,18 @@ def run_live_agent_demo(
         if pause_at_end:
             input("Live browser paused after READY path. Press Enter to close it and run failure recovery...")
 
+    execute_wot("set_temperature.pre_failure_drift", "setTargetTemperature", 24)
     _post_json(
         f"{control_url.rstrip('/')}/failure",
         {"thing": "thermostat", "type": "postcondition_mismatch"},
     )
-    mismatch_result = execute_wot("set_temperature.injected_failure", "setTargetTemperature", 24)
+    mismatch_result = execute_wot("set_temperature.injected_failure", "setTargetTemperature", 22)
     failed_state = _read_state(control_url)
-    postcondition_failed = failed_state["state"]["thermostat"]["targetTemperature"] != 24
+    postcondition_failed = failed_state["state"]["thermostat"]["targetTemperature"] != 22
     _post_json(f"{control_url.rstrip('/')}/failure", {"thing": "thermostat", "clear": True})
-    recovery_result = execute_wot("set_temperature.recovery_retry", "setTargetTemperature", 24)
+    recovery_result = execute_wot("set_temperature.recovery_retry", "setTargetTemperature", 22)
     recovered_state = _read_state(control_url)
-    recovery_passed = recovered_state["state"]["thermostat"]["targetTemperature"] == 24
+    recovery_passed = recovered_state["state"]["thermostat"]["targetTemperature"] == 22
     trace.append(
         {
             "skill_id": "recovery_cascade",
@@ -311,7 +316,7 @@ def main() -> None:
     )
     parser.add_argument("--web-url", default="http://localhost:3000")
     parser.add_argument("--wot-url", default="http://localhost:8080")
-    parser.add_argument("--control-url", default="http://localhost:8081")
+    parser.add_argument("--control-url", default="http://[::1]:8081")
     parser.add_argument("--output-dir", default="artifacts")
     parser.add_argument("--headed", action="store_true", help="Show the Playwright browser window.")
     parser.add_argument("--step-delay", type=float, default=0.0, help="Seconds to wait after each visible action.")

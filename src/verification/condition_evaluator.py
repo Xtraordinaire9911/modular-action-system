@@ -38,6 +38,44 @@ _OPS: dict[str, Callable[[Any, Any], bool]] = {
 }
 
 
+_CANONICAL_PATH_ALIASES: dict[str, list[str]] = {
+    "booking_status": [
+        "device_states.booking_status",
+        "page_state.booking_status",
+    ],
+    "booking.confirmed": [
+        "device_states.booking_confirmed",
+        "page_state.booking_confirmed",
+    ],
+    "thermostat.target_temperature": [
+        "device_states.thermostat.target_temperature",
+        "device_states.thermostat.targetTemperature",
+        "device_states.thermostat_A.target_temperature",
+        "device_states.thermostat_A.targetTemperature",
+    ],
+    "thermostat.current_temperature": [
+        "device_states.thermostat.current_temperature",
+        "device_states.thermostat.currentTemperature",
+        "device_states.thermostat_A.current_temperature",
+        "device_states.thermostat_A.currentTemperature",
+    ],
+    "lighting.brightness": [
+        "device_states.lighting.brightness",
+        "device_states.lights.brightness",
+        "device_states.lighting_A.brightness",
+        "device_states.lights_A.brightness",
+    ],
+    "projector.power": [
+        "device_states.projector.power",
+        "device_states.projector_A.power",
+    ],
+    "readiness.ready": [
+        "device_states.readiness.ready",
+        "page_state.readiness.ready",
+    ],
+}
+
+
 def evaluate_condition(condition: Condition, cognitive_map: CognitiveMap) -> ConditionResult:
     predicate = condition.predicate.strip()
     try:
@@ -118,6 +156,31 @@ def _parse_value(raw: str) -> Any:
 
 
 def _resolve_path(cognitive_map: CognitiveMap, path: str) -> Any:
+    # Resolve in a deterministic order: explicit roots, params, canonical aliases,
+    # then legacy implicit device-state traversal.
+    explicit = _resolve_explicit_path(cognitive_map, path)
+    if explicit[0]:
+        return explicit[1]
+
+    if cognitive_map.current_skill and path in cognitive_map.current_skill.params:
+        return cognitive_map.current_skill.params[path]
+
+    if path in _CANONICAL_PATH_ALIASES:
+        for alias in _CANONICAL_PATH_ALIASES[path]:
+            resolved = _resolve_explicit_path(cognitive_map, alias)
+            if resolved[0]:
+                return resolved[1]
+        tried = ", ".join(_CANONICAL_PATH_ALIASES[path])
+        raise KeyError(f"missing canonical condition path: {path}; tried: {tried}")
+
+    fallback = _resolve_implicit_device_path(cognitive_map, path)
+    if fallback[0]:
+        return fallback[1]
+
+    raise KeyError(f"missing condition path: {path}")
+
+
+def _resolve_explicit_path(cognitive_map: CognitiveMap, path: str) -> tuple[bool, Any]:
     parts = path.split(".")
     roots: dict[str, Any] = {
         "device_states": cognitive_map.device_states,
@@ -125,19 +188,23 @@ def _resolve_path(cognitive_map: CognitiveMap, path: str) -> Any:
         "visual_state": cognitive_map.visual_state,
         "params": cognitive_map.current_skill.params if cognitive_map.current_skill else {},
     }
+    if not parts or parts[0] not in roots:
+        return False, None
 
-    if parts[0] in roots:
-        value = roots[parts[0]]
-        parts = parts[1:]
-    elif cognitive_map.current_skill and parts[0] in cognitive_map.current_skill.params:
-        value = cognitive_map.current_skill.params[parts[0]]
-        parts = parts[1:]
-    else:
-        value = cognitive_map.device_states
-
-    for part in parts:
+    value: Any = roots[parts[0]]
+    for part in parts[1:]:
         if isinstance(value, dict) and part in value:
             value = value[part]
         else:
-            raise KeyError(f"missing condition path: {path}")
-    return value
+            return False, None
+    return True, value
+
+
+def _resolve_implicit_device_path(cognitive_map: CognitiveMap, path: str) -> tuple[bool, Any]:
+    value: Any = cognitive_map.device_states
+    for part in path.split("."):
+        if isinstance(value, dict) and part in value:
+            value = value[part]
+        else:
+            return False, None
+    return True, value
