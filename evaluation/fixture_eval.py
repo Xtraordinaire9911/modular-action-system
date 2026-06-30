@@ -122,10 +122,12 @@ def _canonical_device_states(task_initial: dict[str, Any]) -> dict[str, Any]:
 
 
 def _compute_readiness(device_states: dict[str, Any]) -> bool:
-    projector_on = ((device_states.get("projector_A") or {}).get("power") == "on")
+    projector_on = (device_states.get("projector_A") or {}).get("power") == "on"
     target = (device_states.get("thermostat_A") or {}).get("targetTemperature")
     brightness = (device_states.get("lights") or {}).get("brightness")
-    booking_confirmed = bool(device_states.get("booking_confirmed")) or device_states.get("booking_status") == "confirmed"
+    booking_confirmed = (
+        bool(device_states.get("booking_confirmed")) or device_states.get("booking_status") == "confirmed"
+    )
     return bool(booking_confirmed and target == 22 and projector_on and brightness is not None and brightness <= 40)
 
 
@@ -232,7 +234,9 @@ async def _evaluate_task(task_id: str) -> FixtureTaskEvaluation:
     def make_observation() -> Observation:
         return Observation(
             device_states=dict(cognitive_map.device_states),
-            accessibility_tree={"page_state": {"booking_status": cognitive_map.device_states.get("booking_status", "pending")}},
+            accessibility_tree={
+                "page_state": {"booking_status": cognitive_map.device_states.get("booking_status", "pending")}
+            },
         )
 
     cognitive_map.update_from_observation(Observation(device_states=_canonical_device_states(fixture.initial_state)))
@@ -247,7 +251,11 @@ async def _evaluate_task(task_id: str) -> FixtureTaskEvaluation:
     executed_sequence = [step.skill_id for step in step_results]
     final_state = _final_state_from_map(cognitive_map)
     achieved_recovery_tier = max((step.recovery_tier for step in step_results), default=0)
-    task_success = bool(step_results) and all(step.success for step in step_results) and final_state == fixture.expected_final_state
+    task_success = (
+        bool(step_results)
+        and all(step.success for step in step_results)
+        and final_state == fixture.expected_final_state
+    )
 
     return FixtureTaskEvaluation(
         task_id=task_id,

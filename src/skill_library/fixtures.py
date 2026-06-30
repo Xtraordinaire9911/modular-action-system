@@ -162,9 +162,7 @@ def validate_fixtures_against_library(
             if skill_id not in known_skills:
                 problems.append(f"task {fixture.task_id}: unknown skill_id {skill_id!r}")
         if fixture.allowed_failure_profile and fixture.allowed_failure_profile not in failure_ids:
-            problems.append(
-                f"task {fixture.task_id}: unknown failure profile {fixture.allowed_failure_profile!r}"
-            )
+            problems.append(f"task {fixture.task_id}: unknown failure profile {fixture.allowed_failure_profile!r}")
         if fixture.task_id not in sequences:
             problems.append(f"task {fixture.task_id}: missing expected skill sequence")
         else:
@@ -207,7 +205,9 @@ def skill_to_contract_dict(skill: Any) -> dict[str, Any]:
         "allowed_backends": list(skill.allowed_backends),
         "preferred_backends": list(skill.preferred_backends),
         "rollback": (
-            None if skill.rollback is None else {"skill_id": skill.rollback.skill_id, "params": dict(skill.rollback.params)}
+            None
+            if skill.rollback is None
+            else {"skill_id": skill.rollback.skill_id, "params": dict(skill.rollback.params)}
         ),
         "failure_modes": {
             failure_type: {"tier": policy.tier, "action": policy.action, "description": policy.description}

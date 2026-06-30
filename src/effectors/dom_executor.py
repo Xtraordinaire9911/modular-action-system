@@ -150,7 +150,11 @@ class DomExecutor:
                 status_text = (await self._page.text_content("[data-testid='booking-status']")) or ""
                 expected_room = str(skill_call.params.get("room", "")).strip().upper()
                 expected_time = str(skill_call.params.get("time", "")).strip()
-                if "booked:" not in status_text.lower() or expected_room not in status_text or expected_time not in status_text:
+                if (
+                    "booked:" not in status_text.lower()
+                    or expected_room not in status_text
+                    or expected_time not in status_text
+                ):
                     return self._skill_failure(skill_call, start, "postcondition_mismatch")
                 delta["booking_status"] = "confirmed"
             return ExecutionResult(
@@ -169,7 +173,9 @@ class DomExecutor:
             return {
                 "booking_status": "confirmed",
                 "bookings": {
-                    str(skill_call.params.get("room", "")).strip().upper(): {
+                    str(skill_call.params.get("room", ""))
+                    .strip()
+                    .upper(): {
                         "booked": True,
                         "time": skill_call.params.get("time"),
                     }

@@ -26,9 +26,7 @@ class RetryPolicy:
             "visual_confidence_low",
             "backend_busy",
             "postcondition_mismatch",
-        } or (
-            result.failure_reason or ""
-        ).startswith("HTTP 5")
+        } or (result.failure_reason or "").startswith("HTTP 5")
         should_retry = (not result.success) and transient and attempt < self.max_attempts
         delay = self.base_delay_s * (2 ** max(attempt - 1, 0)) if should_retry else 0.0
         reason = "transient failure" if should_retry else "retry not applicable"

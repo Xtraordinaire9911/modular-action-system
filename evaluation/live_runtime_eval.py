@@ -95,7 +95,9 @@ def _fetch_tds(wot_url: str) -> list[dict[str, Any]]:
 async def _wait_for_dashboard_hooks(page: Any, timeout_s: float = 5.0) -> None:
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
-        ready = await page.evaluate("() => Boolean(window.__injectFault && window.__clearFaults && window.__demoPointTo)")
+        ready = await page.evaluate(
+            "() => Boolean(window.__injectFault && window.__clearFaults && window.__demoPointTo)"
+        )
         if ready:
             return
         time.sleep(0.1)
@@ -107,7 +109,9 @@ def _reset_web_dashboard(web_url: str, task_fixture: TaskFixture) -> None:
     room = str(task_fixture.initial_state.get("room", "A")).strip().upper()
     booked = bool(task_fixture.initial_state.get("booked", False))
     if booked:
-        time_slot = task_fixture.expected_skill_sequence and expected_skill_calls(task_fixture.task_id)[0].params.get("time")
+        time_slot = task_fixture.expected_skill_sequence and expected_skill_calls(task_fixture.task_id)[0].params.get(
+            "time"
+        )
         override["bookings"][room] = {"booked": True, "time": time_slot or "14:00"}
     _post_json(f"{web_url.rstrip('/')}/api/reset", override)
 
@@ -199,7 +203,9 @@ def _build_observation(wot_state: dict[str, Any], *, booking_status: str) -> Obs
     device_states["booking_status"] = booking_status
     if booking_status:
         device_states["booking_confirmed"] = booking_status == "confirmed"
-    return Observation(device_states=device_states, accessibility_tree={"page_state": {"booking_status": booking_status}})
+    return Observation(
+        device_states=device_states, accessibility_tree={"page_state": {"booking_status": booking_status}}
+    )
 
 
 async def _booking_status(page: Any) -> str:
@@ -342,7 +348,10 @@ async def _run_fixture_driven_live_episode(
     _reset_control_plane(control_url)
     _reset_web_dashboard(web_url, task_fixture)
     _reset_wot_server(wot_url, task_fixture, failure_profile)
-    if failure_profile is not None and failure_profile.failure_id in {"sensory_contradiction", "wot_postcondition_mismatch"}:
+    if failure_profile is not None and failure_profile.failure_id in {
+        "sensory_contradiction",
+        "wot_postcondition_mismatch",
+    }:
         _inject_wot_fault(control_url, "postcondition_mismatch")
 
     dashboard_url = web_url
@@ -406,12 +415,13 @@ async def _run_fixture_driven_live_episode(
                     manager,
                     skill_call,
                     observation_factory,
-                    clear_dashboard_faults=(lambda: _clear_dashboard_faults(page))
-                    if browser_fault
-                    else None,
-                    clear_wot_fault=(lambda: _clear_wot_fault(control_url))
-                    if failure_profile is not None and failure_profile.failure_id in {"sensory_contradiction", "wot_postcondition_mismatch"}
-                    else None,
+                    clear_dashboard_faults=(lambda: _clear_dashboard_faults(page)) if browser_fault else None,
+                    clear_wot_fault=(
+                        (lambda: _clear_wot_fault(control_url))
+                        if failure_profile is not None
+                        and failure_profile.failure_id in {"sensory_contradiction", "wot_postcondition_mismatch"}
+                        else None
+                    ),
                     reroute_backend=reroute_backend,
                 )
                 step_result["step_index"] = index
