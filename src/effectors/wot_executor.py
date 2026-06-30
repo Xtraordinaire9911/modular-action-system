@@ -26,10 +26,21 @@ _SKILL_TO_AFFORDANCE_ID = {
     "set_lighting": "wot_lights_A_setBrightness",
     "verify_readiness": "wot_readiness_check",
 }
+_SKILL_TO_AFFORDANCE_SUFFIX = {
+    "turn_on_projector": "setPower",
+    "set_temperature": "setTargetTemperature",
+    "set_lighting": "setBrightness",
+}
 _SKILL_TO_PAYLOAD_KEY = {
     "turn_on_projector": "power",
-    "set_temperature": "targetTemperature",
+    "set_temperature": "target",
     "set_lighting": "brightness",
+}
+_SKILL_TO_STATE_SPEC = {
+    "turn_on_projector": ("projector", "power", "power", "on"),
+    "set_temperature": ("thermostat", "target_temperature", "targetTemperature", "target"),
+    "set_lighting": ("lighting", "brightness", "brightness", "brightness"),
+    "verify_readiness": ("readiness", "ready", "ready", True),
 }
 
 
@@ -197,25 +208,33 @@ class WotExecutor:
 
     async def _execute_skill(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         start = time.monotonic()
-        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id)
-        if affordance_id is None:
+        if skill_call.skill_id == "verify_readiness":
+            delta, actual_value, expected_value = await self._build_readiness_delta(observation)
+            if actual_value != expected_value:
+                return self._skill_failure(skill_call, start, "postcondition_mismatch", delta)
+            return ExecutionResult(
+                skill_id=skill_call.skill_id,
+                backend_used=self.backend,
+                success=True,
+                latency_ms=(time.monotonic() - start) * 1000.0,
+                confidence=1.0,
+                raw_observation_delta=delta,
+            )
+
+        affordance_id, affordance = self._resolve_affordance(skill_call.skill_id)
+        if affordance_id is None or affordance is None:
             return self._skill_failure(
                 skill_call, start, f"no WoT affordance mapping for skill '{skill_call.skill_id}'"
-            )
-        affordance = self._affordances.get(affordance_id)
-        if affordance is None:
-            return self._skill_failure(
-                skill_call, start, f"affordance '{affordance_id}' not loaded; call load_tds() first"
             )
         if not _HTTPX_AVAILABLE:
             return self._skill_failure(skill_call, start, "httpx not installed")
 
         payload_key = _SKILL_TO_PAYLOAD_KEY.get(skill_call.skill_id)
-        payload: Any = {}
+        payload: Any = None
         if payload_key and payload_key in skill_call.params:
-            payload = {payload_key: skill_call.params[payload_key]}
+            payload = skill_call.params[payload_key]
         elif skill_call.skill_id == "turn_on_projector":
-            payload = {"power": "on"}
+            payload = "on"
 
         thing_id = str(affordance.locator.get("thing_id", "unknown"))
         href = str(affordance.locator.get("href", ""))
@@ -227,10 +246,9 @@ class WotExecutor:
             latency = (time.monotonic() - start) * 1000.0
             if response.status_code >= 400:
                 return self._skill_failure(skill_call, start, f"HTTP {response.status_code}: {response.text[:200]}")
-            try:
-                delta = response.json()
-            except Exception:
-                delta = {}
+            delta, actual_value, expected_value = await self._build_skill_delta(skill_call, thing_id)
+            if actual_value != expected_value:
+                return self._skill_failure(skill_call, start, "postcondition_mismatch", delta)
             return ExecutionResult(
                 skill_id=skill_call.skill_id,
                 backend_used=self.backend,
@@ -242,7 +260,54 @@ class WotExecutor:
         except Exception as exc:
             return self._skill_failure(skill_call, start, str(exc))
 
-    def _skill_failure(self, skill_call: SkillCall, start: float, reason: str) -> ExecutionResult:
+    def _resolve_affordance(self, skill_id: str) -> tuple[str | None, Affordance | None]:
+        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_id)
+        if affordance_id is not None:
+            affordance = self._affordances.get(affordance_id)
+            if affordance is not None:
+                return affordance_id, affordance
+
+        suffix = _SKILL_TO_AFFORDANCE_SUFFIX.get(skill_id)
+        if suffix is None:
+            return None, None
+        for loaded_id, affordance in self._affordances.items():
+            if loaded_id.endswith(f"_{suffix}") or affordance.label == suffix:
+                return loaded_id, affordance
+        return None, None
+
+    async def _build_readiness_delta(self, observation: Observation) -> tuple[dict[str, Any], Any, Any]:
+        readiness = observation.device_states.get("readiness")
+        actual_value = None
+        if isinstance(readiness, dict):
+            actual_value = bool(readiness.get("ready"))
+        elif readiness is not None:
+            actual_value = bool(readiness)
+        return {"readiness": {"ready": actual_value}}, actual_value, True
+
+    async def _build_skill_delta(self, skill_call: SkillCall, thing_id: str) -> tuple[dict[str, Any], Any, Any]:
+        state_spec = _SKILL_TO_STATE_SPEC.get(skill_call.skill_id)
+        if state_spec is None:
+            return {}, None, None
+
+        root, attribute, property_name, expected_key = state_spec
+        expected_value = skill_call.params.get(expected_key, expected_key)
+        actual_raw = await self.read_property(thing_id, property_name)
+        actual_value: Any
+        if skill_call.skill_id == "verify_readiness":
+            if isinstance(actual_raw, dict):
+                actual_value = bool(actual_raw.get("ready"))
+            else:
+                actual_value = bool(actual_raw)
+        else:
+            if isinstance(actual_raw, dict):
+                actual_value = actual_raw.get(property_name, actual_raw.get(attribute, actual_raw))
+            else:
+                actual_value = actual_raw
+        return {root: {attribute: actual_value}}, actual_value, expected_value
+
+    def _skill_failure(
+        self, skill_call: SkillCall, start: float, reason: str, delta: dict[str, Any] | None = None
+    ) -> ExecutionResult:
         return ExecutionResult(
             skill_id=skill_call.skill_id,
             backend_used=self.backend,
@@ -250,6 +315,7 @@ class WotExecutor:
             latency_ms=(time.monotonic() - start) * 1000.0,
             confidence=0.0,
             failure_reason=reason,
+            raw_observation_delta=delta or {},
         )
 
     async def read_property(self, thing_id: str, property_name: str) -> Any:

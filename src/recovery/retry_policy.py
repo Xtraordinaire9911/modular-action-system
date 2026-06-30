@@ -25,6 +25,7 @@ class RetryPolicy:
             "timeout",
             "visual_confidence_low",
             "backend_busy",
+            "postcondition_mismatch",
         } or (
             result.failure_reason or ""
         ).startswith("HTTP 5")

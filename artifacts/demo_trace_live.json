@@ -3,7 +3,7 @@
   "envs": {
     "react_dashboard": "http://localhost:3000",
     "node_wot_server": "http://localhost:8080",
-    "failure_control_plane": "http://localhost:8081",
+    "failure_control_plane": "http://[::1]:8081",
     "playwright_browser_session": "isolated chromium context"
   },
   "acceptance": {
@@ -27,7 +27,7 @@
         "skill_id": "confirm_booking.room",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 27.188,
+        "latency_ms": 66.347,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -43,7 +43,7 @@
         "skill_id": "confirm_booking.time",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 20.921,
+        "latency_ms": 20.702,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -59,7 +59,7 @@
         "skill_id": "confirm_booking.submit",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 44.03,
+        "latency_ms": 50.208,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -75,11 +75,11 @@
         "skill_id": "turn_on_projector",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 116.79,
+        "latency_ms": 533.293,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+          "thing_id": "urn:uuid:90d59acf-f080-4888-869c-cb8c295ab10f",
           "action": "setPower",
           "result": "",
           "sent": "on"
@@ -93,11 +93,11 @@
         "skill_id": "set_temperature",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 26.353,
+        "latency_ms": 397.831,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 22
@@ -105,17 +105,17 @@
       }
     },
     {
-      "skill_id": "dim_lights",
+      "skill_id": "set_lighting",
       "backend": "wot",
       "execution_result": {
-        "skill_id": "dim_lights",
+        "skill_id": "set_lighting",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 27.959,
+        "latency_ms": 359.958,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+          "thing_id": "urn:uuid:0865486b-eb06-4c4a-af52-c752514e25e2",
           "action": "setBrightness",
           "result": "",
           "sent": 40
@@ -148,20 +148,38 @@
       }
     },
     {
+      "skill_id": "set_temperature.pre_failure_drift",
+      "backend": "wot",
+      "execution_result": {
+        "skill_id": "set_temperature.pre_failure_drift",
+        "backend_used": "wot",
+        "success": true,
+        "latency_ms": 593.883,
+        "confidence": 1.0,
+        "failure_reason": null,
+        "raw_observation_delta": {
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
+          "action": "setTargetTemperature",
+          "result": "",
+          "sent": 24
+        }
+      }
+    },
+    {
       "skill_id": "set_temperature.injected_failure",
       "backend": "wot",
       "execution_result": {
         "skill_id": "set_temperature.injected_failure",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 15.653,
+        "latency_ms": 533.991,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
-          "sent": 24
+          "sent": 22
         }
       }
     },
@@ -172,14 +190,14 @@
         "skill_id": "set_temperature.recovery_retry",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 31.918,
+        "latency_ms": 554.119,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
-          "sent": 24
+          "sent": 22
         }
       }
     },
@@ -192,28 +210,28 @@
         "skill_id": "set_temperature.injected_failure",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 15.653,
+        "latency_ms": 533.991,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
-          "sent": 24
+          "sent": 22
         }
       },
       "execution_after_recovery": {
         "skill_id": "set_temperature.recovery_retry",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 31.918,
+        "latency_ms": 554.119,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
-          "sent": 24
+          "sent": 22
         }
       },
       "postcondition_result": "pass"
@@ -221,8 +239,8 @@
   ],
   "final_state": {
     "thermostat": {
-      "targetTemperature": 24,
-      "currentTemperature": 24
+      "targetTemperature": 22,
+      "currentTemperature": 22
     },
     "lights": {
       "brightness": 40

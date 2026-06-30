@@ -26,10 +26,9 @@ class PageLike(Protocol):
 _SKILL_TO_DOM_STEPS: dict[str, list[dict[str, Any]]] = {
     "confirm_booking": [
         {"action": "navigate", "target": "/"},
-        {"action": "fill", "selector": "input[name='room']", "param": "room"},
-        {"action": "fill", "selector": "input[name='time']", "param": "time"},
-        {"action": "click", "selector": "#book-room"},
-        {"action": "wait_selector", "selector": ".booking-confirmed"},
+        {"action": "fill", "selector": "[data-testid='room-input']", "param": "room"},
+        {"action": "fill", "selector": "[data-testid='time-input']", "param": "time"},
+        {"action": "click", "selector": "[data-testid='book-room-button']"},
     ],
     "set_temperature": [
         {"action": "navigate", "target": "/thermostat"},
@@ -146,15 +145,41 @@ class DomExecutor:
         try:
             for step in steps:
                 await self._run_step(step, skill_call.params)
+            delta = self._build_skill_delta(skill_call)
+            if skill_call.skill_id == "confirm_booking":
+                status_text = (await self._page.text_content("[data-testid='booking-status']")) or ""
+                expected_room = str(skill_call.params.get("room", "")).strip().upper()
+                expected_time = str(skill_call.params.get("time", "")).strip()
+                if "booked:" not in status_text.lower() or expected_room not in status_text or expected_time not in status_text:
+                    return self._skill_failure(skill_call, start, "postcondition_mismatch")
+                delta["booking_status"] = "confirmed"
             return ExecutionResult(
                 skill_id=skill_call.skill_id,
                 backend_used=self.backend,
                 success=True,
                 latency_ms=(time.monotonic() - start) * 1000.0,
                 confidence=1.0,
+                raw_observation_delta=delta,
             )
         except Exception as exc:
             return self._skill_failure(skill_call, start, str(exc))
+
+    def _build_skill_delta(self, skill_call: SkillCall) -> dict[str, Any]:
+        if skill_call.skill_id == "confirm_booking":
+            return {
+                "booking_status": "confirmed",
+                "bookings": {
+                    str(skill_call.params.get("room", "")).strip().upper(): {
+                        "booked": True,
+                        "time": skill_call.params.get("time"),
+                    }
+                },
+            }
+        if skill_call.skill_id == "set_temperature":
+            return {"thermostat": {"target_temperature": skill_call.params.get("target")}}
+        if skill_call.skill_id == "set_lighting":
+            return {"lighting": {"brightness": skill_call.params.get("brightness")}}
+        return {}
 
     def _skill_failure(self, skill_call: SkillCall, start: float, reason: str) -> ExecutionResult:
         return ExecutionResult(
