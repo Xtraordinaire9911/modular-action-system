@@ -2,20 +2,26 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import json
+from collections.abc import Sequence
+from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Protocol
 
+from src.adaptation.failure_boundary import FailureAnalysis
+from src.adaptation.llm_judge import LLMJudge, LLMJudgeInput, LLMJudgeOutputError, LLMJudgeUnavailable
+from src.adaptation.rule_classifier import RuleFailureClassifier
 from src.contracts.types import ExecutionResult, Observation, SkillCall, SkillTuple
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from src.skill_library.library import SkillLibrary
-from src.recovery.recovery_cascade import RecoveryCascade, RecoveryContext
+from src.recovery.recovery_cascade import RecoveryCascade
 from src.runtime.backend_router import RuntimeBackendRouter
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.state_machine import RuntimeState
 from src.safety.unsafe_action_detector import UnsafeActionDetector
+from src.verification.active_perception import ActivePerceptionResolver
 from src.verification.conflict_detector import EpistemicArbiter
 from src.verification.postcondition_checker import PostconditionChecker
 from src.verification.precondition_checker import PreconditionChecker
@@ -34,6 +40,13 @@ class RuntimeStepResult:
     reason: str = ""
     routing_reason: str = ""
     conflict_ids: list[str] = field(default_factory=list)
+    failure_boundary: str = ""
+    failure_type: str = ""
+    recovery_trace: list[dict[str, object]] = field(default_factory=list)
+    llm_failure_boundary: str = ""
+    llm_failure_type: str = ""
+    llm_judge_evidence: list[str] = field(default_factory=list)
+    active_perception_trace: list[dict[str, object]] = field(default_factory=list)
 
 
 class ContinuousInteractionManager:
@@ -47,6 +60,9 @@ class ContinuousInteractionManager:
         backend_router: RuntimeBackendRouter | None = None,
         epistemic_arbiter: EpistemicArbiter | None = None,
         recovery_cascade: RecoveryCascade | None = None,
+        llm_judge: LLMJudge | None = None,
+        use_llm_judge: bool = False,
+        active_perception_resolver: ActivePerceptionResolver | None = None,
     ) -> None:
         # Accept the typed SkillLibrary (single source of truth) or a plain
         # mapping; normalize to a dict so lookups stay O(1) either way.
@@ -62,21 +78,57 @@ class ContinuousInteractionManager:
         self.epistemic_arbiter = epistemic_arbiter or EpistemicArbiter()
         self.recovery_cascade = recovery_cascade or RecoveryCascade()
         self.safety = UnsafeActionDetector()
+        self.failure_classifier = RuleFailureClassifier()
+        self.llm_judge = llm_judge
+        self.use_llm_judge = use_llm_judge
+        self.active_perception_resolver = active_perception_resolver
 
     async def run_skill(self, skill_call: SkillCall, observation: Observation) -> RuntimeStepResult:
         skill_tuple = self.skill_library.get(skill_call.skill_id)
         if skill_tuple is None:
+            analysis = self.failure_classifier.classify_unknown_skill(skill_call.skill_id)
             self.state = RuntimeState.FAILED
             return RuntimeStepResult(
                 self.state,
                 None,
                 reason=f"unknown skill: {skill_call.skill_id}",
+                failure_boundary=analysis.boundary.value,
+                failure_type=analysis.failure_type,
             )
         self.cognitive_map.set_current_skill(skill_call)
         self.cognitive_map.update_from_observation(observation)
 
+        active_perception_trace: list[dict[str, object]] = []
         conflicts = self.epistemic_arbiter.check(self.cognitive_map)
         if self.epistemic_arbiter.should_halt_system1(conflicts):
+            if self.active_perception_resolver is not None:
+                resolution = await self.active_perception_resolver.resolve(conflicts, self.cognitive_map, observation)
+                active_perception_trace = resolution.trace
+                if resolution.resolved:
+                    conflicts = []
+                else:
+                    conflicts = [
+                        conflict
+                        for conflict in self.cognitive_map.unresolved_conflicts()
+                        if not resolution.remaining_conflict_ids or conflict.id in resolution.remaining_conflict_ids
+                    ]
+            if not conflicts:
+                pass
+            else:
+                self.state = RuntimeState.ESCALATED
+                strongest = max(conflicts, key=lambda conflict: conflict.conflict_mass)
+                return RuntimeStepResult(
+                    self.state,
+                    None,
+                    recovery_tier=4,
+                    reason=f"sensory conflict detected: {strongest.description}",
+                    conflict_ids=[conflict.id for conflict in conflicts],
+                    failure_boundary="recoverable_execution_failure",
+                    failure_type="sensory_conflict",
+                    active_perception_trace=active_perception_trace,
+                )
+
+        if conflicts:
             self.state = RuntimeState.ESCALATED
             strongest = max(conflicts, key=lambda conflict: conflict.conflict_mass)
             return RuntimeStepResult(
@@ -85,6 +137,9 @@ class ContinuousInteractionManager:
                 recovery_tier=4,
                 reason=f"sensory conflict detected: {strongest.description}",
                 conflict_ids=[conflict.id for conflict in conflicts],
+                failure_boundary="recoverable_execution_failure",
+                failure_type="sensory_conflict",
+                active_perception_trace=active_perception_trace,
             )
 
         safety_decision = self.safety.decide(skill_call, skill_tuple)
@@ -100,8 +155,20 @@ class ContinuousInteractionManager:
         self.state = RuntimeState.ROUTING
         backend, routing_reason = self._select_backend(skill_call, skill_tuple)
         if backend == "":
+            analysis = self.failure_classifier.classify_no_backend(
+                skill_id=skill_call.skill_id,
+                allowed_backends=skill_tuple.allowed_backends,
+                available_backends=list(self.executors),
+            )
             self.state = RuntimeState.FAILED
-            return RuntimeStepResult(self.state, None, reason="no backend available", routing_reason=routing_reason)
+            return RuntimeStepResult(
+                self.state,
+                None,
+                reason="no backend available",
+                routing_reason=routing_reason,
+                failure_boundary=analysis.boundary.value,
+                failure_type=analysis.failure_type,
+            )
 
         self.state = RuntimeState.EXECUTING
         try:
@@ -160,6 +227,7 @@ class ContinuousInteractionManager:
             selected_backend=backend,
             reason="skill completed",
             routing_reason=routing_reason,
+            active_perception_trace=active_perception_trace,
         )
 
     def _select_backend(self, skill_call: SkillCall, skill_tuple: SkillTuple) -> tuple[str, str]:
@@ -192,31 +260,84 @@ class ContinuousInteractionManager:
         execution_result: ExecutionResult | None = None,
         routing_reason: str = "",
     ) -> RuntimeStepResult:
-        recovery = self.recovery_cascade.decide(
+        analysis = self.failure_classifier.classify_execution_failure(result, skill_tuple, self.cognitive_map)
+        llm_analysis = self._advisory_llm_analysis(result, skill_tuple, analysis, tried_backends)
+        trace = self.recovery_cascade.decide_with_trace(
             result,
             skill_tuple,
             self.cognitive_map,
-            RecoveryContext(
-                skill_id=result.skill_id,
-                failed_backend=failed_backend,
-                failure_type=result.failure_reason or "execution_failed",
-                tried_backends=tried_backends,
-            ),
             available_backends=list(self.executors.keys()),
+            tried_backends=tried_backends,
+            boundary=analysis.boundary.value,
         )
         returned_result = execution_result or result
-        if recovery.action_type == "escalate_human":
+        if trace.selected_action == "escalate_human":
             self.state = RuntimeState.ESCALATED
-        elif recovery.action_type == "abort":
+        elif trace.selected_action == "abort":
             self.state = RuntimeState.FAILED
         else:
             self.state = RuntimeState.RECOVERING
-        selected_backend = recovery.backend or failed_backend
+        selected_backend = trace.selected_backend or failed_backend
         return RuntimeStepResult(
             self.state,
             returned_result,
-            recovery_tier=recovery.recovery_tier,
+            recovery_tier=trace.selected_tier,
             selected_backend=selected_backend,
-            reason=recovery.reason,
+            reason=_selected_recovery_reason(trace.steps),
             routing_reason=routing_reason,
+            failure_boundary=analysis.boundary.value,
+            failure_type=analysis.failure_type,
+            recovery_trace=[asdict(step) for step in trace.steps],
+            llm_failure_boundary=llm_analysis.boundary.value if llm_analysis else "",
+            llm_failure_type=llm_analysis.failure_type if llm_analysis else "",
+            llm_judge_evidence=llm_analysis.evidence if llm_analysis else [],
         )
+
+    def _advisory_llm_analysis(
+        self,
+        result: ExecutionResult,
+        skill_tuple: SkillTuple,
+        rule_analysis: FailureAnalysis,
+        tried_backends: list[str],
+    ) -> FailureAnalysis | None:
+        if not self.use_llm_judge or self.llm_judge is None:
+            return None
+        if rule_analysis.boundary.value in {"unsafe_governance_boundary", "architecture_gap"}:
+            return None
+        try:
+            return self.llm_judge.judge(
+                LLMJudgeInput(
+                    task_id=self.cognitive_map.task_id,
+                    skill_id=skill_tuple.skill_id,
+                    failure_reason=result.failure_reason or "execution_failed",
+                    selected_backend=result.backend_used,
+                    allowed_backends=skill_tuple.allowed_backends,
+                    conflict_summaries=[
+                        {
+                            "id": conflict.id,
+                            "description": conflict.description,
+                            "severity": conflict.severity,
+                            "conflict_mass": conflict.conflict_mass,
+                        }
+                        for conflict in self.cognitive_map.unresolved_conflicts()
+                    ],
+                    recovery_trace=[
+                        {
+                            "tried_backends": tried_backends,
+                            "available_backends": list(self.executors),
+                        }
+                    ],
+                    history_summary={
+                        "execution_history_count": len(self.cognitive_map.execution_history),
+                    },
+                )
+            )
+        except (LLMJudgeOutputError, LLMJudgeUnavailable, json.JSONDecodeError, KeyError, ValueError):
+            return None
+
+
+def _selected_recovery_reason(steps: Sequence[object]) -> str:
+    for step in steps:
+        if getattr(step, "selected", False):
+            return str(getattr(step, "reason", ""))
+    return ""

@@ -1,6 +1,7 @@
 """Tests for evaluation metric aggregation."""
 
 from evaluation.metrics_aggregator import (
+    AdaptationCase,
     ConflictCase,
     EvaluationDataset,
     PrimitiveAction,
@@ -52,6 +53,46 @@ def test_aggregate_metrics_computes_core_rates():
             PrimitiveAction("t1", "invoke", latency_ms=20),
             PrimitiveAction("t1", "verify", latency_ms=40),
         ],
+        adaptation_cases=[
+            AdaptationCase(
+                task_id="t1",
+                failure_classified=True,
+                full_cascade_trace=True,
+                recoverable=True,
+                recovered=True,
+                policy_proposal_created=True,
+                time_to_recovery_ms=80,
+                false_success_case=True,
+                false_success_detected=True,
+                normal_outcome_score=1.0,
+                failure_outcome_score=0.8,
+                before_heldout_success_rate=0.4,
+                after_heldout_success_rate=0.7,
+                before_normal_success_rate=1.0,
+                after_normal_success_rate=0.95,
+                safety_regression=False,
+                path_attributed=True,
+            ),
+            AdaptationCase(
+                task_id="t2",
+                failure_classified=False,
+                full_cascade_trace=False,
+                recoverable=True,
+                recovered=False,
+                policy_proposal_created=False,
+                time_to_recovery_ms=120,
+                false_success_case=True,
+                false_success_detected=False,
+                normal_outcome_score=1.0,
+                failure_outcome_score=0.4,
+                before_heldout_success_rate=0.5,
+                after_heldout_success_rate=0.6,
+                before_normal_success_rate=1.0,
+                after_normal_success_rate=1.0,
+                safety_regression=False,
+                path_attributed=False,
+            ),
+        ],
     )
 
     metrics = aggregate_metrics(dataset).values
@@ -69,6 +110,18 @@ def test_aggregate_metrics_computes_core_rates():
     assert metrics["WDSR"] == 0.5
     assert metrics["CRR"] == 0.5
     assert metrics["VGA"] == 0.5
+    assert metrics["CascadeTraceCoverage"] == 0.5
+    assert metrics["BoundaryClassificationRate"] == 0.5
+    assert metrics["PolicyProposalRate"] == 0.5
+    assert metrics["ControlRecoveryRatio"] == 0.5
+    assert metrics["MeanTimeToRecovery"] == 100
+    assert metrics["FalseSuccessDetectionRate"] == 0.5
+    assert metrics["CounterfactualOutcomeDeviation"] == 0.4
+    assert metrics["HeldOutGain"] == 0.2
+    assert metrics["BackwardRetention"] == 0.975
+    assert metrics["SafetyNonRegression"] == 1.0
+    assert metrics["ImprovementEfficiency"] == 0.2
+    assert metrics["PathAttributionCoverage"] == 0.5
 
 
 def test_metric_definitions_and_rows_are_report_friendly():
@@ -77,4 +130,5 @@ def test_metric_definitions_and_rows_are_report_friendly():
     rows = report_rows(report)
 
     assert "TSR" in definitions
+    assert "CascadeTraceCoverage" in definitions
     assert any(row["metric"] == "TSR" for row in rows)
