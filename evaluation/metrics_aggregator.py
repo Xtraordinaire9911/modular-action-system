@@ -65,6 +65,27 @@ class PrimitiveAction:
 
 
 @dataclass
+class AdaptationCase:
+    task_id: str
+    failure_classified: bool
+    full_cascade_trace: bool
+    recoverable: bool
+    recovered: bool
+    policy_proposal_created: bool
+    time_to_recovery_ms: float = 0.0
+    false_success_case: bool = False
+    false_success_detected: bool = False
+    normal_outcome_score: float = 0.0
+    failure_outcome_score: float = 0.0
+    before_heldout_success_rate: float = 0.0
+    after_heldout_success_rate: float = 0.0
+    before_normal_success_rate: float = 0.0
+    after_normal_success_rate: float = 0.0
+    safety_regression: bool = False
+    path_attributed: bool = False
+
+
+@dataclass
 class MetricReport:
     values: dict[str, float] = field(default_factory=dict)
 
@@ -72,7 +93,7 @@ class MetricReport:
         self.values[name] = safe_divide(numerator, denominator)
 
     def add_mean(self, name: str, values: list[float]) -> None:
-        self.values[name] = sum(values) / len(values) if values else 0.0
+        self.values[name] = round(sum(values) / len(values), 10) if values else 0.0
 
 
 @dataclass
@@ -84,6 +105,7 @@ class EvaluationDataset:
     conflict_cases: list[ConflictCase] = field(default_factory=list)
     visual_grounding_cases: list[VisualGroundingCase] = field(default_factory=list)
     primitive_actions: list[PrimitiveAction] = field(default_factory=list)
+    adaptation_cases: list[AdaptationCase] = field(default_factory=list)
 
 
 def safe_divide(numerator: float, denominator: float) -> float:
@@ -151,6 +173,71 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         sum(1 for case in dataset.visual_grounding_cases if case.selected_mark_id == case.expected_mark_id),
         len(dataset.visual_grounding_cases),
     )
+    report.add(
+        "CascadeTraceCoverage",
+        sum(1 for case in dataset.adaptation_cases if case.full_cascade_trace),
+        len(dataset.adaptation_cases),
+    )
+    report.add(
+        "BoundaryClassificationRate",
+        sum(1 for case in dataset.adaptation_cases if case.failure_classified),
+        len(dataset.adaptation_cases),
+    )
+    report.add(
+        "PolicyProposalRate",
+        sum(1 for case in dataset.adaptation_cases if case.policy_proposal_created),
+        len(dataset.adaptation_cases),
+    )
+    report.add(
+        "ControlRecoveryRatio",
+        sum(1 for case in dataset.adaptation_cases if case.recoverable and case.recovered),
+        sum(1 for case in dataset.adaptation_cases if case.recoverable),
+    )
+    report.add_mean(
+        "MeanTimeToRecovery",
+        [case.time_to_recovery_ms for case in dataset.adaptation_cases if case.time_to_recovery_ms > 0],
+    )
+    report.add(
+        "FalseSuccessDetectionRate",
+        sum(1 for case in dataset.adaptation_cases if case.false_success_case and case.false_success_detected),
+        sum(1 for case in dataset.adaptation_cases if case.false_success_case),
+    )
+    report.add_mean(
+        "CounterfactualOutcomeDeviation",
+        [
+            abs(case.normal_outcome_score - case.failure_outcome_score)
+            for case in dataset.adaptation_cases
+            if case.normal_outcome_score or case.failure_outcome_score
+        ],
+    )
+    report.add_mean(
+        "HeldOutGain",
+        [
+            case.after_heldout_success_rate - case.before_heldout_success_rate
+            for case in dataset.adaptation_cases
+            if case.before_heldout_success_rate or case.after_heldout_success_rate
+        ],
+    )
+    report.add_mean(
+        "BackwardRetention",
+        [
+            safe_divide(case.after_normal_success_rate, case.before_normal_success_rate)
+            for case in dataset.adaptation_cases
+            if case.before_normal_success_rate
+        ],
+    )
+    report.add(
+        "SafetyNonRegression",
+        sum(1 for case in dataset.adaptation_cases if not case.safety_regression),
+        len(dataset.adaptation_cases),
+    )
+    proposal_count = sum(1 for case in dataset.adaptation_cases if case.policy_proposal_created)
+    report.values["ImprovementEfficiency"] = safe_divide(report.values["HeldOutGain"], proposal_count)
+    report.add(
+        "PathAttributionCoverage",
+        sum(1 for case in dataset.adaptation_cases if case.path_attributed),
+        len(dataset.adaptation_cases),
+    )
 
     return report
 
@@ -171,6 +258,20 @@ def metric_definitions() -> dict[str, str]:
         "WDSR": "World-state Disagreement Success Rate = resolved injected conflicts / injected conflicts",
         "CRR": "Conflict Resolution Rate = resolved conflicts / detected conflicts",
         "VGA": "Visual Grounding Accuracy = correct visual mark selections / visual grounding attempts",
+        "CascadeTraceCoverage": "Failure cases with full tier-by-tier recovery trace / total adaptation cases",
+        "BoundaryClassificationRate": "Classified failures / total adaptation cases",
+        "PolicyProposalRate": "Policy proposals generated / total adaptation cases",
+        "ControlRecoveryRatio": "Recovered failures / recoverable adaptation cases",
+        "MeanTimeToRecovery": "Mean time from failure detection to recovered/escalated state in milliseconds",
+        "FalseSuccessDetectionRate": (
+            "Cases where reported success was contradicted by postcondition/state checks / false-success cases"
+        ),
+        "CounterfactualOutcomeDeviation": "Mean distance between normal-run and failure-run final outcome scores",
+        "HeldOutGain": "Mean held-out success-rate improvement after proposal",
+        "BackwardRetention": "Mean normal-suite retention after proposal / before proposal",
+        "SafetyNonRegression": "Adaptation cases without safety regression / total adaptation cases",
+        "ImprovementEfficiency": "HeldOutGain / number of generated policy proposals",
+        "PathAttributionCoverage": "Adaptation cases with subsystem credit/path attribution / total adaptation cases",
     }
 
 

@@ -199,6 +199,14 @@ class CognitiveMap:
     def unresolved_conflicts(self) -> list[Conflict]:
         return [conflict for conflict in self.conflicts if not conflict.resolved]
 
+    def resolve_conflicts(self, conflict_ids: list[str], decision: str) -> None:
+        targets = set(conflict_ids)
+        for conflict in self.conflicts:
+            if conflict.id in targets:
+                conflict.resolved = True
+                conflict.decision = decision
+        self.touch()
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id,
