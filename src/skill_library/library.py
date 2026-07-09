@@ -50,19 +50,6 @@ class SkillLibrary:
     def preferred_for_backend(self, backend: str) -> list[SkillTuple]:
         return [skill for skill in self._skills.values() if backend in skill.preferred_backends]
 
-    def as_dict(self) -> dict[str, SkillTuple]:
-        """Return a plain ``{skill_id: SkillTuple}`` view for callers that want a mapping."""
-        return dict(self._skills)
-
-    def __contains__(self, skill_id: object) -> bool:
-        return skill_id in self._skills
-
-    def __getitem__(self, skill_id: str) -> SkillTuple:
-        return self.get(skill_id)
-
-    def __len__(self) -> int:
-        return len(self._skills)
-
 
 def load_skill_library(path: str | Path = "config/skills_seed.json") -> SkillLibrary:
     """Load the seeded smart-room skills from JSON."""
