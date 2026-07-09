@@ -11,14 +11,34 @@
       "value": 0.0
     },
     {
+      "definition": "Chaos Exposure Recovery Rate = chaos-exposed tasks that still succeed / chaos-exposed tasks",
+      "metric": "CER",
+      "value": 0.0
+    },
+    {
       "definition": "Conflict Resolution Rate = resolved conflicts / detected conflicts",
       "metric": "CRR",
+      "value": 0.0
+    },
+    {
+      "definition": "Constraint Satisfaction Rate = tasks satisfying final constraints / total tasks",
+      "metric": "CSR",
+      "value": 1.0
+    },
+    {
+      "definition": "False Positive Rate = claimed successes rejected by oracle / claimed successes",
+      "metric": "FPR",
       "value": 0.0
     },
     {
       "definition": "Mean Task Latency in milliseconds",
       "metric": "MTL",
       "value": 140.0
+    },
+    {
+      "definition": "Oracle Success Rate = independently verified successes / oracle checks",
+      "metric": "OSR",
+      "value": 0.0
     },
     {
       "definition": "Postcondition Check Rate = checked required postconditions / required postconditions",
@@ -29,6 +49,11 @@
       "definition": "Postcondition Success Rate = passed postcondition checks / checked postconditions",
       "metric": "PCS",
       "value": 0.0
+    },
+    {
+      "definition": "Recovery Efficiency = mean successful recovery score, where fewer attempts score higher",
+      "metric": "RE",
+      "value": 1.0
     },
     {
       "definition": "Recovery Tier Accuracy = cases with expected tier selected / failure cases",
@@ -69,10 +94,15 @@
   "values": {
     "ATL": 43.333333333333336,
     "BRA": 0.0,
+    "CER": 0.0,
     "CRR": 0.0,
+    "CSR": 1.0,
+    "FPR": 0.0,
     "MTL": 140.0,
+    "OSR": 0.0,
     "PCR": 0.0,
     "PCS": 0.0,
+    "RE": 1.0,
     "RTA": 1.0,
     "RUR": 0.5,
     "RecoverySuccessRate": 1.0,
