@@ -9,6 +9,7 @@ services:
     ports:
       - "8080:8080" # WoT Things + TDs
       - "8081:8081" # failure-injection control plane
+      - "8082:8082" # runtime Thing Directory (WoT Discovery)
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/thermostat', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 10s
