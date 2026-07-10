@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from src.contracts.types import SkillCall
 from src.runtime.cognitive_map import CognitiveMap, RuntimeAffordance
@@ -23,7 +24,23 @@ class RecoveryRoutingContext:
 
 
 class RuntimeBackendRouter:
-    """Rule-first router for the smart-room vertical slice."""
+    """Rule-first router for the smart-room vertical slice.
+
+    An optional ``policy_overlay`` carries routing adjustments learned from
+    approved adaptation proposals (see ``src.adaptation.policy_store``). It is
+    consumed by duck typing so the runtime keeps no dependency on adaptation;
+    when ``None`` the router behaves exactly as before.
+    """
+
+    def __init__(self, policy_overlay: Any | None = None) -> None:
+        self._overlay = policy_overlay
+
+    def _preferred_backend(self, skill_id: str) -> str:
+        if self._overlay is not None:
+            override = self._overlay.preferred_backend(skill_id)
+            if override:
+                return override
+        return _preferred_backend(skill_id)
 
     def select_backend(
         self,
@@ -40,8 +57,13 @@ class RuntimeBackendRouter:
                 return RoutingDecision("", "", "all candidate backends excluded by recovery context", 0.0)
             return RoutingDecision("", "", "no affordance available", 0.0)
 
-        preferred = _preferred_backend(skill_call.skill_id)
-        best = max(candidates, key=lambda affordance: _score(affordance, previous_failures, preferred))
+        preferred = self._preferred_backend(skill_call.skill_id)
+        best = max(
+            candidates,
+            key=lambda affordance: _score(
+                affordance, previous_failures, preferred, self._overlay, skill_call.skill_id
+            ),
+        )
         reason = f"selected {best.source} for {skill_call.skill_id}"
         if best.source != preferred:
             reason += f" because preferred backend {preferred} was unavailable"
@@ -62,8 +84,13 @@ def _score(
     affordance: RuntimeAffordance,
     previous_failures: dict[str, int] | None = None,
     preferred_backend: str | None = None,
+    policy_overlay: Any | None = None,
+    skill_id: str = "",
 ) -> float:
     source_bias = {"wot": 0.05, "dom": 0.03, "visual": 0.0, "system": -0.1}.get(affordance.source, 0.0)
     preferred_bonus = 0.1 if affordance.source == preferred_backend else 0.0
     failure_penalty = 0.15 * (previous_failures or {}).get(affordance.source, 0)
-    return affordance.confidence + source_bias + preferred_bonus - failure_penalty
+    learned_penalty = (
+        policy_overlay.skill_backend_penalty(skill_id, affordance.source) if policy_overlay is not None else 0.0
+    )
+    return affordance.confidence + source_bias + preferred_bonus - failure_penalty - learned_penalty
