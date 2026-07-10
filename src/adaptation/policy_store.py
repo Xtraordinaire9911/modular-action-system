@@ -88,6 +88,8 @@ def _refuse(proposal_id: str, reason: str) -> ApplyOutcome:
 def apply_proposal(overlay: PolicyOverlay, proposal: dict[str, Any]) -> ApplyOutcome:
     """Apply one gated proposal to the overlay, or refuse with a reason."""
     proposal_id = str(proposal.get("proposal_id", ""))
+    if not proposal_id:
+        return _refuse("<missing>", "proposal_id is required")
     change_type = str(proposal.get("change_type", ""))
     gate = proposal.get("release_gate") or {}
 
