@@ -22,7 +22,7 @@ import urllib.error
 import urllib.request
 from typing import Any, Callable
 
-from src.perception.td_affordance_parser import ThingAffordanceModel, TdAffordanceParser
+from src.perception.td_affordance_parser import TdAffordanceParser, ThingAffordanceModel
 
 JsonFetch = Callable[[str], Any]
 
