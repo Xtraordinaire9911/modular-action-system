@@ -82,7 +82,9 @@ class ThingDirectoryClient:
         if isinstance(payload, dict):
             for key in ("things", "members", "@graph"):
                 if isinstance(payload.get(key), list):
-                    return [td for td in payload[key] if isinstance(td, dict)]
+                    return [
+                        td for td in payload[key] if isinstance(td, dict) and any(k in td for k in ("@context", "title", "id"))
+                    ]
             if any(k in payload for k in ("@context", "title", "id")):
                 return [payload]
         return []
