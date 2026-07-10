@@ -78,7 +78,7 @@ class ThingDirectoryClient:
     def _as_td_list(payload: Any) -> list[dict[str, Any]]:
         """Accept a bare TD array, a directory collection object, or a single TD."""
         if isinstance(payload, list):
-            return [td for td in payload if isinstance(td, dict)]
+            return [td for td in payload if isinstance(td, dict) and any(k in td for k in ("@context", "title", "id"))]
         if isinstance(payload, dict):
             for key in ("things", "members", "@graph"):
                 if isinstance(payload.get(key), list):
