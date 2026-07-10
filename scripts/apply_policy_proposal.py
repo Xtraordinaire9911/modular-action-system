@@ -31,7 +31,16 @@ def dry_run_policy_application(proposal: dict[str, Any], policy_path: str | Path
         "change_type": proposal.get("change_type", ""),
         "policy_path": str(path),
         "policy_exists": path.exists(),
-        "would_apply": bool(gate.get("approved") and gate.get("safe_to_apply")),
+        "would_apply": bool(
+            gate.get("approved")
+            and gate.get("safe_to_apply")
+            and proposal.get("change_type")
+            in {
+                "backend_reliability_adjustment",
+                "failure_profile_weight",
+                "preferred_backend_order_change",
+            }
+        ),
         "requires_human_review": bool(proposal.get("needs_human_review", True)),
         "reason": "dry-run only; use --apply to persist an approved low-risk change",
     }
