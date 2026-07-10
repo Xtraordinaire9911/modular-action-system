@@ -37,9 +37,11 @@ class RuntimeBackendRouter:
 
     def _preferred_backend(self, skill_id: str) -> str:
         if self._overlay is not None:
-            override = self._overlay.preferred_backend(skill_id)
-            if override:
-                return override
+            preferred_backend = getattr(self._overlay, "preferred_backend", None)
+            if callable(preferred_backend):
+                override = preferred_backend(skill_id)
+                if override:
+                    return override
         return _preferred_backend(skill_id)
 
     def select_backend(
