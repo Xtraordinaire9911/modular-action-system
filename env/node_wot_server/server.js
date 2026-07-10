@@ -173,11 +173,8 @@ function httpGetJson(url) {
         let data = "";
         res.on("data", (c) => (data += c));
         res.on("end", () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            reject(e);
-          }
+          if (res.statusCode && res.statusCode >= 400) return reject(new Error(`HTTP ${res.statusCode} from ${url}`));
+          try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
         });
       })
       .on("error", reject);
