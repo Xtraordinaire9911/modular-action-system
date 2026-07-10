@@ -42,7 +42,10 @@ class ThingDirectoryClient:
     """Discover Thing Descriptions from a runtime WoT directory."""
 
     def __init__(self, directory_url: str = DEFAULT_DIRECTORY_URL, *, fetch_json: JsonFetch | None = None) -> None:
-        self._base = directory_url.rstrip("/")
+        base = directory_url.rstrip("/")
+        if base.endswith("/things"):
+            base = base.removesuffix("/things")
+        self._base = base
         self._fetch = fetch_json or _urllib_get_json
         self._parser = TdAffordanceParser()
 
