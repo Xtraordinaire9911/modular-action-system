@@ -60,9 +60,7 @@ class RuntimeBackendRouter:
         preferred = self._preferred_backend(skill_call.skill_id)
         best = max(
             candidates,
-            key=lambda affordance: _score(
-                affordance, previous_failures, preferred, self._overlay, skill_call.skill_id
-            ),
+            key=lambda affordance: _score(affordance, previous_failures, preferred, self._overlay, skill_call.skill_id),
         )
         reason = f"selected {best.source} for {skill_call.skill_id}"
         if best.source != preferred:

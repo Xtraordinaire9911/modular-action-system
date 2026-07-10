@@ -24,14 +24,26 @@ def _map_with_wot_and_dom(skill: str = "set_temperature") -> CognitiveMap:
     cognitive_map = CognitiveMap(task_id="t")
     cognitive_map.add_affordance(
         RuntimeAffordance(
-            id="wot_set", source="wot", entity_id="thermostat", action_name="set",
-            action_type="action", confidence=0.9, grounding={}, skill_names=[skill],
+            id="wot_set",
+            source="wot",
+            entity_id="thermostat",
+            action_name="set",
+            action_type="action",
+            confidence=0.9,
+            grounding={},
+            skill_names=[skill],
         )
     )
     cognitive_map.add_affordance(
         RuntimeAffordance(
-            id="dom_set", source="dom", entity_id="thermostat", action_name="set",
-            action_type="input", confidence=0.9, grounding={}, skill_names=[skill],
+            id="dom_set",
+            source="dom",
+            entity_id="thermostat",
+            action_name="set",
+            action_type="input",
+            confidence=0.9,
+            grounding={},
+            skill_names=[skill],
         )
     )
     return cognitive_map
@@ -70,7 +82,9 @@ def test_unapproved_proposal_is_refused():
     proposal["release_gate"] = {"approved": False, "safe_to_apply": False}
     outcome = apply_proposal(overlay, proposal)
     assert not outcome.applied and "not approved" in outcome.reason
-    assert RuntimeBackendRouter(policy_overlay=overlay).select_backend(_call(), _map_with_wot_and_dom()).backend == "wot"
+    assert (
+        RuntimeBackendRouter(policy_overlay=overlay).select_backend(_call(), _map_with_wot_and_dom()).backend == "wot"
+    )
 
 
 def test_forbidden_change_type_is_refused():
