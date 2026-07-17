@@ -20,15 +20,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
-from evaluation.chaos_monkey import ChaosEvent, ChaosPolicy, live_hook_for_event
 from evaluation.integration_eval import write_demo_artifacts
-from src.contracts.types import Affordance, ExecutionResult, SkillCall
+from src.contracts.types import Affordance, ExecutionResult
 from src.effectors.dom_executor import DomExecutor
 from src.effectors.wot_executor import WotExecutor
 from src.perception.browser_session import BrowserSession
 from src.perception.som_parser import BoundingBox, VisualMark, annotate_screenshot, marks_from_affordances
 from src.perception.td_affordance_parser import TdAffordanceParser
-from src.verification.oracle_verifier import OracleVerifier
 
 
 def _get_json(url: str, *, timeout_s: float = 2.0) -> tuple[bool, Any]:
@@ -135,278 +133,6 @@ def _ready_from_state(state: dict[str, Any], booked: bool) -> bool:
         and devices["lights"]["brightness"] <= 40
         and devices["projector"]["power"] == "on"
     )
-
-
-def _ground_truth_from_control_state(state: dict[str, Any], *, booked: bool) -> dict[str, Any]:
-    devices = state.get("state", {})
-    thermostat = devices.get("thermostat", {})
-    lights = devices.get("lights", {})
-    projector = devices.get("projector", {})
-    return {
-        "booked": booked,
-        "booking_confirmed": booked,
-        "booking_status": "confirmed" if booked else "pending",
-        "projector": projector.get("power"),
-        "target_temperature": thermostat.get("targetTemperature"),
-        "light_brightness": lights.get("brightness"),
-        "readiness": bool(
-            booked
-            and projector.get("power") == "on"
-            and thermostat.get("targetTemperature") == 22
-            and lights.get("brightness", 100) <= 40
-        ),
-    }
-
-
-def _apply_live_chaos_event(session: BrowserSession, control_url: str, event: ChaosEvent) -> dict[str, Any]:
-    hook = live_hook_for_event(event)
-    if hook.get("surface") == "dom":
-        fault = str(hook.get("fault", ""))
-        session.evaluate("fault => { if (window.__injectFault) window.__injectFault(fault); }", fault)
-        return {"event": _jsonable(event), "hook": hook, "applied": True}
-    if hook.get("surface") == "wot":
-        payload = {key: value for key, value in hook.items() if key != "surface"}
-        ok, detail = _post_json(f"{control_url.rstrip('/')}/failure", payload)
-        return {"event": _jsonable(event), "hook": hook, "applied": ok, "detail": detail}
-    return {"event": _jsonable(event), "hook": hook, "applied": False}
-
-
-def _clear_live_chaos_event(session: BrowserSession, control_url: str, event: ChaosEvent) -> dict[str, Any]:
-    hook = live_hook_for_event(event)
-    if hook.get("surface") == "dom":
-        session.evaluate("() => { if (window.__clearFaults) window.__clearFaults(); }")
-        return {"event_id": event.event_id, "cleared": True, "surface": "dom"}
-    if hook.get("surface") == "wot":
-        thing = str(hook.get("thing", "thermostat"))
-        ok, detail = _post_json(f"{control_url.rstrip('/')}/failure", {"thing": thing, "clear": True})
-        return {"event_id": event.event_id, "cleared": ok, "surface": "wot", "detail": detail}
-    return {"event_id": event.event_id, "cleared": False}
-
-
-def run_live_chaos_demo(
-    web_url: str,
-    wot_url: str,
-    control_url: str,
-    output_dir: Path,
-    *,
-    headed: bool = False,
-    step_delay_s: float = 0.0,
-    chaos_seed: int = 101,
-    chaos_level: int = 3,
-    pause_at_end: bool = False,
-) -> dict[str, Any]:
-    """Visual chaos demo: DOM reroute plus WoT false-success oracle check."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    _post_json(f"{control_url.rstrip('/')}/reset", {})
-    policy = ChaosPolicy.seeded(chaos_seed, level=chaos_level)
-    tds = _fetch_tds(wot_url)
-    parser = TdAffordanceParser()
-    thing_models = [parser.parse(td) for td in tds]
-    wot_executor = WotExecutor(tds)
-    all_wot_affordances = [affordance for model in thing_models for affordance in model.affordances]
-    oracle = OracleVerifier()
-    trace: list[dict[str, Any]] = []
-    booked = False
-
-    def delay_for_demo() -> None:
-        if step_delay_s > 0:
-            time.sleep(step_delay_s)
-
-    def execute_wot(skill: str, affordance_label: str, value: Any) -> ExecutionResult:
-        affordance = next((item for item in all_wot_affordances if item.label == affordance_label), None)
-        if affordance is None:
-            raise RuntimeError(f"missing parsed WoT affordance label: {affordance_label}")
-        result = wot_executor.execute(affordance, value=value, skill_id=skill)
-        assert isinstance(result, ExecutionResult)
-        return result
-
-    def point_to(selector: str, label: str, session: BrowserSession) -> None:
-        session.evaluate(
-            """({ selector, label }) => {
-                if (window.__demoPointTo) window.__demoPointTo(selector, label);
-            }""",
-            {"selector": selector, "label": label},
-        )
-        delay_for_demo()
-
-    with BrowserSession.launch(web_url, headless=not headed) as session:
-        pam = session.state(page_id="smart_room_dashboard_chaos")
-        (output_dir / "page_affordance_model.json").write_text(json.dumps(_jsonable(pam), indent=2), encoding="utf-8")
-        (output_dir / "thing_affordance_model.json").write_text(
-            json.dumps(_jsonable(thing_models), indent=2), encoding="utf-8"
-        )
-        screenshot_path = output_dir / "smart_room_dashboard.png"
-        screenshot_bytes = session.screenshot(str(screenshot_path))
-        marks = marks_from_affordances(pam.affordances)
-        if not marks:
-            marks = [VisualMark("M000", "Book Room", BoundingBox(80, 180, 110, 32), 0.7)]
-        marked_path = output_dir / "marked_screenshot.png"
-        marked_path.write_bytes(annotate_screenshot(screenshot_bytes, marks))
-        (output_dir / "visual_grounding_result.json").write_text(
-            json.dumps({"marks": [_jsonable(mark) for mark in marks], "marked_screenshot": str(marked_path)}, indent=2),
-            encoding="utf-8",
-        )
-
-        dom_executor = DomExecutor(session)
-        for selector, value, skill in (
-            ("[data-testid='room-input']", "A", "confirm_booking.room"),
-            ("[data-testid='time-input']", "14:00", "confirm_booking.time"),
-        ):
-            point_to(selector, f"DOM type: {value}", session)
-            result = dom_executor.execute(_find_affordance(pam.affordances, selector=selector), value=value, skill_id=skill)
-            trace.append({"skill_id": skill, "backend": "dom", "execution_result": _jsonable(result)})
-            delay_for_demo()
-
-        dom_event = next((event for event in policy.events if event.failure_type == "dom_selector_mutation"), None)
-        booking_selector = "[data-testid='book-room-button']"
-        if dom_event is not None:
-            applied = _apply_live_chaos_event(session, control_url, dom_event)
-            trace.append({"skill_id": "confirm_booking", "event_type": "chaos_injected", **applied})
-            booking_selector = "[data-testid='book-room-button-v2']"
-            point_to(booking_selector, "Chaos: DOM selector changed", session)
-
-        point_to(booking_selector, "DOM attempt uses cached selector", session)
-        dom_result = dom_executor.execute(
-            _find_affordance(pam.affordances, label="Book Room"), skill_id="confirm_booking.dom_attempt"
-        )
-        trace.append({"skill_id": "confirm_booking", "backend": "dom", "execution_result": _jsonable(dom_result)})
-        if isinstance(dom_result, ExecutionResult) and dom_result.success:
-            booked = True
-        if isinstance(dom_result, ExecutionResult) and not dom_result.success:
-            point_to(booking_selector, "Recovery tier 2: visual fallback", session)
-            session.click(booking_selector)
-            booked = True
-            visual_result = ExecutionResult(
-                skill_id="confirm_booking",
-                backend_used="visual",
-                success=True,
-                latency_ms=10.0,
-                confidence=1.0,
-                raw_observation_delta={"booking_status": "confirmed", "booking_confirmed": True},
-            )
-            trace.append(
-                {
-                    "skill_id": "confirm_booking",
-                    "backend": "visual",
-                    "recovery_tier": 2,
-                    "execution_result": _jsonable(visual_result),
-                    "oracle": _jsonable(
-                        oracle.verify_skill(
-                            task_id="prepare_room_A_1400_live_chaos",
-                            skill_call=SkillCall("confirm_booking", {"room": "A", "time": "14:00"}),
-                            execution_result=visual_result,
-                            ground_truth_state={"booked": True, "booking_status": "confirmed"},
-                        )
-                    ),
-                }
-            )
-        delay_for_demo()
-
-        point_to("[data-testid='projector-panel']", "WoT action: projector on", session)
-        projector_result = execute_wot("turn_on_projector", "setPower", "on")
-        trace.append({"skill_id": "turn_on_projector", "backend": "wot", "execution_result": _jsonable(projector_result)})
-        delay_for_demo()
-
-        execute_wot("set_temperature.pre_chaos_drift", "setTargetTemperature", 21)
-        wot_event = next((event for event in policy.events if event.failure_type == "wot_postcondition_mismatch"), None)
-        if wot_event is not None:
-            applied = _apply_live_chaos_event(session, control_url, wot_event)
-            trace.append({"skill_id": "set_temperature", "event_type": "chaos_injected", **applied})
-        point_to("[data-testid='thermostat-panel']", "Chaos: WoT returns success but state is stale", session)
-        mismatch_result = execute_wot("set_temperature", "setTargetTemperature", 22)
-        failed_state = _read_state(control_url)
-        false_positive_verdict = oracle.verify_skill(
-            task_id="prepare_room_A_1400_live_chaos",
-            skill_call=SkillCall("set_temperature", {"room": "A", "target": 22}),
-            execution_result=mismatch_result,
-            ground_truth_state=_ground_truth_from_control_state(failed_state, booked=booked),
-        )
-        trace.append(
-            {
-                "skill_id": "set_temperature",
-                "backend": "wot",
-                "execution_result": _jsonable(mismatch_result),
-                "oracle": _jsonable(false_positive_verdict),
-            }
-        )
-        delay_for_demo()
-
-        if false_positive_verdict.false_positive:
-            point_to("[data-testid='thermostat-panel']", "Oracle caught false success; retry", session)
-            if wot_event is not None:
-                trace.append({"skill_id": "set_temperature", "event_type": "chaos_cleared", **_clear_live_chaos_event(session, control_url, wot_event)})
-            retry_result = execute_wot("set_temperature.retry", "setTargetTemperature", 22)
-            recovered_state = _read_state(control_url)
-            retry_verdict = oracle.verify_skill(
-                task_id="prepare_room_A_1400_live_chaos",
-                skill_call=SkillCall("set_temperature", {"room": "A", "target": 22}),
-                execution_result=retry_result,
-                ground_truth_state=_ground_truth_from_control_state(recovered_state, booked=booked),
-            )
-            trace.append(
-                {
-                    "skill_id": "set_temperature",
-                    "backend": "wot",
-                    "recovery_tier": 1,
-                    "execution_result": _jsonable(retry_result),
-                    "oracle": _jsonable(retry_verdict),
-                }
-            )
-        delay_for_demo()
-
-        point_to("[data-testid='lighting-panel']", "WoT action: brightness 40%", session)
-        lighting_result = execute_wot("set_lighting", "setBrightness", 40)
-        trace.append({"skill_id": "set_lighting", "backend": "wot", "execution_result": _jsonable(lighting_result)})
-        time.sleep(2.0)
-        point_to("[data-testid='readiness-panel']", "Final oracle: READY", session)
-        final_state_raw = _read_state(control_url)
-        ground_truth = _ground_truth_from_control_state(final_state_raw, booked=booked)
-        final_oracle = oracle.verify_final_state(
-            task_id="prepare_room_A_1400_live_chaos",
-            expected_final_state={
-                "booked": True,
-                "projector": "on",
-                "target_temperature": 22,
-                "light_brightness": 40,
-                "readiness": True,
-            },
-            ground_truth_state=ground_truth,
-        )
-        trace.append(
-            {
-                "skill_id": "verify_readiness",
-                "backend": "oracle",
-                "oracle": _jsonable(final_oracle),
-                "ground_truth_state": ground_truth,
-                "dashboard_text": session.text_content("[data-testid='readiness-status']"),
-            }
-        )
-        if pause_at_end:
-            input("Live chaos demo paused. Press Enter to close the browser...")
-
-    report = {
-        "task_id": "prepare_room_A_1400_live_chaos",
-        "chaos_seed": chaos_seed,
-        "chaos_level": chaos_level,
-        "chaos_events": [_jsonable(event) for event in policy.events],
-        "acceptance": {
-            "dom_selector_mutation_injected": any(event.failure_type == "dom_selector_mutation" for event in policy.events),
-            "visual_fallback_triggered": any(row.get("backend") == "visual" for row in trace),
-            "wot_false_success_injected": any(event.failure_type == "wot_postcondition_mismatch" for event in policy.events),
-            "oracle_detected_false_positive": any((row.get("oracle") or {}).get("false_positive") for row in trace),
-            "final_oracle_success": final_oracle.oracle_success,
-        },
-        "trace": trace,
-        "artifacts": {
-            "page_affordance_model": str(output_dir / "page_affordance_model.json"),
-            "thing_affordance_model": str(output_dir / "thing_affordance_model.json"),
-            "visual_grounding_result": str(output_dir / "visual_grounding_result.json"),
-            "marked_screenshot": str(output_dir / "marked_screenshot.png"),
-            "chaos_trace": str(output_dir / "chaos_demo_trace_live.json"),
-        },
-    }
-    (output_dir / "chaos_demo_trace_live.json").write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
-    return report
 
 
 def run_live_agent_demo(
@@ -583,13 +309,6 @@ def main() -> None:
     parser.add_argument(
         "--live-agent", action="store_true", help="Drive the live env with Playwright + DOM/WoT actions."
     )
-    parser.add_argument(
-        "--chaos-demo",
-        action="store_true",
-        help="Drive a visual chaos demo with DOM mutation, WoT false success, oracle verification, and recovery.",
-    )
-    parser.add_argument("--chaos-seed", type=int, default=101, help="Seed for deterministic visual chaos policy.")
-    parser.add_argument("--chaos-level", type=int, choices=[1, 2, 3], default=3, help="Chaos policy level.")
     parser.add_argument("--web-url", default="http://localhost:3000")
     parser.add_argument("--wot-url", default="http://localhost:8080")
     parser.add_argument("--control-url", default="http://localhost:8081")
@@ -615,18 +334,6 @@ def main() -> None:
             Path(args.output_dir),
             headed=args.headed,
             step_delay_s=args.step_delay,
-            pause_at_end=args.pause_at_end,
-        )
-    if args.chaos_demo:
-        summary["chaos_demo"] = run_live_chaos_demo(
-            args.web_url,
-            args.wot_url,
-            args.control_url,
-            Path(args.output_dir),
-            headed=args.headed,
-            step_delay_s=args.step_delay,
-            chaos_seed=args.chaos_seed,
-            chaos_level=args.chaos_level,
             pause_at_end=args.pause_at_end,
         )
     print(json.dumps(summary, indent=2, sort_keys=True))

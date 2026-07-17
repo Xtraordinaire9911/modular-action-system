@@ -11,6 +11,18 @@
       },
       "confidence": 0.7,
       "extra": {}
+    },
+    {
+      "mark_id": "M001",
+      "label": "Readiness",
+      "bbox": {
+        "x": 20,
+        "y": 610,
+        "w": 680,
+        "h": 84
+      },
+      "confidence": 0.7,
+      "extra": {}
     }
   ],
   "marked_screenshot": "artifacts\\marked_screenshot.png"
