@@ -139,13 +139,25 @@ class MiniwobController:
         except Exception:
             return False
 
+    def _click_resolved(self, css: str) -> None:
+        """Click an already-resolved selector, falling back to a direct JS dispatch
+        when a real pointer click is blocked. Absolutely-positioned MiniWoB tasks
+        (e.g. click-button-sequence) randomly overlap their buttons, so Playwright
+        reports "<other> intercepts pointer events" and times out. el.click() fires
+        the same listeners regardless of z-order, so the action still succeeds."""
+        try:
+            self._s.click(css)
+        except Exception:
+            self._say("     (overlap — dispatching click directly)")
+            self._s.evaluate("(s)=>{const e=document.querySelector(s); if(e) e.click();}", css)
+
     def click_css(self, css: str, why: str) -> bool:
         self._say(f"  -> {why}")
         if not self._highlight(css, why):  # resolve first; never hang on a bad selector
             self._say(f"     (skip: '{css}' not found)")
             return False
         self._pause()
-        self._s.click(css)
+        self._click_resolved(css)
         self._pause(0.5)
         return True
 
@@ -170,7 +182,7 @@ class MiniwobController:
             return False
         self._highlight(selector, why)
         self._pause()
-        self._s.click(selector)
+        self._click_resolved(selector)
         self._pause(0.5)
         return True
 
@@ -217,7 +229,10 @@ def solve_enter_password(c: MiniwobController) -> None:
 def solve_click_link(c: MiniwobController) -> None:
     vals = quoted_values(c.query())
     if vals:
-        c.click_text("#area", "a", vals[0], f'Click the link "{vals[0]}"')
+        # MiniWoB renders "links" as <span class="alink">, not <a>. Match both
+        # (querySelectorAll accepts a selector list) so the resolver finds the real
+        # clickable element instead of skipping with a false "no <a> found".
+        c.click_text("#area", "a, .alink", vals[0], f'Click the link "{vals[0]}"')
 
 
 def solve_click_button_sequence(c: MiniwobController) -> None:

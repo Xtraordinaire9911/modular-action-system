@@ -67,7 +67,7 @@ def test_solver_call_sequences():
 
     c = RecordingController('Click on the link "Read more".')
     solve_click_link(c)
-    assert c.calls == [("text", "#area", "a", "Read more")]
+    assert c.calls == [("text", "#area", "a, .alink", "Read more")]  # matches MiniWoB .alink spans + real <a>
 
     c = RecordingController()
     solve_click_button_sequence(c)
