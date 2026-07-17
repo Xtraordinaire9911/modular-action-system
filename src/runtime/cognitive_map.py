@@ -86,7 +86,13 @@ class CognitiveMap:
         self.touch()
 
     def update_affordances(self, affordances: list[ContractAffordance]) -> None:
+        runtime_affordances = [_runtime_affordance_from_contract(affordance) for affordance in affordances]
+        for affordance in runtime_affordances:
+            _validate_runtime_affordance(affordance)
         self.affordances = affordances
+        for affordance in runtime_affordances:
+            affordance.confidence = _clamp_confidence(affordance.confidence)
+            self.runtime_affordances[affordance.id] = affordance
         self.touch()
 
     def add_entity(self, entity: Entity) -> None:
@@ -98,10 +104,7 @@ class CognitiveMap:
         self.touch()
 
     def add_affordance(self, affordance: RuntimeAffordance) -> None:
-        if not affordance.id.strip():
-            raise ValueError("affordance.id must be non-empty")
-        if not affordance.entity_id.strip():
-            raise ValueError("affordance.entity_id must be non-empty")
+        _validate_runtime_affordance(affordance)
         affordance.confidence = _clamp_confidence(affordance.confidence)
         self.runtime_affordances[affordance.id] = affordance
         self.touch()
@@ -196,6 +199,14 @@ class CognitiveMap:
     def unresolved_conflicts(self) -> list[Conflict]:
         return [conflict for conflict in self.conflicts if not conflict.resolved]
 
+    def resolve_conflicts(self, conflict_ids: list[str], decision: str) -> None:
+        targets = set(conflict_ids)
+        for conflict in self.conflicts:
+            if conflict.id in targets:
+                conflict.resolved = True
+                conflict.decision = decision
+        self.touch()
+
     def snapshot(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id,
@@ -247,6 +258,50 @@ class CognitiveMap:
 
 def _clamp_confidence(confidence: float) -> float:
     return max(0.0, min(1.0, confidence))
+
+
+def _validate_runtime_affordance(affordance: RuntimeAffordance) -> None:
+    if not affordance.id.strip():
+        raise ValueError("affordance.id must be non-empty")
+    if not affordance.entity_id.strip():
+        raise ValueError("affordance.entity_id must be non-empty")
+    if not affordance.action_name.strip():
+        raise ValueError("affordance.action_name must be non-empty")
+
+
+def _runtime_affordance_from_contract(affordance: ContractAffordance) -> RuntimeAffordance:
+    source: SourceType
+    if affordance.source == "DOM":
+        source = "dom"
+    elif affordance.source == "VISUAL":
+        source = "visual"
+    else:
+        source = "wot"
+    locator = dict(affordance.locator)
+    state = dict(affordance.state)
+    action_name = str(locator.get("skill_id") or state.get("skill_id") or affordance.action)
+    skill_names = [action_name]
+    for candidate in (locator.get("skill_name"), state.get("skill_name")):
+        if isinstance(candidate, str) and candidate not in skill_names:
+            skill_names.append(candidate)
+    entity_id = str(
+        locator.get("entity_id")
+        or locator.get("thing_id")
+        or locator.get("target_id")
+        or state.get("entity_id")
+        or affordance.id
+    )
+    return RuntimeAffordance(
+        id=affordance.id,
+        source=source,
+        entity_id=entity_id,
+        action_name=action_name,
+        action_type=affordance.type,
+        confidence=affordance.confidence,
+        grounding={**locator, "label": affordance.label, "safety_level": affordance.safety_level},
+        input_schema=state.get("input_schema") if isinstance(state.get("input_schema"), dict) else None,
+        skill_names=skill_names,
+    )
 
 
 def _deep_merge(target: dict[str, Any], update: dict[str, Any]) -> None:

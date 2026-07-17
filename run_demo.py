@@ -79,7 +79,23 @@ def _post_json(url: str, payload: Any, *, timeout_s: float = 2.0) -> tuple[bool,
         return False, str(exc)
 
 
-def _fetch_tds(wot_url: str) -> list[dict[str, Any]]:
+def _fetch_tds(wot_url: str, directory_url: str = "") -> list[dict[str, Any]]:
+    """Obtain the environment's TDs, preferring runtime discovery over a static list.
+
+    When a Thing Directory is reachable the agent discovers the full inventory at
+    runtime (no hard-coded device names); otherwise it falls back to the known
+    smart-room Things so the demo still runs on a bare servient.
+    """
+    if directory_url:
+        try:
+            from src.perception.thing_directory import ThingDirectoryClient
+
+            discovered = ThingDirectoryClient(directory_url).discover_tds()
+            print(f"[discovery] {len(discovered)} Thing Description(s) discovered via {directory_url}/things")
+            return [_rewrite_td_forms_to_base(td, wot_url) for td in discovered]
+        except Exception as exc:  # noqa: BLE001 - discovery is best-effort with a static fallback
+            print(f"[discovery] directory unavailable ({exc}); falling back to static thing list")
+
     tds: list[dict[str, Any]] = []
     for thing in ("thermostat", "lights", "projector"):
         ok, detail = _get_json(f"{wot_url.rstrip('/')}/{thing}")
@@ -415,13 +431,14 @@ def run_live_agent_demo(
     control_url: str,
     output_dir: Path,
     *,
+    directory_url: str = "",
     headed: bool = False,
     step_delay_s: float = 0.0,
     pause_at_end: bool = False,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     _post_json(f"{control_url.rstrip('/')}/reset", {})
-    tds = _fetch_tds(wot_url)
+    tds = _fetch_tds(wot_url, directory_url)
     parser = TdAffordanceParser()
     thing_models = [parser.parse(td) for td in tds]
     wot_executor = WotExecutor(tds)
@@ -592,7 +609,12 @@ def main() -> None:
     parser.add_argument("--chaos-level", type=int, choices=[1, 2, 3], default=3, help="Chaos policy level.")
     parser.add_argument("--web-url", default="http://localhost:3000")
     parser.add_argument("--wot-url", default="http://localhost:8080")
-    parser.add_argument("--control-url", default="http://localhost:8081")
+    parser.add_argument("--control-url", default="http://[::1]:8081")
+    parser.add_argument(
+        "--directory-url",
+        default="http://localhost:8082",
+        help="Thing Directory for runtime TD discovery; empty to force the static thing list.",
+    )
     parser.add_argument("--output-dir", default="artifacts")
     parser.add_argument("--headed", action="store_true", help="Show the Playwright browser window.")
     parser.add_argument("--step-delay", type=float, default=0.0, help="Seconds to wait after each visible action.")
@@ -613,6 +635,7 @@ def main() -> None:
             args.wot_url,
             args.control_url,
             Path(args.output_dir),
+            directory_url=args.directory_url,
             headed=args.headed,
             step_delay_s=args.step_delay,
             pause_at_end=args.pause_at_end,

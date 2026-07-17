@@ -1,0 +1,28 @@
+adaptation:
+  auto_apply: false
+  storage:
+    ledger: artifacts/trace_ledger.jsonl
+    report: artifacts/adaptation_report.json
+    proposals: artifacts/policy_proposals.json
+  required_checks:
+    - normal_suite_passes
+    - failure_suite_non_regression
+    - safety_non_regression
+    - conflict_halt_still_blocks_system1
+    - held_out_cases_improve_or_hold
+    - cost_within_budget
+    - human_approval
+  low_risk_change_types:
+    - backend_reliability_adjustment
+    - preferred_backend_order_change
+    - retry_budget_adjustment
+    - new_regression_fixture
+    - failure_profile_weight
+  forbidden_change_types:
+    - core_source_code_change
+    - model_weight_change
+    - skill_semantics_change
+    - postcondition_weakening
+    - safety_threshold_lowering
+    - human_escalation_removal
+    - conflict_halt_bypass
