@@ -27,7 +27,7 @@
         "skill_id": "confirm_booking.room",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 53.336,
+        "latency_ms": 70.941,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -43,7 +43,7 @@
         "skill_id": "confirm_booking.time",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 16.258,
+        "latency_ms": 17.438,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -59,7 +59,7 @@
         "skill_id": "confirm_booking.submit",
         "backend_used": "dom",
         "success": true,
-        "latency_ms": 44.732,
+        "latency_ms": 38.201,
         "confidence": 0.97,
         "failure_reason": null,
         "raw_observation_delta": {
@@ -75,11 +75,11 @@
         "skill_id": "turn_on_projector",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 481.781,
+        "latency_ms": 1066.169,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:567df5e1-846d-4636-a39a-9ede33d0c2af",
+          "thing_id": "urn:uuid:90d59acf-f080-4888-869c-cb8c295ab10f",
           "action": "setPower",
           "result": "",
           "sent": "on"
@@ -93,11 +93,11 @@
         "skill_id": "set_temperature",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 387.007,
+        "latency_ms": 371.379,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:b1b9a889-6f33-4749-96c4-596e0dc3ee41",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 22
@@ -111,11 +111,11 @@
         "skill_id": "set_lighting",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 361.503,
+        "latency_ms": 462.52,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:ad057fbf-8654-408c-b161-4170bab73c36",
+          "thing_id": "urn:uuid:0865486b-eb06-4c4a-af52-c752514e25e2",
           "action": "setBrightness",
           "result": "",
           "sent": 40
@@ -154,11 +154,11 @@
         "skill_id": "set_temperature.pre_failure_drift",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 608.689,
+        "latency_ms": 649.008,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:b1b9a889-6f33-4749-96c4-596e0dc3ee41",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 24
@@ -172,11 +172,11 @@
         "skill_id": "set_temperature.injected_failure",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 502.824,
+        "latency_ms": 680.629,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:b1b9a889-6f33-4749-96c4-596e0dc3ee41",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 22
@@ -190,11 +190,11 @@
         "skill_id": "set_temperature.recovery_retry",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 457.276,
+        "latency_ms": 687.65,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:b1b9a889-6f33-4749-96c4-596e0dc3ee41",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 22
@@ -210,11 +210,11 @@
         "skill_id": "set_temperature.injected_failure",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 502.824,
+        "latency_ms": 680.629,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:b1b9a889-6f33-4749-96c4-596e0dc3ee41",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 22
@@ -224,11 +224,11 @@
         "skill_id": "set_temperature.recovery_retry",
         "backend_used": "wot",
         "success": true,
-        "latency_ms": 457.276,
+        "latency_ms": 687.65,
         "confidence": 1.0,
         "failure_reason": null,
         "raw_observation_delta": {
-          "thing_id": "urn:uuid:b1b9a889-6f33-4749-96c4-596e0dc3ee41",
+          "thing_id": "urn:uuid:a3664779-44dc-4ac5-86f3-b8fabc98989c",
           "action": "setTargetTemperature",
           "result": "",
           "sent": 22
