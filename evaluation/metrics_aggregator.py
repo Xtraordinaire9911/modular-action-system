@@ -14,6 +14,9 @@ class TaskOutcome:
     recovery_triggered: bool = False
     unsafe_executed: bool = False
     unresolved_conflict: bool = False
+    constraints_satisfied: bool | None = None
+    chaos_exposed: bool = False
+    attempts: int = 1
 
 
 @dataclass
@@ -55,6 +58,16 @@ class VisualGroundingCase:
     task_id: str
     expected_mark_id: str
     selected_mark_id: str | None
+
+
+@dataclass
+class OracleCase:
+    task_id: str
+    skill_id: str
+    claimed_success: bool
+    oracle_success: bool
+    false_positive: bool = False
+    false_negative: bool = False
 
 
 @dataclass
@@ -104,6 +117,7 @@ class EvaluationDataset:
     verification_cases: list[VerificationCase] = field(default_factory=list)
     conflict_cases: list[ConflictCase] = field(default_factory=list)
     visual_grounding_cases: list[VisualGroundingCase] = field(default_factory=list)
+    oracle_cases: list[OracleCase] = field(default_factory=list)
     primitive_actions: list[PrimitiveAction] = field(default_factory=list)
     adaptation_cases: list[AdaptationCase] = field(default_factory=list)
 
@@ -174,6 +188,36 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         len(dataset.visual_grounding_cases),
     )
     report.add(
+        "CSR",
+        sum(
+            1
+            for task in dataset.tasks
+            if (task.constraints_satisfied if task.constraints_satisfied is not None else task.final_success)
+        ),
+        len(dataset.tasks),
+    )
+    report.add(
+        "OSR",
+        sum(1 for case in dataset.oracle_cases if case.oracle_success),
+        len(dataset.oracle_cases),
+    )
+    report.add(
+        "FPR",
+        sum(
+            1
+            for case in dataset.oracle_cases
+            if case.false_positive or (case.claimed_success and not case.oracle_success)
+        ),
+        sum(1 for case in dataset.oracle_cases if case.claimed_success),
+    )
+    report.add(
+        "CER",
+        sum(1 for task in dataset.tasks if task.chaos_exposed and task.final_success),
+        sum(1 for task in dataset.tasks if task.chaos_exposed),
+    )
+    report.add_mean(
+        "RE",
+        [_recovery_efficiency(task) for task in dataset.tasks if task.recovery_triggered or task.chaos_exposed],
         "CascadeTraceCoverage",
         sum(1 for case in dataset.adaptation_cases if case.full_cascade_trace),
         len(dataset.adaptation_cases),
@@ -242,6 +286,13 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
     return report
 
 
+def _recovery_efficiency(task: TaskOutcome) -> float:
+    if not task.final_success:
+        return 0.0
+    attempts = max(1, int(task.attempts or 1))
+    return 1.0 / attempts
+
+
 def metric_definitions() -> dict[str, str]:
     """Short definitions used by reports and notebooks."""
     return {
@@ -258,6 +309,11 @@ def metric_definitions() -> dict[str, str]:
         "WDSR": "World-state Disagreement Success Rate = resolved injected conflicts / injected conflicts",
         "CRR": "Conflict Resolution Rate = resolved conflicts / detected conflicts",
         "VGA": "Visual Grounding Accuracy = correct visual mark selections / visual grounding attempts",
+        "CSR": "Constraint Satisfaction Rate = tasks satisfying final constraints / total tasks",
+        "OSR": "Oracle Success Rate = independently verified successes / oracle checks",
+        "FPR": "False Positive Rate = claimed successes rejected by oracle / claimed successes",
+        "CER": "Chaos Exposure Recovery Rate = chaos-exposed tasks that still succeed / chaos-exposed tasks",
+        "RE": "Recovery Efficiency = mean successful recovery score, where fewer attempts score higher",
         "CascadeTraceCoverage": "Failure cases with full tier-by-tier recovery trace / total adaptation cases",
         "BoundaryClassificationRate": "Classified failures / total adaptation cases",
         "PolicyProposalRate": "Policy proposals generated / total adaptation cases",

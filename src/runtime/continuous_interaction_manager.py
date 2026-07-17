@@ -11,6 +11,10 @@ from src.adaptation.failure_boundary import FailureAnalysis
 from src.adaptation.llm_judge import LLMJudge, LLMJudgeInput, LLMJudgeOutputError, LLMJudgeUnavailable
 from src.adaptation.rule_classifier import RuleFailureClassifier
 from src.contracts.types import ExecutionResult, Observation, SkillCall, SkillTuple
+from src.recovery.human_escalation import HumanEscalationPolicy
+from src.recovery.reroute_policy import ReroutePolicy
+from src.recovery.retry_policy import RetryPolicy
+from src.recovery.rollback_policy import RollbackPolicy
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -54,7 +58,7 @@ class ContinuousInteractionManager:
 
     def __init__(
         self,
-        skill_library: "SkillLibrary | Mapping[str, SkillTuple]",
+        skill_library: dict[str, SkillTuple],
         executors: dict[str, Executor],
         cognitive_map: CognitiveMap,
         backend_router: RuntimeBackendRouter | None = None,
@@ -64,11 +68,7 @@ class ContinuousInteractionManager:
         use_llm_judge: bool = False,
         active_perception_resolver: ActivePerceptionResolver | None = None,
     ) -> None:
-        # Accept the typed SkillLibrary (single source of truth) or a plain
-        # mapping; normalize to a dict so lookups stay O(1) either way.
-        self.skill_library: dict[str, SkillTuple] = (
-            skill_library.as_dict() if hasattr(skill_library, "as_dict") else dict(skill_library)
-        )
+        self.skill_library = skill_library
         self.executors = executors
         self.cognitive_map = cognitive_map
         self.state = RuntimeState.IDLE
