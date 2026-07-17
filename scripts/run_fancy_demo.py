@@ -209,7 +209,9 @@ def main() -> None:
         wob_base + "/" + wob_suite[0].name + ".html" if wob_suite else mock_base
     )
 
-    session = BrowserSession.launch(first_url, headless=not args.headed)
+    # 4 s action timeout: static demo pages settle instantly, so a slow click means
+    # a blocked/overlapping element — fail fast and let _click_resolved dispatch via JS.
+    session = BrowserSession.launch(first_url, headless=not args.headed, action_timeout_ms=4000)
     time.sleep(0.5)
 
     groups: list[dict] = []
