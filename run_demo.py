@@ -31,6 +31,7 @@ from src.perception.som_parser import BoundingBox, VisualMark, annotate_screensh
 from src.perception.td_affordance_parser import TdAffordanceParser
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.skill_library import load_skill_library
 from src.verification.oracle_verifier import OracleVerifier
 
 
@@ -168,6 +169,21 @@ def _runtime_step_payload(result: Any) -> dict[str, Any]:
     }
 
 
+def _runtime_trace_entry(
+    *,
+    skill_id: str,
+    controller: str,
+    observation_source: str,
+    result: Any,
+) -> dict[str, Any]:
+    return {
+        "skill_id": skill_id,
+        "controller": controller,
+        "observation_source": observation_source,
+        "runtime_step": _runtime_step_payload(result),
+    }
+
+
 def _read_state(control_url: str) -> dict[str, Any]:
     ok, detail = _get_json(f"{control_url.rstrip('/')}/state")
     if not ok or not isinstance(detail, dict):
@@ -177,21 +193,9 @@ def _read_state(control_url: str) -> dict[str, Any]:
 
 def _observation_from_live_state(control_url: str, *, booked: bool = False) -> Observation:
     state = _read_state(control_url).get("state", {})
-    thermostat = state.get("thermostat", {})
-    lights = state.get("lights", {})
-    projector = state.get("projector", {})
+    normalized = _normalized_live_device_state(state, booked=booked)
     return Observation(
-        device_states={
-            "booking": {"confirmed": booked},
-            "booking_status": "confirmed" if booked else "pending",
-            "booking_confirmed": booked,
-            "thermostat_A": {
-                "targetTemperature": thermostat.get("targetTemperature"),
-                "currentTemperature": thermostat.get("currentTemperature"),
-            },
-            "lights": {"brightness": lights.get("brightness")},
-            "projector_A": {"power": projector.get("power")},
-        },
+        device_states=normalized,
         accessibility_tree={
             "page_state": {
                 "booking": {"confirmed": booked},
@@ -199,6 +203,41 @@ def _observation_from_live_state(control_url: str, *, booked: bool = False) -> O
             }
         },
     )
+
+
+def _normalized_live_device_state(state: dict[str, Any], *, booked: bool = False) -> dict[str, Any]:
+    thermostat = state.get("thermostat", {})
+    lights = state.get("lights", {})
+    projector = state.get("projector", {})
+    readiness = bool(
+        booked
+        and projector.get("power") == "on"
+        and 20 <= thermostat.get("targetTemperature", 0) <= 24
+        and lights.get("brightness", 100) <= 60
+    )
+    return {
+        "booking": {"confirmed": booked},
+        "booking_status": "confirmed" if booked else "pending",
+        "booking_confirmed": booked,
+        "thermostat_service_available": True,
+        "lighting_service_available": True,
+        "projector_service_available": True,
+        "thermostat": {
+            "target_temperature": thermostat.get("targetTemperature"),
+            "targetTemperature": thermostat.get("targetTemperature"),
+            "current_temperature": thermostat.get("currentTemperature"),
+            "currentTemperature": thermostat.get("currentTemperature"),
+        },
+        "thermostat_A": {
+            "targetTemperature": thermostat.get("targetTemperature"),
+            "currentTemperature": thermostat.get("currentTemperature"),
+        },
+        "lighting": {"brightness": lights.get("brightness")},
+        "lights": {"brightness": lights.get("brightness")},
+        "projector": {"power": projector.get("power")},
+        "projector_A": {"power": projector.get("power")},
+        "readiness": {"ready": readiness},
+    }
 
 
 class _LiveDomPrimitiveExecutor:
@@ -249,6 +288,99 @@ class _LiveDomPrimitiveExecutor:
         if self._delay is not None:
             self._delay()
         return result
+
+
+class _LiveWotSkillExecutor:
+    """CIM executor adapter for live WoT skills with state re-observation."""
+
+    def __init__(
+        self,
+        wot_executor: WotExecutor,
+        control_url: str,
+        *,
+        booked: Any,
+        point_to: Any | None = None,
+        delay: Any | None = None,
+    ) -> None:
+        self._wot_executor = wot_executor
+        self._control_url = control_url
+        self._booked = booked
+        self._point_to = point_to
+        self._delay = delay
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        _ = observation
+        if self._point_to is not None:
+            selector = _selector_for_wot_skill(skill_call.skill_id)
+            if selector:
+                self._point_to(selector, f"CIM WoT: {skill_call.skill_id}")
+
+        if skill_call.skill_id == "verify_readiness":
+            state = _read_state(self._control_url).get("state", {})
+            normalized = _normalized_live_device_state(state, booked=bool(self._booked()))
+            result = ExecutionResult(
+                skill_id=skill_call.skill_id,
+                backend_used="wot",
+                success=bool(normalized["readiness"]["ready"]),
+                latency_ms=0.0,
+                confidence=1.0,
+                failure_reason=None if normalized["readiness"]["ready"] else "readiness_not_satisfied",
+                raw_observation_delta=normalized,
+            )
+        else:
+            env_call = _wot_environment_skill_call(skill_call)
+            result = await self._wot_executor.execute(env_call, observation)
+            result.skill_id = skill_call.skill_id
+            state = _read_state(self._control_url).get("state", {})
+            result.raw_observation_delta = {
+                **result.raw_observation_delta,
+                **_normalized_live_device_state(state, booked=bool(self._booked())),
+            }
+
+        if self._delay is not None:
+            self._delay()
+        return result
+
+
+class _TraceOnlyVisualExecutor:
+    """Advertise visual fallback as a recoverable backend in CIM traces."""
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        _ = observation
+        return ExecutionResult(
+            skill_id=skill_call.skill_id,
+            backend_used="visual",
+            success=False,
+            latency_ms=0.0,
+            confidence=0.0,
+            failure_reason="visual fallback is executed by the live demo presentation layer",
+        )
+
+
+def _wot_environment_skill_call(skill_call: SkillCall) -> SkillCall:
+    params = dict(skill_call.params)
+    if skill_call.skill_id == "set_temperature" and "target" in params:
+        params.setdefault("targetTemperature", params["target"])
+    return SkillCall(
+        skill_id=skill_call.skill_id,
+        params=params,
+        priority=skill_call.priority,
+        required_postconditions=list(skill_call.required_postconditions),
+        preferred_backends=list(skill_call.preferred_backends),
+    )
+
+
+def _selector_for_wot_skill(skill_id: str) -> str:
+    return {
+        "turn_on_projector": "[data-testid='projector-panel']",
+        "set_temperature": "[data-testid='thermostat-panel']",
+        "set_lighting": "[data-testid='lighting-panel']",
+        "verify_readiness": "[data-testid='readiness-panel']",
+    }.get(skill_id, "")
+
+
+def _skill_library_dict() -> dict[str, Any]:
+    return {skill.skill_id: skill for skill in load_skill_library().all()}
 
 
 def _ready_from_state(state: dict[str, Any], booked: bool) -> bool:
@@ -336,14 +468,6 @@ def run_live_chaos_demo(
         if step_delay_s > 0:
             time.sleep(step_delay_s)
 
-    def execute_wot(skill: str, affordance_label: str, value: Any) -> ExecutionResult:
-        affordance = next((item for item in all_wot_affordances if item.label == affordance_label), None)
-        if affordance is None:
-            raise RuntimeError(f"missing parsed WoT affordance label: {affordance_label}")
-        result = wot_executor.execute(affordance, value=value, skill_id=skill)
-        assert isinstance(result, ExecutionResult)
-        return result
-
     def point_to(selector: str, label: str, session: BrowserSession) -> None:
         session.evaluate(
             """({ selector, label }) => {
@@ -372,16 +496,47 @@ def run_live_chaos_demo(
         )
 
         dom_executor = DomExecutor(session)
-        for selector, value, skill in (
-            ("[data-testid='room-input']", "A", "confirm_booking.room"),
-            ("[data-testid='time-input']", "14:00", "confirm_booking.time"),
-        ):
-            point_to(selector, f"DOM type: {value}", session)
-            result = dom_executor.execute(
-                _find_affordance(pam.affordances, selector=selector), value=value, skill_id=skill
+        live_dom_affordances = _with_live_runtime_planning_hints(pam.affordances)
+        booking_state = {"booked": False}
+        cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live_chaos")
+        cognitive_map.update_affordances(live_dom_affordances + all_wot_affordances)
+        manager = ContinuousInteractionManager(
+            _skill_library_dict(),
+            {
+                "dom": _LiveDomPrimitiveExecutor(
+                    dom_executor,
+                    live_dom_affordances,
+                    point_to=lambda selector, label: point_to(selector, label, session),
+                    delay=delay_for_demo,
+                ),
+                "visual": _TraceOnlyVisualExecutor(),
+                "wot": _LiveWotSkillExecutor(
+                    wot_executor,
+                    control_url,
+                    booked=lambda: booking_state["booked"],
+                    point_to=lambda selector, label: point_to(selector, label, session),
+                    delay=delay_for_demo,
+                ),
+            },
+            cognitive_map,
+        )
+
+        def run_cim_skill(skill_id: str, params: dict[str, Any]) -> Any:
+            result = asyncio.run(
+                manager.run_skill(
+                    SkillCall(skill_id, params),
+                    _observation_from_live_state(control_url, booked=booking_state["booked"]),
+                )
             )
-            trace.append({"skill_id": skill, "backend": "dom", "execution_result": _jsonable(result)})
-            delay_for_demo()
+            trace.append(
+                _runtime_trace_entry(
+                    skill_id=skill_id,
+                    controller="ContinuousInteractionManager.run_skill",
+                    observation_source="control plane state -> normalized Observation -> CognitiveMap",
+                    result=result,
+                )
+            )
+            return result
 
         dom_event = next((event for event in policy.events if event.failure_type == "dom_selector_mutation"), None)
         booking_selector = "[data-testid='book-room-button']"
@@ -392,16 +547,30 @@ def run_live_chaos_demo(
             point_to(booking_selector, "Chaos: DOM selector changed", session)
 
         point_to(booking_selector, "DOM attempt uses cached selector", session)
-        dom_result = dom_executor.execute(
-            _find_affordance(pam.affordances, label="Book Room"), skill_id="confirm_booking.dom_attempt"
+        dom_runtime = asyncio.run(
+            manager.run_goal(
+                goal_id="confirm_booking_live_chaos_goal",
+                goal_state="device_states.booking.confirmed == true",
+                parameters={"room": "A", "time": "14:00"},
+                observation=_observation_from_live_state(control_url, booked=False),
+            )
         )
-        trace.append({"skill_id": "confirm_booking", "backend": "dom", "execution_result": _jsonable(dom_result)})
-        if isinstance(dom_result, ExecutionResult) and dom_result.success:
+        trace.append(
+            _runtime_trace_entry(
+                skill_id="confirm_booking_live_chaos_goal",
+                controller="ContinuousInteractionManager.run_goal",
+                observation_source="BrowserSession.state -> DomTransducer -> PageAffordanceModel -> CognitiveMap",
+                result=dom_runtime,
+            )
+        )
+        if dom_runtime.state.value == "completed":
             booked = True
-        if isinstance(dom_result, ExecutionResult) and not dom_result.success:
+            booking_state["booked"] = True
+        if dom_runtime.state.value != "completed":
             point_to(booking_selector, "Recovery tier 2: visual fallback", session)
             session.click(booking_selector)
             booked = True
+            booking_state["booked"] = True
             visual_result = ExecutionResult(
                 skill_id="confirm_booking",
                 backend_used="visual",
@@ -428,21 +597,18 @@ def run_live_chaos_demo(
             )
         delay_for_demo()
 
-        point_to("[data-testid='projector-panel']", "WoT action: projector on", session)
-        projector_result = execute_wot("turn_on_projector", "setPower", "on")
-        trace.append(
-            {"skill_id": "turn_on_projector", "backend": "wot", "execution_result": _jsonable(projector_result)}
-        )
+        run_cim_skill("turn_on_projector", {"room": "A"})
         delay_for_demo()
 
-        execute_wot("set_temperature.pre_chaos_drift", "setTargetTemperature", 21)
+        run_cim_skill("set_temperature", {"room": "A", "target": 21})
         wot_event = next((event for event in policy.events if event.failure_type == "wot_postcondition_mismatch"), None)
         if wot_event is not None:
             applied = _apply_live_chaos_event(session, control_url, wot_event)
             trace.append({"skill_id": "set_temperature", "event_type": "chaos_injected", **applied})
         point_to("[data-testid='thermostat-panel']", "Chaos: WoT returns success but state is stale", session)
-        mismatch_result = execute_wot("set_temperature", "setTargetTemperature", 22)
+        mismatch_runtime = run_cim_skill("set_temperature", {"room": "A", "target": 22})
         failed_state = _read_state(control_url)
+        mismatch_result = mismatch_runtime.execution_result
         false_positive_verdict = oracle.verify_skill(
             task_id="prepare_room_A_1400_live_chaos",
             skill_call=SkillCall("set_temperature", {"room": "A", "target": 22}),
@@ -469,7 +635,8 @@ def run_live_chaos_demo(
                         **_clear_live_chaos_event(session, control_url, wot_event),
                     }
                 )
-            retry_result = execute_wot("set_temperature.retry", "setTargetTemperature", 22)
+            retry_runtime = run_cim_skill("set_temperature", {"room": "A", "target": 22})
+            retry_result = retry_runtime.execution_result
             recovered_state = _read_state(control_url)
             retry_verdict = oracle.verify_skill(
                 task_id="prepare_room_A_1400_live_chaos",
@@ -488,11 +655,10 @@ def run_live_chaos_demo(
             )
         delay_for_demo()
 
-        point_to("[data-testid='lighting-panel']", "WoT action: brightness 40%", session)
-        lighting_result = execute_wot("set_lighting", "setBrightness", 40)
-        trace.append({"skill_id": "set_lighting", "backend": "wot", "execution_result": _jsonable(lighting_result)})
+        run_cim_skill("set_lighting", {"room": "A", "brightness": 40})
         time.sleep(2.0)
         point_to("[data-testid='readiness-panel']", "Final oracle: READY", session)
+        readiness_runtime = run_cim_skill("verify_readiness", {"room": "A"})
         final_state_raw = _read_state(control_url)
         ground_truth = _ground_truth_from_control_state(final_state_raw, booked=booked)
         final_oracle = oracle.verify_final_state(
@@ -510,6 +676,7 @@ def run_live_chaos_demo(
             {
                 "skill_id": "verify_readiness",
                 "backend": "oracle",
+                "runtime_step": _runtime_step_payload(readiness_runtime),
                 "oracle": _jsonable(final_oracle),
                 "ground_truth_state": ground_truth,
                 "dashboard_text": session.text_content("[data-testid='readiness-status']"),
@@ -571,15 +738,6 @@ def run_live_agent_demo(
 
     all_wot_affordances = [affordance for model in thing_models for affordance in model.affordances]
 
-    def execute_wot(skill: str, affordance_label: str, value: Any) -> ExecutionResult:
-        affordance = next((item for item in all_wot_affordances if item.label == affordance_label), None)
-        if affordance is None:
-            raise RuntimeError(f"missing parsed WoT affordance label: {affordance_label}")
-        result = wot_executor.execute(affordance, value=value, skill_id=skill)
-        assert isinstance(result, ExecutionResult)
-        trace.append({"skill_id": skill, "backend": "wot", "execution_result": _jsonable(result)})
-        return result
-
     def delay_for_demo() -> None:
         if step_delay_s > 0:
             time.sleep(step_delay_s)
@@ -619,15 +777,23 @@ def run_live_agent_demo(
         dom_executor = DomExecutor(session)
         cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live")
         cognitive_map.update_affordances(live_dom_affordances + all_wot_affordances)
+        booking_state = {"booked": False}
         manager = ContinuousInteractionManager(
-            {},
+            _skill_library_dict(),
             {
                 "dom": _LiveDomPrimitiveExecutor(
                     dom_executor,
                     live_dom_affordances,
                     point_to=point_to,
                     delay=delay_for_demo,
-                )
+                ),
+                "wot": _LiveWotSkillExecutor(
+                    wot_executor,
+                    control_url,
+                    booked=lambda: booking_state["booked"],
+                    point_to=point_to,
+                    delay=delay_for_demo,
+                ),
             },
             cognitive_map,
         )
@@ -640,34 +806,48 @@ def run_live_agent_demo(
             )
         )
         booked = booking_result.state.value == "completed"
+        booking_state["booked"] = booked
         trace.append(
-            {
-                "skill_id": "confirm_booking_live_goal",
-                "controller": "ContinuousInteractionManager.run_goal",
-                "observation_source": "BrowserSession.state -> DomTransducer -> PageAffordanceModel -> CognitiveMap",
-                "runtime_step": _runtime_step_payload(booking_result),
-            }
+            _runtime_trace_entry(
+                skill_id="confirm_booking_live_goal",
+                controller="ContinuousInteractionManager.run_goal",
+                observation_source="BrowserSession.state -> DomTransducer -> PageAffordanceModel -> CognitiveMap",
+                result=booking_result,
+            )
         )
         delay_for_demo()
 
-        point_to("[data-testid='projector-panel']", "WoT action: projector on")
-        execute_wot("turn_on_projector", "setPower", "on")
-        delay_for_demo()
-        point_to("[data-testid='thermostat-panel']", "WoT action: target 22 C")
-        execute_wot("set_temperature", "setTargetTemperature", 22)
-        delay_for_demo()
-        point_to("[data-testid='lighting-panel']", "WoT action: brightness 40%")
-        execute_wot("dim_lights", "setBrightness", 40)
-        delay_for_demo()
+        def run_cim_skill(skill_id: str, params: dict[str, Any]) -> Any:
+            result = asyncio.run(
+                manager.run_skill(
+                    SkillCall(skill_id, params),
+                    _observation_from_live_state(control_url, booked=booking_state["booked"]),
+                )
+            )
+            trace.append(
+                _runtime_trace_entry(
+                    skill_id=skill_id,
+                    controller="ContinuousInteractionManager.run_skill",
+                    observation_source="control plane state -> normalized Observation -> CognitiveMap",
+                    result=result,
+                )
+            )
+            return result
+
+        run_cim_skill("turn_on_projector", {"room": "A"})
+        run_cim_skill("set_temperature", {"room": "A", "target": 22})
+        run_cim_skill("set_lighting", {"room": "A", "brightness": 40})
+        readiness_result = run_cim_skill("verify_readiness", {"room": "A"})
 
         time.sleep(2.0)
         point_to("[data-testid='readiness-panel']", "Verifier: postconditions pass")
         state_after = _read_state(control_url)
         status_text = session.text_content("[data-testid='readiness-status']")
-        normal_ready = _ready_from_state(state_after, booked=True)
+        normal_ready = readiness_result.state.value == "completed" and _ready_from_state(state_after, booked=True)
         trace.append(
             {
                 "skill_id": "verify_readiness",
+                "controller": "ContinuousInteractionManager.run_skill",
                 "backend": "verifier",
                 "postcondition_result": "pass" if normal_ready else "fail",
                 "dashboard_text": status_text,
@@ -677,28 +857,30 @@ def run_live_agent_demo(
         if pause_at_end:
             input("Live browser paused after READY path. Press Enter to close it and run failure recovery...")
 
-    _post_json(
-        f"{control_url.rstrip('/')}/failure",
-        {"thing": "thermostat", "type": "postcondition_mismatch"},
-    )
-    mismatch_result = execute_wot("set_temperature.injected_failure", "setTargetTemperature", 24)
-    failed_state = _read_state(control_url)
-    postcondition_failed = failed_state["state"]["thermostat"]["targetTemperature"] != 24
-    _post_json(f"{control_url.rstrip('/')}/failure", {"thing": "thermostat", "clear": True})
-    recovery_result = execute_wot("set_temperature.recovery_retry", "setTargetTemperature", 24)
-    recovered_state = _read_state(control_url)
-    recovery_passed = recovered_state["state"]["thermostat"]["targetTemperature"] == 24
-    trace.append(
-        {
-            "skill_id": "recovery_cascade",
-            "backend": "verifier",
-            "failure_detected": postcondition_failed,
-            "recovery_action": "clear_injected_fault_then_retry_wot",
-            "execution_before_recovery": _jsonable(mismatch_result),
-            "execution_after_recovery": _jsonable(recovery_result),
-            "postcondition_result": "pass" if recovery_passed else "fail",
-        }
-    )
+        _post_json(
+            f"{control_url.rstrip('/')}/failure",
+            {"thing": "thermostat", "type": "postcondition_mismatch"},
+        )
+        mismatch_runtime = run_cim_skill("set_temperature", {"room": "A", "target": 24})
+        postcondition_failed = mismatch_runtime.state.value == "recovering"
+        _post_json(f"{control_url.rstrip('/')}/failure", {"thing": "thermostat", "clear": True})
+        recovery_runtime = run_cim_skill("set_temperature", {"room": "A", "target": 24})
+        recovered_state = _read_state(control_url)
+        recovery_passed = recovery_runtime.state.value == "completed" and (
+            recovered_state["state"]["thermostat"]["targetTemperature"] == 24
+        )
+        trace.append(
+            {
+                "skill_id": "recovery_cascade",
+                "controller": "ContinuousInteractionManager.run_skill",
+                "backend": "verifier",
+                "failure_detected": postcondition_failed,
+                "recovery_action": "clear_injected_fault_then_retry_wot",
+                "runtime_failure_step": _runtime_step_payload(mismatch_runtime),
+                "runtime_recovery_step": _runtime_step_payload(recovery_runtime),
+                "postcondition_result": "pass" if recovery_passed else "fail",
+            }
+        )
 
     live_trace = {
         "task_id": "prepare_room_A_1400_live",

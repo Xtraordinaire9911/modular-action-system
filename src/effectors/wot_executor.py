@@ -213,9 +213,9 @@ class WotExecutor:
         payload_key = _SKILL_TO_PAYLOAD_KEY.get(skill_call.skill_id)
         payload: Any = {}
         if payload_key and payload_key in skill_call.params:
-            payload = {payload_key: skill_call.params[payload_key]}
+            payload = skill_call.params[payload_key]
         elif skill_call.skill_id == "turn_on_projector":
-            payload = {"power": "on"}
+            payload = "on"
 
         thing_id = str(affordance.locator.get("thing_id", "unknown"))
         href = str(affordance.locator.get("href", ""))
