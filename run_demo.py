@@ -13,6 +13,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import queue
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -143,7 +145,14 @@ def _find_affordance(affordances: list[Affordance], *, label: str = "", selector
 def _with_live_runtime_planning_hints(affordances: list[Affordance]) -> list[Affordance]:
     hinted: list[Affordance] = []
     for affordance in affordances:
-        if affordance.label == "Book Room":
+        selector = str(affordance.locator.get("selector", ""))
+        if selector == "[data-testid='room-input']":
+            locator = {**affordance.locator, "skill_id": "room"}
+            hinted.append(replace(affordance, label="Room", locator=locator))
+        elif selector == "[data-testid='time-input']":
+            locator = {**affordance.locator, "skill_id": "time"}
+            hinted.append(replace(affordance, label="Time", locator=locator))
+        elif affordance.label == "Book Room":
             locator = {**affordance.locator, "skill_id": "booking confirmed"}
             hinted.append(replace(affordance, locator=locator))
         else:
@@ -182,6 +191,66 @@ def _runtime_trace_entry(
         "observation_source": observation_source,
         "runtime_step": _runtime_step_payload(result),
     }
+
+
+class _MainThreadDispatcher:
+    """Run Playwright-bound sync calls on the thread that owns the browser."""
+
+    def __init__(self) -> None:
+        self._owner_thread_id = threading.get_ident()
+        self._tasks: queue.Queue[dict[str, Any]] = queue.Queue()
+
+    def call(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+        if threading.get_ident() == self._owner_thread_id:
+            return func(*args, **kwargs)
+        done = threading.Event()
+        task = {"func": func, "args": args, "kwargs": kwargs, "done": done}
+        self._tasks.put(task)
+        done.wait()
+        if "error" in task:
+            raise task["error"]
+        return task.get("result")
+
+    def drain_once(self, timeout_s: float = 0.01) -> None:
+        try:
+            task = self._tasks.get(timeout=timeout_s)
+        except queue.Empty:
+            return
+        try:
+            task["result"] = task["func"](*task["args"], **task["kwargs"])
+        except BaseException as exc:  # noqa: BLE001 - propagate to worker
+            task["error"] = exc
+        finally:
+            task["done"].set()
+
+    def drain_all(self) -> None:
+        while not self._tasks.empty():
+            self.drain_once(timeout_s=0.0)
+
+
+def _run_async_runtime(coro: Any, dispatcher: _MainThreadDispatcher | None = None) -> Any:
+    """Run CIM async work without colliding with Playwright's sync event loop."""
+
+    box: dict[str, Any] = {}
+
+    def runner() -> None:
+        try:
+            box["result"] = asyncio.run(coro)
+        except BaseException as exc:  # noqa: BLE001 - propagate from worker thread
+            box["error"] = exc
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    while thread.is_alive():
+        if dispatcher is None:
+            thread.join(0.01)
+        else:
+            dispatcher.drain_once()
+    if dispatcher is not None:
+        dispatcher.drain_all()
+    if "error" in box:
+        raise box["error"]
+    return box.get("result")
 
 
 def _read_state(control_url: str) -> dict[str, Any]:
@@ -250,11 +319,13 @@ class _LiveDomPrimitiveExecutor:
         *,
         point_to: Any | None = None,
         delay: Any | None = None,
+        dispatcher: _MainThreadDispatcher | None = None,
     ) -> None:
         self._dom_executor = dom_executor
         self._affordances = {affordance.id: affordance for affordance in affordances}
         self._point_to = point_to
         self._delay = delay
+        self._dispatcher = dispatcher
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         _ = observation
@@ -271,8 +342,13 @@ class _LiveDomPrimitiveExecutor:
             )
         selector = str(affordance.locator.get("selector", ""))
         if self._point_to is not None and selector:
-            self._point_to(selector, f"CIM {skill_call.params.get('primitive_action')}: {affordance.label}")
-        result = self._dom_executor.execute(
+            self._call_playwright(
+                self._point_to,
+                selector,
+                f"CIM {skill_call.params.get('primitive_action')}: {affordance.label}",
+            )
+        result = self._call_playwright(
+            self._dom_executor.execute,
             affordance,
             value=skill_call.params.get("value"),
             skill_id=f"{skill_call.skill_id}.{affordance.id}",
@@ -289,6 +365,11 @@ class _LiveDomPrimitiveExecutor:
             self._delay()
         return result
 
+    def _call_playwright(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+        if self._dispatcher is None:
+            return func(*args, **kwargs)
+        return self._dispatcher.call(func, *args, **kwargs)
+
 
 class _LiveWotSkillExecutor:
     """CIM executor adapter for live WoT skills with state re-observation."""
@@ -301,19 +382,24 @@ class _LiveWotSkillExecutor:
         booked: Any,
         point_to: Any | None = None,
         delay: Any | None = None,
+        dispatcher: _MainThreadDispatcher | None = None,
     ) -> None:
         self._wot_executor = wot_executor
         self._control_url = control_url
         self._booked = booked
         self._point_to = point_to
         self._delay = delay
+        self._dispatcher = dispatcher
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         _ = observation
         if self._point_to is not None:
             selector = _selector_for_wot_skill(skill_call.skill_id)
             if selector:
-                self._point_to(selector, f"CIM WoT: {skill_call.skill_id}")
+                if self._dispatcher is None:
+                    self._point_to(selector, f"CIM WoT: {skill_call.skill_id}")
+                else:
+                    self._dispatcher.call(self._point_to, selector, f"CIM WoT: {skill_call.skill_id}")
 
         if skill_call.skill_id == "verify_readiness":
             state = _read_state(self._control_url).get("state", {})
@@ -496,6 +582,7 @@ def run_live_chaos_demo(
         )
 
         dom_executor = DomExecutor(session)
+        dispatcher = _MainThreadDispatcher()
         live_dom_affordances = _with_live_runtime_planning_hints(pam.affordances)
         booking_state = {"booked": False}
         cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live_chaos")
@@ -506,27 +593,31 @@ def run_live_chaos_demo(
                 "dom": _LiveDomPrimitiveExecutor(
                     dom_executor,
                     live_dom_affordances,
-                    point_to=lambda selector, label: point_to(selector, label, session),
                     delay=delay_for_demo,
+                    dispatcher=dispatcher,
                 ),
                 "visual": _TraceOnlyVisualExecutor(),
                 "wot": _LiveWotSkillExecutor(
                     wot_executor,
                     control_url,
                     booked=lambda: booking_state["booked"],
-                    point_to=lambda selector, label: point_to(selector, label, session),
                     delay=delay_for_demo,
+                    dispatcher=dispatcher,
                 ),
             },
             cognitive_map,
         )
 
         def run_cim_skill(skill_id: str, params: dict[str, Any]) -> Any:
-            result = asyncio.run(
+            selector = _selector_for_wot_skill(skill_id)
+            if selector:
+                point_to(selector, f"CIM WoT: {skill_id}", session)
+            result = _run_async_runtime(
                 manager.run_skill(
                     SkillCall(skill_id, params),
                     _observation_from_live_state(control_url, booked=booking_state["booked"]),
-                )
+                ),
+                dispatcher=dispatcher,
             )
             trace.append(
                 _runtime_trace_entry(
@@ -547,13 +638,14 @@ def run_live_chaos_demo(
             point_to(booking_selector, "Chaos: DOM selector changed", session)
 
         point_to(booking_selector, "DOM attempt uses cached selector", session)
-        dom_runtime = asyncio.run(
+        dom_runtime = _run_async_runtime(
             manager.run_goal(
                 goal_id="confirm_booking_live_chaos_goal",
                 goal_state="device_states.booking.confirmed == true",
                 parameters={"room": "A", "time": "14:00"},
                 observation=_observation_from_live_state(control_url, booked=False),
-            )
+            ),
+            dispatcher=dispatcher,
         )
         trace.append(
             _runtime_trace_entry(
@@ -775,6 +867,7 @@ def run_live_agent_demo(
         (output_dir / "visual_grounding_result.json").write_text(json.dumps(visual_result, indent=2), encoding="utf-8")
 
         dom_executor = DomExecutor(session)
+        dispatcher = _MainThreadDispatcher()
         cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live")
         cognitive_map.update_affordances(live_dom_affordances + all_wot_affordances)
         booking_state = {"booked": False}
@@ -784,26 +877,27 @@ def run_live_agent_demo(
                 "dom": _LiveDomPrimitiveExecutor(
                     dom_executor,
                     live_dom_affordances,
-                    point_to=point_to,
                     delay=delay_for_demo,
+                    dispatcher=dispatcher,
                 ),
                 "wot": _LiveWotSkillExecutor(
                     wot_executor,
                     control_url,
                     booked=lambda: booking_state["booked"],
-                    point_to=point_to,
                     delay=delay_for_demo,
+                    dispatcher=dispatcher,
                 ),
             },
             cognitive_map,
         )
-        booking_result = asyncio.run(
+        booking_result = _run_async_runtime(
             manager.run_goal(
                 goal_id="confirm_booking_live_goal",
                 goal_state="device_states.booking.confirmed == true",
                 parameters={"room": "A", "time": "14:00"},
                 observation=_observation_from_live_state(control_url, booked=False),
-            )
+            ),
+            dispatcher=dispatcher,
         )
         booked = booking_result.state.value == "completed"
         booking_state["booked"] = booked
@@ -818,11 +912,15 @@ def run_live_agent_demo(
         delay_for_demo()
 
         def run_cim_skill(skill_id: str, params: dict[str, Any]) -> Any:
-            result = asyncio.run(
+            selector = _selector_for_wot_skill(skill_id)
+            if selector:
+                point_to(selector, f"CIM WoT: {skill_id}")
+            result = _run_async_runtime(
                 manager.run_skill(
                     SkillCall(skill_id, params),
                     _observation_from_live_state(control_url, booked=booking_state["booked"]),
-                )
+                ),
+                dispatcher=dispatcher,
             )
             trace.append(
                 _runtime_trace_entry(
