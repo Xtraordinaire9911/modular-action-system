@@ -16,6 +16,7 @@ from src.runtime.action_context import build_action_context
 from src.runtime.affordance_controller import AffordanceController
 from src.runtime.backend_router import RuntimeBackendRouter
 from src.runtime.cognitive_map import CognitiveMap
+from src.runtime.goal_spec import GoalSpec
 from src.runtime.plan_validator import PlanValidator
 from src.runtime.primitive_action import PrimitiveAction
 from src.runtime.state_machine import RuntimeState
@@ -216,10 +217,11 @@ class ContinuousInteractionManager:
     async def run_goal(
         self,
         *,
-        goal_id: str,
-        goal_state: str,
-        parameters: dict[str, object] | None,
-        observation: Observation,
+        goal_id: str = "",
+        goal_state: str = "",
+        parameters: dict[str, object] | None = None,
+        observation: Observation | None = None,
+        goal_spec: GoalSpec | None = None,
     ) -> RuntimeStepResult:
         """Run a bounded no-durable-skill goal over current affordances.
 
@@ -230,16 +232,37 @@ class ContinuousInteractionManager:
         and verifies the declared goal state.
         """
 
+        if goal_spec is not None:
+            validation_errors = goal_spec.validate()
+            goal_id = goal_spec.goal_id
+            goal_state = goal_spec.goal_state
+            parameters = dict(goal_spec.parameters)
+            if validation_errors:
+                self.state = RuntimeState.ESCALATED
+                return RuntimeStepResult(
+                    self.state,
+                    None,
+                    recovery_tier=4,
+                    reason="invalid goal spec",
+                    failure_boundary="skill_spec_insufficient",
+                    failure_type="invalid_goal_spec",
+                    plan_validation_errors=validation_errors,
+                )
+
+        observation = observation or Observation()
         self.cognitive_map.set_current_skill(SkillCall(goal_id, dict(parameters or {})))
         self.cognitive_map.update_from_observation(observation)
         gate = await self._run_fusion_gate(observation)
         if gate is not None:
             return gate
 
+        safety_constraints = ["do not use raw selectors", "do not bypass unresolved sensory conflicts"]
+        if goal_spec is not None:
+            safety_constraints.extend(goal_spec.safety_constraints)
         context = build_action_context(
             self.cognitive_map,
             request_type="goal_spec",
-            safety_constraints=["do not use raw selectors", "do not bypass unresolved sensory conflicts"],
+            safety_constraints=safety_constraints,
         )
         plan = self.system2_planner.plan(context, goal_state=goal_state, parameters=dict(parameters or {}))
         primitive_plan = [_primitive_payload(action) for action in plan.actions]
