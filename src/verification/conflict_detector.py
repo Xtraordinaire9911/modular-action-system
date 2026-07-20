@@ -31,6 +31,26 @@ class ConflictRule:
     right_path: str
 
 
+@dataclass
+class FusedState:
+    entity_id: str
+    attribute: str
+    value: Any
+    support: dict[str, float]
+    selected_support: float
+    confidence: float
+    sources: list[str]
+
+
+@dataclass
+class FusionDecision:
+    allow_system1: bool
+    reason: str
+    fused_states: list[FusedState]
+    conflicts: list[Conflict]
+    active_perception_required: bool = False
+
+
 class SensoryConflictError(Exception):
     def __init__(
         self,
@@ -103,6 +123,63 @@ class EpistemicArbiter:
                 cognitive_map.add_conflict(conflict)
                 conflicts.append(conflict)
         return conflicts
+
+    def fuse(self, cognitive_map: CognitiveMap) -> FusionDecision:
+        """Create an auditable fusion decision from current map assertions.
+
+        This is deliberately still rule-first. It does not pretend to solve
+        semantic world modelling; it exposes the selected state, support mass,
+        and blocking conflicts so the runtime can explain whether System 1 may
+        continue, should actively re-observe, or must halt.
+        """
+
+        conflicts = self.check(cognitive_map)
+        blocking = [conflict for conflict in conflicts if conflict.conflict_mass >= self.halt_threshold]
+        fused_states: list[FusedState] = []
+        for (entity_id, attribute), assertions in _group_assertions(cognitive_map.state_assertions).items():
+            latest_by_source = _latest_by_source(assertions)
+            if not latest_by_source:
+                continue
+            newest_timestamp = max(assertion.timestamp_ms for assertion in latest_by_source.values())
+            support = self._support_by_value(latest_by_source, newest_timestamp)
+            if not support:
+                continue
+            selected_key, selected_support = max(support.items(), key=lambda item: item[1])
+            selected_assertions = [
+                assertion for assertion in latest_by_source.values() if _value_key(assertion.value) == selected_key
+            ]
+            total_support = sum(support.values()) or 1.0
+            selected = max(
+                selected_assertions,
+                key=lambda assertion: self._evidence_weight(assertion, newest_timestamp),
+            )
+            fused_states.append(
+                FusedState(
+                    entity_id=entity_id,
+                    attribute=attribute,
+                    value=selected.value,
+                    support=support,
+                    selected_support=selected_support,
+                    confidence=min(1.0, selected_support / total_support),
+                    sources=[assertion.source for assertion in selected_assertions],
+                )
+            )
+
+        if blocking:
+            return FusionDecision(
+                allow_system1=False,
+                reason="blocking sensory conflict requires active perception or escalation",
+                fused_states=fused_states,
+                conflicts=blocking,
+                active_perception_required=True,
+            )
+        return FusionDecision(
+            allow_system1=True,
+            reason="no blocking sensory conflict",
+            fused_states=fused_states,
+            conflicts=conflicts,
+            active_perception_required=False,
+        )
 
     def should_halt_system1(self, conflicts: list[Conflict]) -> bool:
         return any(conflict.conflict_mass >= self.halt_threshold for conflict in conflicts)

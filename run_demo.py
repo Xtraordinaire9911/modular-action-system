@@ -11,23 +11,26 @@ DOM/WoT actions, verifier checks, failure injection, and artifact export.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import time
 import urllib.error
 import urllib.request
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, is_dataclass, replace
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from evaluation.chaos_monkey import ChaosEvent, ChaosPolicy, live_hook_for_event
 from evaluation.integration_eval import write_demo_artifacts
-from src.contracts.types import Affordance, ExecutionResult, SkillCall
+from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
 from src.effectors.dom_executor import DomExecutor
 from src.effectors.wot_executor import WotExecutor
 from src.perception.browser_session import BrowserSession
 from src.perception.som_parser import BoundingBox, VisualMark, annotate_screenshot, marks_from_affordances
 from src.perception.td_affordance_parser import TdAffordanceParser
+from src.runtime.cognitive_map import CognitiveMap
+from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
 from src.verification.oracle_verifier import OracleVerifier
 
 
@@ -136,11 +139,116 @@ def _find_affordance(affordances: list[Affordance], *, label: str = "", selector
     raise RuntimeError(f"affordance not found: label={label!r}, selector={selector!r}")
 
 
+def _with_live_runtime_planning_hints(affordances: list[Affordance]) -> list[Affordance]:
+    hinted: list[Affordance] = []
+    for affordance in affordances:
+        if affordance.label == "Book Room":
+            locator = {**affordance.locator, "skill_id": "booking confirmed"}
+            hinted.append(replace(affordance, locator=locator))
+        else:
+            hinted.append(affordance)
+    return hinted
+
+
+def _runtime_step_payload(result: Any) -> dict[str, Any]:
+    return {
+        "state": result.state.value if hasattr(result.state, "value") else str(result.state),
+        "reason": result.reason,
+        "selected_backend": result.selected_backend,
+        "routing_reason": result.routing_reason,
+        "recovery_tier": result.recovery_tier,
+        "failure_boundary": result.failure_boundary,
+        "failure_type": result.failure_type,
+        "fusion_decision": _jsonable(result.fusion_decision),
+        "primitive_plan": _jsonable(result.primitive_plan),
+        "plan_validation_errors": list(result.plan_validation_errors),
+        "active_perception_trace": _jsonable(result.active_perception_trace),
+        "recovery_trace": _jsonable(result.recovery_trace),
+        "execution_result": _jsonable(result.execution_result) if result.execution_result else None,
+    }
+
+
 def _read_state(control_url: str) -> dict[str, Any]:
     ok, detail = _get_json(f"{control_url.rstrip('/')}/state")
     if not ok or not isinstance(detail, dict):
         raise RuntimeError(f"control plane state unavailable: {detail}")
     return detail
+
+
+def _observation_from_live_state(control_url: str, *, booked: bool = False) -> Observation:
+    state = _read_state(control_url).get("state", {})
+    thermostat = state.get("thermostat", {})
+    lights = state.get("lights", {})
+    projector = state.get("projector", {})
+    return Observation(
+        device_states={
+            "booking": {"confirmed": booked},
+            "booking_status": "confirmed" if booked else "pending",
+            "booking_confirmed": booked,
+            "thermostat_A": {
+                "targetTemperature": thermostat.get("targetTemperature"),
+                "currentTemperature": thermostat.get("currentTemperature"),
+            },
+            "lights": {"brightness": lights.get("brightness")},
+            "projector_A": {"power": projector.get("power")},
+        },
+        accessibility_tree={
+            "page_state": {
+                "booking": {"confirmed": booked},
+                "booking_status": "confirmed" if booked else "pending",
+            }
+        },
+    )
+
+
+class _LiveDomPrimitiveExecutor:
+    """CIM executor adapter for primitive DOM actions over live Playwright."""
+
+    def __init__(
+        self,
+        dom_executor: DomExecutor,
+        affordances: list[Affordance],
+        *,
+        point_to: Any | None = None,
+        delay: Any | None = None,
+    ) -> None:
+        self._dom_executor = dom_executor
+        self._affordances = {affordance.id: affordance for affordance in affordances}
+        self._point_to = point_to
+        self._delay = delay
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        _ = observation
+        affordance_id = str(skill_call.params.get("affordance_id", ""))
+        affordance = self._affordances.get(affordance_id)
+        if affordance is None:
+            return ExecutionResult(
+                skill_id=skill_call.skill_id,
+                backend_used="dom",
+                success=False,
+                latency_ms=0.0,
+                confidence=0.0,
+                failure_reason=f"unknown live DOM affordance: {affordance_id}",
+            )
+        selector = str(affordance.locator.get("selector", ""))
+        if self._point_to is not None and selector:
+            self._point_to(selector, f"CIM {skill_call.params.get('primitive_action')}: {affordance.label}")
+        result = self._dom_executor.execute(
+            affordance,
+            value=skill_call.params.get("value"),
+            skill_id=f"{skill_call.skill_id}.{affordance.id}",
+        )
+        assert isinstance(result, ExecutionResult)
+        if result.success and affordance.label == "Book Room":
+            result.raw_observation_delta = {
+                **result.raw_observation_delta,
+                "booking": {"confirmed": True},
+                "booking_status": "confirmed",
+                "booking_confirmed": True,
+            }
+        if self._delay is not None:
+            self._delay()
+        return result
 
 
 def _ready_from_state(state: dict[str, Any], booked: bool) -> bool:
@@ -269,7 +377,9 @@ def run_live_chaos_demo(
             ("[data-testid='time-input']", "14:00", "confirm_booking.time"),
         ):
             point_to(selector, f"DOM type: {value}", session)
-            result = dom_executor.execute(_find_affordance(pam.affordances, selector=selector), value=value, skill_id=skill)
+            result = dom_executor.execute(
+                _find_affordance(pam.affordances, selector=selector), value=value, skill_id=skill
+            )
             trace.append({"skill_id": skill, "backend": "dom", "execution_result": _jsonable(result)})
             delay_for_demo()
 
@@ -320,7 +430,9 @@ def run_live_chaos_demo(
 
         point_to("[data-testid='projector-panel']", "WoT action: projector on", session)
         projector_result = execute_wot("turn_on_projector", "setPower", "on")
-        trace.append({"skill_id": "turn_on_projector", "backend": "wot", "execution_result": _jsonable(projector_result)})
+        trace.append(
+            {"skill_id": "turn_on_projector", "backend": "wot", "execution_result": _jsonable(projector_result)}
+        )
         delay_for_demo()
 
         execute_wot("set_temperature.pre_chaos_drift", "setTargetTemperature", 21)
@@ -350,7 +462,13 @@ def run_live_chaos_demo(
         if false_positive_verdict.false_positive:
             point_to("[data-testid='thermostat-panel']", "Oracle caught false success; retry", session)
             if wot_event is not None:
-                trace.append({"skill_id": "set_temperature", "event_type": "chaos_cleared", **_clear_live_chaos_event(session, control_url, wot_event)})
+                trace.append(
+                    {
+                        "skill_id": "set_temperature",
+                        "event_type": "chaos_cleared",
+                        **_clear_live_chaos_event(session, control_url, wot_event),
+                    }
+                )
             retry_result = execute_wot("set_temperature.retry", "setTargetTemperature", 22)
             recovered_state = _read_state(control_url)
             retry_verdict = oracle.verify_skill(
@@ -406,9 +524,13 @@ def run_live_chaos_demo(
         "chaos_level": chaos_level,
         "chaos_events": [_jsonable(event) for event in policy.events],
         "acceptance": {
-            "dom_selector_mutation_injected": any(event.failure_type == "dom_selector_mutation" for event in policy.events),
+            "dom_selector_mutation_injected": any(
+                event.failure_type == "dom_selector_mutation" for event in policy.events
+            ),
             "visual_fallback_triggered": any(row.get("backend") == "visual" for row in trace),
-            "wot_false_success_injected": any(event.failure_type == "wot_postcondition_mismatch" for event in policy.events),
+            "wot_false_success_injected": any(
+                event.failure_type == "wot_postcondition_mismatch" for event in policy.events
+            ),
             "oracle_detected_false_positive": any((row.get("oracle") or {}).get("false_positive") for row in trace),
             "final_oracle_success": final_oracle.oracle_success,
         },
@@ -421,7 +543,9 @@ def run_live_chaos_demo(
             "chaos_trace": str(output_dir / "chaos_demo_trace_live.json"),
         },
     }
-    (output_dir / "chaos_demo_trace_live.json").write_text(json.dumps(report, indent=2, sort_keys=True), encoding="utf-8")
+    (output_dir / "chaos_demo_trace_live.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
+    )
     return report
 
 
@@ -472,6 +596,7 @@ def run_live_agent_demo(
             delay_for_demo()
 
         pam = session.state(page_id="smart_room_dashboard")
+        live_dom_affordances = _with_live_runtime_planning_hints(pam.affordances)
         (output_dir / "page_affordance_model.json").write_text(json.dumps(_jsonable(pam), indent=2), encoding="utf-8")
         (output_dir / "thing_affordance_model.json").write_text(
             json.dumps(_jsonable(thing_models), indent=2), encoding="utf-8"
@@ -492,21 +617,37 @@ def run_live_agent_demo(
         (output_dir / "visual_grounding_result.json").write_text(json.dumps(visual_result, indent=2), encoding="utf-8")
 
         dom_executor = DomExecutor(session)
-        for selector, value, skill in (
-            ("[data-testid='room-input']", "A", "confirm_booking.room"),
-            ("[data-testid='time-input']", "14:00", "confirm_booking.time"),
-        ):
-            point_to(selector, f"DOM type: {value}")
-            result = dom_executor.execute(
-                _find_affordance(pam.affordances, selector=selector), value=value, skill_id=skill
-            )
-            trace.append({"skill_id": skill, "backend": "dom", "execution_result": _jsonable(result)})
-            delay_for_demo()
-        point_to("[data-testid='book-room-button']", "DOM click: Book Room")
-        result = dom_executor.execute(
-            _find_affordance(pam.affordances, label="Book Room"), skill_id="confirm_booking.submit"
+        cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live")
+        cognitive_map.update_affordances(live_dom_affordances + all_wot_affordances)
+        manager = ContinuousInteractionManager(
+            {},
+            {
+                "dom": _LiveDomPrimitiveExecutor(
+                    dom_executor,
+                    live_dom_affordances,
+                    point_to=point_to,
+                    delay=delay_for_demo,
+                )
+            },
+            cognitive_map,
         )
-        trace.append({"skill_id": "confirm_booking.submit", "backend": "dom", "execution_result": _jsonable(result)})
+        booking_result = asyncio.run(
+            manager.run_goal(
+                goal_id="confirm_booking_live_goal",
+                goal_state="device_states.booking.confirmed == true",
+                parameters={"room": "A", "time": "14:00"},
+                observation=_observation_from_live_state(control_url, booked=False),
+            )
+        )
+        booked = booking_result.state.value == "completed"
+        trace.append(
+            {
+                "skill_id": "confirm_booking_live_goal",
+                "controller": "ContinuousInteractionManager.run_goal",
+                "observation_source": "BrowserSession.state -> DomTransducer -> PageAffordanceModel -> CognitiveMap",
+                "runtime_step": _runtime_step_payload(booking_result),
+            }
+        )
         delay_for_demo()
 
         point_to("[data-testid='projector-panel']", "WoT action: projector on")
@@ -572,6 +713,8 @@ def run_live_agent_demo(
             "node_wot_tds_accessible": True,
             "playwright_isolated_browser_running": True,
             "dom_transducer_outputs_pam": True,
+            "cim_consumes_live_pam": True,
+            "cim_runs_booking_goal": booked,
             "td_parser_outputs_wot_affordances": True,
             "som_outputs_marked_screenshot": True,
             "system1_executes_normal_path": normal_ready,

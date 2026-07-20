@@ -603,6 +603,9 @@ def test_continuous_interaction_manager_blocks_system1_on_sensory_conflict():
     assert result.conflict_ids == ["thermostat_A.temperature"]
     assert result.failure_boundary == "recoverable_execution_failure"
     assert result.failure_type == "sensory_conflict"
+    assert result.fusion_decision["allow_system1"] is False
+    assert result.fusion_decision["active_perception_required"] is True
+    assert result.fusion_decision["fused_states"][0]["entity_id"] == "thermostat_A"
     assert wot_executor.calls == []
 
 
@@ -832,3 +835,90 @@ def test_continuous_interaction_manager_can_attach_optional_llm_failure_judgment
     assert result.llm_failure_boundary == "skill_spec_insufficient"
     assert result.llm_failure_type == "weak_postcondition"
     assert result.llm_judge_evidence[-1] == "schema_validated_llm_judge"
+
+
+def test_continuous_interaction_manager_runs_structured_goal_without_durable_skill():
+    dom_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="reserve_room_goal",
+            backend_used="dom",
+            success=True,
+            latency_ms=2.0,
+            confidence=1.0,
+            raw_observation_delta={"booking": {"confirmed": True}},
+        ),
+    )
+    cmap = CognitiveMap(task_id="task_goal_path")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_time_input",
+                source="DOM",
+                type="input",
+                label="Time",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking_button"},
+                confidence=0.95,
+            ),
+        ]
+    )
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+            observation=Observation(),
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.reason == "goal completed"
+    assert result.selected_backend == "dom"
+    assert [step["action"] for step in result.primitive_plan] == ["type", "type", "click"]
+    assert [call.params["affordance_id"] for call in dom_executor.calls] == [
+        "dom_room_input",
+        "dom_time_input",
+        "dom_confirm_booking",
+    ]
+
+
+def test_continuous_interaction_manager_rejects_goal_plan_with_missing_affordance():
+    manager = ContinuousInteractionManager(
+        {}, {"dom": _RecordingExecutor("dom")}, CognitiveMap(task_id="task_bad_goal")
+    )
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A"},
+            observation=Observation(),
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_boundary == "skill_spec_insufficient"
+    assert result.failure_type == "insufficient_affordance_plan"
+    assert "room" in result.reason
+    assert result.primitive_plan[0]["action"] == "ask_user"

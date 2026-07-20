@@ -218,6 +218,8 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
     report.add_mean(
         "RE",
         [_recovery_efficiency(task) for task in dataset.tasks if task.recovery_triggered or task.chaos_exposed],
+    )
+    report.add(
         "CascadeTraceCoverage",
         sum(1 for case in dataset.adaptation_cases if case.full_cascade_trace),
         len(dataset.adaptation_cases),

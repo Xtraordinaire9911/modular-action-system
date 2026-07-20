@@ -58,7 +58,10 @@ def generate_randomized_fixture(base_fixture_id: str, seed: int) -> RandomizedFi
         },
         allowed_failure_profile=failure_profile,
     )
-    calls = [_variant_call(call, room, time_slot, target_temperature, brightness, rng) for call in expected_skill_calls(base_fixture_id)]
+    calls = [
+        _variant_call(call, room, time_slot, target_temperature, brightness, rng)
+        for call in expected_skill_calls(base_fixture_id)
+    ]
     return RandomizedFixture(fixture=fixture, skill_calls=calls, seed=seed, base_task_id=base_fixture_id)
 
 
@@ -92,4 +95,6 @@ def _variant_call(
     preferred_backends: list[str] = []
     if call.skill_id == "set_temperature" and rng.random() < 0.25:
         preferred_backends = ["dom", "wot", "visual"]
-    return SkillCall(skill_id=call.skill_id, params=params, priority=call.priority, preferred_backends=preferred_backends)
+    return SkillCall(
+        skill_id=call.skill_id, params=params, priority=call.priority, preferred_backends=preferred_backends
+    )

@@ -9,16 +9,21 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from evaluation.chaos_monkey import ChaosEvent, ChaosPolicy, OfflineChaosExecutor, apply_observation_chaos
+from evaluation.chaos_monkey import ChaosPolicy, OfflineChaosExecutor, apply_observation_chaos
 from evaluation.fixture_eval import evaluate_all_task_fixtures
 from evaluation.metrics_aggregator import EvaluationDataset, OracleCase, TaskOutcome, aggregate_metrics
-from evaluation.randomized_fixture_generator import DEV_SEEDS, EVAL_SEEDS, RandomizedFixture, generate_randomized_fixture
+from evaluation.randomized_fixture_generator import (
+    DEV_SEEDS,
+    EVAL_SEEDS,
+    RandomizedFixture,
+    generate_randomized_fixture,
+)
 from src.contracts.types import ExecutionResult, Observation, SkillCall
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, RuntimeStepResult
 from src.runtime.state_machine import RuntimeState
-from src.skill_library import TaskFixture, expected_skill_calls, get_task_fixture, load_skill_library
-from src.verification.oracle_verifier import OracleVerifier, OracleVerdict
+from src.skill_library import TaskFixture, load_skill_library
+from src.verification.oracle_verifier import OracleVerdict, OracleVerifier
 
 
 @dataclass
@@ -102,7 +107,10 @@ class _SmartRoomOracleState:
             "lights": {"brightness": self.state["light_brightness"]},
             "readiness": {"ready": self.state["readiness"]},
         }
-        return Observation(device_states=device_states, accessibility_tree={"page_state": {"booking_status": self.state["booking_status"]}})
+        return Observation(
+            device_states=device_states,
+            accessibility_tree={"page_state": {"booking_status": self.state["booking_status"]}},
+        )
 
     def final_state(self, expected: dict[str, Any]) -> dict[str, Any]:
         target = dict(self.state)
@@ -230,7 +238,9 @@ async def _run_step(
     while attempts < 4:
         attempts += 1
         observation = oracle_state.as_observation()
-        observation = apply_observation_chaos(observation, policy, timing="during_verification", skill_id=skill_call.skill_id)
+        observation = apply_observation_chaos(
+            observation, policy, timing="during_verification", skill_id=skill_call.skill_id
+        )
         result: RuntimeStepResult = await manager.run_skill(current_call, observation)
         selected_backend = result.selected_backend
         reason = result.reason
@@ -246,7 +256,15 @@ async def _run_step(
 
         if result.state == RuntimeState.COMPLETED and last_verdict.oracle_success:
             return _step_result(
-                skill_call, True, attempts, selected_backend, highest_tier, reason, last_execution, last_verdict, oracle_attempts
+                skill_call,
+                True,
+                attempts,
+                selected_backend,
+                highest_tier,
+                reason,
+                last_execution,
+                last_verdict,
+                oracle_attempts,
             )
 
         tier = int(result.recovery_tier or (1 if last_verdict.false_positive else 4))
@@ -254,10 +272,20 @@ async def _run_step(
         if tier == 1 or last_verdict.false_positive:
             continue
         if tier == 2:
-            current_call = SkillCall(skill_id=skill_call.skill_id, params=dict(skill_call.params), preferred_backends=["visual"])
+            current_call = SkillCall(
+                skill_id=skill_call.skill_id, params=dict(skill_call.params), preferred_backends=["visual"]
+            )
             continue
         return _step_result(
-            skill_call, False, attempts, selected_backend, highest_tier, reason, last_execution, last_verdict, oracle_attempts
+            skill_call,
+            False,
+            attempts,
+            selected_backend,
+            highest_tier,
+            reason,
+            last_execution,
+            last_verdict,
+            oracle_attempts,
         )
 
     verdict = last_verdict or verifier.verify_skill(
@@ -269,7 +297,15 @@ async def _run_step(
     if not oracle_attempts:
         oracle_attempts.append(asdict(verdict))
     return _step_result(
-        skill_call, False, attempts, selected_backend, highest_tier or 4, "recovery loop exhausted", last_execution, verdict, oracle_attempts
+        skill_call,
+        False,
+        attempts,
+        selected_backend,
+        highest_tier or 4,
+        "recovery loop exhausted",
+        last_execution,
+        verdict,
+        oracle_attempts,
     )
 
 

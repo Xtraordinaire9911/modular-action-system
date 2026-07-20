@@ -7,14 +7,14 @@ import asyncio
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from evaluation.metrics_aggregator import AdaptationCase, EvaluationDataset, aggregate_metrics
 from src.adaptation.artifact_writer import write_adaptation_artifacts
 from src.adaptation.llm_judge import LLMJudge
 from src.adaptation.pattern_miner import FailurePatternMiner
 from src.adaptation.trace_ledger import EpisodeFailureEvent, TraceLedger
-from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
+from src.contracts.types import Affordance, Condition, ExecutionResult, Observation, SkillCall, SkillTuple
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
 from src.runtime.state_machine import RuntimeState
@@ -45,6 +45,22 @@ class _DemoExecutor:
             latency_ms=10.0,
             confidence=1.0,
             raw_observation_delta={"thermostat_A": {"targetTemperature": skill_call.params.get("target", 22)}},
+        )
+
+
+class _BookingGoalExecutor:
+    def __init__(self) -> None:
+        self.calls: list[SkillCall] = []
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        self.calls.append(skill_call)
+        return ExecutionResult(
+            skill_id=skill_call.skill_id,
+            backend_used="dom",
+            success=True,
+            latency_ms=12.0,
+            confidence=1.0,
+            raw_observation_delta={"booking": {"confirmed": True}},
         )
 
 
@@ -100,6 +116,7 @@ def run_adaptation_demo(output_dir: str | Path = "artifacts/adaptation_demo") ->
     scenarios = [
         asyncio.run(_sensory_conflict_scenario()),
         asyncio.run(_active_perception_resolved_scenario()),
+        asyncio.run(_bounded_goal_no_durable_skill_scenario()),
         asyncio.run(_timeout_reroute_scenario()),
         asyncio.run(_llm_advisory_scenario()),
     ]
@@ -171,6 +188,29 @@ async def _timeout_reroute_scenario() -> dict[str, Any]:
     return _result_payload("executor_timeout_reroutes_with_trace", result)
 
 
+async def _bounded_goal_no_durable_skill_scenario() -> dict[str, Any]:
+    cognitive_map = CognitiveMap(task_id="demo_bounded_goal")
+    cognitive_map.update_affordances(
+        [
+            _dom_affordance("dom_room_input", "input", "Room", "type", "booking_form"),
+            _dom_affordance("dom_time_input", "input", "Time", "type", "booking_form"),
+            _dom_affordance("dom_confirm_booking", "button", "Confirm booking", "click", "booking_button"),
+        ]
+    )
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": _BookingGoalExecutor()},
+        cognitive_map,
+    )
+    result = await manager.run_goal(
+        goal_id="reserve_room_goal",
+        goal_state="device_states.booking.confirmed == true",
+        parameters={"room": "A", "time": "14:00"},
+        observation=Observation(),
+    )
+    return _result_payload("bounded_goal_executes_without_durable_skill", result)
+
+
 async def _llm_advisory_scenario() -> dict[str, Any]:
     manager = ContinuousInteractionManager(
         {
@@ -217,8 +257,29 @@ def _result_payload(name: str, result: Any) -> dict[str, Any]:
         "llm_failure_type": result.llm_failure_type,
         "llm_judge_evidence": result.llm_judge_evidence,
         "active_perception_trace": result.active_perception_trace,
+        "fusion_decision": result.fusion_decision,
+        "primitive_plan": result.primitive_plan,
+        "plan_validation_errors": result.plan_validation_errors,
         "execution_result": asdict(result.execution_result) if result.execution_result else None,
     }
+
+
+def _dom_affordance(
+    affordance_id: str,
+    affordance_type: Literal["button", "input", "property", "action", "event", "sensor"],
+    label: str,
+    action: str,
+    entity_id: str,
+) -> Affordance:
+    return Affordance(
+        id=affordance_id,
+        source="DOM",
+        type=affordance_type,
+        label=label,
+        action=action,
+        locator={"entity_id": entity_id},
+        confidence=0.95,
+    )
 
 
 def _build_repeated_failure_ledger() -> TraceLedger:

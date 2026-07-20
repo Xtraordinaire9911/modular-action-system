@@ -1,9 +1,9 @@
-"""Top-level runtime smoke entry point.
+"""Top-level runtime entry point.
 
 The Week-6 demo has concrete DOM/WoT/Visual perception and executor modules;
-this file deliberately keeps a tiny deterministic orchestration smoke test for
-CI so runtime state-machine changes can be verified without a browser or Docker.
-Use ``run_demo.py`` plus ``env/docker-compose.yml`` for the smart-room demo.
+this file keeps a tiny deterministic orchestration smoke test for CI while also
+offering a white-box runtime demo entry point that does not require browser or
+Docker services.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import argparse
 import asyncio
 import json
 from dataclasses import asdict
+from pathlib import Path
 
 from src.contracts.types import Condition, ExecutionResult, Observation, RollbackSpec, SkillCall, SkillTuple
 from src.runtime.cognitive_map import CognitiveMap
@@ -74,16 +75,29 @@ async def run_smoke_pipeline(task_id: str = "pipeline_smoke_task") -> dict:
     }
 
 
+def run_runtime_demo_pipeline(output_dir: str | Path = "artifacts/adaptation_demo") -> dict[str, str]:
+    """Run the integrated runtime-control demo and return written artifacts."""
+
+    from evaluation.adaptation_demo import run_adaptation_demo
+
+    return {key: str(path) for key, path in run_adaptation_demo(output_dir).items()}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
+    parser.add_argument("--demo", action="store_true", help="Run the white-box runtime-control demo path.")
+    parser.add_argument("--output-dir", default="artifacts/adaptation_demo")
     parser.add_argument("--task-id", default="pipeline_smoke_task")
     args = parser.parse_args()
 
-    # --smoke is accepted for explicit CI usage; this entry point intentionally
-    # avoids live services so it stays deterministic.
-    _ = args.smoke
-    summary = asyncio.run(run_smoke_pipeline(task_id=args.task_id))
+    if args.demo:
+        summary = run_runtime_demo_pipeline(args.output_dir)
+    else:
+        # --smoke is accepted for explicit CI usage; the default path avoids
+        # live services so it stays deterministic.
+        _ = args.smoke
+        summary = asyncio.run(run_smoke_pipeline(task_id=args.task_id))
     print(json.dumps(summary, indent=2, sort_keys=True))
 
 
