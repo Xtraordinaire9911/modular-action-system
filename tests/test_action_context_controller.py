@@ -56,7 +56,7 @@ def test_affordance_controller_builds_typed_plan_without_durable_skill():
             action_name="room",
             action_type="type",
             confidence=0.95,
-            grounding={"label": "Room", "selector": "#room"},
+            grounding={"label": "Room", "selector": "#room", "parameter": "room"},
         ),
         RuntimeAffordance(
             id="dom_time_input",
@@ -65,7 +65,7 @@ def test_affordance_controller_builds_typed_plan_without_durable_skill():
             action_name="time",
             action_type="type",
             confidence=0.94,
-            grounding={"label": "Time", "selector": "#time"},
+            grounding={"label": "Time", "selector": "#time", "parameter": "time"},
         ),
         RuntimeAffordance(
             id="dom_confirm_booking",
@@ -74,7 +74,11 @@ def test_affordance_controller_builds_typed_plan_without_durable_skill():
             action_name="confirm_booking",
             action_type="click",
             confidence=0.93,
-            grounding={"label": "Confirm booking", "selector": "#confirm"},
+            grounding={
+                "label": "Confirm booking",
+                "selector": "#confirm",
+                "achieves": "booking_status == 'confirmed'",
+            },
         ),
     ]:
         cmap.add_affordance(affordance)
@@ -114,9 +118,52 @@ def test_affordance_controller_escalates_when_context_is_ambiguous():
 
     assert plan.requires_escalation
     assert plan.actions == [
-        PrimitiveAction("ask_user", expected_effect="clarify missing affordances for: room"),
+        PrimitiveAction("ask_user", expected_effect="provide affordance bindings for: room"),
     ]
-    assert "no matching affordance for parameter 'room'" in plan.reason
+    assert "no declared affordance binding for parameter 'room'" in plan.reason
+
+
+def test_affordance_controller_uses_declarative_semantics_across_sources_without_label_keywords():
+    cmap = CognitiveMap(task_id="task_cross_env_controller")
+    for affordance in [
+        RuntimeAffordance(
+            id="visual_mark_7",
+            source="visual",
+            entity_id="form_surface",
+            action_name="enter_value",
+            action_type="input",
+            confidence=0.91,
+            grounding={"mark_id": "7", "parameter": "room_id"},
+        ),
+        RuntimeAffordance(
+            id="wot_action_3",
+            source="wot",
+            entity_id="booking_service",
+            action_name="invoke",
+            action_type="action",
+            confidence=0.88,
+            grounding={"thing_id": "booking_service", "completion_for": "reserve_room_goal"},
+        ),
+    ]:
+        cmap.add_affordance(affordance)
+    context = build_action_context(cmap, request_type="goal_spec")
+
+    plan = AffordanceController().plan(
+        context,
+        goal_id="reserve_room_goal",
+        goal_state="device_states.booking.confirmed == true",
+        parameters={"room_id": "A"},
+    )
+
+    assert plan.requires_escalation is False
+    assert plan.actions == [
+        PrimitiveAction("type", affordance_id="visual_mark_7", value="A", expected_effect="room_id == 'A'"),
+        PrimitiveAction(
+            "invoke",
+            affordance_id="wot_action_3",
+            expected_effect="device_states.booking.confirmed == true",
+        ),
+    ]
 
 
 def test_plan_validator_rejects_unknown_affordance_and_disallowed_action():

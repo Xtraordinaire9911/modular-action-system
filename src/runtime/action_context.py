@@ -15,7 +15,29 @@ from src.runtime.cognitive_map import CognitiveMap, Conflict, RuntimeAffordance
 
 RequestType = Literal["skill_call", "goal_spec", "primitive_action"]
 
-_SAFE_GROUNDING_KEYS = frozenset(["label", "description", "role", "text", "mark_id", "thing_id"])
+_SAFE_GROUNDING_KEYS = frozenset(
+    [
+        "label",
+        "description",
+        "role",
+        "text",
+        "mark_id",
+        "thing_id",
+        "parameter",
+        "binds_parameter",
+        "binds_parameters",
+        "accepts_parameter",
+        "accepts_parameters",
+        "parameters",
+        "achieves",
+        "achieves_goal",
+        "completion_for",
+        "goal_id",
+        "goal_ids",
+        "effects",
+        "observes",
+    ]
+)
 _DEFAULT_ALLOWED_ACTIONS = ["click", "type", "select", "invoke", "read", "scroll", "wait", "ask_user", "done"]
 
 
@@ -58,8 +80,16 @@ def _sanitize_affordance(affordance: RuntimeAffordance) -> RuntimeAffordance:
     grounding = {
         key: value
         for key, value in affordance.grounding.items()
-        if key in _SAFE_GROUNDING_KEYS and isinstance(value, str | int | float | bool)
+        if key in _SAFE_GROUNDING_KEYS and _is_safe_grounding_value(value)
     }
     if "label" not in grounding:
         grounding["label"] = affordance.action_name
     return replace(affordance, grounding=grounding)
+
+
+def _is_safe_grounding_value(value: object) -> bool:
+    if isinstance(value, str | int | float | bool):
+        return True
+    if isinstance(value, list | tuple | set):
+        return all(isinstance(item, str | int | float | bool) for item in value)
+    return False

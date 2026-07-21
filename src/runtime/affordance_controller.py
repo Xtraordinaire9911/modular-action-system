@@ -8,6 +8,7 @@ from typing import Any
 from src.runtime.action_context import ActionContext
 from src.runtime.cognitive_map import RuntimeAffordance
 from src.runtime.primitive_action import PrimitiveAction, PrimitiveActionType
+from src.runtime.task_planner import DeclarativeRuntimeTaskPlanner, RuntimeTaskPlan
 
 
 @dataclass(frozen=True)
@@ -20,19 +21,22 @@ class PrimitivePlan:
 class AffordanceController:
     """Create a typed primitive plan from a sanitized ActionContext.
 
-    This controller is intentionally conservative. It handles clear form-like
-    goals by binding known parameters to matching input affordances and then
-    choosing a goal-relevant submit/click/invoke affordance. It does not infer
-    arbitrary user intent and does not emit raw selectors.
+    This controller is intentionally conservative. It consumes declared
+    affordance semantics instead of environment-specific keywords: parameters
+    bind to affordances that declare they accept them, and completion actions
+    must declare the goal/effect they achieve. It does not infer arbitrary user
+    intent and does not emit raw selectors.
     """
 
     def __init__(self, *, min_confidence: float = 0.5) -> None:
         self._min_confidence = min_confidence
+        self._task_planner = DeclarativeRuntimeTaskPlanner(min_confidence=min_confidence)
 
     def plan(
         self,
         context: ActionContext,
         *,
+        goal_id: str = "",
         goal_state: str,
         parameters: dict[str, Any] | None = None,
     ) -> PrimitivePlan:
@@ -43,61 +47,38 @@ class AffordanceController:
                 reason="unresolved conflicts block affordance-level planning",
             )
 
-        parameters = parameters or {}
-        actions: list[PrimitiveAction] = []
-        missing: list[str] = []
-        used: set[str] = set()
-
-        for name, value in parameters.items():
-            affordance = self._find_parameter_affordance(context.affordances, name, used)
-            if affordance is None:
-                missing.append(name)
-                continue
-            primitive = _primitive_for_affordance(affordance)
-            if primitive not in {"type", "select"}:
-                missing.append(name)
-                continue
-            used.add(affordance.id)
-            actions.append(
-                PrimitiveAction(
-                    primitive,
-                    affordance_id=affordance.id,
-                    value=value,
-                    expected_effect=f"{name} == {value!r}",
-                )
-            )
-
-        if missing:
+        task_plan = self._task_planner.plan(
+            context,
+            goal_id=goal_id,
+            goal_state=goal_state,
+            parameters=parameters or {},
+        )
+        if task_plan.requires_escalation:
             return PrimitivePlan(
-                actions=[
-                    PrimitiveAction(
-                        "ask_user",
-                        expected_effect=f"clarify missing affordances for: {', '.join(missing)}",
-                    )
-                ],
+                actions=task_plan.actions,
                 requires_escalation=True,
-                reason="; ".join(f"no matching affordance for parameter '{name}'" for name in missing),
+                reason=task_plan.reason,
             )
+        return self.plan_task(context, task_plan)
 
-        completion = self._find_completion_affordance(context.affordances, goal_state, used)
-        if completion is not None:
-            actions.append(
-                PrimitiveAction(
-                    _primitive_for_affordance(completion),
-                    affordance_id=completion.id,
-                    expected_effect=goal_state,
+    def plan_task(self, context: ActionContext, task_plan: RuntimeTaskPlan) -> PrimitivePlan:
+        _ = context
+        actions: list[PrimitiveAction] = []
+        for step in task_plan.steps:
+            if step.kind == "clarify":
+                return PrimitivePlan(
+                    actions=[step.action],
+                    requires_escalation=True,
+                    reason=step.reason,
                 )
-            )
-            return PrimitivePlan(actions=actions)
-
+            actions.append(step.action)
         if not actions:
             return PrimitivePlan(
                 actions=[PrimitiveAction("ask_user", expected_effect="clarify executable affordance")],
                 requires_escalation=True,
                 reason="no executable affordance matched the goal",
             )
-
-        return PrimitivePlan(actions=actions, reason="parameter actions planned without a completion affordance")
+        return PrimitivePlan(actions=actions)
 
     def _find_parameter_affordance(
         self,
@@ -105,14 +86,7 @@ class AffordanceController:
         name: str,
         used: set[str],
     ) -> RuntimeAffordance | None:
-        candidates = [
-            affordance
-            for affordance in affordances
-            if affordance.id not in used
-            and affordance.confidence >= self._min_confidence
-            and _primitive_for_affordance(affordance) in {"type", "select"}
-        ]
-        return _best_label_match(candidates, name)
+        return self._task_planner._find_parameter_affordance(affordances, name, used)
 
     def _find_completion_affordance(
         self,
@@ -120,14 +94,7 @@ class AffordanceController:
         goal_state: str,
         used: set[str],
     ) -> RuntimeAffordance | None:
-        candidates = [
-            affordance
-            for affordance in affordances
-            if affordance.id not in used
-            and affordance.confidence >= self._min_confidence
-            and _primitive_for_affordance(affordance) in {"click", "invoke"}
-        ]
-        return _best_label_match(candidates, goal_state) or (candidates[0] if len(candidates) == 1 else None)
+        return self._task_planner._find_completion_affordance(affordances, "", goal_state, used)
 
 
 def _primitive_for_affordance(affordance: RuntimeAffordance) -> PrimitiveActionType:
@@ -142,22 +109,3 @@ def _primitive_for_affordance(affordance: RuntimeAffordance) -> PrimitiveActionT
     if action_type in {"action", "invoke"} or action_name.startswith("set_"):
         return "invoke"
     return "click"
-
-
-def _best_label_match(affordances: list[RuntimeAffordance], query: str) -> RuntimeAffordance | None:
-    query_tokens = _tokens(query)
-    best: RuntimeAffordance | None = None
-    best_score = 0
-    for affordance in affordances:
-        label = str(affordance.grounding.get("label", affordance.action_name))
-        haystack = _tokens(" ".join([affordance.id, affordance.action_name, label]))
-        score = len(query_tokens & haystack)
-        if score > best_score:
-            best = affordance
-            best_score = score
-    return best
-
-
-def _tokens(text: str) -> set[str]:
-    normalized = text.replace("_", " ").replace("-", " ").replace(".", " ").lower()
-    return {token for token in normalized.split() if token}

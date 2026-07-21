@@ -265,7 +265,12 @@ class ContinuousInteractionManager:
             request_type="goal_spec",
             safety_constraints=safety_constraints,
         )
-        plan = self.system2_planner.plan(context, goal_state=goal_state, parameters=dict(parameters or {}))
+        plan = self.system2_planner.plan(
+            context,
+            goal_id=goal_id,
+            goal_state=goal_state,
+            parameters=dict(parameters or {}),
+        )
         primitive_plan = [_primitive_payload(action) for action in plan.actions]
         validation = self.plan_validator.validate(context, plan.actions)
         if plan.requires_escalation or not validation.valid:
