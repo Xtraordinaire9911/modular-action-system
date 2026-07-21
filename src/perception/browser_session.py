@@ -108,8 +108,9 @@ class BrowserSession:
     # ── perception ───────────────────────────────────────────────────────────
     def state(self, *, page_id: str = "page", captured_at_ms: int = 0) -> PageAffordanceModel:
         """Perceive the current page as a Page Affordance Model."""
+        current_url = str(getattr(self._page, "url", "") or self._url)
         return self._transducer.transduce(
-            self._page.content(), page_id=page_id, url=self._url, captured_at_ms=captured_at_ms
+            self._page.content(), page_id=page_id, url=current_url, captured_at_ms=captured_at_ms
         )
 
     def screenshot(self, path: str | None = None) -> bytes:
