@@ -16,9 +16,12 @@ from src.contracts.types import (
     SkillCall,
     SkillTuple,
 )
+from src.perception.page_affordance_model import PageAffordanceModel
 from src.recovery.system2_escalation import System2EscalationPolicy, suggest_system2_decision
 from src.runtime.cognitive_map import CognitiveMap, Entity, RuntimeAffordance, StateAssertion
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.runtime.goal_spec import GoalSpec
+from src.runtime.live_observation import observation_from_live_sources
 from src.runtime.state_machine import RuntimeState
 from src.verification.active_perception import ActivePerceptionResolver, ActivePerceptionResult
 from src.verification.conflict_detector import EpistemicArbiter, SemanticConsistencyRule, SensoryConflictError
@@ -603,6 +606,9 @@ def test_continuous_interaction_manager_blocks_system1_on_sensory_conflict():
     assert result.conflict_ids == ["thermostat_A.temperature"]
     assert result.failure_boundary == "recoverable_execution_failure"
     assert result.failure_type == "sensory_conflict"
+    assert result.fusion_decision["allow_system1"] is False
+    assert result.fusion_decision["active_perception_required"] is True
+    assert result.fusion_decision["fused_states"][0]["entity_id"] == "thermostat_A"
     assert wot_executor.calls == []
 
 
@@ -630,6 +636,66 @@ def test_continuous_interaction_manager_uses_active_perception_to_resolve_confli
     assert result.active_perception_trace[0]["resolved"] is True
     assert wot_executor.calls
     assert manager.cognitive_map.unresolved_conflicts() == []
+
+
+def test_epistemic_arbiter_fuses_live_style_dom_wot_visual_majority():
+    cmap = CognitiveMap(task_id="task_live_fusion")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22, "wot", confidence=1.0, timestamp_ms=10)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22, "dom", confidence=0.85, timestamp_ms=11)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 23, "visual", confidence=0.35, timestamp_ms=12)
+    )
+
+    decision = EpistemicArbiter(numeric_tolerances={"target_temperature": 2.0}).fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert decision.conflicts == []
+    fused = next(
+        state
+        for state in decision.fused_states
+        if state.entity_id == "thermostat" and state.attribute == "target_temperature"
+    )
+    assert fused.value == 22
+    assert set(fused.sources) == {"wot", "dom"}
+    assert fused.confidence > 0.8
+
+
+def test_epistemic_arbiter_allows_missing_visual_when_primary_sources_agree():
+    cmap = CognitiveMap(task_id="task_missing_visual")
+    cmap.add_state_assertion(StateAssertion("projector", "power", "on", "wot", confidence=1.0, timestamp_ms=10))
+    cmap.add_state_assertion(StateAssertion("projector", "power", "on", "dom", confidence=0.8, timestamp_ms=11))
+
+    decision = EpistemicArbiter().fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.conflicts == []
+    assert decision.fused_states[0].value == "on"
+
+
+def test_epistemic_arbiter_downweights_stale_live_dashboard_state():
+    cmap = CognitiveMap(task_id="task_stale_dashboard")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 24, "dom", confidence=1.0, timestamp_ms=1)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22, "wot", confidence=1.0, timestamp_ms=10_001)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 1.0},
+        max_freshness_delta_ms=1000,
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.conflicts == []
+    fused = next(state for state in decision.fused_states if state.attribute == "target_temperature")
+    assert fused.value == 22
+    assert fused.sources == ["wot"]
 
 
 def test_active_perception_result_records_unresolved_conflict():
@@ -832,3 +898,260 @@ def test_continuous_interaction_manager_can_attach_optional_llm_failure_judgment
     assert result.llm_failure_boundary == "skill_spec_insufficient"
     assert result.llm_failure_type == "weak_postcondition"
     assert result.llm_judge_evidence[-1] == "schema_validated_llm_judge"
+
+
+def test_continuous_interaction_manager_runs_structured_goal_without_durable_skill():
+    dom_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="reserve_room_goal",
+            backend_used="dom",
+            success=True,
+            latency_ms=2.0,
+            confidence=1.0,
+            raw_observation_delta={"booking": {"confirmed": True}},
+        ),
+    )
+    cmap = CognitiveMap(task_id="task_goal_path")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_time_input",
+                source="DOM",
+                type="input",
+                label="Time",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking_button"},
+                confidence=0.95,
+            ),
+        ]
+    )
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+            observation=Observation(),
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.reason == "goal completed"
+    assert result.selected_backend == "dom"
+    assert [step["action"] for step in result.primitive_plan] == ["type", "type", "click"]
+    assert [call.params["affordance_id"] for call in dom_executor.calls] == [
+        "dom_room_input",
+        "dom_time_input",
+        "dom_confirm_booking",
+    ]
+
+
+def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal():
+    dom_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="reserve_room_goal",
+            backend_used="dom",
+            success=True,
+            latency_ms=2.0,
+            confidence=1.0,
+            raw_observation_delta={"booking": {"confirmed": True}},
+        ),
+    )
+    page = PageAffordanceModel(
+        page_id="booking_page",
+        url="https://example.test/booking",
+        affordances=[
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_time_input",
+                source="DOM",
+                type="input",
+                label="Time",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking"},
+                confidence=0.95,
+            ),
+        ],
+        raw_node_count=100,
+        kept_node_count=3,
+    )
+    live_observation = observation_from_live_sources(
+        page=page,
+        device_states={"booking": {"confirmed": False}},
+        page_state={"booking": {"confirmed": False}},
+    )
+    cmap = CognitiveMap(task_id="task_observe_first_goal")
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            live_observation,
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.reason == "goal completed"
+    assert "dom_room_input" in cmap.runtime_affordances
+    assert cmap.page_state["page"]["url"] == "https://example.test/booking"
+    assert [step["action"] for step in result.primitive_plan] == ["type", "type", "click"]
+    assert result.fusion_decision["allow_system1"] is True
+
+
+def test_live_observation_fusion_reports_multisource_support_without_halting():
+    page = PageAffordanceModel(
+        page_id="dashboard",
+        url="https://example.test",
+        affordances=[],
+    )
+    live_observation = observation_from_live_sources(
+        page=page,
+        device_states={"booking": {"confirmed": True}},
+        page_state={"booking": {"confirmed": True}},
+        visual_state={"booking": {"confirmed": True}},
+    )
+    cmap = CognitiveMap(task_id="task_live_multisource_fusion")
+    live_observation.apply_to(cmap)
+
+    decision = EpistemicArbiter().fuse(cmap)
+    booking = next(
+        state for state in decision.fused_states if state.entity_id == "booking" and state.attribute == "confirmed"
+    )
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert set(booking.sources) == {"wot", "dom", "visual"}
+    assert booking.confidence == 1.0
+
+
+def test_continuous_interaction_manager_accepts_goal_spec_boundary():
+    dom_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="reserve_room_goal",
+            backend_used="dom",
+            success=True,
+            latency_ms=1.0,
+            confidence=1.0,
+            raw_observation_delta={"booking": {"confirmed": True}},
+        ),
+    )
+    cmap = CognitiveMap(task_id="task_goal_spec")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking_button"},
+                confidence=0.95,
+            ),
+        ]
+    )
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_goal(
+            observation=Observation(),
+            goal_spec=GoalSpec(
+                goal_id="reserve_room_goal",
+                goal_state="device_states.booking.confirmed == true",
+                parameters={"room": "A"},
+                source="user_intent_parser",
+                safety_constraints=["only use declared affordances"],
+            ),
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert dom_executor.calls[0].skill_id == "reserve_room_goal"
+    assert result.primitive_plan[-1]["action"] == "click"
+
+
+def test_continuous_interaction_manager_rejects_invalid_goal_spec():
+    manager = ContinuousInteractionManager(
+        {}, {"dom": _RecordingExecutor("dom")}, CognitiveMap(task_id="bad_goal_spec")
+    )
+
+    result = asyncio.run(
+        manager.run_goal(
+            observation=Observation(),
+            goal_spec=GoalSpec(goal_id="", goal_state="", parameters={}),
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_type == "invalid_goal_spec"
+    assert "goal_id must be non-empty" in result.plan_validation_errors
+
+
+def test_continuous_interaction_manager_rejects_goal_plan_with_missing_affordance():
+    manager = ContinuousInteractionManager(
+        {}, {"dom": _RecordingExecutor("dom")}, CognitiveMap(task_id="task_bad_goal")
+    )
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A"},
+            observation=Observation(),
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_boundary == "skill_spec_insufficient"
+    assert result.failure_type == "insufficient_affordance_plan"
+    assert "room" in result.reason
+    assert result.primitive_plan[0]["action"] == "ask_user"

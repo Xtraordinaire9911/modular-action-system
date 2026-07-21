@@ -26,6 +26,11 @@ _SKILL_TO_AFFORDANCE_ID = {
     "set_lighting": "wot_lights_A_setBrightness",
     "verify_readiness": "wot_readiness_check",
 }
+_SKILL_TO_AFFORDANCE_LABEL = {
+    "turn_on_projector": "setPower",
+    "set_temperature": "setTargetTemperature",
+    "set_lighting": "setBrightness",
+}
 _SKILL_TO_PAYLOAD_KEY = {
     "turn_on_projector": "power",
     "set_temperature": "targetTemperature",
@@ -197,13 +202,13 @@ class WotExecutor:
 
     async def _execute_skill(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         start = time.monotonic()
-        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id)
-        if affordance_id is None:
+        affordance = self._affordance_for_skill(skill_call.skill_id)
+        if affordance is None and skill_call.skill_id not in _SKILL_TO_AFFORDANCE_ID:
             return self._skill_failure(
                 skill_call, start, f"no WoT affordance mapping for skill '{skill_call.skill_id}'"
             )
-        affordance = self._affordances.get(affordance_id)
         if affordance is None:
+            affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id, "")
             return self._skill_failure(
                 skill_call, start, f"affordance '{affordance_id}' not loaded; call load_tds() first"
             )
@@ -213,9 +218,9 @@ class WotExecutor:
         payload_key = _SKILL_TO_PAYLOAD_KEY.get(skill_call.skill_id)
         payload: Any = {}
         if payload_key and payload_key in skill_call.params:
-            payload = {payload_key: skill_call.params[payload_key]}
+            payload = skill_call.params[payload_key]
         elif skill_call.skill_id == "turn_on_projector":
-            payload = {"power": "on"}
+            payload = "on"
 
         thing_id = str(affordance.locator.get("thing_id", "unknown"))
         href = str(affordance.locator.get("href", ""))
@@ -250,6 +255,22 @@ class WotExecutor:
             latency_ms=(time.monotonic() - start) * 1000.0,
             confidence=0.0,
             failure_reason=reason,
+        )
+
+    def _affordance_for_skill(self, skill_id: str) -> Affordance | None:
+        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_id)
+        if affordance_id and affordance_id in self._affordances:
+            return self._affordances[affordance_id]
+        label = _SKILL_TO_AFFORDANCE_LABEL.get(skill_id)
+        if label is None:
+            return None
+        return next(
+            (
+                affordance
+                for affordance in self._affordances.values()
+                if affordance.label == label and affordance.action == "invoke"
+            ),
+            None,
         )
 
     async def read_property(self, thing_id: str, property_name: str) -> Any:

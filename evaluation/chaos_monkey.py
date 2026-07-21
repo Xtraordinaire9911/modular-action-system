@@ -57,7 +57,11 @@ class ChaosPolicy:
         return cls(seed=seed, events=events, name=f"level_{level}_seed_{seed}")
 
     def events_for(self, timing: ChaosTiming, skill_id: str) -> list[ChaosEvent]:
-        return [event for event in self.events if event.timing == timing and (event.skill_id is None or event.skill_id == skill_id)]
+        return [
+            event
+            for event in self.events
+            if event.timing == timing and (event.skill_id is None or event.skill_id == skill_id)
+        ]
 
 
 class OfflineChaosExecutor:
