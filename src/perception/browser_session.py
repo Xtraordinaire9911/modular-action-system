@@ -50,8 +50,18 @@ class BrowserSession:
         from playwright.sync_api import sync_playwright  # lazy
 
         pw = sync_playwright().start()
-        browser = pw.chromium.launch(headless=headless)
-        context = browser.new_context()  # ← isolation boundary (PiP analogue)
+        browser = pw.chromium.launch(
+            headless=headless,
+            args=[
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-sandbox",
+            ],
+        )
+        context = browser.new_context(
+            viewport={"width": 1280, "height": 800},
+            device_scale_factor=1,
+        )  # ← isolation boundary (PiP analogue)
         page = context.new_page()
         # Cap action waits so a mistargeted click fails fast instead of hanging
         # the default 30s (e.g. clicking a non-actionable element).
@@ -103,7 +113,28 @@ class BrowserSession:
         )
 
     def screenshot(self, path: str | None = None) -> bytes:
-        return self._page.screenshot(path=path) if path else self._page.screenshot()
+        last_error: Exception | None = None
+        waiter = getattr(self._page, "wait_for_load_state", None)
+        for _ in range(3):
+            try:
+                if waiter is not None:
+                    try:
+                        waiter("networkidle", timeout=2_000)
+                    except Exception:
+                        waiter("domcontentloaded", timeout=2_000)
+                kwargs: dict[str, Any] = {
+                    "full_page": True,
+                    "animations": "disabled",
+                }
+                if path:
+                    kwargs["path"] = path
+                return self._page.screenshot(**kwargs)
+            except Exception as exc:
+                last_error = exc
+                time.sleep(0.25)
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("screenshot failed without an exception")
 
     def evaluate(self, expression: str, arg: Any | None = None) -> Any:
         evaluator = getattr(self._page, "evaluate", None)

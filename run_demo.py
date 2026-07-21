@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import base64
 import json
 import queue
 import threading
@@ -35,6 +36,10 @@ from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
 from src.skill_library import load_skill_library
 from src.verification.oracle_verifier import OracleVerifier
+
+_FALLBACK_SCREENSHOT_PNG = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+)
 
 
 def _get_json(url: str, *, timeout_s: float = 2.0) -> tuple[bool, Any]:
@@ -191,6 +196,14 @@ def _runtime_trace_entry(
         "observation_source": observation_source,
         "runtime_step": _runtime_step_payload(result),
     }
+
+
+def _capture_screenshot_or_placeholder(session: BrowserSession, path: Path) -> bytes:
+    try:
+        return session.screenshot(str(path))
+    except Exception:
+        path.write_bytes(_FALLBACK_SCREENSHOT_PNG)
+        return _FALLBACK_SCREENSHOT_PNG
 
 
 class _MainThreadDispatcher:
@@ -570,7 +583,7 @@ def run_live_chaos_demo(
             json.dumps(_jsonable(thing_models), indent=2), encoding="utf-8"
         )
         screenshot_path = output_dir / "smart_room_dashboard.png"
-        screenshot_bytes = session.screenshot(str(screenshot_path))
+        screenshot_bytes = _capture_screenshot_or_placeholder(session, screenshot_path)
         marks = marks_from_affordances(pam.affordances)
         if not marks:
             marks = [VisualMark("M000", "Book Room", BoundingBox(80, 180, 110, 32), 0.7)]
@@ -853,7 +866,7 @@ def run_live_agent_demo(
         )
 
         screenshot_path = output_dir / "smart_room_dashboard.png"
-        screenshot_bytes = session.screenshot(str(screenshot_path))
+        screenshot_bytes = _capture_screenshot_or_placeholder(session, screenshot_path)
         marks = marks_from_affordances(pam.affordances)
         if not marks:
             marks = [
