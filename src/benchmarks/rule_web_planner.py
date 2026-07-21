@@ -1,9 +1,9 @@
-"""Rule-first web task planner over observed page affordances.
+"""Rule-first affordance planner over observed page affordances.
 
-This module upgrades the external-site demo from scripted Playwright steps to
-an observe-plan-act loop. The planner never emits raw selectors; it selects an
-observed ``Affordance`` and an optional value. An LLM planner can later be added
-behind the same decision contract.
+This module selects the next concrete ``Affordance`` for one active subgoal.
+Task decomposition lives in ``web_task_planner``. The split keeps the runtime
+loop honest: observe the current page, check the current subgoal, then choose
+one action from the fresh Page Affordance Model.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from src.benchmarks.web_task_planner import WebSubgoal, normalize_web_values, tokens
 from src.contracts.types import Affordance
 from src.perception.page_affordance_model import PageAffordanceModel
 
@@ -22,6 +23,7 @@ class WebPlannerDecision:
     reason: str = ""
     done: bool = False
     page_url: str = ""
+    subgoal_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -32,68 +34,82 @@ class WebPlannerHistory:
         return WebPlannerHistory([*self.steps, decision])
 
 
-class WebTaskPlanner(Protocol):
+class WebAffordancePlanner(Protocol):
     def next_action(
         self,
         pam: PageAffordanceModel,
-        goal: str,
+        subgoal: WebSubgoal,
         *,
         values: dict[str, Any] | None = None,
         history: WebPlannerHistory | None = None,
     ) -> WebPlannerDecision: ...
 
 
-class RuleBasedWebPlanner:
-    """Deterministic multi-step planner for form and checkout-like tasks."""
+class RuleBasedAffordancePlanner:
+    """Deterministic next-action planner for one current web subgoal."""
 
     def next_action(
         self,
         pam: PageAffordanceModel,
-        goal: str,
+        subgoal: WebSubgoal,
         *,
         values: dict[str, Any] | None = None,
         history: WebPlannerHistory | None = None,
     ) -> WebPlannerDecision:
-        values = _normalize_values(values or {})
+        values = normalize_web_values(values or {})
         history = history or WebPlannerHistory()
-        goal_tokens = _tokens(goal)
 
-        input_decision = _next_unfilled_input(pam, values, history)
-        if input_decision is not None:
-            return input_decision
+        if subgoal.kind in {"login", "fill_checkout_info", "generic_goal"}:
+            input_decision = _next_unfilled_input(pam, subgoal, values, history)
+            if input_decision is not None:
+                return input_decision
 
-        for matcher in (
-            _login_action,
-            _add_to_cart_action,
-            _checkout_action,
-            _continue_action,
-            _finish_action,
-            _open_cart_action,
-        ):
-            decision = matcher(pam, goal_tokens, values)
-            if decision.affordance is not None:
-                return decision
+        match subgoal.kind:
+            case "login":
+                return _login_action(pam, subgoal, values)
+            case "add_product":
+                return _add_to_cart_action(pam, subgoal)
+            case "open_cart":
+                return _open_cart_action(pam, subgoal)
+            case "checkout":
+                return _checkout_action(pam, subgoal)
+            case "fill_checkout_info":
+                return _continue_action(pam, subgoal)
+            case "finish_order":
+                return _finish_action(pam, subgoal)
+            case "generic_goal":
+                return _generic_action(pam, subgoal, values)
 
-        return WebPlannerDecision(None, reason="no rule matched current observed affordances", done=True)
+        return WebPlannerDecision(
+            None,
+            reason=f"unsupported subgoal kind: {subgoal.kind}",
+            done=True,
+            page_url=pam.url,
+            subgoal_id=subgoal.id,
+        )
 
 
 class LLMWebPlanner:
-    """Placeholder for a future LLM planner using the same decision contract."""
+    """Placeholder for a future LLM affordance planner."""
 
     def next_action(
         self,
         pam: PageAffordanceModel,
-        goal: str,
+        subgoal: WebSubgoal,
         *,
         values: dict[str, Any] | None = None,
         history: WebPlannerHistory | None = None,
     ) -> WebPlannerDecision:
-        _ = pam, goal, values, history
-        raise NotImplementedError("LLM web planner is intentionally left empty; use RuleBasedWebPlanner for now")
+        _ = pam, subgoal, values, history
+        raise NotImplementedError("LLM web planner is intentionally left empty; use RuleBasedAffordancePlanner for now")
+
+
+RuleBasedWebPlanner = RuleBasedAffordancePlanner
 
 
 def _next_unfilled_input(
     pam: PageAffordanceModel,
+    subgoal: WebSubgoal,
     values: dict[str, Any],
     history: WebPlannerHistory,
 ) -> WebPlannerDecision | None:
@@ -103,6 +119,7 @@ def _next_unfilled_input(
         if decision.affordance is not None
         and decision.affordance.action in {"type", "select"}
         and decision.page_url == pam.url
+        and decision.subgoal_id == subgoal.id
     }
     for affordance in pam.inputs():
         if affordance.id in used_inputs:
@@ -112,107 +129,113 @@ def _next_unfilled_input(
             return WebPlannerDecision(
                 affordance,
                 value=value,
-                reason=f"fill observed input '{affordance.label}'",
+                reason=f"fill observed input '{affordance.label}' for subgoal '{subgoal.id}'",
                 page_url=pam.url,
+                subgoal_id=subgoal.id,
             )
     return None
 
 
 def _login_action(
     pam: PageAffordanceModel,
-    goal_tokens: set[str],
+    subgoal: WebSubgoal,
     values: dict[str, Any],
 ) -> WebPlannerDecision:
-    has_login_intent = bool(goal_tokens & {"login", "log", "buy", "purchase", "order", "checkout"})
     has_credentials = "username" in values and "password" in values
-    if not has_login_intent and not has_credentials:
-        return WebPlannerDecision(None)
+    if not has_credentials:
+        return WebPlannerDecision(
+            None, reason="missing login credentials", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
     affordance = _first_clickable_matching(pam, {"login", "log-in", "sign-in", "submit"})
     if affordance is None:
-        return WebPlannerDecision(None)
-    return WebPlannerDecision(affordance, reason="login form appears ready", page_url=pam.url)
+        return WebPlannerDecision(
+            None, reason="login button not observed", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
+    return WebPlannerDecision(affordance, reason="login form appears ready", page_url=pam.url, subgoal_id=subgoal.id)
 
 
-def _add_to_cart_action(
-    pam: PageAffordanceModel,
-    goal_tokens: set[str],
-    values: dict[str, Any],
-) -> WebPlannerDecision:
-    if not (goal_tokens & {"buy", "purchase", "order", "cart", "checkout", "add"}):
-        return WebPlannerDecision(None)
-    product_tokens = _tokens(str(values.get("product", "")))
-    candidates = [
-        affordance
-        for affordance in pam.clickable()
-        if "add" in _tokens(affordance.label) and "cart" in _tokens(affordance.label)
-    ]
+def _add_to_cart_action(pam: PageAffordanceModel, subgoal: WebSubgoal) -> WebPlannerDecision:
+    product_tokens = tokens(str(subgoal.parameters.get("product", "")))
+    candidates = [aff for aff in pam.clickable() if {"add", "cart"} <= tokens(aff.label)]
     if not candidates:
-        return WebPlannerDecision(None)
+        return WebPlannerDecision(
+            None, reason="no add-to-cart affordance observed", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
     if product_tokens:
-        candidates.sort(key=lambda aff: len(product_tokens & _tokens(aff.label)), reverse=True)
-        if len(product_tokens & _tokens(candidates[0].label)) == 0:
-            return WebPlannerDecision(None)
-    return WebPlannerDecision(candidates[0], reason="add matching observed product to cart", page_url=pam.url)
+        candidates.sort(key=lambda aff: len(product_tokens & tokens(aff.label)), reverse=True)
+        if len(product_tokens & tokens(candidates[0].label)) == 0:
+            return WebPlannerDecision(
+                None,
+                reason="no add-to-cart affordance matches requested product",
+                done=True,
+                page_url=pam.url,
+                subgoal_id=subgoal.id,
+            )
+    return WebPlannerDecision(
+        candidates[0], reason="add matching observed product to cart", page_url=pam.url, subgoal_id=subgoal.id
+    )
 
 
-def _open_cart_action(
-    pam: PageAffordanceModel,
-    goal_tokens: set[str],
-    values: dict[str, Any],
-) -> WebPlannerDecision:
-    _ = values
-    if not (goal_tokens & {"buy", "purchase", "order", "cart", "checkout"}):
-        return WebPlannerDecision(None)
-    if _has_clickable_matching(pam, {"checkout"}):
-        return WebPlannerDecision(None)
+def _open_cart_action(pam: PageAffordanceModel, subgoal: WebSubgoal) -> WebPlannerDecision:
     affordance = _first_cart_link(pam)
     if affordance is None:
-        return WebPlannerDecision(None)
-    return WebPlannerDecision(affordance, reason="open cart before checkout", page_url=pam.url)
+        return WebPlannerDecision(
+            None, reason="cart affordance not observed", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
+    return WebPlannerDecision(affordance, reason="open cart for checkout", page_url=pam.url, subgoal_id=subgoal.id)
 
 
-def _checkout_action(
-    pam: PageAffordanceModel,
-    goal_tokens: set[str],
-    values: dict[str, Any],
-) -> WebPlannerDecision:
-    _ = values
-    if not (goal_tokens & {"buy", "purchase", "order", "checkout"}):
-        return WebPlannerDecision(None)
+def _checkout_action(pam: PageAffordanceModel, subgoal: WebSubgoal) -> WebPlannerDecision:
     affordance = _first_clickable_matching(pam, {"checkout"})
     if affordance is None:
-        return WebPlannerDecision(None)
-    return WebPlannerDecision(affordance, reason="checkout action available", page_url=pam.url)
+        return WebPlannerDecision(
+            None, reason="checkout affordance not observed", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
+    return WebPlannerDecision(affordance, reason="enter checkout flow", page_url=pam.url, subgoal_id=subgoal.id)
 
 
-def _continue_action(
-    pam: PageAffordanceModel,
-    goal_tokens: set[str],
-    values: dict[str, Any],
-) -> WebPlannerDecision:
-    _ = goal_tokens, values
+def _continue_action(pam: PageAffordanceModel, subgoal: WebSubgoal) -> WebPlannerDecision:
     affordance = _first_clickable_matching(pam, {"continue"})
     if affordance is None:
-        return WebPlannerDecision(None)
-    return WebPlannerDecision(affordance, reason="continue checkout after filling details", page_url=pam.url)
+        return WebPlannerDecision(
+            None, reason="continue affordance not observed", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
+    return WebPlannerDecision(
+        affordance, reason="continue after checkout fields", page_url=pam.url, subgoal_id=subgoal.id
+    )
 
 
-def _finish_action(
-    pam: PageAffordanceModel,
-    goal_tokens: set[str],
-    values: dict[str, Any],
-) -> WebPlannerDecision:
-    _ = values
-    if not (goal_tokens & {"buy", "purchase", "order", "checkout", "finish", "complete"}):
-        return WebPlannerDecision(None)
+def _finish_action(pam: PageAffordanceModel, subgoal: WebSubgoal) -> WebPlannerDecision:
     affordance = _first_clickable_matching(pam, {"finish", "place", "submit", "complete"})
     if affordance is None:
-        return WebPlannerDecision(None)
-    return WebPlannerDecision(affordance, reason="finish final checkout step", page_url=pam.url)
+        return WebPlannerDecision(
+            None, reason="finish affordance not observed", done=True, page_url=pam.url, subgoal_id=subgoal.id
+        )
+    return WebPlannerDecision(affordance, reason="finish final checkout step", page_url=pam.url, subgoal_id=subgoal.id)
+
+
+def _generic_action(
+    pam: PageAffordanceModel,
+    subgoal: WebSubgoal,
+    values: dict[str, Any],
+) -> WebPlannerDecision:
+    wanted = tokens(subgoal.description) | set(values)
+    affordance = _first_clickable_matching(pam, wanted)
+    if affordance is None:
+        return WebPlannerDecision(
+            None,
+            reason="no generic affordance matched current subgoal",
+            done=True,
+            page_url=pam.url,
+            subgoal_id=subgoal.id,
+        )
+    return WebPlannerDecision(
+        affordance, reason="generic affordance matched current subgoal", page_url=pam.url, subgoal_id=subgoal.id
+    )
 
 
 def _value_for_input(affordance: Affordance, values: dict[str, Any]) -> Any | None:
-    label_tokens = _tokens(" ".join([affordance.id, affordance.label, str(affordance.locator.get("selector", ""))]))
+    label_tokens = tokens(" ".join([affordance.id, affordance.label, str(affordance.locator.get("selector", ""))]))
     aliases = {
         "username": {"username", "user", "login"},
         "password": {"password", "pass"},
@@ -230,20 +253,16 @@ def _value_for_input(affordance: Affordance, values: dict[str, Any]) -> Any | No
     for key, value in values.items():
         if key == "product":
             continue
-        if _tokens(key) & label_tokens:
+        if tokens(key) & label_tokens:
             return value
     return None
 
 
 def _first_clickable_matching(pam: PageAffordanceModel, wanted: set[str]) -> Affordance | None:
     for affordance in pam.clickable():
-        if _tokens(affordance.label) & wanted:
+        if tokens(affordance.label) & wanted:
             return affordance
     return None
-
-
-def _has_clickable_matching(pam: PageAffordanceModel, wanted: set[str]) -> bool:
-    return _first_clickable_matching(pam, wanted) is not None
 
 
 def _first_cart_link(pam: PageAffordanceModel) -> Affordance | None:
@@ -255,24 +274,3 @@ def _first_cart_link(pam: PageAffordanceModel) -> Affordance | None:
         if label.isdigit() and "cart" in selector:
             return affordance
     return None
-
-
-def _normalize_values(values: dict[str, Any]) -> dict[str, Any]:
-    normalized: dict[str, Any] = {}
-    for key, value in values.items():
-        norm = key.strip().replace("-", "_").replace(" ", "_").lower()
-        if norm in {"first", "firstname", "first_name"}:
-            norm = "first_name"
-        elif norm in {"last", "lastname", "last_name"}:
-            norm = "last_name"
-        elif norm in {"zip", "zipcode", "postal", "postal_code", "postcode"}:
-            norm = "postal_code"
-        elif norm in {"user", "user_name"}:
-            norm = "username"
-        normalized[norm] = value
-    return normalized
-
-
-def _tokens(text: str) -> set[str]:
-    normalized = text.replace("_", " ").replace("-", " ").replace("/", " ").replace(".", " ").lower()
-    return {token for token in normalized.split() if token}
