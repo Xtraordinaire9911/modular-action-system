@@ -30,8 +30,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.benchmarks.reflex_policy import select_next  # noqa: E402
+from src.benchmarks.rule_web_planner import RuleBasedAffordancePlanner, WebPlannerHistory  # noqa: E402
 from src.benchmarks.task_spec import BenchmarkTask  # noqa: E402
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter  # noqa: E402
+from src.benchmarks.web_task_planner import LLMWebTaskPlanner, RuleBasedWebTaskPlanner, subgoal_satisfied  # noqa: E402
 
 
 def _parse_values(pairs: list[str]) -> dict[str, str]:
@@ -72,6 +74,12 @@ def main() -> None:
     parser.add_argument("--goal", default="", help="Free-text goal used to pick goal-relevant buttons.")
     parser.add_argument("--value", action="append", default=[], help="Input fill as label=text (repeatable).")
     parser.add_argument(
+        "--planner",
+        choices=["reflex", "rule", "llm"],
+        default="reflex",
+        help="Action planner. 'llm' is a reserved stub and intentionally not implemented yet.",
+    )
+    parser.add_argument(
         "--success-text", action="append", default=[], help="Success if all fragments appear (repeatable)."
     )
     parser.add_argument("--env", default="external", help="Environment label for the trace.")
@@ -105,11 +113,22 @@ def main() -> None:
     shots.mkdir(parents=True, exist_ok=True)
     values = _parse_values(args.value)
     task = BenchmarkTask(args.env, args.task_id, url, args.goal, success_text=args.success_text)
+    if args.planner == "llm":
+        LLMWebTaskPlanner().plan(args.goal, values=values)
 
     print(f"launching {'headed' if args.headed else 'headless'} browser on {url}")
     session = BrowserSession.launch(url, headless=not args.headed)
     adapter = WebBenchmarkAdapter(session)
     used: list[str] = []
+    history = WebPlannerHistory()
+    task_plan = None
+    active_subgoal = 0
+    if args.planner == "rule":
+        task_plan = RuleBasedWebTaskPlanner().plan(args.goal, values=values)
+        print("task plan:")
+        for idx, subgoal in enumerate(task_plan.subgoals, start=1):
+            print(f"  {idx}. {subgoal.id}: {subgoal.description}")
+    rule_planner = RuleBasedAffordancePlanner()
     try:
         for step in range(args.max_steps):
             pam = adapter.observe(task)
@@ -118,11 +137,39 @@ def main() -> None:
                 f"[{step:02d}] perceived {len(pam.affordances)} affordances "
                 f"(compression {pam.compression_ratio:.0%})"
             )
-            choice = select_next(pam, args.goal, values=values, used_ids=tuple(used))
-            if choice is None:
-                print("     no further affordance to act on; stopping")
-                break
-            affordance, value = choice
+            if args.planner == "rule":
+                assert task_plan is not None
+                page_text = adapter.page_text()
+                while active_subgoal < len(task_plan.subgoals) and subgoal_satisfied(
+                    pam,
+                    page_text,
+                    task_plan.subgoals[active_subgoal],
+                    success_text=args.success_text,
+                ):
+                    print(f"     subgoal done: {task_plan.subgoals[active_subgoal].id}")
+                    active_subgoal += 1
+                subgoal = task_plan.current(active_subgoal)
+                if subgoal is None:
+                    print("     all planned subgoals completed")
+                    break
+                print(f"     active subgoal: {subgoal.id}")
+                decision = rule_planner.next_action(pam, subgoal, values=values, history=history)
+                if decision.done or decision.affordance is None:
+                    print(f"     no further rule action; stopping ({decision.reason})")
+                    break
+                affordance, value = decision.affordance, decision.value
+                print(f"     rule reason: {decision.reason}")
+                history = history.append(decision)
+            elif args.planner == "llm":
+                raise NotImplementedError(
+                    "LLM planner mode is reserved; use --planner rule or --planner reflex for now"
+                )
+            else:
+                choice = select_next(pam, args.goal, values=values, used_ids=tuple(used))
+                if choice is None:
+                    print("     no further affordance to act on; stopping")
+                    break
+                affordance, value = choice
             verb = "type" if value is not None else "click"
             print(f"     -> {verb} '{affordance.label}'  via {affordance.locator.get('selector')}")
             result = adapter.act(affordance, value=value)
