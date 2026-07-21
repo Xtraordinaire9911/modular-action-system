@@ -16,10 +16,12 @@ from src.contracts.types import (
     SkillCall,
     SkillTuple,
 )
+from src.perception.page_affordance_model import PageAffordanceModel
 from src.recovery.system2_escalation import System2EscalationPolicy, suggest_system2_decision
 from src.runtime.cognitive_map import CognitiveMap, Entity, RuntimeAffordance, StateAssertion
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
 from src.runtime.goal_spec import GoalSpec
+from src.runtime.live_observation import observation_from_live_sources
 from src.runtime.state_machine import RuntimeState
 from src.verification.active_perception import ActivePerceptionResolver, ActivePerceptionResult
 from src.verification.conflict_detector import EpistemicArbiter, SemanticConsistencyRule, SensoryConflictError
@@ -962,6 +964,104 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
         "dom_time_input",
         "dom_confirm_booking",
     ]
+
+
+def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal():
+    dom_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="reserve_room_goal",
+            backend_used="dom",
+            success=True,
+            latency_ms=2.0,
+            confidence=1.0,
+            raw_observation_delta={"booking": {"confirmed": True}},
+        ),
+    )
+    page = PageAffordanceModel(
+        page_id="booking_page",
+        url="https://example.test/booking",
+        affordances=[
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_time_input",
+                source="DOM",
+                type="input",
+                label="Time",
+                action="type",
+                locator={"entity_id": "booking_form"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking"},
+                confidence=0.95,
+            ),
+        ],
+        raw_node_count=100,
+        kept_node_count=3,
+    )
+    live_observation = observation_from_live_sources(
+        page=page,
+        device_states={"booking": {"confirmed": False}},
+        page_state={"booking": {"confirmed": False}},
+    )
+    cmap = CognitiveMap(task_id="task_observe_first_goal")
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            live_observation,
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.reason == "goal completed"
+    assert "dom_room_input" in cmap.runtime_affordances
+    assert cmap.page_state["page"]["url"] == "https://example.test/booking"
+    assert [step["action"] for step in result.primitive_plan] == ["type", "type", "click"]
+    assert result.fusion_decision["allow_system1"] is True
+
+
+def test_live_observation_fusion_reports_multisource_support_without_halting():
+    page = PageAffordanceModel(
+        page_id="dashboard",
+        url="https://example.test",
+        affordances=[],
+    )
+    live_observation = observation_from_live_sources(
+        page=page,
+        device_states={"booking": {"confirmed": True}},
+        page_state={"booking": {"confirmed": True}},
+        visual_state={"booking": {"confirmed": True}},
+    )
+    cmap = CognitiveMap(task_id="task_live_multisource_fusion")
+    live_observation.apply_to(cmap)
+
+    decision = EpistemicArbiter().fuse(cmap)
+    booking = next(
+        state for state in decision.fused_states if state.entity_id == "booking" and state.attribute == "confirmed"
+    )
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert set(booking.sources) == {"wot", "dom", "visual"}
+    assert booking.confidence == 1.0
 
 
 def test_continuous_interaction_manager_accepts_goal_spec_boundary():

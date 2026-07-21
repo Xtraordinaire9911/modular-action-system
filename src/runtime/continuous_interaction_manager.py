@@ -17,6 +17,7 @@ from src.runtime.affordance_controller import AffordanceController
 from src.runtime.backend_router import RuntimeBackendRouter
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.goal_spec import GoalSpec
+from src.runtime.live_observation import LiveRuntimeObservation
 from src.runtime.plan_validator import PlanValidator
 from src.runtime.primitive_action import PrimitiveAction
 from src.runtime.state_machine import RuntimeState
@@ -384,6 +385,31 @@ class ContinuousInteractionManager:
             fusion_decision=self._last_fusion_decision,
             active_perception_trace=self._last_active_perception_trace,
             primitive_plan=primitive_plan,
+        )
+
+    async def run_observed_goal(
+        self,
+        live_observation: LiveRuntimeObservation,
+        *,
+        goal_id: str = "",
+        goal_state: str = "",
+        parameters: dict[str, object] | None = None,
+        goal_spec: GoalSpec | None = None,
+    ) -> RuntimeStepResult:
+        """Observe first, then run the bounded no-durable-skill goal path.
+
+        This is the runtime-side zero-shot entry point: parsed DOM/WoT/Visual
+        outputs are applied to ``CognitiveMap`` before planning, so the planner
+        reasons over current affordances instead of a pre-written action chain.
+        """
+
+        observation = live_observation.apply_to(self.cognitive_map)
+        return await self.run_goal(
+            goal_id=goal_id,
+            goal_state=goal_state,
+            parameters=parameters,
+            observation=observation,
+            goal_spec=goal_spec,
         )
 
     def _select_backend(self, skill_call: SkillCall, skill_tuple: SkillTuple) -> tuple[str, str]:

@@ -34,6 +34,7 @@ from src.perception.som_parser import BoundingBox, VisualMark, annotate_screensh
 from src.perception.td_affordance_parser import TdAffordanceParser
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.runtime.live_observation import observation_from_live_sources
 from src.skill_library import load_skill_library
 from src.verification.oracle_verifier import OracleVerifier
 
@@ -284,6 +285,27 @@ def _observation_from_live_state(control_url: str, *, booked: bool = False) -> O
                 "booking_status": "confirmed" if booked else "pending",
             }
         },
+    )
+
+
+def _live_runtime_observation_from_sources(
+    control_url: str,
+    *,
+    page: Any,
+    wot_affordances: list[Affordance],
+    booked: bool = False,
+    visual_mark_count: int = 0,
+) -> Any:
+    state = _read_state(control_url).get("state", {})
+    return observation_from_live_sources(
+        page=page,
+        wot_affordances=wot_affordances,
+        device_states=_normalized_live_device_state(state, booked=booked),
+        page_state={
+            "booking": {"confirmed": booked},
+            "booking_status": "confirmed" if booked else "pending",
+        },
+        visual_state={"visual_grounding": {"mark_count": visual_mark_count}} if visual_mark_count else None,
     )
 
 
@@ -599,7 +621,6 @@ def run_live_chaos_demo(
         live_dom_affordances = _with_live_runtime_planning_hints(pam.affordances)
         booking_state = {"booked": False}
         cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live_chaos")
-        cognitive_map.update_affordances(live_dom_affordances + all_wot_affordances)
         manager = ContinuousInteractionManager(
             _skill_library_dict(),
             {
@@ -652,18 +673,24 @@ def run_live_chaos_demo(
 
         point_to(booking_selector, "DOM attempt uses cached selector", session)
         dom_runtime = _run_async_runtime(
-            manager.run_goal(
+            manager.run_observed_goal(
+                _live_runtime_observation_from_sources(
+                    control_url,
+                    page=replace(pam, affordances=live_dom_affordances),
+                    wot_affordances=all_wot_affordances,
+                    booked=False,
+                    visual_mark_count=len(marks),
+                ),
                 goal_id="confirm_booking_live_chaos_goal",
                 goal_state="device_states.booking.confirmed == true",
                 parameters={"room": "A", "time": "14:00"},
-                observation=_observation_from_live_state(control_url, booked=False),
             ),
             dispatcher=dispatcher,
         )
         trace.append(
             _runtime_trace_entry(
                 skill_id="confirm_booking_live_chaos_goal",
-                controller="ContinuousInteractionManager.run_goal",
+                controller="ContinuousInteractionManager.run_observed_goal",
                 observation_source="BrowserSession.state -> DomTransducer -> PageAffordanceModel -> CognitiveMap",
                 result=dom_runtime,
             )
@@ -882,7 +909,6 @@ def run_live_agent_demo(
         dom_executor = DomExecutor(session)
         dispatcher = _MainThreadDispatcher()
         cognitive_map = CognitiveMap(task_id="prepare_room_A_1400_live")
-        cognitive_map.update_affordances(live_dom_affordances + all_wot_affordances)
         booking_state = {"booked": False}
         manager = ContinuousInteractionManager(
             _skill_library_dict(),
@@ -904,11 +930,17 @@ def run_live_agent_demo(
             cognitive_map,
         )
         booking_result = _run_async_runtime(
-            manager.run_goal(
+            manager.run_observed_goal(
+                _live_runtime_observation_from_sources(
+                    control_url,
+                    page=replace(pam, affordances=live_dom_affordances),
+                    wot_affordances=all_wot_affordances,
+                    booked=False,
+                    visual_mark_count=len(marks),
+                ),
                 goal_id="confirm_booking_live_goal",
                 goal_state="device_states.booking.confirmed == true",
                 parameters={"room": "A", "time": "14:00"},
-                observation=_observation_from_live_state(control_url, booked=False),
             ),
             dispatcher=dispatcher,
         )
@@ -917,7 +949,7 @@ def run_live_agent_demo(
         trace.append(
             _runtime_trace_entry(
                 skill_id="confirm_booking_live_goal",
-                controller="ContinuousInteractionManager.run_goal",
+                controller="ContinuousInteractionManager.run_observed_goal",
                 observation_source="BrowserSession.state -> DomTransducer -> PageAffordanceModel -> CognitiveMap",
                 result=booking_result,
             )
