@@ -11,9 +11,13 @@ from evaluation.metrics_aggregator import (
     VerificationCase,
     VisualGroundingCase,
     aggregate_metrics,
+    dataset_from_runtime_results,
     metric_definitions,
     report_rows,
 )
+from src.runtime.continuous_interaction_manager import RuntimeStepResult
+from src.runtime.episode import TransitionLedger, TransitionRecord
+from src.runtime.state_machine import RuntimeState
 
 
 def test_aggregate_metrics_computes_core_rates():
@@ -98,7 +102,7 @@ def test_aggregate_metrics_computes_core_rates():
     metrics = aggregate_metrics(dataset).values
 
     assert metrics["TSR"] == 0.5
-    assert metrics["RUR"] == 0.5
+    assert metrics["RecoveryTriggerRate"] == 0.5
     assert metrics["RecoverySuccessRate"] == 0.5
     assert metrics["RTA"] == 0.5
     assert metrics["BRA"] == 0.5
@@ -132,3 +136,73 @@ def test_metric_definitions_and_rows_are_report_friendly():
     assert "TSR" in definitions
     assert "CascadeTraceCoverage" in definitions
     assert any(row["metric"] == "TSR" for row in rows)
+
+
+def test_runtime_metrics_are_derived_from_verified_episode_and_transition_evidence():
+    ledger = TransitionLedger()
+    ledger.record(
+        TransitionRecord(
+            task_id="task-live",
+            episode_id="ep-live",
+            transition_id="ep-live:t1",
+            step=1,
+            state_id_before="s1",
+            state_id_after="s2",
+            skill_id="set_temperature",
+            affordance_key="wot:set_temperature",
+            backend="wot",
+            params={},
+            success=True,
+            execution_success=True,
+            postcondition_passed=True,
+            latency_ms=12,
+            attempt=1,
+            observation_delta={},
+            recovery_action="retry",
+            recovery_tier=1,
+        )
+    )
+    result = RuntimeStepResult(
+        RuntimeState.COMPLETED,
+        None,
+        recovery_tier=1,
+        failure_type="timeout",
+        recovery_trace=[{"policy": "retry", "selected": True}],
+        episode_id="ep-live",
+        attempts=2,
+        recovery_attempted=True,
+        recovery_succeeded=True,
+        final_outcome_verified=True,
+    )
+
+    dataset = dataset_from_runtime_results([result], ledger)
+    report = aggregate_metrics(dataset, data_source="live", episode_ids=[result.episode_id])
+
+    assert report.values["TSR"] == 1.0
+    assert report.values["RecoveryTriggerRate"] == 1.0
+    assert report.values["RecoverySuccessRate"] == 1.0
+    assert report.metadata == {"data_source": "live", "episode_ids": ["ep-live"]}
+
+
+def test_verified_rollback_counts_as_recovery_but_not_task_success():
+    result = RuntimeStepResult(
+        RuntimeState.FAILED,
+        None,
+        recovery_tier=3,
+        failure_type="postcondition_failed",
+        recovery_trace=[{"policy": "rollback", "selected": True}],
+        episode_id="ep-rollback",
+        attempts=2,
+        recovery_attempted=True,
+        recovery_succeeded=True,
+        final_outcome_verified=False,
+    )
+
+    report = aggregate_metrics(
+        dataset_from_runtime_results([result], TransitionLedger()),
+        data_source="live",
+        episode_ids=[result.episode_id],
+    )
+
+    assert report.values["TSR"] == 0.0
+    assert report.values["RecoverySuccessRate"] == 1.0

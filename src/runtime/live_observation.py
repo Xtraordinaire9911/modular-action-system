@@ -23,13 +23,25 @@ class LiveRuntimeObservation:
     observation: Observation
     affordances: list[Affordance] = field(default_factory=list)
     provenance: dict[str, Any] = field(default_factory=dict)
+    complete_affordance_snapshot: bool = True
 
     def apply_to(self, cognitive_map: CognitiveMap) -> Observation:
         """Update a map with observed affordances/state and return the observation."""
 
-        if self.affordances:
+        if self.complete_affordance_snapshot:
+            cognitive_map.replace_affordances(self.affordances)
+        elif self.affordances:
             cognitive_map.update_affordances(self.affordances)
         cognitive_map.update_from_observation(self.observation)
+        return self.observation
+
+    def apply_affordances_to(self, cognitive_map: CognitiveMap) -> Observation:
+        """Install affordances while leaving state ingestion to the episode loop."""
+
+        if self.complete_affordance_snapshot:
+            cognitive_map.replace_affordances(self.affordances)
+        elif self.affordances:
+            cognitive_map.update_affordances(self.affordances)
         return self.observation
 
 

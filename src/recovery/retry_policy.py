@@ -21,13 +21,13 @@ class RetryPolicy:
         self.base_delay_s = base_delay_s
 
     def decide(self, result: ExecutionResult, attempt: int) -> RetryDecision:
-        transient = result.failure_reason in {
+        failure = (result.failure_reason or "").strip().lower()
+        transient = failure in {
             "timeout",
             "visual_confidence_low",
             "backend_busy",
-        } or (
-            result.failure_reason or ""
-        ).startswith("HTTP 5")
+        } or failure.startswith("http 5")
+        transient = transient or "timeout" in failure or "timed out" in failure
         should_retry = (not result.success) and transient and attempt < self.max_attempts
         delay = self.base_delay_s * (2 ** max(attempt - 1, 0)) if should_retry else 0.0
         reason = "transient failure" if should_retry else "retry not applicable"

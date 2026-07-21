@@ -20,6 +20,11 @@ class RuntimeTraceLike(Protocol):
     failure_reason: str | None
     postcondition_passed: bool | None
     details: dict[str, Any] | None
+    episode_id: str
+    transition_id: str
+    state_id_before: str
+    state_id_after: str
+    affordance_key: str
 
 
 @dataclass(frozen=True)
@@ -39,6 +44,11 @@ class CompiledExperience:
     validated: bool = False
     safe_to_auto_apply: bool = False
     needs_human_review: bool = True
+    episode_id: str = ""
+    transition_id: str = ""
+    state_id_before: str = ""
+    state_id_after: str = ""
+    affordance_key: str = ""
 
 
 class ExperienceCompiler:
@@ -79,6 +89,11 @@ class ExperienceCompiler:
             validated=False,
             safe_to_auto_apply=False,
             needs_human_review=analysis.needs_human_review,
+            episode_id=getattr(event, "episode_id", ""),
+            transition_id=getattr(event, "transition_id", ""),
+            state_id_before=getattr(event, "state_id_before", ""),
+            state_id_after=getattr(event, "state_id_after", ""),
+            affordance_key=getattr(event, "affordance_key", ""),
         )
 
 
@@ -110,4 +125,9 @@ def _trace_event_dict(event: RuntimeTraceLike) -> dict[str, Any]:
         "failure_reason": event.failure_reason,
         "postcondition_passed": event.postcondition_passed,
         "details": event.details,
+        "episode_id": getattr(event, "episode_id", ""),
+        "transition_id": getattr(event, "transition_id", ""),
+        "state_id_before": getattr(event, "state_id_before", ""),
+        "state_id_after": getattr(event, "state_id_after", ""),
+        "affordance_key": getattr(event, "affordance_key", ""),
     }

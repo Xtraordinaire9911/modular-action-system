@@ -15,6 +15,11 @@ def test_experience_compiler_builds_reviewable_experience_from_failure_trace():
         failure_reason="timeout",
         postcondition_passed=False,
         details={"request": {"target": 22}},
+        episode_id="episode-1",
+        transition_id="episode-1:t1",
+        state_id_before="state-before",
+        state_id_after="state-after",
+        affordance_key="wot:set_temperature",
     )
     analysis = FailureAnalysis(
         boundary=FailureBoundary.IMMEDIATE_RUNTIME_ERROR,
@@ -41,3 +46,6 @@ def test_experience_compiler_builds_reviewable_experience_from_failure_trace():
     assert experience.validated is False
     assert experience.recovery_trace[0]["policy"] == "reroute"
     assert "failure_reason='timeout'" in experience.evidence
+    assert experience.transition_id == "episode-1:t1"
+    assert experience.state_id_before == "state-before"
+    assert experience.affordance_key == "wot:set_temperature"

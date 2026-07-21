@@ -53,6 +53,23 @@ class _RecordingExecutor:
         )
 
 
+class _GoalExecutor:
+    def __init__(self) -> None:
+        self.calls: list[SkillCall] = []
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        self.calls.append(skill_call)
+        delta = {"booking": {"confirmed": True}} if skill_call.params.get("primitive_action") == "click" else {}
+        return ExecutionResult(
+            skill_id=skill_call.skill_id,
+            backend_used="dom",
+            success=True,
+            latency_ms=1.0,
+            confidence=1.0,
+            raw_observation_delta=delta,
+        )
+
+
 class _FakeJudgeClient:
     def complete_json(self, prompt: str):
         assert "ambiguous_false_success" in prompt
@@ -745,6 +762,45 @@ def test_continuous_interaction_manager_uses_runtime_backend_router_when_afforda
     assert wot_executor.calls == []
 
 
+def test_continuous_interaction_manager_uses_verified_system1_routing_cache_on_repeat():
+    dom_executor = _RecordingExecutor("dom")
+    cmap = CognitiveMap(task_id="task_runtime_reflex")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking", "skill_id": "confirm_booking"},
+                confidence=0.98,
+            )
+        ]
+    )
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom"],
+                preferred_backends=["dom"],
+            )
+        },
+        {"dom": dom_executor},
+        cmap,
+    )
+
+    first = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+    second = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+
+    assert first.state == RuntimeState.COMPLETED
+    assert first.system1_cache_hit is False
+    assert second.state == RuntimeState.COMPLETED
+    assert second.system1_cache_hit and second.system1_fast_path
+    assert second.routing_reason == "system1 cached grounding dom_confirm_booking"
+    assert second.system1_routing_latency_ms >= 0
+
+
 def test_continuous_interaction_manager_falls_back_to_preferred_backend_without_runtime_affordance():
     dom_executor = _RecordingExecutor("dom")
     wot_executor = _RecordingExecutor("wot")
@@ -786,6 +842,8 @@ def test_continuous_interaction_manager_handles_unknown_skill_without_crashing()
 
 
 def test_continuous_interaction_manager_converts_executor_exception_to_recovery_decision():
+    dom_executor = _RecordingExecutor("dom", exception=TimeoutError("playwright timed out"))
+    visual_executor = _RecordingExecutor("visual")
     manager = ContinuousInteractionManager(
         {
             "confirm_booking": _skill_tuple(
@@ -795,23 +853,27 @@ def test_continuous_interaction_manager_converts_executor_exception_to_recovery_
             )
         },
         {
-            "dom": _RecordingExecutor("dom", exception=TimeoutError("playwright timed out")),
-            "visual": _RecordingExecutor("visual"),
+            "dom": dom_executor,
+            "visual": visual_executor,
         },
         CognitiveMap(task_id="task_executor_exception"),
     )
 
     result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
 
-    assert result.state == RuntimeState.RECOVERING
+    assert result.state == RuntimeState.COMPLETED
     assert result.recovery_tier == 2
     assert result.selected_backend == "visual"
     assert result.execution_result is not None
-    assert result.execution_result.failure_reason == "executor_exception:TimeoutError"
+    assert result.execution_result.success is True
     assert result.failure_boundary == "immediate_runtime_error"
     assert result.failure_type == "timeout"
     assert [step["policy"] for step in result.recovery_trace[:2]] == ["retry", "reroute"]
     assert result.recovery_trace[1]["selected"] is True
+    assert result.recovery_attempted and result.recovery_succeeded
+    assert result.final_outcome_verified
+    assert len(dom_executor.calls) == 1
+    assert len(visual_executor.calls) == 1
 
 
 def test_continuous_interaction_manager_uses_recovery_cascade_for_failures_and_postconditions():
@@ -826,6 +888,7 @@ def test_continuous_interaction_manager_uses_recovery_cascade_for_failures_and_p
             failure_reason="selector_not_found",
         ),
     )
+    visual_executor = _RecordingExecutor("visual")
     failure_manager = ContinuousInteractionManager(
         {
             "confirm_booking": _skill_tuple(
@@ -834,16 +897,18 @@ def test_continuous_interaction_manager_uses_recovery_cascade_for_failures_and_p
                 preferred_backends=["dom"],
             )
         },
-        {"dom": failed_executor, "visual": _RecordingExecutor("visual")},
+        {"dom": failed_executor, "visual": visual_executor},
         CognitiveMap(task_id="task_failure_recovery"),
     )
 
     failure = asyncio.run(failure_manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
 
-    assert failure.state == RuntimeState.RECOVERING
+    assert failure.state == RuntimeState.COMPLETED
     assert failure.recovery_tier == 2
     assert failure.selected_backend == "visual"
     assert failure.recovery_trace[1]["policy"] == "reroute"
+    assert failure.recovery_succeeded and failure.final_outcome_verified
+    assert len(visual_executor.calls) == 1
 
     postcondition_manager = ContinuousInteractionManager(
         {
@@ -860,9 +925,10 @@ def test_continuous_interaction_manager_uses_recovery_cascade_for_failures_and_p
         postcondition_manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation())
     )
 
-    assert postcondition.state == RuntimeState.RECOVERING
-    assert postcondition.recovery_tier == 3
-    assert postcondition.reason == "rollback spec available"
+    assert postcondition.state == RuntimeState.ESCALATED
+    assert postcondition.recovery_attempted
+    assert not postcondition.recovery_succeeded
+    assert postcondition.reason == "rollback execution failed"
 
 
 def test_continuous_interaction_manager_can_attach_optional_llm_failure_judgment():
@@ -893,25 +959,16 @@ def test_continuous_interaction_manager_can_attach_optional_llm_failure_judgment
 
     result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
 
-    assert result.state == RuntimeState.RECOVERING
+    assert result.state == RuntimeState.COMPLETED
     assert result.failure_boundary == "recoverable_execution_failure"
     assert result.llm_failure_boundary == "skill_spec_insufficient"
     assert result.llm_failure_type == "weak_postcondition"
     assert result.llm_judge_evidence[-1] == "schema_validated_llm_judge"
+    assert result.recovery_succeeded and result.final_outcome_verified
 
 
 def test_continuous_interaction_manager_runs_structured_goal_without_durable_skill():
-    dom_executor = _RecordingExecutor(
-        "dom",
-        ExecutionResult(
-            skill_id="reserve_room_goal",
-            backend_used="dom",
-            success=True,
-            latency_ms=2.0,
-            confidence=1.0,
-            raw_observation_delta={"booking": {"confirmed": True}},
-        ),
-    )
+    dom_executor = _GoalExecutor()
     cmap = CognitiveMap(task_id="task_goal_path")
     cmap.update_affordances(
         [
@@ -942,7 +999,7 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
                 locator={
                     "entity_id": "booking_button",
                     "completion_for": "reserve_room_goal",
-                    "achieves": "device_states.booking.confirmed == true",
+                    "achieves": "booking.confirmed == true",
                 },
                 confidence=0.95,
             ),
@@ -953,7 +1010,7 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
     result = asyncio.run(
         manager.run_goal(
             goal_id="reserve_room_goal",
-            goal_state="device_states.booking.confirmed == true",
+            goal_state="booking.confirmed == true",
             parameters={"room": "A", "time": "14:00"},
             observation=Observation(),
         )
@@ -971,17 +1028,7 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
 
 
 def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal():
-    dom_executor = _RecordingExecutor(
-        "dom",
-        ExecutionResult(
-            skill_id="reserve_room_goal",
-            backend_used="dom",
-            success=True,
-            latency_ms=2.0,
-            confidence=1.0,
-            raw_observation_delta={"booking": {"confirmed": True}},
-        ),
-    )
+    dom_executor = _GoalExecutor()
     page = PageAffordanceModel(
         page_id="booking_page",
         url="https://example.test/booking",
@@ -1013,7 +1060,7 @@ def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal
                 locator={
                     "entity_id": "booking",
                     "completion_for": "reserve_room_goal",
-                    "achieves": "device_states.booking.confirmed == true",
+                    "achieves": "booking.confirmed == true",
                 },
                 confidence=0.95,
             ),
@@ -1023,7 +1070,6 @@ def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal
     )
     live_observation = observation_from_live_sources(
         page=page,
-        device_states={"booking": {"confirmed": False}},
         page_state={"booking": {"confirmed": False}},
     )
     cmap = CognitiveMap(task_id="task_observe_first_goal")
@@ -1033,7 +1079,7 @@ def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal
         manager.run_observed_goal(
             live_observation,
             goal_id="reserve_room_goal",
-            goal_state="device_states.booking.confirmed == true",
+            goal_state="booking.confirmed == true",
             parameters={"room": "A", "time": "14:00"},
         )
     )
@@ -1073,17 +1119,7 @@ def test_live_observation_fusion_reports_multisource_support_without_halting():
 
 
 def test_continuous_interaction_manager_accepts_goal_spec_boundary():
-    dom_executor = _RecordingExecutor(
-        "dom",
-        ExecutionResult(
-            skill_id="reserve_room_goal",
-            backend_used="dom",
-            success=True,
-            latency_ms=1.0,
-            confidence=1.0,
-            raw_observation_delta={"booking": {"confirmed": True}},
-        ),
-    )
+    dom_executor = _GoalExecutor()
     cmap = CognitiveMap(task_id="task_goal_spec")
     cmap.update_affordances(
         [
@@ -1105,7 +1141,7 @@ def test_continuous_interaction_manager_accepts_goal_spec_boundary():
                 locator={
                     "entity_id": "booking_button",
                     "completion_for": "reserve_room_goal",
-                    "achieves": "device_states.booking.confirmed == true",
+                    "achieves": "booking.confirmed == true",
                 },
                 confidence=0.95,
             ),
@@ -1118,7 +1154,7 @@ def test_continuous_interaction_manager_accepts_goal_spec_boundary():
             observation=Observation(),
             goal_spec=GoalSpec(
                 goal_id="reserve_room_goal",
-                goal_state="device_states.booking.confirmed == true",
+                goal_state="booking.confirmed == true",
                 parameters={"room": "A"},
                 source="user_intent_parser",
                 safety_constraints=["only use declared affordances"],

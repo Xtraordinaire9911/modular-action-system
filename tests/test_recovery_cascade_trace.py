@@ -17,6 +17,7 @@ def _skill_tuple() -> SkillTuple:
         timeout_ms=3000,
         safety_level="low",
         irreversible=False,
+        idempotent=True,
     )
 
 

@@ -1,46 +1,31 @@
-"""Cost-aware backend routing.
+"""Compatibility adapters for the canonical runtime backend router.
 
-Supports the B-103 affordance-candidate router and the earlier develop
-skill-level BackendRouter API over one confidence tracker.
+Existing evaluation and skill-level callers keep their public APIs, but all
+candidate filtering, ranking, and decision construction now run through
+``src.runtime.backend_router.RuntimeBackendRouter``.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any
 
 from src.backend_router.backend_confidence import BackendConfidenceTracker
 from src.contracts.types import Affordance, SkillCall, SkillTuple
+from src.runtime.backend_router import (
+    DEFAULT_COST,
+    CostAwareRoutingScorer,
+    RoutingDecision,
+    RuntimeBackendRouter,
+)
+from src.runtime.cognitive_map import CognitiveMap, RuntimeAffordance
 
-DEFAULT_COST = {"wot": 0.1, "dom": 0.3, "visual": 1.0}
-_COST_DEFAULTS = {"dom": 0.1, "visual": 0.5, "wot": 0.05}
-MODE_BACKENDS = {
-    "full": {"dom", "wot", "visual"},
-    "no-recovery": {"dom", "wot"},
-    "dom-only": {"dom"},
-    "wot-only": {"wot"},
-    "vam-only": {"visual"},
-    "visual-only": {"visual"},
-}
-_LATENCY_NORM_MS = 2000.0
 _AFF_SOURCE_TO_BACKEND = {"DOM": "dom", "WOT": "wot", "VISUAL": "visual"}
-
-
-@dataclass
-class RoutingDecision:
-    selected_backend: str | None
-    candidate_backends: list[str]
-    routing_reason: str
-    score: float = 0.0
-    confidence: float = 0.0
-    scores: dict[str, float] = field(default_factory=dict)
-
-    @property
-    def confidence_score(self) -> float:
-        return self.confidence
+_COST_DEFAULTS = {"dom": 0.1, "visual": 0.5, "wot": 0.05}
 
 
 class CostAwareRouter:
+    """Legacy affordance-candidate API backed by RuntimeBackendRouter."""
+
     def __init__(
         self,
         tracker: BackendConfidenceTracker | None = None,
@@ -49,57 +34,25 @@ class CostAwareRouter:
         mode: str = "full",
         cost: dict[str, float] | None = None,
     ) -> None:
-        self._tracker = tracker or BackendConfidenceTracker()
-        self._l1, self._l2, self._l3 = lambdas
-        self._mode = mode
-        self._cost = cost or dict(DEFAULT_COST)
-
-    def _enabled(self, skill: SkillTuple) -> set[str]:
-        return MODE_BACKENDS.get(self._mode, MODE_BACKENDS["full"]) & set(skill.allowed_backends)
-
-    def _score(self, backend: str, preferred: set[str]) -> float:
-        cost = self._cost.get(backend, 0.5)
-        reliability = self._tracker.reliability(backend)
-        latency = min(self._tracker.mean_latency(backend) / _LATENCY_NORM_MS, 1.0)
-        score = self._l1 * cost + self._l2 * (1.0 - reliability) + self._l3 * latency
-        if backend in preferred:
-            score -= 0.05
-        return score
+        scorer = CostAwareRoutingScorer(tracker, lambdas=lambdas, cost=cost or dict(DEFAULT_COST))
+        self.core = RuntimeBackendRouter(scorer=scorer, mode=mode)
 
     def route(self, skill: SkillTuple, candidates: dict[str, Affordance]) -> RoutingDecision:
-        available = {_AFF_SOURCE_TO_BACKEND.get(aff.source, backend): aff for backend, aff in candidates.items()}
-        viable = [backend for backend in available if backend in self._enabled(skill)]
-        if not viable:
-            return RoutingDecision(None, [], f"no enabled backend (mode={self._mode})", float("inf"), 0.0)
-
-        preferred = set(skill.preferred_backends)
-        scores = {backend: self._score(backend, preferred) for backend in viable}
-        best = min(scores, key=lambda backend: scores[backend])
-        return RoutingDecision(
-            selected_backend=best,
-            candidate_backends=sorted(viable, key=lambda backend: scores[backend]),
-            routing_reason=(
-                f"min-cost backend among {sorted(viable)}; "
-                f"c={self._cost.get(best, 0.5):.2f} r={self._tracker.reliability(best):.2f}"
-            ),
-            score=round(scores[best], 4),
-            confidence=available[best].confidence,
-            scores={backend: round(score, 4) for backend, score in scores.items()},
+        cognitive_map = _candidate_map(skill, candidates)
+        return self.core.select_backend(
+            SkillCall(skill.skill_id, {}, preferred_backends=list(skill.preferred_backends)),
+            cognitive_map,
         )
 
     def observe(self, backend: str, *, success: bool, latency_ms: float) -> None:
-        self._tracker.update(backend, success=success, latency_ms=latency_ms)
+        self.core.record_outcome(backend, success=success, latency_ms=latency_ms)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "mode": self._mode,
-            "lambdas": [self._l1, self._l2, self._l3],
-            "stats": self._tracker.snapshot(),
-        }
+        return self.core.snapshot()
 
 
 class BackendRouter:
-    """Develop-compatible skill-level router."""
+    """Legacy skill-level API backed by the same canonical routing core."""
 
     def __init__(
         self,
@@ -108,10 +61,12 @@ class BackendRouter:
         lambda_reliability: float = 0.4,
         lambda_latency: float = 0.2,
     ) -> None:
-        self._tracker = tracker or BackendConfidenceTracker()
-        self._lc = lambda_cost
-        self._lr = lambda_reliability
-        self._ll = lambda_latency
+        scorer = CostAwareRoutingScorer(
+            tracker,
+            lambdas=(lambda_cost, lambda_reliability, lambda_latency),
+            cost=dict(_COST_DEFAULTS),
+        )
+        self.core = RuntimeBackendRouter(scorer=scorer)
 
     def route(
         self,
@@ -120,42 +75,57 @@ class BackendRouter:
         available: list[str],
         exclude: list[str] | None = None,
     ) -> RoutingDecision:
-        exclude = exclude or []
-        candidates = [
-            backend for backend in skill_tuple.allowed_backends if backend in available and backend not in exclude
-        ]
-        if not candidates:
-            return RoutingDecision(
-                selected_backend="",
-                candidate_backends=[],
-                routing_reason="no available backend satisfies skill constraints",
-                score=float("inf"),
-                confidence=0.0,
-            )
-
-        weight_sum = self._lc + self._lr + self._ll
-        if weight_sum <= 0:
-            raise ValueError("routing weights must sum to a positive value")
-        scores: dict[str, float] = {}
-        for backend in candidates:
-            stats = self._tracker.get_stats(backend)
-            cost = _COST_DEFAULTS.get(backend, 1.0)
-            reliability_penalty = 1.0 - stats.reliability
-            latency_norm = min(stats.latency / _LATENCY_NORM_MS, 1.0)
-            scores[backend] = (self._lc * cost + self._lr * reliability_penalty + self._ll * latency_norm) / weight_sum
-
-        best = min(scores, key=lambda backend: scores[backend])
-        reason = f"scored {best}={scores[best]:.3f} among {list(scores.keys())}"
-        if best in skill_tuple.preferred_backends:
-            reason += " (preferred)"
-        return RoutingDecision(
-            selected_backend=best,
-            candidate_backends=candidates,
-            routing_reason=reason,
-            score=round(scores[best], 4),
-            confidence=max(0.0, min(1.0, 1.0 - scores[best])),
-            scores={backend: round(score, 4) for backend, score in scores.items()},
+        candidates = {
+            backend: _synthetic_affordance(backend, skill_tuple.skill_id)
+            for backend in skill_tuple.allowed_backends
+            if backend in available and backend not in (exclude or [])
+        }
+        cognitive_map = _candidate_map(skill_tuple, candidates)
+        call = SkillCall(
+            skill_call.skill_id,
+            dict(skill_call.params),
+            priority=skill_call.priority,
+            required_postconditions=list(skill_call.required_postconditions),
+            preferred_backends=list(skill_call.preferred_backends or skill_tuple.preferred_backends),
         )
+        decision = self.core.select_backend(call, cognitive_map)
+        if not candidates:
+            decision.reason = "no available backend satisfies skill constraints"
+        return decision
 
     def record_outcome(self, backend: str, success: bool, latency_ms: float) -> None:
-        self._tracker.record(backend, success, latency_ms)
+        self.core.record_outcome(backend, success=success, latency_ms=latency_ms)
+
+
+def _candidate_map(skill: SkillTuple, candidates: dict[str, Affordance]) -> CognitiveMap:
+    cognitive_map = CognitiveMap(task_id=f"routing:{skill.skill_id}")
+    for key, affordance in candidates.items():
+        backend = _AFF_SOURCE_TO_BACKEND.get(affordance.source, key.lower())
+        if backend not in skill.allowed_backends:
+            continue
+        cognitive_map.add_affordance(
+            RuntimeAffordance(
+                id=affordance.id,
+                source=backend,  # type: ignore[arg-type]
+                entity_id=str(affordance.locator.get("entity_id") or affordance.id),
+                action_name=affordance.action,
+                action_type=affordance.type,
+                confidence=affordance.confidence,
+                grounding=dict(affordance.locator),
+                skill_names=[skill.skill_id],
+            )
+        )
+    return cognitive_map
+
+
+def _synthetic_affordance(backend: str, skill_id: str) -> Affordance:
+    source = {"dom": "DOM", "wot": "WOT", "visual": "VISUAL"}.get(backend, "WOT")
+    return Affordance(
+        id=f"{backend}:{skill_id}",
+        source=source,  # type: ignore[arg-type]
+        type="action",
+        label=skill_id,
+        action=skill_id,
+        locator={"entity_id": skill_id},
+        confidence=1.0,
+    )

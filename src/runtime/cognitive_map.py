@@ -5,6 +5,7 @@ and safety decisions need while the low-level executors remain backend-owned.
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Literal
@@ -48,6 +49,16 @@ class StateAssertion:
 
 
 @dataclass
+class FusedAssertion:
+    entity_id: str
+    attribute: str
+    value: Any
+    confidence: float
+    sources: list[str]
+    support: dict[str, float] = field(default_factory=dict)
+
+
+@dataclass
 class Conflict:
     """A disagreement among observation sources, including two-source and multi-source conflicts."""
 
@@ -78,6 +89,8 @@ class CognitiveMap:
     device_states: dict[str, Any] = field(default_factory=dict)
     page_state: dict[str, Any] = field(default_factory=dict)
     visual_state: dict[str, Any] = field(default_factory=dict)
+    fused_state: dict[str, Any] = field(default_factory=dict)
+    fused_assertions: list[FusedAssertion] = field(default_factory=list)
     conflicts: list[Conflict] = field(default_factory=list)
     execution_history: list[ExecutionResult] = field(default_factory=list)
 
@@ -93,6 +106,17 @@ class CognitiveMap:
         for affordance in runtime_affordances:
             affordance.confidence = _clamp_confidence(affordance.confidence)
             self.runtime_affordances[affordance.id] = affordance
+        self.touch()
+
+    def replace_affordances(self, affordances: list[ContractAffordance]) -> None:
+        """Install a complete environment scan and remove disappeared affordances."""
+
+        runtime_affordances = [_runtime_affordance_from_contract(affordance) for affordance in affordances]
+        for affordance in runtime_affordances:
+            _validate_runtime_affordance(affordance)
+            affordance.confidence = _clamp_confidence(affordance.confidence)
+        self.affordances = list(affordances)
+        self.runtime_affordances = {affordance.id: affordance for affordance in runtime_affordances}
         self.touch()
 
     def add_entity(self, entity: Entity) -> None:
@@ -114,6 +138,7 @@ class CognitiveMap:
             raise ValueError("assertion.entity_id must be non-empty")
         if not assertion.attribute.strip():
             raise ValueError("assertion.attribute must be non-empty")
+        assertion.attribute = canonical_state_name(assertion.attribute)
         assertion.confidence = _clamp_confidence(assertion.confidence)
         if assertion.timestamp_ms == 0:
             assertion.timestamp_ms = int(time.time() * 1000)
@@ -164,25 +189,91 @@ class CognitiveMap:
         state are represented through the accessibility tree when callers have
         structured fields to pass before a richer schema is available.
         """
+        explicit_keys = {
+            (assertion.source, assertion.entity_id, canonical_state_name(assertion.attribute))
+            for assertion in observation.assertions
+        }
         if observation.device_states:
             _deep_merge(self.device_states, observation.device_states)
-            self._ingest_state_tree(observation.device_states, source="wot")
+            self._ingest_state_tree(observation.device_states, source="wot", skip_keys=explicit_keys)
 
         tree = observation.accessibility_tree or {}
         if isinstance(tree.get("page_state"), dict):
             _deep_merge(self.page_state, tree["page_state"])
-            self._ingest_state_tree(tree["page_state"], source="dom")
+            self._ingest_state_tree(tree["page_state"], source="dom", skip_keys=explicit_keys)
         if isinstance(tree.get("visual_state"), dict):
             _deep_merge(self.visual_state, tree["visual_state"])
-            self._ingest_state_tree(tree["visual_state"], source="visual")
+            self._ingest_state_tree(tree["visual_state"], source="visual", skip_keys=explicit_keys)
+
+        for observed in observation.assertions:
+            confidence_is_default = observed.confidence is None
+            timestamp_is_default = observed.timestamp_ms <= 0
+            confidence = 1.0 if observed.confidence is None else observed.confidence
+            self.add_state_assertion(
+                StateAssertion(
+                    entity_id=observed.entity_id,
+                    attribute=observed.attribute,
+                    value=observed.value,
+                    source=observed.source,
+                    confidence=confidence,
+                    timestamp_ms=observed.timestamp_ms,
+                    metadata={
+                        **observed.provenance,
+                        "confidence_origin": "default" if confidence_is_default else "observed",
+                        "timestamp_origin": "ingestion" if timestamp_is_default else "observed",
+                    },
+                )
+            )
 
         self.touch()
 
     def record_execution_result(self, result: ExecutionResult) -> None:
         self.execution_history.append(result)
         if result.raw_observation_delta:
-            _deep_merge(self.device_states, result.raw_observation_delta)
-            self._ingest_state_tree(result.raw_observation_delta, source="wot")
+            source = result.observation_source or _source_from_backend(result.backend_used)
+            target = {
+                "dom": self.page_state,
+                "visual": self.visual_state,
+                "wot": self.device_states,
+                "system": self.device_states,
+            }[source]
+            _deep_merge(target, result.raw_observation_delta)
+            self._ingest_state_tree(
+                result.raw_observation_delta,
+                source=source,
+                confidence=result.confidence,
+                metadata={
+                    **result.metadata,
+                    "backend": result.backend_used,
+                    "skill_id": result.skill_id,
+                    "attempt": result.attempt,
+                    "transition_id": result.transition_id,
+                    "observation_source_origin": (
+                        "explicit" if result.observation_source is not None else "backend_inferred"
+                    ),
+                },
+            )
+        self.touch()
+
+    def apply_fusion_decision(self, fused_states: list[Any], *, allow_system1: bool) -> None:
+        """Replace the accepted fused view while retaining every raw assertion."""
+
+        self.fused_state = {}
+        self.fused_assertions = []
+        for state in fused_states:
+            assertion = FusedAssertion(
+                entity_id=str(state.entity_id),
+                attribute=canonical_state_name(str(state.attribute)),
+                value=state.value,
+                confidence=_clamp_confidence(float(state.confidence)),
+                sources=list(state.sources),
+                support=dict(state.support),
+            )
+            self.fused_assertions.append(assertion)
+            if allow_system1:
+                entity = self.fused_state.setdefault(assertion.entity_id, {})
+                if isinstance(entity, dict):
+                    entity[assertion.attribute] = assertion.value
         self.touch()
 
     def mark_conflict(
@@ -220,6 +311,8 @@ class CognitiveMap:
             "device_states": self.device_states,
             "page_state": self.page_state,
             "visual_state": self.visual_state,
+            "fused_state": self.fused_state,
+            "fused_assertions": [assertion.__dict__ for assertion in self.fused_assertions],
             "conflicts": [conflict.__dict__ for conflict in self.conflicts],
             "execution_history": [result.__dict__ for result in self.execution_history],
         }
@@ -238,22 +331,59 @@ class CognitiveMap:
         if isinstance(entity_state, dict):
             entity_state[assertion.attribute] = assertion.value
 
-    def _ingest_state_tree(self, state_tree: dict[str, Any], source: SourceType) -> None:
+    def _ingest_state_tree(
+        self,
+        state_tree: dict[str, Any],
+        source: SourceType,
+        *,
+        confidence: float = 1.0,
+        metadata: dict[str, Any] | None = None,
+        skip_keys: set[tuple[SourceType, str, str]] | None = None,
+    ) -> None:
         now = int(time.time() * 1000)
         for entity_id, values in state_tree.items():
             if isinstance(values, dict):
                 self.entities.setdefault(entity_id, Entity(id=entity_id, type="unknown"))
                 for attribute, value in values.items():
+                    normalized_attribute = canonical_state_name(attribute)
+                    if skip_keys and (source, entity_id, normalized_attribute) in skip_keys:
+                        continue
                     self.state_assertions.append(
                         StateAssertion(
                             entity_id=entity_id,
-                            attribute=attribute,
+                            attribute=normalized_attribute,
                             value=value,
                             source=source,
-                            confidence=1.0,
+                            confidence=_clamp_confidence(confidence),
                             timestamp_ms=now,
+                            metadata=dict(
+                                metadata
+                                or {
+                                    "confidence_origin": "default",
+                                    "timestamp_origin": "ingestion",
+                                }
+                            ),
                         )
                     )
+
+
+def canonical_state_name(value: str) -> str:
+    """Normalize source-specific state names without changing raw channel data."""
+
+    value = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", value)
+    value = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value)
+    return value.replace("-", "_").lower()
+
+
+def _source_from_backend(backend: str) -> SourceType:
+    normalized = backend.strip().lower()
+    if normalized in {"dom", "playwright", "browser"}:
+        return "dom"
+    if normalized in {"visual", "vam", "vlm"}:
+        return "visual"
+    if normalized in {"system", "noop"}:
+        return "system"
+    return "wot"
 
 
 def _clamp_confidence(confidence: float) -> float:

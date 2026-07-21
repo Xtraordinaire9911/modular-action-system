@@ -54,13 +54,14 @@ class _BookingGoalExecutor:
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         self.calls.append(skill_call)
+        delta = {"booking": {"confirmed": True}} if skill_call.params.get("primitive_action") == "click" else {}
         return ExecutionResult(
             skill_id=skill_call.skill_id,
             backend_used="dom",
             success=True,
             latency_ms=12.0,
             confidence=1.0,
-            raw_observation_delta={"booking": {"confirmed": True}},
+            raw_observation_delta=delta,
         )
 
 
@@ -201,7 +202,7 @@ async def _bounded_goal_no_durable_skill_scenario() -> dict[str, Any]:
                 "click",
                 "booking_button",
                 completion_for="reserve_room_goal",
-                achieves="device_states.booking.confirmed == true",
+                achieves="booking.confirmed == true",
             ),
         ]
     )
@@ -212,7 +213,7 @@ async def _bounded_goal_no_durable_skill_scenario() -> dict[str, Any]:
     )
     result = await manager.run_goal(
         goal_id="reserve_room_goal",
-        goal_state="device_states.booking.confirmed == true",
+        goal_state="booking.confirmed == true",
         parameters={"room": "A", "time": "14:00"},
         observation=Observation(),
     )
@@ -268,6 +269,12 @@ def _result_payload(name: str, result: Any) -> dict[str, Any]:
         "fusion_decision": result.fusion_decision,
         "primitive_plan": result.primitive_plan,
         "plan_validation_errors": result.plan_validation_errors,
+        "episode_id": result.episode_id,
+        "attempts": result.attempts,
+        "transition_ids": result.transition_ids,
+        "recovery_attempted": result.recovery_attempted,
+        "recovery_succeeded": result.recovery_succeeded,
+        "final_outcome_verified": result.final_outcome_verified,
         "execution_result": asdict(result.execution_result) if result.execution_result else None,
     }
 
@@ -321,7 +328,7 @@ def _build_repeated_failure_ledger() -> TraceLedger:
     return ledger
 
 
-def _build_demo_metrics(scenarios: list[dict[str, Any]], proposals: list[Any]) -> dict[str, float]:
+def _build_demo_metrics(scenarios: list[dict[str, Any]], proposals: list[Any]) -> dict[str, Any]:
     dataset = EvaluationDataset(
         adaptation_cases=[
             AdaptationCase(
@@ -329,7 +336,7 @@ def _build_demo_metrics(scenarios: list[dict[str, Any]], proposals: list[Any]) -
                 failure_classified=bool(scenario["failure_boundary"] or scenario["llm_failure_boundary"]),
                 full_cascade_trace=bool(scenario["recovery_trace"]),
                 recoverable=scenario["recovery_tier"] in {1, 2, 3, 4},
-                recovered=scenario["state"] in {"recovering", "escalated"},
+                recovered=bool(scenario["recovery_succeeded"] and scenario["final_outcome_verified"]),
                 policy_proposal_created=bool(proposals),
                 time_to_recovery_ms=10.0,
                 false_success_case=scenario["name"] == "optional_llm_advisory_judgment",
@@ -348,7 +355,8 @@ def _build_demo_metrics(scenarios: list[dict[str, Any]], proposals: list[Any]) -
             for scenario in scenarios
         ]
     )
-    return aggregate_metrics(dataset).values
+    report = aggregate_metrics(dataset, data_source="synthetic")
+    return {"data_source": report.metadata["data_source"], **report.values}
 
 
 def main() -> None:

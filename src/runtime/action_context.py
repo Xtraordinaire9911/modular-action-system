@@ -36,6 +36,7 @@ _SAFE_GROUNDING_KEYS = frozenset(
         "goal_ids",
         "effects",
         "observes",
+        "idempotent",
     ]
 )
 _DEFAULT_ALLOWED_ACTIONS = ["click", "type", "select", "invoke", "read", "scroll", "wait", "ask_user", "done"]

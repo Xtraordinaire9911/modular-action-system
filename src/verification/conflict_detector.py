@@ -101,28 +101,75 @@ class EpistemicArbiter:
         source_reliability: dict[str, float] | None = None,
         max_freshness_delta_ms: int = 5000,
         semantic_rules: list[SemanticConsistencyRule] | None = None,
+        required_sources_by_attribute: dict[str, set[str]] | None = None,
+        missing_source_mass: float = 1.0,
     ) -> None:
         self.numeric_tolerances = numeric_tolerances or {}
         self.halt_threshold = halt_threshold
         self.source_reliability = source_reliability or {"wot": 1.0, "dom": 0.8, "visual": 0.6, "system": 1.0}
         self.max_freshness_delta_ms = max_freshness_delta_ms
         self.semantic_rules = semantic_rules or []
+        self.required_sources_by_attribute = {
+            attribute: {source.lower() for source in sources}
+            for attribute, sources in (required_sources_by_attribute or {}).items()
+        }
+        self.missing_source_mass = max(0.0, missing_source_mass)
 
     def check(self, cognitive_map: CognitiveMap) -> list[Conflict]:
         conflicts: list[Conflict] = []
         for (entity_id, attribute), assertions in _group_assertions(cognitive_map.state_assertions).items():
             latest_by_source = _latest_by_source(assertions)
-            if len(latest_by_source) < 2:
-                continue
-            conflict = self._compare_latest(entity_id, attribute, latest_by_source)
-            if conflict and conflict.conflict_mass >= self.halt_threshold:
-                cognitive_map.add_conflict(conflict)
-                conflicts.append(conflict)
+            missing = self._missing_required_sources(entity_id, attribute, latest_by_source)
+            if missing is not None and missing.conflict_mass >= self.halt_threshold:
+                cognitive_map.add_conflict(missing)
+                conflicts.append(missing)
+            if len(latest_by_source) >= 2:
+                conflict = self._compare_latest(entity_id, attribute, latest_by_source)
+                if conflict and conflict.conflict_mass >= self.halt_threshold:
+                    cognitive_map.add_conflict(conflict)
+                    conflicts.append(conflict)
         for conflict in self._check_semantic_rules(cognitive_map):
             if conflict.conflict_mass >= self.halt_threshold:
                 cognitive_map.add_conflict(conflict)
                 conflicts.append(conflict)
         return conflicts
+
+    def _missing_required_sources(
+        self,
+        entity_id: str,
+        attribute: str,
+        latest_by_source: dict[str, StateAssertion],
+    ) -> Conflict | None:
+        required = self.required_sources_by_attribute.get(f"{entity_id}.{attribute}")
+        if required is None:
+            required = self.required_sources_by_attribute.get(attribute)
+        if not required or not latest_by_source:
+            return None
+        newest = max(assertion.timestamp_ms for assertion in latest_by_source.values())
+        available = {
+            source
+            for source, assertion in latest_by_source.items()
+            if newest - assertion.timestamp_ms <= self.max_freshness_delta_ms
+        }
+        missing = sorted(required - available)
+        if not missing:
+            return None
+        values = {source: assertion.value for source, assertion in latest_by_source.items()}
+        values["missing_sources"] = missing
+        return Conflict(
+            id=f"{entity_id}.{attribute}.missing_source",
+            conflict_type="required_source_missing_or_stale",
+            entity_id=entity_id,
+            attribute=attribute,
+            sources=sorted(required),
+            values=values,
+            conflict_mass=self.missing_source_mass,
+            severity=_severity(self.missing_source_mass),
+            description=(
+                f"Required evidence unavailable for {entity_id}.{attribute}: "
+                f"missing_or_stale={missing}, available={sorted(available)}"
+            ),
+        )
 
     def fuse(self, cognitive_map: CognitiveMap) -> FusionDecision:
         """Create an auditable fusion decision from current map assertions.
@@ -166,20 +213,23 @@ class EpistemicArbiter:
             )
 
         if blocking:
-            return FusionDecision(
+            decision = FusionDecision(
                 allow_system1=False,
                 reason="blocking sensory conflict requires active perception or escalation",
                 fused_states=fused_states,
                 conflicts=blocking,
                 active_perception_required=True,
             )
-        return FusionDecision(
-            allow_system1=True,
-            reason="no blocking sensory conflict",
-            fused_states=fused_states,
-            conflicts=conflicts,
-            active_perception_required=False,
-        )
+        else:
+            decision = FusionDecision(
+                allow_system1=True,
+                reason="no blocking sensory conflict",
+                fused_states=fused_states,
+                conflicts=conflicts,
+                active_perception_required=False,
+            )
+        cognitive_map.apply_fusion_decision(decision.fused_states, allow_system1=decision.allow_system1)
+        return decision
 
     def should_halt_system1(self, conflicts: list[Conflict]) -> bool:
         return any(conflict.conflict_mass >= self.halt_threshold for conflict in conflicts)

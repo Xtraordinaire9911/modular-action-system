@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol, Sequence
+
+from src.runtime.episode import TransitionLedger
 
 
 @dataclass
@@ -101,6 +103,7 @@ class AdaptationCase:
 @dataclass
 class MetricReport:
     values: dict[str, float] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add(self, name: str, numerator: float, denominator: float) -> None:
         self.values[name] = safe_divide(numerator, denominator)
@@ -126,9 +129,80 @@ def safe_divide(numerator: float, denominator: float) -> float:
     return numerator / denominator if denominator else 0.0
 
 
-def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
+class RuntimeResultLike(Protocol):
+    episode_id: str
+    attempts: int
+    recovery_tier: int | None
+    recovery_attempted: bool
+    recovery_succeeded: bool
+    final_outcome_verified: bool
+    failure_type: str
+    recovery_trace: list[dict[str, object]]
+
+
+def dataset_from_runtime_results(
+    results: Sequence[RuntimeResultLike],
+    transition_ledger: TransitionLedger,
+) -> EvaluationDataset:
+    """Derive evaluation rows from executed episodes instead of hand-written outcomes."""
+
+    dataset = EvaluationDataset()
+    for result in results:
+        records = transition_ledger.for_episode(result.episode_id)
+        latency_ms = sum(record.latency_ms for record in records)
+        task_id = records[0].task_id if records else result.episode_id
+        final_success = bool(result.final_outcome_verified)
+        dataset.tasks.append(
+            TaskOutcome(
+                task_id=task_id,
+                final_success=final_success,
+                latency_ms=latency_ms,
+                recovery_triggered=result.recovery_attempted,
+                attempts=result.attempts,
+            )
+        )
+        if result.recovery_attempted:
+            # A verified rollback is a successful recovery even though the
+            # original task goal remains incomplete. TSR records goal success;
+            # RecoverySuccessRate records restoration of a verified safe state.
+            verified_recovery = bool(result.recovery_succeeded)
+            dataset.recovery_cases.append(
+                RecoveryCase(
+                    task_id=task_id,
+                    failure_type=result.failure_type or "execution_failure",
+                    expected_tier=result.recovery_tier or 0,
+                    triggered_tier=result.recovery_tier,
+                    recovery_success=verified_recovery,
+                    final_success=final_success,
+                )
+            )
+        dataset.adaptation_cases.append(
+            AdaptationCase(
+                task_id=task_id,
+                failure_classified=bool(result.failure_type),
+                full_cascade_trace=bool(result.recovery_trace),
+                recoverable=result.recovery_attempted,
+                recovered=bool(result.recovery_succeeded),
+                policy_proposal_created=False,
+                path_attributed=bool(result.failure_type and records),
+            )
+        )
+    return dataset
+
+
+def aggregate_metrics(
+    dataset: EvaluationDataset,
+    *,
+    data_source: str = "unspecified",
+    episode_ids: list[str] | None = None,
+) -> MetricReport:
     """Compute the project metrics from structured evaluation rows."""
-    report = MetricReport()
+    report = MetricReport(
+        metadata={
+            "data_source": data_source,
+            "episode_ids": sorted(set(episode_ids or [])),
+        }
+    )
 
     report.add(
         "TSR",
@@ -136,7 +210,7 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         len(dataset.tasks),
     )
     report.add(
-        "RUR",
+        "RecoveryTriggerRate",
         sum(1 for task in dataset.tasks if task.recovery_triggered),
         len(dataset.tasks),
     )
@@ -299,7 +373,7 @@ def metric_definitions() -> dict[str, str]:
     """Short definitions used by reports and notebooks."""
     return {
         "TSR": "Task Success Rate = successful tasks / total tasks",
-        "RUR": "Recovery Utilization Rate = tasks with recovery triggered / total tasks",
+        "RecoveryTriggerRate": "Tasks with at least one executed recovery attempt / total tasks",
         "RecoverySuccessRate": "Recovered tasks / recovery-triggered cases",
         "RTA": "Recovery Tier Accuracy = cases with expected tier selected / failure cases",
         "BRA": "Backend Routing Accuracy = correct backend selections / routing decisions",
