@@ -175,12 +175,17 @@ def test_runtime_metrics_are_derived_from_verified_episode_and_transition_eviden
         final_outcome_verified=True,
     )
 
-    dataset = dataset_from_runtime_results([result], ledger)
+    dataset = dataset_from_runtime_results(
+        [result],
+        ledger,
+        expected_recovery_tiers={result.episode_id: 1},
+    )
     report = aggregate_metrics(dataset, data_source="live", episode_ids=[result.episode_id])
 
     assert report.values["TSR"] == 1.0
     assert report.values["RecoveryTriggerRate"] == 1.0
     assert report.values["RecoverySuccessRate"] == 1.0
+    assert report.values["RTA"] == 1.0
     assert report.metadata == {"data_source": "live", "episode_ids": ["ep-live"]}
 
 
@@ -206,3 +211,41 @@ def test_verified_rollback_counts_as_recovery_but_not_task_success():
 
     assert report.values["TSR"] == 0.0
     assert report.values["RecoverySuccessRate"] == 1.0
+
+
+def test_runtime_recovery_tier_accuracy_is_omitted_without_an_independent_oracle():
+    result = RuntimeStepResult(
+        RuntimeState.COMPLETED,
+        None,
+        recovery_tier=4,
+        failure_type="timeout",
+        episode_id="ep-no-oracle",
+        recovery_attempted=True,
+        recovery_succeeded=True,
+        final_outcome_verified=True,
+    )
+
+    report = aggregate_metrics(dataset_from_runtime_results([result], TransitionLedger()))
+
+    assert "RTA" not in report.values
+
+
+def test_runtime_recovery_tier_accuracy_uses_oracle_not_selected_tier():
+    result = RuntimeStepResult(
+        RuntimeState.ESCALATED,
+        None,
+        recovery_tier=4,
+        failure_type="timeout",
+        episode_id="ep-wrong-tier",
+        recovery_attempted=True,
+        recovery_succeeded=False,
+        final_outcome_verified=False,
+    )
+
+    dataset = dataset_from_runtime_results(
+        [result],
+        TransitionLedger(),
+        expected_recovery_tiers={result.episode_id: 1},
+    )
+
+    assert aggregate_metrics(dataset).values["RTA"] == 0.0

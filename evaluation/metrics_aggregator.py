@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Protocol, Sequence
+from typing import Any, Mapping, Protocol, Sequence
 
 from src.runtime.episode import TransitionLedger
 
@@ -25,7 +25,7 @@ class TaskOutcome:
 class RecoveryCase:
     task_id: str
     failure_type: str
-    expected_tier: int
+    expected_tier: int | None
     triggered_tier: int | None
     recovery_success: bool
     final_success: bool
@@ -143,8 +143,14 @@ class RuntimeResultLike(Protocol):
 def dataset_from_runtime_results(
     results: Sequence[RuntimeResultLike],
     transition_ledger: TransitionLedger,
+    *,
+    expected_recovery_tiers: Mapping[str, int] | None = None,
 ) -> EvaluationDataset:
-    """Derive evaluation rows from executed episodes instead of hand-written outcomes."""
+    """Derive evaluation rows from executed episodes.
+
+    Expected tiers are evaluation-oracle labels keyed by episode ID (preferred)
+    or task ID. They must not be inferred from the runtime-selected tier.
+    """
 
     dataset = EvaluationDataset()
     for result in results:
@@ -166,11 +172,17 @@ def dataset_from_runtime_results(
             # original task goal remains incomplete. TSR records goal success;
             # RecoverySuccessRate records restoration of a verified safe state.
             verified_recovery = bool(result.recovery_succeeded)
+            expected_tier = None
+            if expected_recovery_tiers is not None:
+                expected_tier = expected_recovery_tiers.get(
+                    result.episode_id,
+                    expected_recovery_tiers.get(task_id),
+                )
             dataset.recovery_cases.append(
                 RecoveryCase(
                     task_id=task_id,
                     failure_type=result.failure_type or "execution_failure",
-                    expected_tier=result.recovery_tier or 0,
+                    expected_tier=expected_tier,
                     triggered_tier=result.recovery_tier,
                     recovery_success=verified_recovery,
                     final_success=final_success,
@@ -219,11 +231,13 @@ def aggregate_metrics(
         sum(1 for case in dataset.recovery_cases if case.recovery_success),
         len(dataset.recovery_cases),
     )
-    report.add(
-        "RTA",
-        sum(1 for case in dataset.recovery_cases if case.triggered_tier == case.expected_tier),
-        len(dataset.recovery_cases),
-    )
+    tier_oracle_cases = [case for case in dataset.recovery_cases if case.expected_tier is not None]
+    if tier_oracle_cases:
+        report.add(
+            "RTA",
+            sum(1 for case in tier_oracle_cases if case.triggered_tier == case.expected_tier),
+            len(tier_oracle_cases),
+        )
     report.add(
         "BRA",
         sum(1 for case in dataset.routing_cases if case.selected_backend == case.expected_backend),

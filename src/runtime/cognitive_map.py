@@ -153,11 +153,12 @@ class CognitiveMap:
         attribute: str,
         source: str | None = None,
     ) -> StateAssertion | None:
+        normalized_attribute = canonical_state_name(attribute)
         matches = [
             assertion
             for assertion in self.state_assertions
             if assertion.entity_id == entity_id
-            and assertion.attribute == attribute
+            and assertion.attribute == normalized_attribute
             and (source is None or assertion.source == source)
         ]
         if not matches:

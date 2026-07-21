@@ -144,6 +144,14 @@ def test_cognitive_map_stores_state_history_and_affordance_queries():
     assert cmap.get_affordances_for_skill("set_temperature")[0].id == "wot_set_temperature"
 
 
+def test_cognitive_map_normalizes_attribute_names_on_write_and_read():
+    cmap = CognitiveMap(task_id="canonical-state-name")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 22, "wot"))
+
+    assert cmap.get_latest_state("thermostat_A", "targetTemperature").value == 22
+    assert cmap.get_latest_state("thermostat_A", "target_temperature").value == 22
+
+
 def test_epistemic_arbiter_computes_numeric_conflict_mass_and_halts():
     cmap = CognitiveMap(task_id="task_1")
     cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 20, "dom", timestamp_ms=1))
@@ -344,6 +352,29 @@ def test_epistemic_arbiter_detects_semantic_consistency_conflict():
     assert conflicts[0].conflict_type == "readiness_projector_inconsistent"
     assert conflicts[0].severity == "high"
     assert arbiter.should_halt_system1(conflicts)
+
+
+def test_semantic_rule_accepts_source_spelling_for_canonicalized_attribute():
+    cmap = CognitiveMap(task_id="semantic-source-spelling")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 30, "wot"))
+    cmap.add_state_assertion(StateAssertion("safety", "limitExceeded", True, "system"))
+    arbiter = EpistemicArbiter(
+        semantic_rules=[
+            SemanticConsistencyRule(
+                conflict_type="unsafe_temperature_target",
+                entity_id="thermostat_A",
+                attribute="targetTemperature",
+                value=30,
+                depends_on_entity_id="safety",
+                depends_on_attribute="limitExceeded",
+                depends_on_value=True,
+            )
+        ]
+    )
+
+    conflicts = arbiter.check(cmap)
+
+    assert [conflict.conflict_type for conflict in conflicts] == ["unsafe_temperature_target"]
 
 
 def test_cognitive_map_rejects_malformed_structured_inputs_and_clamps_confidence():

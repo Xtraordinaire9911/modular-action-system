@@ -410,6 +410,7 @@ class ContinuousInteractionManager:
                 tried_backends=episode.tried_backends,
                 rollback_available=rollback_available,
                 boundary=analysis.boundary.value,
+                max_retry_attempts=episode.policy.max_retry_attempts,
             )
             recovery_attempted = True
             recovery_tier = trace.selected_tier
@@ -936,6 +937,7 @@ class ContinuousInteractionManager:
                 tried_backends=episode.tried_backends,
                 rollback_available=False,
                 boundary=analysis.boundary.value,
+                max_retry_attempts=episode.policy.max_retry_attempts,
             )
             recovery_attempted = True
             recovery_tier = trace.selected_tier

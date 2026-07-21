@@ -152,7 +152,11 @@ async def _run_ablation(
         )
         results = [normal, timeout]
         report = aggregate_metrics(
-            dataset_from_runtime_results(results, ledger),
+            dataset_from_runtime_results(
+                results,
+                ledger,
+                expected_recovery_tiers={timeout.episode_id: 1},
+            ),
             data_source="live_ablation",
             episode_ids=[result.episode_id for result in results],
         )
@@ -267,7 +271,14 @@ async def _run_suite(
         },
     )
 
-    dataset = dataset_from_runtime_results(results, transition_ledger)
+    dataset = dataset_from_runtime_results(
+        results,
+        transition_ledger,
+        expected_recovery_tiers={
+            timeout.episode_id: 1,
+            rollback.episode_id: 3,
+        },
+    )
     metrics = aggregate_metrics(
         dataset,
         data_source="live",

@@ -111,6 +111,59 @@ def test_idempotent_timeout_is_retried_and_verified_from_fresh_observation():
     assert failure_event.recovery_success is True
 
 
+def test_episode_policy_can_disable_retries_even_when_cascade_default_allows_them():
+    executor = _SequenceExecutor(
+        "wot",
+        [
+            _result("wot", success=False, failure_reason="timeout"),
+            _result("wot", success=True, value=22),
+        ],
+    )
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill(idempotent=True)},
+        {"wot": executor},
+        CognitiveMap(task_id="no-retry"),
+        episode_policy=EpisodePolicy(max_steps=4, deadline_s=2, max_retry_attempts=0),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.attempts == 1
+    assert len(executor.calls) == 1
+    retry_step = next(step for step in result.recovery_trace if step["policy"] == "retry")
+    assert retry_step["selected"] is False
+    assert retry_step["reason"] == "episode retry budget exhausted"
+
+
+def test_episode_policy_can_raise_retry_budget_above_cascade_default():
+    executor = _SequenceExecutor(
+        "wot",
+        [
+            _result("wot", success=False, failure_reason="timeout"),
+            _result("wot", success=False, failure_reason="timeout"),
+            _result("wot", success=True, value=22),
+        ],
+    )
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill(idempotent=True)},
+        {"wot": executor},
+        CognitiveMap(task_id="two-retries"),
+        episode_policy=EpisodePolicy(
+            max_steps=4,
+            deadline_s=2,
+            max_retry_attempts=2,
+            max_attempts_per_backend=3,
+        ),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.attempts == 3
+    assert len(executor.calls) == 3
+
+
 def test_non_retryable_dom_failure_executes_visual_reroute():
     dom = _SequenceExecutor("dom", [_result("dom", success=False, failure_reason="selector_not_found")])
     visual = _SequenceExecutor("visual", [_result("visual", success=True, value=22)])

@@ -23,6 +23,7 @@ class RecoveryContext:
     retry_count: int = 0
     tried_backends: list[str] = field(default_factory=list)
     rollback_available: bool = False
+    max_retry_attempts: int | None = None
 
 
 @dataclass
@@ -87,6 +88,7 @@ class RecoveryCascade:
         tried_backends: list[str] | None = None,
         rollback_available: bool = False,
         boundary: str = "",
+        max_retry_attempts: int | None = None,
     ) -> RecoveryTrace:
         _, trace = self.select_with_trace(
             result,
@@ -97,6 +99,7 @@ class RecoveryCascade:
             tried_backends=tried_backends,
             rollback_available=rollback_available,
             boundary=boundary,
+            max_retry_attempts=max_retry_attempts,
         )
         return trace
 
@@ -111,6 +114,7 @@ class RecoveryCascade:
         tried_backends: list[str] | None = None,
         rollback_available: bool = False,
         boundary: str = "",
+        max_retry_attempts: int | None = None,
     ) -> tuple[RecoveryAction, RecoveryTrace]:
         context = RecoveryContext(
             skill_id=skill_tuple.skill_id,
@@ -119,6 +123,7 @@ class RecoveryCascade:
             retry_count=retry_count,
             tried_backends=tried_backends or [],
             rollback_available=rollback_available,
+            max_retry_attempts=max_retry_attempts,
         )
         action, steps = self._decide_and_trace(result, skill_tuple, cognitive_map, context, available_backends)
         trace = RecoveryTrace(
@@ -158,7 +163,11 @@ class RecoveryCascade:
             steps.append(RecoveryDecisionStep(4, "human_escalation", True, True, action.reason))
             return action, steps
 
-        retry = self.retry_policy.decide(result, attempt=context.retry_count + 1)
+        retry = self.retry_policy.decide(
+            result,
+            attempt=context.retry_count + 1,
+            max_retries=context.max_retry_attempts,
+        )
         retry_allowed = retry.should_retry and skill_tuple.idempotent and not skill_tuple.irreversible
         retry_reason = retry.reason
         if retry.should_retry and not retry_allowed:
