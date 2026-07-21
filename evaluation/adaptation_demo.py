@@ -192,9 +192,17 @@ async def _bounded_goal_no_durable_skill_scenario() -> dict[str, Any]:
     cognitive_map = CognitiveMap(task_id="demo_bounded_goal")
     cognitive_map.update_affordances(
         [
-            _dom_affordance("dom_room_input", "input", "Room", "type", "booking_form"),
-            _dom_affordance("dom_time_input", "input", "Time", "type", "booking_form"),
-            _dom_affordance("dom_confirm_booking", "button", "Confirm booking", "click", "booking_button"),
+            _dom_affordance("dom_room_input", "input", "Room", "type", "booking_form", parameter="room"),
+            _dom_affordance("dom_time_input", "input", "Time", "type", "booking_form", parameter="time"),
+            _dom_affordance(
+                "dom_confirm_booking",
+                "button",
+                "Confirm booking",
+                "click",
+                "booking_button",
+                completion_for="reserve_room_goal",
+                achieves="device_states.booking.confirmed == true",
+            ),
         ]
     )
     manager = ContinuousInteractionManager(
@@ -270,14 +278,25 @@ def _dom_affordance(
     label: str,
     action: str,
     entity_id: str,
+    *,
+    parameter: str = "",
+    completion_for: str = "",
+    achieves: str = "",
 ) -> Affordance:
+    locator = {"entity_id": entity_id}
+    if parameter:
+        locator["parameter"] = parameter
+    if completion_for:
+        locator["completion_for"] = completion_for
+    if achieves:
+        locator["achieves"] = achieves
     return Affordance(
         id=affordance_id,
         source="DOM",
         type=affordance_type,
         label=label,
         action=action,
-        locator={"entity_id": entity_id},
+        locator=locator,
         confidence=0.95,
     )
 

@@ -24,7 +24,8 @@ class System2Planner:
         self,
         context: ActionContext,
         *,
+        goal_id: str = "",
         goal_state: str = "",
         parameters: dict[str, Any] | None = None,
     ) -> PrimitivePlan:
-        return self.controller.plan(context, goal_state=goal_state, parameters=parameters or {})
+        return self.controller.plan(context, goal_id=goal_id, goal_state=goal_state, parameters=parameters or {})

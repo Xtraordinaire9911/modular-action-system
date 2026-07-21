@@ -921,7 +921,7 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
                 type="input",
                 label="Room",
                 action="type",
-                locator={"entity_id": "booking_form"},
+                locator={"entity_id": "booking_form", "parameter": "room"},
                 confidence=0.95,
             ),
             Affordance(
@@ -930,7 +930,7 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
                 type="input",
                 label="Time",
                 action="type",
-                locator={"entity_id": "booking_form"},
+                locator={"entity_id": "booking_form", "parameter": "time"},
                 confidence=0.95,
             ),
             Affordance(
@@ -939,7 +939,11 @@ def test_continuous_interaction_manager_runs_structured_goal_without_durable_ski
                 type="button",
                 label="Confirm booking",
                 action="click",
-                locator={"entity_id": "booking_button"},
+                locator={
+                    "entity_id": "booking_button",
+                    "completion_for": "reserve_room_goal",
+                    "achieves": "device_states.booking.confirmed == true",
+                },
                 confidence=0.95,
             ),
         ]
@@ -988,7 +992,7 @@ def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal
                 type="input",
                 label="Room",
                 action="type",
-                locator={"entity_id": "booking_form"},
+                locator={"entity_id": "booking_form", "parameter": "room"},
                 confidence=0.95,
             ),
             Affordance(
@@ -997,7 +1001,7 @@ def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal
                 type="input",
                 label="Time",
                 action="type",
-                locator={"entity_id": "booking_form"},
+                locator={"entity_id": "booking_form", "parameter": "time"},
                 confidence=0.95,
             ),
             Affordance(
@@ -1006,7 +1010,11 @@ def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal
                 type="button",
                 label="Confirm booking",
                 action="click",
-                locator={"entity_id": "booking"},
+                locator={
+                    "entity_id": "booking",
+                    "completion_for": "reserve_room_goal",
+                    "achieves": "device_states.booking.confirmed == true",
+                },
                 confidence=0.95,
             ),
         ],
@@ -1085,7 +1093,7 @@ def test_continuous_interaction_manager_accepts_goal_spec_boundary():
                 type="input",
                 label="Room",
                 action="type",
-                locator={"entity_id": "booking_form"},
+                locator={"entity_id": "booking_form", "parameter": "room"},
                 confidence=0.95,
             ),
             Affordance(
@@ -1094,7 +1102,11 @@ def test_continuous_interaction_manager_accepts_goal_spec_boundary():
                 type="button",
                 label="Confirm booking",
                 action="click",
-                locator={"entity_id": "booking_button"},
+                locator={
+                    "entity_id": "booking_button",
+                    "completion_for": "reserve_room_goal",
+                    "achieves": "device_states.booking.confirmed == true",
+                },
                 confidence=0.95,
             ),
         ]
