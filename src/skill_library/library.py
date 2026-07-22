@@ -89,6 +89,7 @@ def _parse_skill(raw: dict) -> SkillTuple:
         timeout_ms=int(raw["timeout_ms"]),
         safety_level=raw["safety_level"],
         irreversible=bool(raw["irreversible"]),
+        idempotent=bool(raw.get("idempotent", False)),
     )
 
 

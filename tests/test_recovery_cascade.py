@@ -47,6 +47,21 @@ def test_retry_policy_retries_transient_timeout():
     assert decision.next_attempt == 2
 
 
+def test_retry_policy_recognizes_transport_timeout_exception_text():
+    result = ExecutionResult(
+        skill_id="set_temperature",
+        backend_used="wot",
+        success=False,
+        latency_ms=300,
+        confidence=0.0,
+        failure_reason="ReadTimeout: timed out",
+    )
+
+    decision = RetryPolicy(max_attempts=2).decide(result, attempt=1)
+
+    assert decision.should_retry
+
+
 def test_reroute_policy_selects_alternate_backend():
     decision = ReroutePolicy().decide(
         _skill_tuple(allowed=["dom", "wot", "visual"], preferred=["wot", "dom"]),

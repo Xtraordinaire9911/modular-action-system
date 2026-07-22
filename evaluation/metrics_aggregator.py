@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Mapping, Protocol, Sequence
+
+from src.runtime.episode import TransitionLedger
 
 
 @dataclass
@@ -23,7 +25,7 @@ class TaskOutcome:
 class RecoveryCase:
     task_id: str
     failure_type: str
-    expected_tier: int
+    expected_tier: int | None
     triggered_tier: int | None
     recovery_success: bool
     final_success: bool
@@ -101,6 +103,7 @@ class AdaptationCase:
 @dataclass
 class MetricReport:
     values: dict[str, float] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add(self, name: str, numerator: float, denominator: float) -> None:
         self.values[name] = safe_divide(numerator, denominator)
@@ -126,9 +129,92 @@ def safe_divide(numerator: float, denominator: float) -> float:
     return numerator / denominator if denominator else 0.0
 
 
-def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
+class RuntimeResultLike(Protocol):
+    episode_id: str
+    attempts: int
+    recovery_tier: int | None
+    recovery_attempted: bool
+    recovery_succeeded: bool
+    final_outcome_verified: bool
+    failure_type: str
+    recovery_trace: list[dict[str, object]]
+
+
+def dataset_from_runtime_results(
+    results: Sequence[RuntimeResultLike],
+    transition_ledger: TransitionLedger,
+    *,
+    expected_recovery_tiers: Mapping[str, int] | None = None,
+) -> EvaluationDataset:
+    """Derive evaluation rows from executed episodes.
+
+    Expected tiers are evaluation-oracle labels keyed by episode ID (preferred)
+    or task ID. They must not be inferred from the runtime-selected tier.
+    """
+
+    dataset = EvaluationDataset()
+    for result in results:
+        records = transition_ledger.for_episode(result.episode_id)
+        latency_ms = sum(record.latency_ms for record in records)
+        task_id = records[0].task_id if records else result.episode_id
+        final_success = bool(result.final_outcome_verified)
+        dataset.tasks.append(
+            TaskOutcome(
+                task_id=task_id,
+                final_success=final_success,
+                latency_ms=latency_ms,
+                recovery_triggered=result.recovery_attempted,
+                attempts=result.attempts,
+            )
+        )
+        if result.recovery_attempted:
+            # A verified rollback is a successful recovery even though the
+            # original task goal remains incomplete. TSR records goal success;
+            # RecoverySuccessRate records restoration of a verified safe state.
+            verified_recovery = bool(result.recovery_succeeded)
+            expected_tier = None
+            if expected_recovery_tiers is not None:
+                expected_tier = expected_recovery_tiers.get(
+                    result.episode_id,
+                    expected_recovery_tiers.get(task_id),
+                )
+            dataset.recovery_cases.append(
+                RecoveryCase(
+                    task_id=task_id,
+                    failure_type=result.failure_type or "execution_failure",
+                    expected_tier=expected_tier,
+                    triggered_tier=result.recovery_tier,
+                    recovery_success=verified_recovery,
+                    final_success=final_success,
+                )
+            )
+        dataset.adaptation_cases.append(
+            AdaptationCase(
+                task_id=task_id,
+                failure_classified=bool(result.failure_type),
+                full_cascade_trace=bool(result.recovery_trace),
+                recoverable=result.recovery_attempted,
+                recovered=bool(result.recovery_succeeded),
+                policy_proposal_created=False,
+                path_attributed=bool(result.failure_type and records),
+            )
+        )
+    return dataset
+
+
+def aggregate_metrics(
+    dataset: EvaluationDataset,
+    *,
+    data_source: str = "unspecified",
+    episode_ids: list[str] | None = None,
+) -> MetricReport:
     """Compute the project metrics from structured evaluation rows."""
-    report = MetricReport()
+    report = MetricReport(
+        metadata={
+            "data_source": data_source,
+            "episode_ids": sorted(set(episode_ids or [])),
+        }
+    )
 
     report.add(
         "TSR",
@@ -136,7 +222,7 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         len(dataset.tasks),
     )
     report.add(
-        "RUR",
+        "RecoveryTriggerRate",
         sum(1 for task in dataset.tasks if task.recovery_triggered),
         len(dataset.tasks),
     )
@@ -145,11 +231,13 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         sum(1 for case in dataset.recovery_cases if case.recovery_success),
         len(dataset.recovery_cases),
     )
-    report.add(
-        "RTA",
-        sum(1 for case in dataset.recovery_cases if case.triggered_tier == case.expected_tier),
-        len(dataset.recovery_cases),
-    )
+    tier_oracle_cases = [case for case in dataset.recovery_cases if case.expected_tier is not None]
+    if tier_oracle_cases:
+        report.add(
+            "RTA",
+            sum(1 for case in tier_oracle_cases if case.triggered_tier == case.expected_tier),
+            len(tier_oracle_cases),
+        )
     report.add(
         "BRA",
         sum(1 for case in dataset.routing_cases if case.selected_backend == case.expected_backend),
@@ -299,7 +387,7 @@ def metric_definitions() -> dict[str, str]:
     """Short definitions used by reports and notebooks."""
     return {
         "TSR": "Task Success Rate = successful tasks / total tasks",
-        "RUR": "Recovery Utilization Rate = tasks with recovery triggered / total tasks",
+        "RecoveryTriggerRate": "Tasks with at least one executed recovery attempt / total tasks",
         "RecoverySuccessRate": "Recovered tasks / recovery-triggered cases",
         "RTA": "Recovery Tier Accuracy = cases with expected tier selected / failure cases",
         "BRA": "Backend Routing Accuracy = correct backend selections / routing decisions",

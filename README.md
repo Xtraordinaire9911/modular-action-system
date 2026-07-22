@@ -128,6 +128,40 @@ python run_demo.py --probe-env
 
 The `environment.all_ok` field should be `true` when Docker services are up.
 
+### 5. Live runtime-control tracer bullet
+
+With the smart-room services running, execute the complete observe-plan-act-
+verify-recover loop through one entry point:
+
+```bash
+uv run python -m src.pipeline --live-demo
+```
+
+The command runs a normal structured goal, transient WoT timeout recovery,
+postcondition-mismatch rollback, DOM/WoT conflict resolution, and a repeated
+System-1 grounding-cache episode. It writes live screenshots, transition and
+failure JSONL ledgers, a recovery report, and episode-derived metrics under
+`artifacts/live_runtime_demo/`.
+
+Run the same seeded normal/timeout episodes under full, no-recovery, DOM-only,
+and WoT-only modes:
+
+```bash
+uv run python -m src.pipeline --live-ablation
+```
+
+Calibrate the current rule-first fusion threshold over labeled live clean,
+DOM-fault, WoT-timeout/offline, and postcondition-mismatch scenarios:
+
+```bash
+uv run python -m src.pipeline --fusion-calibration
+```
+
+Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
+`--control-url` when Docker is mapped to non-default host ports. These are live
+measurements; `python -m src.pipeline --demo` remains the deterministic synthetic
+white-box path.
+
 ## Demo
 
 1. Open http://localhost:3000.
@@ -202,7 +236,9 @@ The `environment.all_ok` field should be `true` when Docker services are up.
 | System-1 reflex library | `src/effectors/system1_reflex_library.py`. |
 | Execution effectors | `src/effectors/dom_executor.py`, `src/effectors/wot_executor.py`, `src/effectors/visual_executor.py`. |
 | VAM / System 2 | `src/vam/vam_adapter.py`, `src/vam/vam_payload.py`. |
-| CMap / SSG-style runtime state | `src/runtime/cognitive_map.py` and `src/planner/cognitive_map.py`. |
+| CMap / SSG-style runtime state | `src/runtime/cognitive_map.py` is the canonical episode state; `src/planner/cognitive_map.py` derives a read-only Semantic Scene Graph view from it. |
+| Epistemic arbitration | `src/verification/conflict_detector.py` is the canonical fusion/arbiter implementation used by CIM and the planner-facing gate. |
+| Backend routing | `src/runtime/backend_router.py` is the canonical routing core; `src/backend_router/router.py` preserves cost-aware and legacy APIs as adapters. |
 | Preconditions/postconditions | `src/verification/precondition_checker.py`, `src/verification/postcondition_checker.py`. |
 | Recovery/failure injection | `src/recovery/*`, `scripts/inject_failures.py`, `evaluation/backend_eval.py`. |
 
@@ -232,21 +268,21 @@ scripts/
   run_miniwob_demo.py       MiniWoB++-only curated demo suite
   run_agent_on_env.py       Single-task agent runner with static file server
 src/
-  backend_router/           Cost-aware routing and confidence tracking
+  backend_router/           Cost-aware compatibility adapters and confidence tracking
   benchmarks/               External CUA benchmark controllers and task suites
     miniwob_tasks.py          MiniwobController, MockEnvController, DEMO_TASKS
     mock_env_tasks.py         MockEnvTask definitions and solvers for mock envs
   contracts/                Shared dataclasses (Affordance, ExecutionResult, …)
   effectors/                DOM/WoT/Visual executors and System-1 reflexes
   perception/               DOM transducer, TD parser, SoM parser, browser session
-  planner/                  Epistemic arbiter, planning gate, System-2 recovery
+  planner/                  Read-only runtime-map view, planning gate, System-2 packaging
   recovery/                 Retry/reroute/rollback/escalation policies
-  runtime/                  State machine and runtime cognitive map
+  runtime/                  Canonical state, planning, routing, and interaction control
   safety/                   Unsafe-action detector, rate limiter
   skill_library/            Canonical skill definitions and fixture loader
   vam/                      VAM adapter and recovery payload
   verification/             Preconditions, postconditions, conflict detection
-tests/                      Unit and integration-smoke tests (115 passing)
+tests/                      Unit, integration, recovery, and live-adapter tests
 .external_envs/             Cloned external benchmark repos (MiniWoB++, WebArena, …)
 ```
 

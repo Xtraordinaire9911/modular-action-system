@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from src.contracts.types import Condition
-from src.runtime.cognitive_map import CognitiveMap
+from src.runtime.cognitive_map import CognitiveMap, canonical_state_name
 
 
 @dataclass
@@ -120,6 +120,7 @@ def _parse_value(raw: str) -> Any:
 def _resolve_path(cognitive_map: CognitiveMap, path: str) -> Any:
     parts = path.split(".")
     roots: dict[str, Any] = {
+        "fused_state": cognitive_map.fused_state,
         "device_states": cognitive_map.device_states,
         "page_state": cognitive_map.page_state,
         "visual_state": cognitive_map.visual_state,
@@ -133,11 +134,24 @@ def _resolve_path(cognitive_map: CognitiveMap, path: str) -> Any:
         value = cognitive_map.current_skill.params[parts[0]]
         parts = parts[1:]
     else:
-        value = cognitive_map.device_states
+        try:
+            return _walk_path(cognitive_map.fused_state, parts, path)
+        except KeyError:
+            value = cognitive_map.device_states
 
+    return _walk_path(value, parts, path)
+
+
+def _walk_path(value: Any, parts: list[str], original_path: str) -> Any:
     for part in parts:
-        if isinstance(value, dict) and part in value:
+        if not isinstance(value, dict):
+            raise KeyError(f"missing condition path: {original_path}")
+        if part in value:
             value = value[part]
-        else:
-            raise KeyError(f"missing condition path: {path}")
+            continue
+        normalized = canonical_state_name(part)
+        if normalized in value:
+            value = value[normalized]
+            continue
+        raise KeyError(f"missing condition path: {original_path}")
     return value

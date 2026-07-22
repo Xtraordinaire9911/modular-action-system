@@ -21,10 +21,17 @@ class EpisodeFailureEvent:
     recovery_action: str = ""
     recovery_success: bool = False
     safety_regression: bool = False
+    transition_id: str = ""
+    state_id_before: str = ""
+    state_id_after: str = ""
+    affordance_key: str = ""
 
     @property
     def signature(self) -> str:
-        return "|".join([self.skill_id, self.backend, self.failure_type, self.context_key])
+        parts = [self.skill_id, self.backend, self.failure_type, self.context_key]
+        if self.state_id_before or self.affordance_key:
+            parts.extend([self.state_id_before or "unknown_state", self.affordance_key or "unknown_affordance"])
+        return "|".join(parts)
 
 
 class TraceLedger:

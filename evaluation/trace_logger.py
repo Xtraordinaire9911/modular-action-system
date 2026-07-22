@@ -20,6 +20,11 @@ class RuntimeTraceEvent:
     failure_reason: str | None = None
     postcondition_passed: bool | None = None
     details: dict[str, Any] | None = None
+    episode_id: str = ""
+    transition_id: str = ""
+    state_id_before: str = ""
+    state_id_after: str = ""
+    affordance_key: str = ""
 
 
 class TraceLogger:

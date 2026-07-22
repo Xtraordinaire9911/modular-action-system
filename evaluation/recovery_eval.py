@@ -11,6 +11,7 @@ from evaluation.metrics_aggregator import EvaluationDataset, MetricReport, aggre
 def write_recovery_metrics(dataset: EvaluationDataset, path: str | Path) -> MetricReport:
     report = aggregate_metrics(dataset)
     output = {
+        "metadata": report.metadata,
         "values": report.values,
         "rows": report_rows(report),
     }
