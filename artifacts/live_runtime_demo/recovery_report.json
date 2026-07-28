@@ -1,0 +1,201 @@
+{
+  "data_source": "live",
+  "episodes": [
+    {
+      "attempts": 1,
+      "episode_id": "episode-d794423604cb",
+      "failure_type": "postcondition_failed",
+      "final_outcome_verified": false,
+      "recovery_attempted": true,
+      "recovery_succeeded": false,
+      "recovery_trace": [
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "retry not applicable",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "reroute",
+          "tier": 1
+        },
+        {
+          "attempt": 1,
+          "backend": "wot",
+          "considered": true,
+          "policy": "reroute",
+          "reason": "rerouted to preferred backend wot",
+          "recovery_of_transition_id": "episode-d794423604cb:transition-0001",
+          "selected": true,
+          "selected_action": "reroute",
+          "tier": 2
+        }
+      ],
+      "state": "escalated"
+    },
+    {
+      "attempts": 2,
+      "episode_id": "episode-0b0b47c4d7fe",
+      "failure_type": "postcondition_failed",
+      "final_outcome_verified": false,
+      "recovery_attempted": true,
+      "recovery_succeeded": false,
+      "recovery_trace": [
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "transient failure",
+          "recovery_of_transition_id": "episode-0b0b47c4d7fe:transition-0001",
+          "selected": true,
+          "selected_action": "retry",
+          "tier": 1
+        },
+        {
+          "attempt": 2,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "retry not applicable",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "escalate_human",
+          "tier": 1
+        },
+        {
+          "attempt": 2,
+          "backend": "",
+          "considered": true,
+          "policy": "reroute",
+          "reason": "no alternate backend available",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "escalate_human",
+          "tier": 2
+        },
+        {
+          "attempt": 2,
+          "backend": "",
+          "considered": true,
+          "policy": "rollback",
+          "reason": "skill has no rollback spec",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "escalate_human",
+          "tier": 3
+        },
+        {
+          "attempt": 2,
+          "backend": "",
+          "considered": true,
+          "policy": "human_escalation",
+          "reason": "automated recovery exhausted",
+          "recovery_of_transition_id": "episode-0b0b47c4d7fe:transition-0002",
+          "selected": true,
+          "selected_action": "escalate_human",
+          "tier": 4
+        }
+      ],
+      "state": "escalated"
+    },
+    {
+      "attempts": 2,
+      "episode_id": "episode-9b69287428a0",
+      "failure_type": "postcondition_failed",
+      "final_outcome_verified": false,
+      "recovery_attempted": true,
+      "recovery_succeeded": true,
+      "recovery_trace": [
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "retry not applicable",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "rollback",
+          "tier": 1
+        },
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "reroute",
+          "reason": "no alternate backend available",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "rollback",
+          "tier": 2
+        },
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "rollback",
+          "reason": "rollback spec available",
+          "recovery_of_transition_id": "episode-9b69287428a0:transition-0001",
+          "selected": true,
+          "selected_action": "rollback",
+          "tier": 3
+        }
+      ],
+      "state": "failed"
+    },
+    {
+      "attempts": 1,
+      "episode_id": "episode-059b71d3e28a",
+      "failure_type": "postcondition_failed",
+      "final_outcome_verified": false,
+      "recovery_attempted": true,
+      "recovery_succeeded": false,
+      "recovery_trace": [
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "retry not applicable",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "reroute",
+          "tier": 1
+        },
+        {
+          "attempt": 1,
+          "backend": "wot",
+          "considered": true,
+          "policy": "reroute",
+          "reason": "rerouted to preferred backend wot",
+          "recovery_of_transition_id": "episode-059b71d3e28a:transition-0001",
+          "selected": true,
+          "selected_action": "reroute",
+          "tier": 2
+        }
+      ],
+      "state": "escalated"
+    },
+    {
+      "attempts": 1,
+      "episode_id": "episode-d6ee95ec2f20",
+      "failure_type": "",
+      "final_outcome_verified": true,
+      "recovery_attempted": false,
+      "recovery_succeeded": false,
+      "recovery_trace": [],
+      "state": "completed"
+    },
+    {
+      "attempts": 1,
+      "episode_id": "episode-99cbb09f359a",
+      "failure_type": "",
+      "final_outcome_verified": true,
+      "recovery_attempted": false,
+      "recovery_succeeded": false,
+      "recovery_trace": [],
+      "state": "completed"
+    }
+  ]
+}
