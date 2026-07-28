@@ -1,38 +1,38 @@
 {
-  "all_evidence_checks_passed": false,
+  "all_evidence_checks_passed": true,
   "cases": [
     {
       "case": "normal_structured_goal",
       "evidence_checks": {
-        "final_goal_verified": false,
-        "planned_multiple_live_actions": false,
-        "transition_chain_persisted": false
+        "final_goal_verified": true,
+        "planned_multiple_live_actions": true,
+        "transition_chain_persisted": true
       },
-      "evidence_passed": false,
+      "evidence_passed": true,
       "result": {
         "active_perception_trace": [],
-        "attempts": 1,
+        "attempts": 3,
         "conflict_ids": [],
-        "episode_id": "episode-d794423604cb",
+        "episode_id": "episode-eec434cd0517",
         "execution_result": {
-          "attempt": 1,
+          "attempt": 3,
           "backend_used": "dom",
           "confidence": 0.97,
           "failure_reason": null,
-          "latency_ms": 12.957,
+          "latency_ms": 37.719,
           "metadata": {
-            "affordance_id": "dom_input_1",
+            "affordance_id": "dom_button_1",
             "affordance_source": "DOM",
             "live_execution": true
           },
           "observation_source": "dom",
           "skill_id": "book_room",
           "success": true,
-          "transition_id": "episode-d794423604cb:transition-0001"
+          "transition_id": "episode-eec434cd0517:transition-0003"
         },
-        "failure_boundary": "recoverable_execution_failure",
-        "failure_type": "postcondition_failed",
-        "final_outcome_verified": false,
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -86,9 +86,9 @@
                 "dom"
               ],
               "support": {
-                "False": 0.76
+                "True": 0.76
               },
-              "value": false
+              "value": true
             },
             {
               "attribute": "room",
@@ -112,9 +112,9 @@
                 "dom"
               ],
               "support": {
-                "'14:00'": 0.76
+                "'15:30'": 0.76
               },
-              "value": "14:00"
+              "value": "15:30"
             },
             {
               "attribute": "target_temperature",
@@ -220,66 +220,57 @@
             "affordance_id": "dom_input_1",
             "expected_effect": "room == 'C'",
             "value": "C"
-          }
-        ],
-        "reason": "rerouted to preferred backend wot",
-        "recovery_attempted": true,
-        "recovery_succeeded": false,
-        "recovery_tier": 2,
-        "recovery_trace": [
-          {
-            "attempt": 1,
-            "backend": "",
-            "considered": true,
-            "policy": "retry",
-            "reason": "retry not applicable",
-            "recovery_of_transition_id": "",
-            "selected": false,
-            "selected_action": "reroute",
-            "tier": 1
           },
           {
-            "attempt": 1,
-            "backend": "wot",
-            "considered": true,
-            "policy": "reroute",
-            "reason": "rerouted to preferred backend wot",
-            "recovery_of_transition_id": "episode-d794423604cb:transition-0001",
-            "selected": true,
-            "selected_action": "reroute",
-            "tier": 2
+            "action": "type",
+            "affordance_id": "dom_input_2",
+            "expected_effect": "time == '15:30'",
+            "value": "15:30"
+          },
+          {
+            "action": "click",
+            "affordance_id": "dom_button_1",
+            "expected_effect": "booking.confirmed == true",
+            "value": null
           }
         ],
-        "routing_reason": "",
+        "reason": "goal completed",
+        "recovery_attempted": false,
+        "recovery_succeeded": false,
+        "recovery_tier": null,
+        "recovery_trace": [],
+        "routing_reason": "observe-plan-act-reobserve loop",
         "selected_backend": "dom",
-        "state": "escalated",
+        "state": "completed",
         "system1_cache_hit": false,
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-d794423604cb:transition-0001"
+          "episode-eec434cd0517:transition-0001",
+          "episode-eec434cd0517:transition-0002",
+          "episode-eec434cd0517:transition-0003"
         ]
       }
     },
     {
       "case": "wot_timeout_retry",
       "evidence_checks": {
-        "recovery_reached_verified_goal": false,
+        "recovery_reached_verified_goal": true,
         "same_action_was_retried": true,
         "transient_failure_triggered_recovery": true
       },
-      "evidence_passed": false,
+      "evidence_passed": true,
       "result": {
         "active_perception_trace": [],
         "attempts": 2,
         "conflict_ids": [],
-        "episode_id": "episode-0b0b47c4d7fe",
+        "episode_id": "episode-db4c148e7056",
         "execution_result": {
           "attempt": 2,
           "backend_used": "wot",
           "confidence": 1.0,
           "failure_reason": null,
-          "latency_ms": 6.342,
+          "latency_ms": 5.126,
           "metadata": {
             "affordance_id": "wot_thermostat_setTargetTemperature",
             "affordance_source": "WOT",
@@ -288,11 +279,11 @@
           "observation_source": "wot",
           "skill_id": "set_temperature_live",
           "success": true,
-          "transition_id": "episode-0b0b47c4d7fe:transition-0002"
+          "transition_id": "episode-db4c148e7056:transition-0002"
         },
-        "failure_boundary": "recoverable_execution_failure",
-        "failure_type": "postcondition_failed",
-        "final_outcome_verified": false,
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -443,10 +434,10 @@
             "value": 22
           }
         ],
-        "reason": "automated recovery exhausted",
+        "reason": "goal completed",
         "recovery_attempted": true,
-        "recovery_succeeded": false,
-        "recovery_tier": 4,
+        "recovery_succeeded": true,
+        "recovery_tier": 1,
         "recovery_trace": [
           {
             "attempt": 1,
@@ -454,65 +445,21 @@
             "considered": true,
             "policy": "retry",
             "reason": "transient failure",
-            "recovery_of_transition_id": "episode-0b0b47c4d7fe:transition-0001",
+            "recovery_of_transition_id": "episode-db4c148e7056:transition-0001",
             "selected": true,
             "selected_action": "retry",
             "tier": 1
-          },
-          {
-            "attempt": 2,
-            "backend": "",
-            "considered": true,
-            "policy": "retry",
-            "reason": "retry not applicable",
-            "recovery_of_transition_id": "",
-            "selected": false,
-            "selected_action": "escalate_human",
-            "tier": 1
-          },
-          {
-            "attempt": 2,
-            "backend": "",
-            "considered": true,
-            "policy": "reroute",
-            "reason": "no alternate backend available",
-            "recovery_of_transition_id": "",
-            "selected": false,
-            "selected_action": "escalate_human",
-            "tier": 2
-          },
-          {
-            "attempt": 2,
-            "backend": "",
-            "considered": true,
-            "policy": "rollback",
-            "reason": "skill has no rollback spec",
-            "recovery_of_transition_id": "",
-            "selected": false,
-            "selected_action": "escalate_human",
-            "tier": 3
-          },
-          {
-            "attempt": 2,
-            "backend": "",
-            "considered": true,
-            "policy": "human_escalation",
-            "reason": "automated recovery exhausted",
-            "recovery_of_transition_id": "episode-0b0b47c4d7fe:transition-0002",
-            "selected": true,
-            "selected_action": "escalate_human",
-            "tier": 4
           }
         ],
-        "routing_reason": "",
+        "routing_reason": "observe-plan-act-reobserve loop",
         "selected_backend": "wot",
-        "state": "escalated",
+        "state": "completed",
         "system1_cache_hit": false,
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-0b0b47c4d7fe:transition-0001",
-          "episode-0b0b47c4d7fe:transition-0002"
+          "episode-db4c148e7056:transition-0001",
+          "episode-db4c148e7056:transition-0002"
         ]
       }
     },
@@ -529,13 +476,13 @@
         "active_perception_trace": [],
         "attempts": 2,
         "conflict_ids": [],
-        "episode_id": "episode-9b69287428a0",
+        "episode_id": "episode-d9fe5eff4c10",
         "execution_result": {
           "attempt": 1,
           "backend_used": "restore",
           "confidence": 1.0,
           "failure_reason": null,
-          "latency_ms": 4.258,
+          "latency_ms": 4.268,
           "metadata": {
             "affordance_id": "wot_thermostat_setTargetTemperature",
             "affordance_source": "WOT",
@@ -546,7 +493,7 @@
           "observation_source": "wot",
           "skill_id": "restore_temperature_live",
           "success": true,
-          "transition_id": "episode-9b69287428a0:transition-0002"
+          "transition_id": "episode-d9fe5eff4c10:transition-0002"
         },
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -727,7 +674,7 @@
             "considered": true,
             "policy": "rollback",
             "reason": "rollback spec available",
-            "recovery_of_transition_id": "episode-9b69287428a0:transition-0001",
+            "recovery_of_transition_id": "episode-d9fe5eff4c10:transition-0001",
             "selected": true,
             "selected_action": "rollback",
             "tier": 3
@@ -740,8 +687,8 @@
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-9b69287428a0:transition-0001",
-          "episode-9b69287428a0:transition-0002"
+          "episode-d9fe5eff4c10:transition-0001",
+          "episode-d9fe5eff4c10:transition-0002"
         ]
       }
     },
@@ -750,9 +697,9 @@
       "evidence_checks": {
         "active_perception_was_triggered": true,
         "conflict_was_resolved": true,
-        "system1_continued_only_after_resolution": false
+        "system1_continued_only_after_resolution": true
       },
-      "evidence_passed": false,
+      "evidence_passed": true,
       "result": {
         "active_perception_trace": [
           {
@@ -762,28 +709,28 @@
             "resolved": true
           }
         ],
-        "attempts": 1,
+        "attempts": 3,
         "conflict_ids": [],
-        "episode_id": "episode-059b71d3e28a",
+        "episode_id": "episode-5f262c973ca1",
         "execution_result": {
-          "attempt": 1,
+          "attempt": 3,
           "backend_used": "dom",
           "confidence": 0.97,
           "failure_reason": null,
-          "latency_ms": 4.112,
+          "latency_ms": 30.178,
           "metadata": {
-            "affordance_id": "dom_input_1",
+            "affordance_id": "dom_button_1",
             "affordance_source": "DOM",
             "live_execution": true
           },
           "observation_source": "dom",
           "skill_id": "book_room",
           "success": true,
-          "transition_id": "episode-059b71d3e28a:transition-0001"
+          "transition_id": "episode-5f262c973ca1:transition-0003"
         },
-        "failure_boundary": "recoverable_execution_failure",
-        "failure_type": "postcondition_failed",
-        "final_outcome_verified": false,
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -837,9 +784,9 @@
                 "dom"
               ],
               "support": {
-                "False": 0.76
+                "True": 0.76
               },
-              "value": false
+              "value": true
             },
             {
               "attribute": "room",
@@ -863,9 +810,9 @@
                 "dom"
               ],
               "support": {
-                "'14:00'": 0.76
+                "'16:00'": 0.76
               },
-              "value": "14:00"
+              "value": "16:00"
             },
             {
               "attribute": "target_temperature",
@@ -972,44 +919,35 @@
             "affordance_id": "dom_input_1",
             "expected_effect": "room == 'A'",
             "value": "A"
-          }
-        ],
-        "reason": "rerouted to preferred backend wot",
-        "recovery_attempted": true,
-        "recovery_succeeded": false,
-        "recovery_tier": 2,
-        "recovery_trace": [
-          {
-            "attempt": 1,
-            "backend": "",
-            "considered": true,
-            "policy": "retry",
-            "reason": "retry not applicable",
-            "recovery_of_transition_id": "",
-            "selected": false,
-            "selected_action": "reroute",
-            "tier": 1
           },
           {
-            "attempt": 1,
-            "backend": "wot",
-            "considered": true,
-            "policy": "reroute",
-            "reason": "rerouted to preferred backend wot",
-            "recovery_of_transition_id": "episode-059b71d3e28a:transition-0001",
-            "selected": true,
-            "selected_action": "reroute",
-            "tier": 2
+            "action": "type",
+            "affordance_id": "dom_input_2",
+            "expected_effect": "time == '16:00'",
+            "value": "16:00"
+          },
+          {
+            "action": "click",
+            "affordance_id": "dom_button_1",
+            "expected_effect": "booking.confirmed == true",
+            "value": null
           }
         ],
-        "routing_reason": "",
+        "reason": "goal completed",
+        "recovery_attempted": false,
+        "recovery_succeeded": false,
+        "recovery_tier": null,
+        "recovery_trace": [],
+        "routing_reason": "observe-plan-act-reobserve loop",
         "selected_backend": "dom",
-        "state": "escalated",
+        "state": "completed",
         "system1_cache_hit": false,
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-059b71d3e28a:transition-0001"
+          "episode-5f262c973ca1:transition-0001",
+          "episode-5f262c973ca1:transition-0002",
+          "episode-5f262c973ca1:transition-0003"
         ]
       }
     },
@@ -1027,13 +965,13 @@
         "active_perception_trace": [],
         "attempts": 1,
         "conflict_ids": [],
-        "episode_id": "episode-99cbb09f359a",
+        "episode_id": "episode-8d58ef434d7d",
         "execution_result": {
           "attempt": 1,
           "backend_used": "wot",
           "confidence": 1.0,
           "failure_reason": null,
-          "latency_ms": 4.435,
+          "latency_ms": 4.906,
           "metadata": {
             "affordance_id": "wot_thermostat_setTargetTemperature",
             "affordance_source": "WOT",
@@ -1042,7 +980,7 @@
           "observation_source": "wot",
           "skill_id": "set_temperature_reflex",
           "success": true,
-          "transition_id": "episode-99cbb09f359a:transition-0001"
+          "transition_id": "episode-8d58ef434d7d:transition-0001"
         },
         "failure_boundary": "",
         "failure_type": "",
@@ -1200,12 +1138,12 @@
         "state": "completed",
         "system1_cache_hit": true,
         "system1_fast_path": true,
-        "system1_routing_latency_ms": 0.00801868736743927,
+        "system1_routing_latency_ms": 0.008356757462024689,
         "transition_ids": [
-          "episode-99cbb09f359a:transition-0001"
+          "episode-8d58ef434d7d:transition-0001"
         ]
       },
-      "warmup_episode_id": "episode-d6ee95ec2f20"
+      "warmup_episode_id": "episode-69e31a5a1221"
     }
   ],
   "data_source": "live",

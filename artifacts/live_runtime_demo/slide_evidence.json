@@ -1,0 +1,119 @@
+{
+  "slide_1_goal_to_verified_outcome": {
+    "episode": {
+      "attempts": 3,
+      "episode_id": "episode-eec434cd0517",
+      "final_outcome_verified": true,
+      "state": "COMPLETED",
+      "transition_ids": [
+        "episode-eec434cd0517:transition-0001",
+        "episode-eec434cd0517:transition-0002",
+        "episode-eec434cd0517:transition-0003"
+      ]
+    },
+    "evidence_checks": {
+      "final_goal_verified": true,
+      "planned_multiple_live_actions": true,
+      "transition_chain_persisted": true
+    },
+    "primitive_plan": [
+      {
+        "action": "type",
+        "affordance_id": "dom_input_1",
+        "expected_effect": "room == 'C'",
+        "value": "C"
+      },
+      {
+        "action": "type",
+        "affordance_id": "dom_input_2",
+        "expected_effect": "time == '15:30'",
+        "value": "15:30"
+      },
+      {
+        "action": "click",
+        "affordance_id": "dom_button_1",
+        "expected_effect": "booking.confirmed == true",
+        "value": null
+      }
+    ]
+  },
+  "slide_2_fusion_decision": {
+    "after_fresh_observation": {
+      "active_perception_required": false,
+      "allow_system1": true,
+      "conflicts": [],
+      "reason": "no blocking sensory conflict"
+    },
+    "before_active_perception": {
+      "active_perception_required": true,
+      "allow_system1": false,
+      "conflicts": [
+        {
+          "attribute": "target_temperature",
+          "conflict_mass": 1.0,
+          "entity_id": "thermostat",
+          "sources": [
+            "dom",
+            "wot"
+          ],
+          "values": {
+            "dom": 22,
+            "wot": 25
+          }
+        }
+      ],
+      "reason": "blocking sensory conflict requires active perception or escalation"
+    },
+    "live_case": {
+      "active_perception_trace": [
+        {
+          "action": "active_perception_probe",
+          "attempt": 1,
+          "reason": "fresh observation removed blocking conflict",
+          "resolved": true
+        }
+      ],
+      "episode_id": "episode-5f262c973ca1",
+      "evidence_checks": {
+        "active_perception_was_triggered": true,
+        "conflict_was_resolved": true,
+        "system1_continued_only_after_resolution": true
+      },
+      "state": "COMPLETED"
+    },
+    "resolution_evidence": {
+      "decision": "fresh_evidence_resolved",
+      "id": "thermostat.target_temperature",
+      "resolved": true
+    }
+  },
+  "slide_3_failed_transition_to_recovery_transition": {
+    "arrow_label": "recovery_of_transition_id",
+    "failed_transition": {
+      "backend": "wot",
+      "execution_success": true,
+      "failure_reason": "postcondition_failed",
+      "postcondition_passed": false,
+      "recovery_action": "rollback",
+      "recovery_of_transition_id": "",
+      "recovery_tier": 3,
+      "transition_id": "episode-d9fe5eff4c10:transition-0001"
+    },
+    "recovery_transition": {
+      "backend": "restore",
+      "execution_success": true,
+      "failure_reason": "",
+      "postcondition_passed": true,
+      "recovery_action": "rollback",
+      "recovery_of_transition_id": "episode-d9fe5eff4c10:transition-0001",
+      "recovery_tier": 3,
+      "transition_id": "episode-d9fe5eff4c10:transition-0002"
+    }
+  },
+  "source_files": {
+    "episode_report": "artifacts/live_runtime_demo/episode_report.json",
+    "measured_metrics": "artifacts/live_runtime_demo/measured_metrics.json",
+    "recovery_report": "artifacts/live_runtime_demo/recovery_report.json",
+    "transition_ledger": "artifacts/live_runtime_demo/transition_ledger.jsonl"
+  }
+}

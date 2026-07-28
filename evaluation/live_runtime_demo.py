@@ -699,6 +699,8 @@ def _booking_bindings() -> list[AffordanceSemanticBinding]:
     return [
         AffordanceSemanticBinding(
             "DOM",
+            entity_id="booking",
+            state_attribute="room",
             selector="[data-testid='room-input']",
             binds_parameter="room",
             stable_key="booking.room",
@@ -706,6 +708,8 @@ def _booking_bindings() -> list[AffordanceSemanticBinding]:
         ),
         AffordanceSemanticBinding(
             "DOM",
+            entity_id="booking",
+            state_attribute="time",
             selector="[data-testid='time-input']",
             binds_parameter="time",
             stable_key="booking.time",
@@ -725,6 +729,8 @@ def _temperature_bindings() -> list[AffordanceSemanticBinding]:
     return [
         AffordanceSemanticBinding(
             "WOT",
+            entity_id="thermostat",
+            state_attribute="target_temperature",
             thing_id="thermostat",
             label="setTargetTemperature",
             binds_parameter="target",

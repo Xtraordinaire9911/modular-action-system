@@ -1557,7 +1557,17 @@ def _contextual_expected_effect(expected_effect: str, affordance: RuntimeAfforda
     left, operator, right = _split_condition_once(expected_effect)
     if operator == "" or "." in left or not affordance.entity_id:
         return expected_effect
-    return f"{affordance.entity_id}.{left} {operator} {right}"
+    state_attribute = str(affordance.grounding.get("state_attribute") or "").strip()
+    bound_parameters = {
+        str(value)
+        for value in (
+            affordance.grounding.get("binds_parameter"),
+            affordance.grounding.get("parameter"),
+        )
+        if value
+    }
+    attribute = state_attribute if state_attribute and (not bound_parameters or left in bound_parameters) else left
+    return f"{affordance.entity_id}.{attribute} {operator} {right}"
 
 
 def _split_condition_once(predicate: str) -> tuple[str, str, str]:

@@ -68,6 +68,8 @@ class AffordanceSemanticBinding:
     """Attach task semantics to a discovered affordance without changing its grounding."""
 
     source: Literal["DOM", "WOT", "VISUAL"]
+    entity_id: str = ""
+    state_attribute: str = ""
     affordance_id: str = ""
     selector: str = ""
     thing_id: str = ""
@@ -339,6 +341,10 @@ class SmartRoomLiveEnvironment:
         for binding in self.semantic_bindings:
             if not binding.matches(affordance):
                 continue
+            if binding.entity_id:
+                locator["entity_id"] = binding.entity_id
+            if binding.state_attribute:
+                locator["state_attribute"] = binding.state_attribute
             if binding.binds_parameter:
                 locator["binds_parameter"] = binding.binds_parameter
             if binding.completion_for:
