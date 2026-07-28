@@ -895,7 +895,13 @@ class ContinuousInteractionManager:
                     active_perception_trace=active_trace,
                 )
 
-            if result.success and observation_failure is None:
+            postcondition_passed, expected_effect_failure = _verify_primitive_expected_effect(
+                current_action,
+                affordance,
+                self.postconditions,
+                self.cognitive_map,
+            )
+            if result.success and observation_failure is None and postcondition_passed is not False:
                 for event in pending_failure_events:
                     event.recovery_success = True
                 self._record_transition(
@@ -904,7 +910,7 @@ class ContinuousInteractionManager:
                     state_before,
                     primitive_call,
                     result,
-                    postcondition_passed=True,
+                    postcondition_passed=postcondition_passed,
                     recovery_action=selected_recovery_action,
                     recovery_tier=recovery_tier,
                     affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
@@ -922,7 +928,7 @@ class ContinuousInteractionManager:
                     active_perception_trace=active_trace,
                 )
 
-            failure = _verification_failure(result, observation_failure)
+            failure = _verification_failure(result, observation_failure or expected_effect_failure)
             analysis = self.failure_classifier.classify_execution_failure(
                 failure,
                 primitive_skill,
@@ -1479,6 +1485,42 @@ def _primitive_payload(action: PrimitiveAction) -> dict[str, object]:
 
 def _primitive_signature(action: PrimitiveAction) -> tuple[str, str, str]:
     return (action.action, str(action.value), action.expected_effect)
+
+
+def _verify_primitive_expected_effect(
+    action: PrimitiveAction,
+    affordance: RuntimeAffordance,
+    postconditions: PostconditionChecker,
+    cognitive_map: CognitiveMap,
+) -> tuple[bool | None, str | None]:
+    expected_effect = action.expected_effect.strip()
+    if not expected_effect:
+        return None, None
+    condition = Condition(_contextual_expected_effect(expected_effect, affordance))
+    results = postconditions.check([condition], cognitive_map)
+    if results and results[0].passed:
+        return True, None
+    reason = results[0].reason if results else "missing primitive expected-effect evidence"
+    observed = results[0].observed if results else None
+    return (
+        False,
+        f"postcondition_failed: expected_effect={condition.predicate!r}, observed={observed!r}, reason={reason}",
+    )
+
+
+def _contextual_expected_effect(expected_effect: str, affordance: RuntimeAffordance) -> str:
+    left, operator, right = _split_condition_once(expected_effect)
+    if operator == "" or "." in left or not affordance.entity_id:
+        return expected_effect
+    return f"{affordance.entity_id}.{left} {operator} {right}"
+
+
+def _split_condition_once(predicate: str) -> tuple[str, str, str]:
+    for operator in ("==", "!=", ">=", "<=", ">", "<"):
+        if operator in predicate:
+            left, right = predicate.split(operator, 1)
+            return left.strip(), operator, right.strip()
+    return predicate.strip(), "", ""
 
 
 def _alternative_affordance(

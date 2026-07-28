@@ -135,6 +135,33 @@ def test_goal_reobserves_and_replans_between_every_primitive_action():
     assert len(result.transition_ids) == 3
 
 
+def test_primitive_expected_effect_requires_fresh_verified_state():
+    provider = _Provider([_live({"form": {"room": "B"}, "booking": {"confirmed": False}})])
+    executor = _Executor("dom")
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": executor},
+        CognitiveMap(task_id="goal-expected-effect"),
+        observation_provider=provider,
+        episode_policy=EpisodePolicy(max_steps=3, max_retry_attempts=0, deadline_s=2, require_fresh_observation=True),
+    )
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            _live({"booking": {"confirmed": False}}, include_time=False),
+            goal_id="reserve",
+            goal_state="booking.confirmed == true",
+            parameters={"room": "A"},
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_type == "postcondition_failed"
+    assert "expected_effect=\"form.room == 'A'\"" in manager.transition_ledger.records[0].failure_reason
+    assert manager.transition_ledger.records[0].execution_success is True
+    assert manager.transition_ledger.records[0].postcondition_passed is False
+
+
 def test_disappeared_affordance_causes_replan_and_escalation_not_stale_execution():
     provider = _Provider([_live({"form": {"room": "A"}, "booking": {"confirmed": False}}, include_time=False)])
     executor = _Executor("dom")
