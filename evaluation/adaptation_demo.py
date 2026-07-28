@@ -54,7 +54,16 @@ class _BookingGoalExecutor:
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         self.calls.append(skill_call)
-        delta = {"booking": {"confirmed": True}} if skill_call.params.get("primitive_action") == "click" else {}
+        delta: dict[str, dict[str, object]] = {}
+        if skill_call.params.get("primitive_action") == "click":
+            delta = {"booking": {"confirmed": True}}
+        if skill_call.params.get("primitive_action") == "type":
+            affordance_id = str(skill_call.params.get("affordance_id", ""))
+            value = skill_call.params.get("value")
+            if "room" in affordance_id:
+                delta = {"booking_form": {"room": value}}
+            if "time" in affordance_id:
+                delta = {"booking_form": {"time": value}}
         return ExecutionResult(
             skill_id=skill_call.skill_id,
             backend_used="dom",

@@ -59,7 +59,16 @@ class _GoalExecutor:
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         self.calls.append(skill_call)
-        delta = {"booking": {"confirmed": True}} if skill_call.params.get("primitive_action") == "click" else {}
+        delta = {}
+        if skill_call.params.get("primitive_action") == "click":
+            delta = {"booking": {"confirmed": True}}
+        if skill_call.params.get("primitive_action") == "type":
+            affordance_id = str(skill_call.params.get("affordance_id", ""))
+            value = skill_call.params.get("value")
+            if "room" in affordance_id:
+                delta = {"booking_form": {"room": value}}
+            if "time" in affordance_id:
+                delta = {"booking_form": {"time": value}}
         return ExecutionResult(
             skill_id=skill_call.skill_id,
             backend_used="dom",
@@ -414,6 +423,50 @@ def test_epistemic_arbiter_repeated_checks_update_conflict_instead_of_duplicatin
     assert len(second) == 1
     assert len(cmap.unresolved_conflicts()) == 1
     assert cmap.unresolved_conflicts()[0].id == "door_A.lock"
+
+
+def test_epistemic_arbiter_resolves_conflict_after_clean_reobservation():
+    cmap = CognitiveMap(task_id="task_conflict_freshness")
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "dom", timestamp_ms=10))
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "unlocked", "wot", timestamp_ms=11))
+    arbiter = EpistemicArbiter()
+
+    assert [conflict.id for conflict in arbiter.check(cmap)] == ["door_A.lock"]
+
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "dom", timestamp_ms=20))
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "wot", timestamp_ms=21))
+    assert arbiter.check(cmap) == []
+    assert cmap.unresolved_conflicts() == []
+    assert cmap.conflicts[0].resolved is True
+    assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
+
+
+def test_epistemic_arbiter_clears_missing_source_conflict_when_source_recovers():
+    cmap = CognitiveMap(task_id="task_missing_source_freshness")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "wot", timestamp_ms=10))
+    arbiter = EpistemicArbiter(required_sources_by_attribute={"temperature": {"wot", "dom"}})
+
+    assert [conflict.id for conflict in arbiter.check(cmap)] == ["thermostat_A.temperature.missing_source"]
+
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=11))
+    assert arbiter.check(cmap) == []
+    assert cmap.unresolved_conflicts() == []
+    assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
+
+
+def test_epistemic_arbiter_requires_absolute_freshness_when_configured():
+    cmap = CognitiveMap(task_id="task_absolute_freshness")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=10))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "wot", timestamp_ms=11))
+    arbiter = EpistemicArbiter(
+        required_sources_by_attribute={"temperature": {"dom", "wot"}},
+        max_assertion_age_ms=1,
+    )
+
+    conflicts = arbiter.check(cmap)
+
+    assert [conflict.id for conflict in conflicts] == ["thermostat_A.temperature.missing_source"]
+    assert conflicts[0].values["missing_sources"] == ["dom", "wot"]
 
 
 def test_epistemic_arbiter_ignores_low_confidence_visual_noise():

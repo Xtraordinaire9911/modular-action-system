@@ -100,6 +100,7 @@ class EpistemicArbiter:
         halt_threshold: float = 1.0,
         source_reliability: dict[str, float] | None = None,
         max_freshness_delta_ms: int = 5000,
+        max_assertion_age_ms: int | None = None,
         semantic_rules: list[SemanticConsistencyRule] | None = None,
         required_sources_by_attribute: dict[str, set[str]] | None = None,
         missing_source_mass: float = 1.0,
@@ -108,6 +109,7 @@ class EpistemicArbiter:
         self.halt_threshold = halt_threshold
         self.source_reliability = source_reliability or {"wot": 1.0, "dom": 0.8, "visual": 0.6, "system": 1.0}
         self.max_freshness_delta_ms = max_freshness_delta_ms
+        self.max_assertion_age_ms = max_assertion_age_ms
         self.semantic_rules = semantic_rules or []
         self.required_sources_by_attribute = {
             attribute: {source.lower() for source in sources}
@@ -117,44 +119,50 @@ class EpistemicArbiter:
 
     def check(self, cognitive_map: CognitiveMap) -> list[Conflict]:
         conflicts: list[Conflict] = []
+        active_conflict_ids: set[str] = set()
+        evaluated_conflict_ids: set[str] = set()
         for (entity_id, attribute), assertions in _group_assertions(cognitive_map.state_assertions).items():
-            latest_by_source = _latest_by_source(assertions)
-            missing = self._missing_required_sources(entity_id, attribute, latest_by_source)
+            latest_all = _latest_by_source(assertions)
+            latest_by_source = self._fresh_latest_by_source(latest_all)
+            evaluated_conflict_ids.add(f"{entity_id}.{attribute}")
+            missing_id = f"{entity_id}.{attribute}.missing_source"
+            if self._required_sources(entity_id, attribute):
+                evaluated_conflict_ids.add(missing_id)
+            missing = self._missing_required_sources(entity_id, attribute, latest_all, latest_by_source)
             if missing is not None and missing.conflict_mass >= self.halt_threshold:
                 cognitive_map.add_conflict(missing)
                 conflicts.append(missing)
+                active_conflict_ids.add(missing.id)
             if len(latest_by_source) >= 2:
                 conflict = self._compare_latest(entity_id, attribute, latest_by_source)
                 if conflict and conflict.conflict_mass >= self.halt_threshold:
                     cognitive_map.add_conflict(conflict)
                     conflicts.append(conflict)
+                    active_conflict_ids.add(conflict.id)
         for conflict in self._check_semantic_rules(cognitive_map):
+            evaluated_conflict_ids.add(conflict.id)
             if conflict.conflict_mass >= self.halt_threshold:
                 cognitive_map.add_conflict(conflict)
                 conflicts.append(conflict)
+                active_conflict_ids.add(conflict.id)
+        self._resolve_inactive_conflicts(cognitive_map, evaluated_conflict_ids, active_conflict_ids)
         return conflicts
 
     def _missing_required_sources(
         self,
         entity_id: str,
         attribute: str,
+        latest_all: dict[str, StateAssertion],
         latest_by_source: dict[str, StateAssertion],
     ) -> Conflict | None:
-        required = self.required_sources_by_attribute.get(f"{entity_id}.{attribute}")
-        if required is None:
-            required = self.required_sources_by_attribute.get(attribute)
-        if not required or not latest_by_source:
+        required = self._required_sources(entity_id, attribute)
+        if not required or not latest_all:
             return None
-        newest = max(assertion.timestamp_ms for assertion in latest_by_source.values())
-        available = {
-            source
-            for source, assertion in latest_by_source.items()
-            if newest - assertion.timestamp_ms <= self.max_freshness_delta_ms
-        }
+        available = set(latest_by_source)
         missing = sorted(required - available)
         if not missing:
             return None
-        values = {source: assertion.value for source, assertion in latest_by_source.items()}
+        values = {source: assertion.value for source, assertion in latest_all.items()}
         values["missing_sources"] = missing
         return Conflict(
             id=f"{entity_id}.{attribute}.missing_source",
@@ -184,7 +192,7 @@ class EpistemicArbiter:
         blocking = [conflict for conflict in conflicts if conflict.conflict_mass >= self.halt_threshold]
         fused_states: list[FusedState] = []
         for (entity_id, attribute), assertions in _group_assertions(cognitive_map.state_assertions).items():
-            latest_by_source = _latest_by_source(assertions)
+            latest_by_source = self._fresh_latest_by_source(_latest_by_source(assertions))
             if not latest_by_source:
                 continue
             newest_timestamp = max(assertion.timestamp_ms for assertion in latest_by_source.values())
@@ -330,6 +338,39 @@ class EpistemicArbiter:
             support[key] = support.get(key, 0.0) + self._evidence_weight(assertion, newest_timestamp)
         return support
 
+    def _fresh_latest_by_source(
+        self,
+        latest_by_source: dict[str, StateAssertion],
+    ) -> dict[str, StateAssertion]:
+        if self.max_assertion_age_ms is None:
+            return latest_by_source
+        now_ms = _now_ms()
+        return {
+            source: assertion
+            for source, assertion in latest_by_source.items()
+            if now_ms - assertion.timestamp_ms <= self.max_assertion_age_ms
+        }
+
+    def _required_sources(self, entity_id: str, attribute: str) -> set[str]:
+        required = self.required_sources_by_attribute.get(f"{entity_id}.{attribute}")
+        if required is None:
+            required = self.required_sources_by_attribute.get(attribute)
+        return set(required or set())
+
+    def _resolve_inactive_conflicts(
+        self,
+        cognitive_map: CognitiveMap,
+        evaluated_conflict_ids: set[str],
+        active_conflict_ids: set[str],
+    ) -> None:
+        for conflict in cognitive_map.conflicts:
+            if conflict.resolved or conflict.id not in evaluated_conflict_ids or conflict.id in active_conflict_ids:
+                continue
+            conflict.resolved = True
+            conflict.decision = "fresh_evidence_resolved"
+        if evaluated_conflict_ids:
+            cognitive_map.touch()
+
     def _check_semantic_rules(self, cognitive_map: CognitiveMap) -> list[Conflict]:
         conflicts: list[Conflict] = []
         for rule in self.semantic_rules:
@@ -413,6 +454,12 @@ def _latest_by_source(assertions: list[StateAssertion]) -> dict[str, StateAssert
         if current is None or assertion.timestamp_ms >= current.timestamp_ms:
             latest[assertion.source] = assertion
     return latest
+
+
+def _now_ms() -> int:
+    import time
+
+    return int(time.time() * 1000)
 
 
 def _severity(conflict_mass: float) -> Severity:

@@ -45,9 +45,9 @@ The project is now a **structured-goal action-system runtime**, rather than only
 | Release and claims | Reported code absent from main; clean-clone/CI mismatch (§0; §1; §5 D1; §7.1) | PR #56 is merged into `develop` with green CI; `main` is not yet synchronized | `[Yixin - Completed]` implementation, tests, and develop merge; `[Team/Release]` clean-clone replay and main release |
 | Composition | No single planner-to-recovery execution path (§2; §7.3) | The CIM episode loop now composes the runtime path with fresh observations | `[Yixin - Completed]` |
 | Planner | No goal-to-action planner (§0; §1; §6; §7.7) | Bounded schema-driven planning exists; unrestricted NL-to-GoalSpec does not | `[Yixin - Completed]` runtime planner; `[Ruiyao/Fadi - To assign]` upstream layer or claim reduction |
-| Fusion | Duplicate maps/arbiters, gate only, no fused estimate, uncalibrated parameters (§3; §5 D3-D5; §7.2/7.4; §9) | One canonical map/arbiter/router; fused state feeds verification; missing/stale source handling and active perception exist; initial calibration completed | `[Yixin - Completed]`; `[Yixin - TODO]` freshness regression coverage, repeated campaign, and holdout evaluation |
+| Fusion | Duplicate maps/arbiters, gate only, no fused estimate, uncalibrated parameters (§3; §5 D3-D5; §7.2/7.4; §9) | One canonical map/arbiter/router; fused state feeds verification; missing/stale source handling, clean re-observation resolution, and active perception exist; initial calibration completed | `[Yixin - Completed]` freshness lifecycle; `[Yixin - TODO]` repeated campaign and holdout evaluation |
 | Input integrity | All deltas labelled WoT; confidence fixed at 1.0 (§3.3; §5 D3-D4; §9.1) | Write-backs are source-attributed; confidence/timestamp/provenance contracts exist and default origins are explicit | `[Yixin - Completed]` runtime contract; `[Ruiyao/Fadi - To assign]` measured sensor confidence |
-| Verification | Executor success and task success must remain empirically separated (§2; §5 D2/D7; §7.3; §7.5) | Skill-level postconditions and final goal verification exist; primitive-level declared effects need stricter evidence linkage | `[Yixin - TODO]` primitive expected-effect verification and transition evidence |
+| Verification | Executor success and task success must remain empirically separated (§2; §5 D2/D7; §7.3; §7.5) | Skill-level postconditions, primitive-level declared-effect verification, and final goal verification are now separated | `[Yixin - Completed]` primitive expected-effect verification; `[Yixin - TODO]` parent/recovery transition evidence |
 | Recovery | Tier selected but retry/reroute/rollback not executed; ambiguous states (§2; §5 D2/D6; §7.3) | Recovery actions execute and are freshly verified; result semantics and retry budgets are explicit | `[Yixin - Completed]`; `[Yixin - TODO]` parent/recovery transition linkage and reroute-equivalence regression tests |
 | System 1 | ReflexLibrary has no production consumer (§4.4; §5 D9; §8.5) | CIM consumes verified cache entries, invalidates failures, and records fast-path evidence | `[Yixin - Completed]`; `[Yixin - TODO]` repeated amortized-latency evidence |
 | Effectors/visual | Legacy hardcoded maps; no genuine visual marks or VLM (§4.1-4.3; §5 D8; §7.6) | Legacy paths remain and real visual grounding remains incomplete | `[Ruiyao/Fadi - To assign]` |
@@ -72,6 +72,8 @@ The project is now a **structured-goal action-system runtime**, rather than only
 | Genuine live tracer bullet | Normal, timeout, rollback, conflict/active perception, System-1 repeat | §1 live-demo critique; §7.5; §9.1 |
 | Live ablation and initial fusion calibration | Four runtime modes; seven labelled scenarios | §6; §8.4-8.5; §9.2/9.5/9.6 |
 | Metric-integrity fixes | Episode-derived values and independent recovery-tier oracle | §5 D7; §6 |
+| Primitive expected-effect verification | Non-empty primitive effects are checked after fresh observation and fusion; undeclared effects are recorded as not checked | §2; §5 D2/D7; §7.3; §7.5 |
+| Conflict freshness lifecycle | New agreeing evidence resolves old conflicts; restored required sources clear missing-source conflicts; optional absolute assertion age prevents stale evidence from passing as fresh | §3; §7.2; §7.4; §9.1 |
 
 ## 4. Required TODOs by Priority
 
@@ -79,8 +81,8 @@ The project is now a **structured-goal action-system runtime**, rather than only
 |---|---|---|---|---|
 | P0 | Rerun checks/live demo from a clean clone of latest `develop`, release verified code to `main`, and align README claims | `[Team/Release]`; `[Yixin - Completed]` develop merge and fix support | Reproducible release commit with green CI and branch-accurate claims | §0; §1; §5 D1; §7.1 |
 | P0 | Mark synthetic/authored artifacts as illustrative; use episode IDs and ledgers for final reported numbers | `[Ruiyao/Fadi - To assign]`; `[Yixin - Completed]` live metric path | Every final metric traces to executed episodes | §1 offline-demo finding; §7.5 |
-| P1 | Verify every non-empty primitive `expected_effect` after fresh observation and fusion; do not record an unchecked primitive as postcondition success | `[Yixin - TODO]` | Executor success without the declared state effect becomes a false-success/recovery case; undeclared effects are recorded as not checked | §2; §5 D2/D7; §7.3; §7.5 |
-| P1 | Refresh conflict state from current evidence and add stale/clean re-observation regressions without redesigning CognitiveMap | `[Yixin - TODO]` | A previous conflict cannot continue blocking after newer agreeing evidence; stale required-source evidence is identified deterministically | §3; §7.2; §7.4; §9.1 |
+| P1 | Verify every non-empty primitive `expected_effect` after fresh observation and fusion; do not record an unchecked primitive as postcondition success | `[Yixin - Completed]` | Executor success without the declared state effect becomes a false-success/recovery case; undeclared effects are recorded as not checked | §2; §5 D2/D7; §7.3; §7.5 |
+| P1 | Refresh conflict state from current evidence and add stale/clean re-observation regressions without redesigning CognitiveMap | `[Yixin - Completed]` | A previous conflict cannot continue blocking after newer agreeing evidence; stale required-source evidence is identified deterministically | §3; §7.2; §7.4; §9.1 |
 | P1 | Link failed transitions to the retry/reroute/rollback transitions that recover them and harden primitive reroute equivalence | `[Yixin - TODO]` | Every successful recovery has a failed parent transition, an executed recovery transition, and fresh verification evidence | §2; §5 D2/D6; §7.3 |
 | P1 | Complete ledger-derived live metric rows and distinguish `not measured` from measured zero | `[Yixin - TODO]` | Live reports derive primitive/verification/recovery evidence from executed episodes and do not publish empty-denominator metrics as `0.0` | §5 D7; §6; §7.5 |
 | P1 | Build a real visual path: screenshot input, real model or honest heuristic label, Playwright bounding boxes, no fabricated marks | `[Ruiyao/Fadi - To assign]` | One genuine image-in/model-out/mark-to-click smoke trace | §1 VAM/SoM; §4.3; §7.6 |
@@ -112,6 +114,8 @@ The work packages below extend the existing runtime in small reviewable changes.
 | 8 | Y-08 Bayesian fusion decision gate | Y-06 | Implement-and-compare decision or documented no-go |
 
 ### Y-01 — Primitive expected-effect verification (`P1`)
+
+**Status:** `[Yixin - Completed]` in the current implementation branch. The remaining related work is Y-03 transition parent/recovery linkage, not primitive effect checking itself.
 
 **Target files**
 
@@ -146,6 +150,8 @@ The work packages below extend the existing runtime in small reviewable changes.
 No primitive is marked verified solely because the executor returned success and the observation call did not throw.
 
 ### Y-02 — Conflict freshness and clean re-observation regressions (`P1`)
+
+**Status:** `[Yixin - Completed]` in the current implementation branch for conflict lifecycle regression coverage and optional absolute assertion age. Larger repeated-campaign calibration remains Y-05/Y-06.
 
 **Target files**
 
