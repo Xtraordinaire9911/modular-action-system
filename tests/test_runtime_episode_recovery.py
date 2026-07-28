@@ -113,6 +113,47 @@ def test_idempotent_timeout_is_retried_and_verified_from_fresh_observation():
     assert failure_event.recovery_success is True
 
 
+def test_failed_retry_keeps_retry_label_before_next_reroute_transition():
+    wot = _SequenceExecutor(
+        "wot",
+        [
+            _result("wot", success=False, failure_reason="timeout"),
+            _result("wot", success=False, failure_reason="timeout"),
+        ],
+    )
+    visual = _SequenceExecutor("visual", [_result("visual", success=True, value=22)])
+    provider = _SequenceObservationProvider(
+        [
+            Observation(device_states={"thermostat": {"temperature": 20}}),
+            Observation(device_states={"thermostat": {"temperature": 20}}),
+            Observation(device_states={"thermostat": {"temperature": 22}}),
+        ]
+    )
+    ledger = TransitionLedger()
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill(allowed=("wot", "visual"), preferred=("wot",), idempotent=True)},
+        {"wot": wot, "visual": visual},
+        CognitiveMap(task_id="retry-then-reroute"),
+        observation_provider=provider,
+        episode_policy=EpisodePolicy(
+            max_steps=5,
+            deadline_s=2,
+            max_retry_attempts=1,
+            max_attempts_per_backend=2,
+        ),
+        transition_ledger=ledger,
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
+
+    assert result.state == RuntimeState.COMPLETED
+    assert [record.backend for record in ledger.records] == ["wot", "wot", "visual"]
+    assert [record.recovery_action for record in ledger.records] == ["retry", "retry", "reroute"]
+    assert ledger.records[0].recovery_of_transition_id == ""
+    assert ledger.records[1].recovery_of_transition_id == ledger.records[0].transition_id
+    assert ledger.records[2].recovery_of_transition_id == ledger.records[1].transition_id
+
+
 def test_episode_policy_can_disable_retries_even_when_cascade_default_allows_them():
     executor = _SequenceExecutor(
         "wot",

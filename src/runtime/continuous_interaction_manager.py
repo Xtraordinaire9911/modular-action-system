@@ -325,6 +325,8 @@ class ContinuousInteractionManager:
             fusion_payload = self._last_fusion_decision
             active_perception_trace.extend(self._last_active_perception_trace)
             if gate is not None:
+                transition_recovery_action = recovery_action if recovering_transition_id else "escalate_human"
+                transition_recovery_tier = recovery_tier if recovering_transition_id else 4
                 self._record_transition(
                     episode,
                     transition_id,
@@ -332,8 +334,8 @@ class ContinuousInteractionManager:
                     skill_call,
                     result,
                     postcondition_passed=False,
-                    recovery_action="escalate_human",
-                    recovery_tier=4,
+                    recovery_action=transition_recovery_action,
+                    recovery_tier=transition_recovery_tier,
                     recovery_of_transition_id=recovering_transition_id,
                 )
                 transition_ids.append(transition_id)
@@ -416,8 +418,8 @@ class ContinuousInteractionManager:
                 max_retry_attempts=episode.policy.max_retry_attempts,
             )
             recovery_attempted = True
-            recovery_tier = trace.selected_tier
-            recovery_action = trace.selected_action
+            next_recovery_tier = trace.selected_tier
+            next_recovery_action = trace.selected_action
             selected_recovery_of_transition_id = transition_id
             recovery_trace.extend(
                 {
@@ -428,6 +430,8 @@ class ContinuousInteractionManager:
                 }
                 for step in trace.steps
             )
+            transition_recovery_action = recovery_action if recovering_transition_id else next_recovery_action
+            transition_recovery_tier = recovery_tier if recovering_transition_id else next_recovery_tier
             self._record_transition(
                 episode,
                 transition_id,
@@ -435,8 +439,8 @@ class ContinuousInteractionManager:
                 skill_call,
                 result,
                 postcondition_passed=False,
-                recovery_action=trace.selected_action,
-                recovery_tier=trace.selected_tier,
+                recovery_action=transition_recovery_action,
+                recovery_tier=transition_recovery_tier,
                 verification_failure_reason=failure.failure_reason or "",
                 recovery_of_transition_id=recovering_transition_id,
             )
@@ -454,6 +458,8 @@ class ContinuousInteractionManager:
             )
 
             if action.action_type == "retry":
+                recovery_action = next_recovery_action
+                recovery_tier = next_recovery_tier
                 recovering_transition_id = selected_recovery_of_transition_id
                 episode.retry_count += 1
                 self.state = RuntimeState.RECOVERING
@@ -472,6 +478,8 @@ class ContinuousInteractionManager:
                 )
                 candidate = decision.backend or action.backend
                 if candidate in self.executors and candidate in skill_tuple.allowed_backends:
+                    recovery_action = next_recovery_action
+                    recovery_tier = next_recovery_tier
                     recovering_transition_id = selected_recovery_of_transition_id
                     backend = candidate
                     routing_reason = decision.reason or action.reason
@@ -882,6 +890,8 @@ class ContinuousInteractionManager:
             gate = await self._run_fusion_gate(current_observation)
             active_trace.extend(self._last_active_perception_trace)
             if gate is not None:
+                transition_recovery_action = selected_recovery_action if recovering_transition_id else "escalate_human"
+                transition_recovery_tier = recovery_tier if recovering_transition_id else 4
                 self._record_transition(
                     episode,
                     transition_id,
@@ -889,8 +899,8 @@ class ContinuousInteractionManager:
                     primitive_call,
                     result,
                     postcondition_passed=False,
-                    recovery_action="escalate_human",
-                    recovery_tier=4,
+                    recovery_action=transition_recovery_action,
+                    recovery_tier=transition_recovery_tier,
                     affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
                     recovery_of_transition_id=recovering_transition_id,
                 )
@@ -962,8 +972,8 @@ class ContinuousInteractionManager:
                 max_retry_attempts=episode.policy.max_retry_attempts,
             )
             recovery_attempted = True
-            recovery_tier = trace.selected_tier
-            selected_recovery_action = trace.selected_action
+            next_recovery_tier = trace.selected_tier
+            next_recovery_action = trace.selected_action
             selected_recovery_of_transition_id = transition_id
             recovery_trace.extend(
                 {
@@ -974,6 +984,8 @@ class ContinuousInteractionManager:
                 }
                 for step in trace.steps
             )
+            transition_recovery_action = selected_recovery_action if recovering_transition_id else next_recovery_action
+            transition_recovery_tier = recovery_tier if recovering_transition_id else next_recovery_tier
             self._record_transition(
                 episode,
                 transition_id,
@@ -981,8 +993,8 @@ class ContinuousInteractionManager:
                 primitive_call,
                 result,
                 postcondition_passed=False,
-                recovery_action=trace.selected_action,
-                recovery_tier=trace.selected_tier,
+                recovery_action=transition_recovery_action,
+                recovery_tier=transition_recovery_tier,
                 verification_failure_reason=failure.failure_reason or "",
                 affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
                 recovery_of_transition_id=recovering_transition_id,
@@ -1002,6 +1014,8 @@ class ContinuousInteractionManager:
             )
 
             if recovery_action.action_type == "retry":
+                selected_recovery_action = next_recovery_action
+                recovery_tier = next_recovery_tier
                 recovering_transition_id = selected_recovery_of_transition_id
                 episode.retry_count += 1
                 self.state = RuntimeState.RECOVERING
@@ -1017,6 +1031,8 @@ class ContinuousInteractionManager:
                     preferred_backend=recovery_action.backend,
                 )
                 if alternative is not None:
+                    selected_recovery_action = next_recovery_action
+                    recovery_tier = next_recovery_tier
                     recovering_transition_id = selected_recovery_of_transition_id
                     current_action = PrimitiveAction(
                         current_action.action,
