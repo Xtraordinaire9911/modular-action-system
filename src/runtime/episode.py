@@ -116,6 +116,7 @@ class TransitionRecord:
     observation_delta: dict[str, object]
     recovery_action: str = ""
     recovery_tier: int | None = None
+    recovery_of_transition_id: str = ""
     failure_reason: str = ""
     reversible_result: bool | None = None
     timestamp_ms: int = field(default_factory=lambda: int(time.time() * 1000))

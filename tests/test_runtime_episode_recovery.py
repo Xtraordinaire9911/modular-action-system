@@ -103,6 +103,8 @@ def test_idempotent_timeout_is_retried_and_verified_from_fresh_observation():
     assert len(executor.calls) == 2
     assert len(provider.requests) == 2
     assert [record.recovery_action for record in ledger.records] == ["retry", "retry"]
+    assert ledger.records[0].recovery_of_transition_id == ""
+    assert ledger.records[1].recovery_of_transition_id == ledger.records[0].transition_id
     assert len(manager.failure_ledger.events) == 1
     failure_event = manager.failure_ledger.events[0]
     assert failure_event.transition_id == result.transition_ids[0]
@@ -167,10 +169,12 @@ def test_episode_policy_can_raise_retry_budget_above_cascade_default():
 def test_non_retryable_dom_failure_executes_visual_reroute():
     dom = _SequenceExecutor("dom", [_result("dom", success=False, failure_reason="selector_not_found")])
     visual = _SequenceExecutor("visual", [_result("visual", success=True, value=22)])
+    ledger = TransitionLedger()
     manager = ContinuousInteractionManager(
         {"set_temperature": _skill(allowed=("dom", "visual"), preferred=("dom",))},
         {"dom": dom, "visual": visual},
         CognitiveMap(task_id="reroute"),
+        transition_ledger=ledger,
     )
 
     result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
@@ -181,6 +185,10 @@ def test_non_retryable_dom_failure_executes_visual_reroute():
     assert result.recovery_succeeded and result.final_outcome_verified
     assert len(dom.calls) == 1
     assert len(visual.calls) == 1
+    assert [record.backend for record in ledger.records] == ["dom", "visual"]
+    assert ledger.records[0].recovery_of_transition_id == ""
+    assert ledger.records[1].recovery_action == "reroute"
+    assert ledger.records[1].recovery_of_transition_id == ledger.records[0].transition_id
 
 
 def test_postcondition_failure_executes_and_verifies_rollback():
@@ -211,6 +219,7 @@ def test_postcondition_failure_executes_and_verifies_rollback():
     assert ledger.records[0].postcondition_passed is False
     assert ledger.records[0].failure_reason == "postcondition_failed"
     assert ledger.records[-1].recovery_action == "rollback"
+    assert ledger.records[-1].recovery_of_transition_id == ledger.records[0].transition_id
     assert ledger.records[-1].reversible_result is True
 
 
