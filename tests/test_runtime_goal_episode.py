@@ -225,3 +225,8 @@ def test_goal_executes_visual_alternative_after_dom_failure():
     assert len(dom.calls) == 1
     assert len(visual.calls) == 1
     assert visual.calls[0].params["affordance_id"] == "visual_confirm"
+    records = manager.transition_ledger.records
+    assert [record.backend for record in records] == ["dom", "visual"]
+    assert records[0].recovery_of_transition_id == ""
+    assert records[1].recovery_action == "reroute"
+    assert records[1].recovery_of_transition_id == records[0].transition_id

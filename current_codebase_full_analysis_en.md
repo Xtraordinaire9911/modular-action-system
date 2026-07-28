@@ -47,8 +47,8 @@ The project is now a **structured-goal action-system runtime**, rather than only
 | Planner | No goal-to-action planner (§0; §1; §6; §7.7) | Bounded schema-driven planning exists; unrestricted NL-to-GoalSpec does not | `[Yixin - Completed]` runtime planner; `[Ruiyao/Fadi - To assign]` upstream layer or claim reduction |
 | Fusion | Duplicate maps/arbiters, gate only, no fused estimate, uncalibrated parameters (§3; §5 D3-D5; §7.2/7.4; §9) | One canonical map/arbiter/router; fused state feeds verification; missing/stale source handling, clean re-observation resolution, and active perception exist; initial calibration completed | `[Yixin - Completed]` freshness lifecycle; `[Yixin - TODO]` repeated campaign and holdout evaluation |
 | Input integrity | All deltas labelled WoT; confidence fixed at 1.0 (§3.3; §5 D3-D4; §9.1) | Write-backs are source-attributed; confidence/timestamp/provenance contracts exist and default origins are explicit | `[Yixin - Completed]` runtime contract; `[Ruiyao/Fadi - To assign]` measured sensor confidence |
-| Verification | Executor success and task success must remain empirically separated (§2; §5 D2/D7; §7.3; §7.5) | Skill-level postconditions, primitive-level declared-effect verification, and final goal verification are now separated | `[Yixin - Completed]` primitive expected-effect verification; `[Yixin - TODO]` parent/recovery transition evidence |
-| Recovery | Tier selected but retry/reroute/rollback not executed; ambiguous states (§2; §5 D2/D6; §7.3) | Recovery actions execute and are freshly verified; result semantics and retry budgets are explicit | `[Yixin - Completed]`; `[Yixin - TODO]` parent/recovery transition linkage and reroute-equivalence regression tests |
+| Verification | Executor success and task success must remain empirically separated (§2; §5 D2/D7; §7.3; §7.5) | Skill-level postconditions, primitive-level declared-effect verification, and final goal verification are now separated | `[Yixin - Completed]` primitive expected-effect verification and transition evidence |
+| Recovery | Tier selected but retry/reroute/rollback not executed; ambiguous states (§2; §5 D2/D6; §7.3) | Recovery actions execute and are freshly verified; failed transitions are explicitly linked to retry/reroute/rollback recovery transitions; result semantics and retry budgets are explicit | `[Yixin - Completed]` recovery evidence linkage; `[Yixin - TODO]` reroute-equivalence hardening |
 | System 1 | ReflexLibrary has no production consumer (§4.4; §5 D9; §8.5) | CIM consumes verified cache entries, invalidates failures, and records fast-path evidence | `[Yixin - Completed]`; `[Yixin - TODO]` repeated amortized-latency evidence |
 | Effectors/visual | Legacy hardcoded maps; no genuine visual marks or VLM (§4.1-4.3; §5 D8; §7.6) | Legacy paths remain and real visual grounding remains incomplete | `[Ruiyao/Fadi - To assign]` |
 | Isolation/PiP | BrowserContext presented as full PiP; no takeover; shared WoT state; overlay contamination (§4.5) | Documentation now says browser-session isolation, but the missing lifecycle and supervision features remain | `[Ruiyao/Fadi - To assign]` |
@@ -74,6 +74,7 @@ The project is now a **structured-goal action-system runtime**, rather than only
 | Metric-integrity fixes | Episode-derived values and independent recovery-tier oracle | §5 D7; §6 |
 | Primitive expected-effect verification | Non-empty primitive effects are checked after fresh observation and fusion; undeclared effects are recorded as not checked | §2; §5 D2/D7; §7.3; §7.5 |
 | Conflict freshness lifecycle | New agreeing evidence resolves old conflicts; restored required sources clear missing-source conflicts; optional absolute assertion age prevents stale evidence from passing as fresh | §3; §7.2; §7.4; §9.1 |
+| Recovery evidence linkage | Retry, reroute, and rollback transitions now store `recovery_of_transition_id`, making the failed-transition to recovery-transition chain directly auditable | §2; §5 D2/D6; §7.3 |
 
 ## 4. Required TODOs by Priority
 
@@ -83,7 +84,7 @@ The project is now a **structured-goal action-system runtime**, rather than only
 | P0 | Mark synthetic/authored artifacts as illustrative; use episode IDs and ledgers for final reported numbers | `[Ruiyao/Fadi - To assign]`; `[Yixin - Completed]` live metric path | Every final metric traces to executed episodes | §1 offline-demo finding; §7.5 |
 | P1 | Verify every non-empty primitive `expected_effect` after fresh observation and fusion; do not record an unchecked primitive as postcondition success | `[Yixin - Completed]` | Executor success without the declared state effect becomes a false-success/recovery case; undeclared effects are recorded as not checked | §2; §5 D2/D7; §7.3; §7.5 |
 | P1 | Refresh conflict state from current evidence and add stale/clean re-observation regressions without redesigning CognitiveMap | `[Yixin - Completed]` | A previous conflict cannot continue blocking after newer agreeing evidence; stale required-source evidence is identified deterministically | §3; §7.2; §7.4; §9.1 |
-| P1 | Link failed transitions to the retry/reroute/rollback transitions that recover them and harden primitive reroute equivalence | `[Yixin - TODO]` | Every successful recovery has a failed parent transition, an executed recovery transition, and fresh verification evidence | §2; §5 D2/D6; §7.3 |
+| P1 | Link failed transitions to the retry/reroute/rollback transitions that recover them and harden primitive reroute equivalence | `[Yixin - Completed]` evidence linkage; `[Yixin - TODO]` reroute-equivalence hardening | Every successful recovery has a failed parent transition, an executed recovery transition, and fresh verification evidence | §2; §5 D2/D6; §7.3 |
 | P1 | Complete ledger-derived live metric rows and distinguish `not measured` from measured zero | `[Yixin - TODO]` | Live reports derive primitive/verification/recovery evidence from executed episodes and do not publish empty-denominator metrics as `0.0` | §5 D7; §6; §7.5 |
 | P1 | Build a real visual path: screenshot input, real model or honest heuristic label, Playwright bounding boxes, no fabricated marks | `[Ruiyao/Fadi - To assign]` | One genuine image-in/model-out/mark-to-click smoke trace | §1 VAM/SoM; §4.3; §7.6 |
 | P1 | Remove or isolate legacy `_SKILL_TO_*` tables and use affordance contracts on live paths | `[Ruiyao/Fadi - To assign]` | Live execution no longer depends on hardcoded skill mappings | §4.1-4.3; §5 D8 |
@@ -184,6 +185,8 @@ A conflict reflects current evidence: newer agreement clears the blocking state,
 
 ### Y-03 — Recovery evidence linkage and reroute equivalence (`P1`)
 
+**Status:** `[Yixin - Completed]` for transition evidence linkage in the current implementation branch. Retry, reroute, and rollback recovery transitions now carry `recovery_of_transition_id`. The remaining part of this work package is stricter primitive reroute-equivalence hardening.
+
 **Target files**
 
 - `src/runtime/episode.py`
@@ -194,24 +197,24 @@ A conflict reflects current evidence: newer agreement clears the blocking state,
 
 **Implementation steps**
 
-1. Add a backward-compatible transition field such as `recovery_of_transition_id`.
-2. Link every retry, reroute, or rollback execution to the failed transition that triggered it.
-3. Mark recovery success only after the recovery execution has a fresh observation and verification result.
-4. For primitive reroute, require the alternative affordance to preserve:
+1. `[Completed]` Add a backward-compatible transition field `recovery_of_transition_id`.
+2. `[Completed]` Link every retry, reroute, or rollback execution to the failed transition that triggered it.
+3. `[Completed]` Mark recovery success only after the recovery execution has a fresh observation and verification result.
+4. `[Remaining]` For primitive reroute, require the alternative affordance to preserve:
    - the primitive action type;
    - the declared `expected_effect` or completion semantics;
    - compatible parameter binding;
    - no weaker safety metadata.
-5. Record the selected tier, considered tiers, failed backend, recovery backend, and verification outcome in one episode chain.
-6. Preserve rollback semantics: a verified rollback may count as recovery success while the original task remains unsuccessful.
+5. `[Completed]` Record the selected tier, considered tiers, failed backend, recovery backend, and verification outcome in one episode chain.
+6. `[Completed]` Preserve rollback semantics: a verified rollback may count as recovery success while the original task remains unsuccessful.
 
 **Required tests**
 
-- retry transition points to the original failed transition;
-- reroute transition points to the original failed transition;
-- rollback transition records `reversible_result=True` only after verification;
+- `[Completed]` retry transition points to the original failed transition;
+- `[Completed]` reroute transition points to the original failed transition;
+- `[Completed]` rollback transition records `reversible_result=True` only after verification;
 - a semantically unrelated affordance is rejected as a reroute;
-- recovery success and final task success remain separate.
+- `[Completed]` recovery success and final task success remain separate.
 
 **Acceptance criterion**
 
