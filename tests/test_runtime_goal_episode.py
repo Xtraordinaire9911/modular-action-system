@@ -11,7 +11,7 @@ from src.runtime.live_observation import LiveRuntimeObservation, observation_fro
 from src.runtime.state_machine import RuntimeState
 
 
-def _affordances(include_time=True, include_visual=False):
+def _affordances(include_time=True, include_visual=False, include_visual_room=False):
     values = [
         Affordance(
             "dom_room",
@@ -62,14 +62,30 @@ def _affordances(include_time=True, include_visual=False):
                 0.9,
             )
         )
+    if include_visual_room:
+        values.append(
+            Affordance(
+                "visual_room",
+                "VISUAL",
+                "input",
+                "Room",
+                "type",
+                {"entity_id": "form", "parameter": "room", "mark_id": "M2"},
+                0.88,
+            )
+        )
     return values
 
 
-def _live(state, *, include_time=True, include_visual=False):
+def _live(state, *, include_time=True, include_visual=False, include_visual_room=False):
     page = PageAffordanceModel(
         page_id="booking",
         url="https://example.test/booking",
-        affordances=_affordances(include_time=include_time, include_visual=include_visual),
+        affordances=_affordances(
+            include_time=include_time,
+            include_visual=include_visual,
+            include_visual_room=include_visual_room,
+        ),
     )
     return observation_from_live_sources(page=page, page_state=state)
 
@@ -225,3 +241,59 @@ def test_goal_executes_visual_alternative_after_dom_failure():
     assert len(dom.calls) == 1
     assert len(visual.calls) == 1
     assert visual.calls[0].params["affordance_id"] == "visual_confirm"
+    records = manager.transition_ledger.records
+    assert [record.backend for record in records] == ["dom", "visual"]
+    assert records[0].recovery_of_transition_id == ""
+    assert records[1].recovery_action == "reroute"
+    assert records[1].recovery_of_transition_id == records[0].transition_id
+
+
+def test_failed_primitive_retry_keeps_retry_label_before_next_reroute_transition():
+    failed = ExecutionResult("reserve", "dom", False, 1, 0.0, failure_reason="timeout")
+    dom = _Executor("dom", [failed, failed])
+    visual = _Executor("visual")
+    provider = _Provider(
+        [
+            _live({"form": {}}, include_time=False, include_visual_room=True),
+            _live({"form": {}}, include_time=False, include_visual_room=True),
+            _live({"form": {"room": "A"}}, include_time=False, include_visual_room=True),
+        ]
+    )
+    initial = LiveRuntimeObservation(
+        observation=Observation(accessibility_tree={"page_state": {"form": {}}}),
+        affordances=[
+            affordance
+            for affordance in _affordances(include_time=False, include_visual_room=True)
+            if affordance.locator.get("parameter") == "room"
+        ],
+    )
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": dom, "visual": visual},
+        CognitiveMap(task_id="goal-retry-then-reroute"),
+        observation_provider=provider,
+        episode_policy=EpisodePolicy(
+            max_steps=5,
+            deadline_s=2,
+            max_retry_attempts=1,
+            max_attempts_per_backend=2,
+            require_fresh_observation=True,
+        ),
+    )
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            initial,
+            goal_id="reserve",
+            goal_state="form.room == 'A'",
+            parameters={"room": "A"},
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    records = manager.transition_ledger.records
+    assert [record.backend for record in records] == ["dom", "dom", "visual"]
+    assert [record.recovery_action for record in records] == ["retry", "retry", "reroute"]
+    assert records[0].recovery_of_transition_id == ""
+    assert records[1].recovery_of_transition_id == records[0].transition_id
+    assert records[2].recovery_of_transition_id == records[1].transition_id

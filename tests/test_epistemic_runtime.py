@@ -454,6 +454,21 @@ def test_epistemic_arbiter_clears_missing_source_conflict_when_source_recovers()
     assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
 
 
+def test_epistemic_arbiter_treats_old_required_source_as_stale_by_relative_freshness():
+    cmap = CognitiveMap(task_id="task_required_relative_freshness")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=1))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "wot", timestamp_ms=10_001))
+    arbiter = EpistemicArbiter(
+        required_sources_by_attribute={"temperature": {"dom", "wot"}},
+        max_freshness_delta_ms=5000,
+    )
+
+    conflicts = arbiter.check(cmap)
+
+    assert [conflict.id for conflict in conflicts] == ["thermostat_A.temperature.missing_source"]
+    assert conflicts[0].values["missing_sources"] == ["dom"]
+
+
 def test_epistemic_arbiter_requires_absolute_freshness_when_configured():
     cmap = CognitiveMap(task_id="task_absolute_freshness")
     cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=10))
@@ -467,6 +482,33 @@ def test_epistemic_arbiter_requires_absolute_freshness_when_configured():
 
     assert [conflict.id for conflict in conflicts] == ["thermostat_A.temperature.missing_source"]
     assert conflicts[0].values["missing_sources"] == ["dom", "wot"]
+
+
+def test_epistemic_arbiter_resolves_semantic_conflict_after_rule_becomes_consistent():
+    cmap = CognitiveMap(task_id="task_semantic_conflict_resolution")
+    cmap.add_state_assertion(StateAssertion("readiness", "ready", True, "system", timestamp_ms=1))
+    cmap.add_state_assertion(StateAssertion("projector_A", "power", "off", "wot", timestamp_ms=2))
+    arbiter = EpistemicArbiter(
+        semantic_rules=[
+            SemanticConsistencyRule(
+                conflict_type="readiness_projector_inconsistent",
+                entity_id="readiness",
+                attribute="ready",
+                value=True,
+                depends_on_entity_id="projector_A",
+                depends_on_attribute="power",
+                depends_on_value="off",
+                severity="high",
+            )
+        ]
+    )
+
+    assert [conflict.id for conflict in arbiter.check(cmap)] == ["semantic.readiness_projector_inconsistent"]
+
+    cmap.add_state_assertion(StateAssertion("projector_A", "power", "on", "wot", timestamp_ms=3))
+    assert arbiter.check(cmap) == []
+    assert cmap.unresolved_conflicts() == []
+    assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
 
 
 def test_epistemic_arbiter_ignores_low_confidence_visual_noise():

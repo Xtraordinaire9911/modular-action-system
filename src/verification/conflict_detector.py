@@ -139,8 +139,9 @@ class EpistemicArbiter:
                     cognitive_map.add_conflict(conflict)
                     conflicts.append(conflict)
                     active_conflict_ids.add(conflict.id)
+        for rule in self.semantic_rules:
+            evaluated_conflict_ids.add(_semantic_rule_id(rule))
         for conflict in self._check_semantic_rules(cognitive_map):
-            evaluated_conflict_ids.add(conflict.id)
             if conflict.conflict_mass >= self.halt_threshold:
                 cognitive_map.add_conflict(conflict)
                 conflicts.append(conflict)
@@ -342,12 +343,21 @@ class EpistemicArbiter:
         self,
         latest_by_source: dict[str, StateAssertion],
     ) -> dict[str, StateAssertion]:
+        if not latest_by_source:
+            return {}
+        newest_timestamp = max(assertion.timestamp_ms for assertion in latest_by_source.values())
+        relative_fresh = {
+            source: assertion
+            for source, assertion in latest_by_source.items()
+            if self.max_freshness_delta_ms <= 0
+            or newest_timestamp - assertion.timestamp_ms <= self.max_freshness_delta_ms
+        }
         if self.max_assertion_age_ms is None:
-            return latest_by_source
+            return relative_fresh
         now_ms = _now_ms()
         return {
             source: assertion
-            for source, assertion in latest_by_source.items()
+            for source, assertion in relative_fresh.items()
             if now_ms - assertion.timestamp_ms <= self.max_assertion_age_ms
         }
 
@@ -385,7 +395,7 @@ class EpistemicArbiter:
                 mass = 2.0 if rule.severity == "high" else 1.0
                 conflicts.append(
                     Conflict(
-                        id=f"semantic.{rule.conflict_type}",
+                        id=_semantic_rule_id(rule),
                         conflict_type=rule.conflict_type,
                         entity_id=rule.entity_id,
                         attribute=rule.attribute,
@@ -404,6 +414,10 @@ class EpistemicArbiter:
                     )
                 )
         return conflicts
+
+
+def _semantic_rule_id(rule: SemanticConsistencyRule) -> str:
+    return f"semantic.{rule.conflict_type}"
 
 
 def _value_distance(attribute: str, left: Any, right: Any, numeric_tolerances: dict[str, float]) -> float:

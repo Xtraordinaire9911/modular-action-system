@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "data_source": "live",
+    "episode_ids": [
+      "episode-5f262c973ca1",
+      "episode-69e31a5a1221",
+      "episode-8d58ef434d7d",
+      "episode-d9fe5eff4c10",
+      "episode-db4c148e7056",
+      "episode-eec434cd0517"
+    ]
+  },
+  "values": {
+    "ATL": 0.0,
+    "BRA": 0.0,
+    "BackwardRetention": 0.0,
+    "BoundaryClassificationRate": 0.16666666666666666,
+    "CER": 0.0,
+    "CRR": 0.0,
+    "CSR": 0.8333333333333334,
+    "CascadeTraceCoverage": 0.3333333333333333,
+    "ControlRecoveryRatio": 1.0,
+    "CounterfactualOutcomeDeviation": 0.0,
+    "FPR": 0.0,
+    "FalseSuccessDetectionRate": 0.0,
+    "HeldOutGain": 0.0,
+    "ImprovementEfficiency": 0.0,
+    "MTL": 70.0126666667,
+    "MeanTimeToRecovery": 0.0,
+    "OSR": 0.0,
+    "PCR": 0.0,
+    "PCS": 0.0,
+    "PathAttributionCoverage": 0.16666666666666666,
+    "PolicyProposalRate": 0.0,
+    "RE": 0.25,
+    "RTA": 1.0,
+    "RecoverySuccessRate": 1.0,
+    "RecoveryTriggerRate": 0.3333333333333333,
+    "SafetyNonRegression": 1.0,
+    "TSR": 0.8333333333333334,
+    "UAR": 0.0,
+    "VGA": 0.0,
+    "WDSR": 0.0
+  }
+}
