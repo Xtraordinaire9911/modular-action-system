@@ -173,6 +173,15 @@ Run the live repeated campaign when the smart-room environment is available:
 uv run python -m src.pipeline --fusion-campaign --repetitions 30
 ```
 
+After a full campaign is saved, create a locked calibration/holdout report:
+
+```bash
+uv run python -m src.pipeline --fusion-holdout \
+  --campaign-summary artifacts/live_fusion_campaign_full/fusion_campaign_summary.json \
+  --calibration-repetitions 20 \
+  --holdout-repetitions 10
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

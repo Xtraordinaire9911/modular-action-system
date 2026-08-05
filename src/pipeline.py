@@ -173,6 +173,23 @@ def run_fusion_campaign_pipeline(
     )
 
 
+def run_fusion_holdout_pipeline(
+    campaign_summary_path: str | Path = "artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
+    output_dir: str | Path = "artifacts/live_fusion_holdout",
+    *,
+    calibration_repetitions: int = 20,
+    holdout_repetitions: int | None = None,
+) -> dict[str, str]:
+    from evaluation.fusion_holdout import write_locked_holdout_report
+
+    return write_locked_holdout_report(
+        campaign_summary_path,
+        output_dir,
+        calibration_repetitions=calibration_repetitions,
+        holdout_repetitions=holdout_repetitions,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -182,6 +199,23 @@ def main() -> None:
     parser.add_argument("--fusion-calibration", action="store_true", help="Run labeled live fusion calibration.")
     parser.add_argument("--fusion-campaign", action="store_true", help="Run repeated live fusion/recovery campaign.")
     parser.add_argument("--fusion-campaign-dry-run", action="store_true", help="Write the repeated campaign plan only.")
+    parser.add_argument("--fusion-holdout", action="store_true", help="Build locked calibration/holdout report.")
+    parser.add_argument(
+        "--campaign-summary",
+        default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
+        help="Input campaign summary for --fusion-holdout.",
+    )
+    parser.add_argument(
+        "--calibration-repetitions",
+        type=int,
+        default=20,
+        help="Calibration repetitions per condition for locked holdout.",
+    )
+    parser.add_argument(
+        "--holdout-repetitions",
+        type=int,
+        help="Holdout repetitions per condition; defaults to all remaining repetitions.",
+    )
     parser.add_argument("--repetitions", type=int, default=30, help="Repeated campaign trials per condition.")
     parser.add_argument("--seed-start", type=int, default=1000, help="First deterministic campaign seed.")
     parser.add_argument("--output-dir")
@@ -193,7 +227,14 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.fusion_campaign or args.fusion_campaign_dry_run:
+    if args.fusion_holdout:
+        summary = run_fusion_holdout_pipeline(
+            args.campaign_summary,
+            args.output_dir or "artifacts/live_fusion_holdout",
+            calibration_repetitions=args.calibration_repetitions,
+            holdout_repetitions=args.holdout_repetitions,
+        )
+    elif args.fusion_campaign or args.fusion_campaign_dry_run:
         summary = run_fusion_campaign_pipeline(
             args.output_dir or "artifacts/live_fusion_campaign",
             repetitions=args.repetitions,
