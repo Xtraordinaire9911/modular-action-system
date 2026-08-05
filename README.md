@@ -191,6 +191,13 @@ uv run python -m src.pipeline --bayesian-fusion-comparator \
   --holdout-report artifacts/live_fusion_holdout/fusion_holdout_report.json
 ```
 
+Run synthetic ambiguous/noisy fusion stress cases to see whether the Bayesian
+comparator has a plausible role before designing live ambiguous cases:
+
+```bash
+uv run python -m src.pipeline --noisy-fusion-stress --repetitions 30
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

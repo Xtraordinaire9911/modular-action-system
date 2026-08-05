@@ -401,6 +401,7 @@ or statistically validated Bayesian fusion yet.
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
 | Conditional | Bayesian fusion comparator | `[Yixin - experimental comparator 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；posterior 必须被 verifier/CIM 实际消费且优于 calibrated heuristic，否则保留 heuristic fallback | `evaluation/bayesian_fusion_comparator.py`, `tests/test_bayesian_fusion_comparator.py`, `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
+| Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
 
 ### 14.5.1 Live evidence 记录
 
@@ -500,6 +501,32 @@ or statistically validated Bayesian fusion yet.
 - **结论**：
   - 目前 Bayesian 与 locked rule-first 打平，没有证明能改进现有 gate。
   - 如果后续要让 Bayesian 有意义，需要新增 ambiguous/noisy source cases，例如弱 stale、延迟但最终返回、source reliability 漂移、三源冲突或部分缺失 evidence。
+
+### 14.5.5 Ambiguous/noisy fusion stress 记录
+
+- **时间**：2026-08-05
+- **输出**：`artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json`
+- **运行命令**：
+  `python -m src.pipeline --noisy-fusion-stress --repetitions 30 --seed-start 3000 --output-dir artifacts/noisy_fusion_stress --posterior-threshold 0.5`
+- **性质**：synthetic stress，不是 live evidence，不接入 production gate。
+- **stress conditions**：
+  - `weak_stale_signal`
+  - `delayed_wot_recovery`
+  - `low_reliability_dom`
+  - `partial_missing_wot`
+- **结果**：
+  - trials = 120
+  - rule-first balanced accuracy = 0.5
+  - rule-first recall = 0.0
+  - rule-first miss rate = 1.0
+  - Bayesian balanced accuracy = 1.0
+  - Bayesian recall = 1.0
+  - Bayesian false halt rate = 0.0
+  - Bayesian miss rate = 0.0
+  - delta = 0.5
+- **结论**：
+  - Synthetic noisy stress 说明 Bayesian posterior 在模糊 source reliability / staleness / missing-source 特征下有潜在价值。
+  - 这只支持下一步设计 live ambiguous cases；不能 claim Bayesian 已优于 production live gate。
 
 ### 14.6 Planner 职责边界
 

@@ -26,6 +26,7 @@ a verified release pull request.
 | Fusion calibration | Implemented, initial campaign | A labeled live campaign reports threshold ROC/confusion, false halt/miss, and detection latency. The campaign is intentionally small and should be expanded before publication. | `python -m src.pipeline --fusion-calibration` |
 | Locked fusion holdout | Implemented, initial 20/10 split complete | The full 30×7 campaign can be split per condition into calibration and locked holdout; threshold is selected only on calibration and then reused unchanged on holdout. | `tests/test_fusion_holdout.py`; `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | Probabilistic/Bayesian fusion | Experimental comparator implemented | A Bayesian posterior comparator can be evaluated against the locked rule-first holdout without replacing the production gate. On the current holdout it ties rule-first and therefore recommends keeping rule-first as default. | `tests/test_bayesian_fusion_comparator.py`; `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
+| Noisy fusion stress set | Synthetic comparator stress only | Ambiguous/noisy source cases exercise weak stale evidence, delayed WoT recovery, low-reliability DOM, and partial missing WoT. Bayesian outperforms a fixed rule threshold on this synthetic stress set, but this is not live evidence and only motivates future live ambiguous cases. | `tests/test_noisy_fusion_stress.py`; `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
 
 ## Verification
 

@@ -205,6 +205,23 @@ def run_bayesian_fusion_comparator_pipeline(
     )
 
 
+def run_noisy_fusion_stress_pipeline(
+    output_dir: str | Path = "artifacts/noisy_fusion_stress",
+    *,
+    repetitions: int = 30,
+    seed_start: int = 3000,
+    posterior_threshold: float = 0.5,
+) -> dict[str, str]:
+    from evaluation.noisy_fusion_stress import write_noisy_fusion_stress_report
+
+    return write_noisy_fusion_stress_report(
+        output_dir,
+        repetitions=repetitions,
+        seed_start=seed_start,
+        posterior_threshold=posterior_threshold,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -219,6 +236,11 @@ def main() -> None:
         "--bayesian-fusion-comparator",
         action="store_true",
         help="Compare experimental Bayesian posterior against locked rule-first fusion.",
+    )
+    parser.add_argument(
+        "--noisy-fusion-stress",
+        action="store_true",
+        help="Run synthetic ambiguous/noisy fusion stress cases for Bayesian comparator evaluation.",
     )
     parser.add_argument(
         "--campaign-summary",
@@ -258,7 +280,14 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.bayesian_fusion_comparator:
+    if args.noisy_fusion_stress:
+        summary = run_noisy_fusion_stress_pipeline(
+            args.output_dir or "artifacts/noisy_fusion_stress",
+            repetitions=args.repetitions,
+            seed_start=args.seed_start,
+            posterior_threshold=args.posterior_threshold,
+        )
+    elif args.bayesian_fusion_comparator:
         summary = run_bayesian_fusion_comparator_pipeline(
             args.holdout_report,
             args.output_dir or "artifacts/bayesian_fusion_comparator",

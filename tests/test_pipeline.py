@@ -6,6 +6,7 @@ import json
 from src.pipeline import (
     run_bayesian_fusion_comparator_pipeline,
     run_fusion_campaign_pipeline,
+    run_noisy_fusion_stress_pipeline,
     run_runtime_demo_pipeline,
     run_smoke_pipeline,
 )
@@ -84,3 +85,12 @@ def test_bayesian_fusion_comparator_pipeline_writes_report(tmp_path):
     paths = run_bayesian_fusion_comparator_pipeline(source, tmp_path / "bayesian")
 
     assert paths["bayesian_fusion_comparator_report"].endswith("bayesian_fusion_comparator_report.json")
+
+
+def test_noisy_fusion_stress_pipeline_writes_synthetic_report(tmp_path):
+    paths = run_noisy_fusion_stress_pipeline(tmp_path, repetitions=2, seed_start=10)
+    report = json.loads((tmp_path / "noisy_fusion_stress_report.json").read_text())
+
+    assert paths["noisy_fusion_stress_report"].endswith("noisy_fusion_stress_report.json")
+    assert report["protocol"]["synthetic_not_live"] is True
+    assert report["protocol"]["trial_count"] == 8
