@@ -1,0 +1,13 @@
+{
+  "current_fault_api_mapping_only": true,
+  "data_source": "live_ambiguous_fusion_campaign_plan",
+  "dry_run": true,
+  "plan": "artifacts/live_ambiguous_fusion_plan/live_ambiguous_fusion_plan.json",
+  "planned_trial_count": 120,
+  "profile_counts": {
+    "delayed_wot_recovery": 30,
+    "low_reliability_dom": 30,
+    "partial_missing_wot": 30,
+    "weak_stale_signal": 30
+  }
+}

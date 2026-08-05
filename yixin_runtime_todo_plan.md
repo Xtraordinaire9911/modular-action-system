@@ -402,6 +402,7 @@ or statistically validated Bayesian fusion yet.
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
 | Conditional | Bayesian fusion comparator | `[Yixin - experimental comparator 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；posterior 必须被 verifier/CIM 实际消费且优于 calibrated heuristic，否则保留 heuristic fallback | `evaluation/bayesian_fusion_comparator.py`, `tests/test_bayesian_fusion_comparator.py`, `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
+| Conditional | Live ambiguous fusion profiles | `[Yixin - current fault API mapping + 1×4 smoke 已完成，细粒度 fault API 待扩展]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到现有 live fault API；记录 profile、seed、episode id、fault mapping 和 comparator summary；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `artifacts/live_ambiguous_fusion_smoke/live_ambiguous_fusion_summary.json` |
 
 ### 14.5.1 Live evidence 记录
 
@@ -527,6 +528,34 @@ or statistically validated Bayesian fusion yet.
 - **结论**：
   - Synthetic noisy stress 说明 Bayesian posterior 在模糊 source reliability / staleness / missing-source 特征下有潜在价值。
   - 这只支持下一步设计 live ambiguous cases；不能 claim Bayesian 已优于 production live gate。
+
+### 14.5.6 Live ambiguous fusion profile 记录
+
+- **时间**：2026-08-05
+- **代码入口**：
+  - `evaluation/live_ambiguous_fusion_campaign.py`
+  - CLI: `python -m src.pipeline --live-ambiguous-fusion-dry-run --repetitions 30`
+  - CLI: `python -m src.pipeline --live-ambiguous-fusion --repetitions 1`
+- **已生成 artifact**：
+  - 30×4 dry-run plan: `artifacts/live_ambiguous_fusion_plan/live_ambiguous_fusion_plan.json`
+  - 30×4 dry-run summary: `artifacts/live_ambiguous_fusion_plan/live_ambiguous_fusion_summary.json`
+  - 1×4 live smoke summary: `artifacts/live_ambiguous_fusion_smoke/live_ambiguous_fusion_summary.json`
+- **profile mapping**：
+  - `weak_stale_signal` -> current dashboard `stale_temperature`
+  - `delayed_wot_recovery` -> current WoT `timeout` with short request timeout
+  - `low_reliability_dom` -> current dashboard `layout_shift`
+  - `partial_missing_wot` -> current WoT `offline`
+- **1×4 live smoke result**：
+  - trial count = 4
+  - profile counts = 1 each
+  - rule-first balanced accuracy = 1.0
+  - Bayesian balanced accuracy = 1.0
+  - delta = 0.0
+  - recommendation = `keep_rule_first_default`
+- **当前边界**：
+  - 这一步证明 live ambiguous campaign 入口和证据格式可运行。
+  - 由于现有 smart-room fault API 还是离散故障映射，不足以复现 synthetic stress 中的连续 reliability / weak stale / probabilistic missing 特征。
+  - 下一步如要证明 Bayesian live 增益，应扩展 smart-room fault API：`stale_offset`、`read_delay_ms`、`drop_probability`、`source_reliability` metadata。
 
 ### 14.6 Planner 职责边界
 

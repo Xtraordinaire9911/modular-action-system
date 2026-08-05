@@ -1,0 +1,86 @@
+[
+  {
+    "conflict_score": 0.0,
+    "conflict_type": "",
+    "detected_blocking": false,
+    "detection_latency_ms": 0.0,
+    "episode_id": "ambiguous_weak_stale_signal_rep_000_seed_4100",
+    "expected_blocking": true,
+    "live_fault_mapping": {
+      "dom_fault": "stale_temperature",
+      "fault_delay_ms": 0,
+      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "request_timeout_s": null,
+      "wot_fault": ""
+    },
+    "oracle_source": "ambiguous-fault-profile-label",
+    "profile": "weak_stale_signal",
+    "repetition": 0,
+    "reset_evidence_id": "",
+    "seed": 4100,
+    "source_pair": "DOM+WOT"
+  },
+  {
+    "conflict_score": 0.0,
+    "conflict_type": "",
+    "detected_blocking": false,
+    "detection_latency_ms": 0.0,
+    "episode_id": "ambiguous_delayed_wot_recovery_rep_000_seed_4101",
+    "expected_blocking": true,
+    "live_fault_mapping": {
+      "dom_fault": "",
+      "fault_delay_ms": 450,
+      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "request_timeout_s": 0.25,
+      "wot_fault": "timeout"
+    },
+    "oracle_source": "ambiguous-fault-profile-label",
+    "profile": "delayed_wot_recovery",
+    "repetition": 0,
+    "reset_evidence_id": "",
+    "seed": 4101,
+    "source_pair": "DOM+WOT"
+  },
+  {
+    "conflict_score": 0.0,
+    "conflict_type": "",
+    "detected_blocking": false,
+    "detection_latency_ms": 0.0,
+    "episode_id": "ambiguous_low_reliability_dom_rep_000_seed_4102",
+    "expected_blocking": false,
+    "live_fault_mapping": {
+      "dom_fault": "layout_shift",
+      "fault_delay_ms": 0,
+      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "request_timeout_s": null,
+      "wot_fault": ""
+    },
+    "oracle_source": "ambiguous-fault-profile-label",
+    "profile": "low_reliability_dom",
+    "repetition": 0,
+    "reset_evidence_id": "",
+    "seed": 4102,
+    "source_pair": "DOM+WOT"
+  },
+  {
+    "conflict_score": 0.0,
+    "conflict_type": "",
+    "detected_blocking": false,
+    "detection_latency_ms": 0.0,
+    "episode_id": "ambiguous_partial_missing_wot_rep_000_seed_4103",
+    "expected_blocking": true,
+    "live_fault_mapping": {
+      "dom_fault": "",
+      "fault_delay_ms": 0,
+      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "request_timeout_s": 0.25,
+      "wot_fault": "offline"
+    },
+    "oracle_source": "ambiguous-fault-profile-label",
+    "profile": "partial_missing_wot",
+    "repetition": 0,
+    "reset_evidence_id": "",
+    "seed": 4103,
+    "source_pair": "DOM+WOT"
+  }
+]

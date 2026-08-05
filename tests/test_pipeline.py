@@ -6,6 +6,7 @@ import json
 from src.pipeline import (
     run_bayesian_fusion_comparator_pipeline,
     run_fusion_campaign_pipeline,
+    run_live_ambiguous_fusion_pipeline,
     run_noisy_fusion_stress_pipeline,
     run_runtime_demo_pipeline,
     run_smoke_pipeline,
@@ -94,3 +95,13 @@ def test_noisy_fusion_stress_pipeline_writes_synthetic_report(tmp_path):
     assert paths["noisy_fusion_stress_report"].endswith("noisy_fusion_stress_report.json")
     assert report["protocol"]["synthetic_not_live"] is True
     assert report["protocol"]["trial_count"] == 8
+
+
+def test_live_ambiguous_fusion_pipeline_dry_run_writes_profile_plan(tmp_path):
+    paths = run_live_ambiguous_fusion_pipeline(tmp_path, repetitions=2, seed_start=20, dry_run=True)
+    summary = json.loads((tmp_path / "live_ambiguous_fusion_summary.json").read_text())
+
+    assert paths["live_ambiguous_fusion_plan"].endswith("live_ambiguous_fusion_plan.json")
+    assert summary["dry_run"] is True
+    assert summary["planned_trial_count"] == 8
+    assert summary["current_fault_api_mapping_only"] is True

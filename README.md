@@ -198,6 +198,14 @@ comparator has a plausible role before designing live ambiguous cases:
 uv run python -m src.pipeline --noisy-fusion-stress --repetitions 30
 ```
 
+Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
+fault API:
+
+```bash
+uv run python -m src.pipeline --live-ambiguous-fusion-dry-run --repetitions 30
+uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 1
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

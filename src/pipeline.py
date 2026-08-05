@@ -222,6 +222,33 @@ def run_noisy_fusion_stress_pipeline(
     )
 
 
+def run_live_ambiguous_fusion_pipeline(
+    output_dir: str | Path = "artifacts/live_ambiguous_fusion_campaign",
+    *,
+    repetitions: int = 30,
+    seed_start: int = 4000,
+    dashboard_url: str = "http://127.0.0.1:3000",
+    thing_directory_url: str = "http://127.0.0.1:8082/things",
+    wot_base_url: str = "http://127.0.0.1:8080",
+    control_url: str = "http://127.0.0.1:8081",
+    headless: bool = True,
+    dry_run: bool = False,
+) -> dict[str, str]:
+    from evaluation.live_ambiguous_fusion_campaign import run_live_ambiguous_fusion_campaign
+
+    return run_live_ambiguous_fusion_campaign(
+        output_dir,
+        repetitions=repetitions,
+        seed_start=seed_start,
+        dashboard_url=dashboard_url,
+        thing_directory_url=thing_directory_url,
+        wot_base_url=wot_base_url,
+        control_url=control_url,
+        headless=headless,
+        dry_run=dry_run,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -241,6 +268,16 @@ def main() -> None:
         "--noisy-fusion-stress",
         action="store_true",
         help="Run synthetic ambiguous/noisy fusion stress cases for Bayesian comparator evaluation.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-fusion",
+        action="store_true",
+        help="Run live ambiguous fusion profiles mapped onto current smart-room fault API.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-fusion-dry-run",
+        action="store_true",
+        help="Write the live ambiguous fusion profile plan only.",
     )
     parser.add_argument(
         "--campaign-summary",
@@ -280,7 +317,19 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.noisy_fusion_stress:
+    if args.live_ambiguous_fusion or args.live_ambiguous_fusion_dry_run:
+        summary = run_live_ambiguous_fusion_pipeline(
+            args.output_dir or "artifacts/live_ambiguous_fusion_campaign",
+            repetitions=args.repetitions,
+            seed_start=args.seed_start,
+            dashboard_url=args.dashboard_url,
+            thing_directory_url=args.thing_directory_url,
+            wot_base_url=args.wot_base_url,
+            control_url=args.control_url,
+            headless=not args.headed,
+            dry_run=args.live_ambiguous_fusion_dry_run,
+        )
+    elif args.noisy_fusion_stress:
         summary = run_noisy_fusion_stress_pipeline(
             args.output_dir or "artifacts/noisy_fusion_stress",
             repetitions=args.repetitions,
