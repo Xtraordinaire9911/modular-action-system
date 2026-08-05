@@ -39,3 +39,23 @@ def test_live_ambiguous_summary_reports_protocol_and_comparator_metrics():
     assert summary["rule_first"]["locked_threshold"] == 1.0
     assert summary["bayesian"]["posterior_threshold"] == 0.5
     assert summary["comparison"]["production_gate_changed"] is False
+
+
+def test_live_ambiguous_profiles_use_fine_grained_fault_parameters():
+    mappings = {profile.name: profile.fault_mapping() for profile in LIVE_AMBIGUOUS_PROFILES}
+
+    assert mappings["weak_stale_signal"]["stale_offset"] == -1.5
+    assert mappings["delayed_wot_recovery"]["read_delay_ms"] == 450
+    assert mappings["partial_missing_wot"]["drop_probability"] == 0.7
+    assert mappings["low_reliability_dom"]["source_reliability"]["dom"] < 0.5
+
+
+def test_smart_room_fault_sources_expose_fine_grained_fault_hooks():
+    node_source = open("env/node_wot_server/server.js", encoding="utf-8").read()
+    dashboard_source = open("env/react_dashboard/src/App.jsx", encoding="utf-8").read()
+
+    assert "read_delay_ms" in node_source
+    assert "drop_probability" in node_source
+    assert "source_reliability" in node_source
+    assert "stale_offset" in dashboard_source
+    assert "source_reliability" in dashboard_source

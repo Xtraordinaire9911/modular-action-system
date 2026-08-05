@@ -1,7 +1,7 @@
 {
-  "current_fault_api_mapping_only": true,
   "data_source": "live_ambiguous_fusion_campaign_plan",
   "dry_run": true,
+  "fine_grained_fault_api": true,
   "plan": "artifacts/live_ambiguous_fusion_plan/live_ambiguous_fusion_plan.json",
   "planned_trial_count": 120,
   "profile_counts": {

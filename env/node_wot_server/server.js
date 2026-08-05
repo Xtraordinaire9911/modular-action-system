@@ -19,7 +19,9 @@
  * A separate control plane on :8081 drives WoT-side failure injection used by
  * the Chaos-Monkey evaluation (advisor §11.1):
  *   POST /failure  {"type":"timeout|offline|postcondition_mismatch|malformed",
- *                   "thing":"thermostat", "delay_ms":1000}
+ *                   "thing":"thermostat", "delay_ms":1000,
+ *                   "read_delay_ms":450, "drop_probability":0.7,
+ *                   "source_reliability":{"wot":0.35}}
  *   POST /reset
  */
 "use strict";
@@ -39,13 +41,22 @@ const INITIAL = {
 let state = structuredClone(INITIAL);
 
 // ── fault injection registry ─────────────────────────────────────────────────
-// faults[thing] = { type, delay_ms }
+// faults[thing] = { type, delay_ms, read_delay_ms, drop_probability, source_reliability }
 const faults = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function guard(thing) {
+function shouldDropRead(f) {
+  if (!f || !f.drop_probability) return false;
+  const probability = Math.max(0, Math.min(1, Number(f.drop_probability) || 0));
+  if (probability <= 0) return false;
+  return Math.random() < probability;
+}
+
+async function guard(thing, { read = false } = {}) {
   const f = faults[thing];
   if (!f) return;
+  if (read && f.read_delay_ms) await sleep(f.read_delay_ms);
+  if (read && shouldDropRead(f)) throw new Error("backend dropped read (injected)");
   if (f.type === "timeout") await sleep(f.delay_ms || 1500);
   if (f.type === "offline") throw new Error("backend offline (injected)");
 }
@@ -62,7 +73,7 @@ async function exposeThing(servient, def) {
   const thing = await wot.produce(def.td);
   for (const [name, key] of Object.entries(def.readables)) {
     thing.setPropertyReadHandler(name, async () => {
-      await guard(def.thing);
+      await guard(def.thing, { read: true });
       if (faults[def.thing] && faults[def.thing].type === "malformed") return "NOT_A_NUMBER";
       return state[def.thing][key];
     });
@@ -224,7 +235,15 @@ function startControlPlane(port = 8081) {
       if (req.method === "POST" && req.url === "/failure") {
         const f = JSON.parse(body || "{}");
         if (f.clear) delete faults[f.thing];
-        else faults[f.thing] = { type: f.type, delay_ms: f.delay_ms };
+        else {
+          faults[f.thing] = {
+            type: f.type,
+            delay_ms: f.delay_ms,
+            read_delay_ms: f.read_delay_ms,
+            drop_probability: f.drop_probability,
+            source_reliability: f.source_reliability,
+          };
+        }
         return res.end(JSON.stringify({ status: "ok", faults }));
       }
       if (req.method === "GET" && req.url === "/state") {

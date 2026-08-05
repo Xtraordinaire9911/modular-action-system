@@ -104,4 +104,4 @@ def test_live_ambiguous_fusion_pipeline_dry_run_writes_profile_plan(tmp_path):
     assert paths["live_ambiguous_fusion_plan"].endswith("live_ambiguous_fusion_plan.json")
     assert summary["dry_run"] is True
     assert summary["planned_trial_count"] == 8
-    assert summary["current_fault_api_mapping_only"] is True
+    assert summary["fine_grained_fault_api"] is True

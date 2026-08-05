@@ -8,9 +8,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -29,9 +36,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -50,9 +64,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -71,9 +92,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -92,9 +120,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -113,9 +148,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -134,9 +176,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -155,9 +204,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -176,9 +232,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -197,9 +260,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -218,9 +288,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -239,9 +316,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -260,9 +344,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -281,9 +372,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -302,9 +400,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -323,9 +428,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -344,9 +456,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -365,9 +484,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -386,9 +512,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -407,9 +540,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -428,9 +568,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -449,9 +596,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -470,9 +624,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -491,9 +652,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -512,9 +680,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -533,9 +708,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -554,9 +736,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -575,9 +764,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -596,9 +792,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -617,9 +820,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "stale_temperature",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+      "notes": "Weak dashboard stale offset with source reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.55,
+        "wot": 0.85
+      },
+      "stale_offset": -1.5,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -638,9 +848,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -659,9 +876,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -680,9 +904,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -701,9 +932,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -722,9 +960,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -743,9 +988,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -764,9 +1016,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -785,9 +1044,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -806,9 +1072,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -827,9 +1100,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -848,9 +1128,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -869,9 +1156,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -890,9 +1184,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -911,9 +1212,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -932,9 +1240,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -953,9 +1268,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -974,9 +1296,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -995,9 +1324,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1016,9 +1352,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1037,9 +1380,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1058,9 +1408,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1079,9 +1436,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1100,9 +1464,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1121,9 +1492,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1142,9 +1520,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1163,9 +1548,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1184,9 +1576,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1205,9 +1604,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1226,9 +1632,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1247,9 +1660,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": null,
       "fault_delay_ms": 450,
-      "notes": "Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+      "notes": "Read delay creates an ambiguous delayed-recovery window.",
+      "read_delay_ms": 450,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.6,
+        "wot": 0.9
+      },
+      "stale_offset": null,
       "wot_fault": "timeout"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1268,9 +1688,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1289,9 +1716,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1310,9 +1744,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1331,9 +1772,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1352,9 +1800,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1373,9 +1828,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1394,9 +1856,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1415,9 +1884,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1436,9 +1912,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1457,9 +1940,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1478,9 +1968,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1499,9 +1996,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1520,9 +2024,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1541,9 +2052,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1562,9 +2080,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1583,9 +2108,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1604,9 +2136,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1625,9 +2164,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1646,9 +2192,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1667,9 +2220,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1688,9 +2248,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1709,9 +2276,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1730,9 +2304,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1751,9 +2332,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1772,9 +2360,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1793,9 +2388,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1814,9 +2416,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1835,9 +2444,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1856,9 +2472,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1877,9 +2500,16 @@
     "expected_blocking": false,
     "live_fault_mapping": {
       "dom_fault": "layout_shift",
+      "drop_probability": null,
       "fault_delay_ms": 0,
-      "notes": "Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+      "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+      "read_delay_ms": null,
       "request_timeout_s": null,
+      "source_reliability": {
+        "dom": 0.3,
+        "wot": 0.95
+      },
+      "stale_offset": null,
       "wot_fault": ""
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1898,9 +2528,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1919,9 +2556,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1940,9 +2584,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1961,9 +2612,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -1982,9 +2640,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2003,9 +2668,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2024,9 +2696,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2045,9 +2724,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2066,9 +2752,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2087,9 +2780,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2108,9 +2808,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2129,9 +2836,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2150,9 +2864,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2171,9 +2892,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2192,9 +2920,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2213,9 +2948,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2234,9 +2976,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2255,9 +3004,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2276,9 +3032,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2297,9 +3060,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2318,9 +3088,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2339,9 +3116,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2360,9 +3144,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2381,9 +3172,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2402,9 +3200,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2423,9 +3228,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2444,9 +3256,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2465,9 +3284,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2486,9 +3312,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",
@@ -2507,9 +3340,16 @@
     "expected_blocking": true,
     "live_fault_mapping": {
       "dom_fault": "",
+      "drop_probability": 0.7,
       "fault_delay_ms": 0,
-      "notes": "Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+      "notes": "Partial missing WoT reads through drop probability.",
+      "read_delay_ms": null,
       "request_timeout_s": 0.25,
+      "source_reliability": {
+        "dom": 0.65,
+        "wot": 0.35
+      },
+      "stale_offset": null,
       "wot_fault": "offline"
     },
     "oracle_source": "ambiguous-fault-profile-label",

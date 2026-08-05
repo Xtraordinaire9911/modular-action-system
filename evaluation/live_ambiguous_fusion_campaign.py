@@ -14,6 +14,7 @@ import time
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Sequence
+from urllib.parse import urlencode
 
 from evaluation.noisy_fusion_stress import build_noisy_fusion_stress_report
 from src.runtime.cognitive_map import CognitiveMap
@@ -38,6 +39,10 @@ class LiveAmbiguousProfile:
     dom_fault: str = ""
     wot_fault: str = ""
     fault_delay_ms: int = 0
+    stale_offset: float | None = None
+    read_delay_ms: int | None = None
+    drop_probability: float | None = None
+    source_reliability: dict[str, float] | None = None
     request_timeout_s: float | None = None
     notes: str = ""
 
@@ -46,6 +51,10 @@ class LiveAmbiguousProfile:
             "dom_fault": self.dom_fault,
             "wot_fault": self.wot_fault,
             "fault_delay_ms": self.fault_delay_ms,
+            "stale_offset": self.stale_offset,
+            "read_delay_ms": self.read_delay_ms,
+            "drop_probability": self.drop_probability,
+            "source_reliability": self.source_reliability or {},
             "request_timeout_s": self.request_timeout_s,
             "notes": self.notes,
         }
@@ -98,28 +107,35 @@ LIVE_AMBIGUOUS_PROFILES = (
         "weak_stale_signal",
         True,
         dom_fault="stale_temperature",
-        notes="Current dashboard maps this to the available stale_temperature fault; future env should support small stale offsets.",
+        stale_offset=-1.5,
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        notes="Weak dashboard stale offset with source reliability metadata.",
     ),
     LiveAmbiguousProfile(
         "delayed_wot_recovery",
         True,
         wot_fault="timeout",
         fault_delay_ms=450,
+        read_delay_ms=450,
+        source_reliability={"dom": 0.6, "wot": 0.9},
         request_timeout_s=0.25,
-        notes="Current WoT fault uses timeout delay; future env should support delayed-success recovery windows.",
+        notes="Read delay creates an ambiguous delayed-recovery window.",
     ),
     LiveAmbiguousProfile(
         "low_reliability_dom",
         False,
         dom_fault="layout_shift",
-        notes="Current dashboard maps this to non-semantic layout noise; future env should emit source reliability annotations.",
+        source_reliability={"dom": 0.3, "wot": 0.95},
+        notes="Non-semantic DOM layout noise with low DOM reliability metadata.",
     ),
     LiveAmbiguousProfile(
         "partial_missing_wot",
         True,
         wot_fault="offline",
+        drop_probability=0.7,
+        source_reliability={"dom": 0.65, "wot": 0.35},
         request_timeout_s=0.25,
-        notes="Current WoT fault maps partial missing evidence to offline; future env should support probabilistic missing reads.",
+        notes="Partial missing WoT reads through drop probability.",
     ),
 )
 
@@ -192,7 +208,7 @@ def summarize_live_ambiguous_fusion_trials(
             "profile_counts": _profile_counts(materialized),
             "oracle_source": ORACLE_SOURCE,
             "production_gate_changed": False,
-            "current_fault_api_mapping_only": True,
+            "fine_grained_fault_api": True,
             "unique_episode_ids": len({trial.episode_id for trial in materialized}) == len(materialized),
             "unique_seeds": len({trial.seed for trial in materialized}) == len(materialized),
             "reset_evidence_complete": all(bool(trial.reset_evidence_id) for trial in materialized),
@@ -233,7 +249,7 @@ def run_live_ambiguous_fusion_campaign(
                     "dry_run": True,
                     "planned_trial_count": len(plan),
                     "profile_counts": _profile_counts(plan),
-                    "current_fault_api_mapping_only": True,
+                    "fine_grained_fault_api": True,
                     "plan": str(plan_path),
                 },
                 indent=2,
@@ -293,10 +309,26 @@ async def _execute_live_ambiguous_trials(
         reset = await control.reset()
         reset_evidence_id = f"{planned.episode_id}:reset:{reset.get('state', {}).get('version', planned.repetition)}"
         if profile.wot_fault:
-            await control.inject("thermostat", profile.wot_fault, delay_ms=profile.fault_delay_ms)
+            await control.inject(
+                "thermostat",
+                profile.wot_fault,
+                delay_ms=profile.fault_delay_ms,
+                read_delay_ms=profile.read_delay_ms,
+                drop_probability=profile.drop_probability,
+                source_reliability=profile.source_reliability,
+            )
         url = config.dashboard_url
         if profile.dom_fault:
-            url = f"{url}/?fault={profile.dom_fault}&seed={planned.seed}&rep={planned.repetition}"
+            params: dict[str, Any] = {
+                "fault": profile.dom_fault,
+                "seed": planned.seed,
+                "rep": planned.repetition,
+            }
+            if profile.stale_offset is not None:
+                params["stale_offset"] = profile.stale_offset
+            if profile.source_reliability:
+                params["source_reliability"] = json.dumps(profile.source_reliability, sort_keys=True)
+            url = f"{url}/?{urlencode(params)}"
         await session.open(url)
         scenario_config = replace(
             config,
@@ -354,6 +386,8 @@ def _profile_counts(trials: Sequence[LiveAmbiguousTrial]) -> dict[str, int]:
 
 
 def _source_reliability_from_mapping(mapping: dict[str, Any]) -> dict[str, float]:
+    if mapping.get("source_reliability"):
+        return {str(key): float(value) for key, value in dict(mapping["source_reliability"]).items()}
     if mapping.get("dom_fault") == "layout_shift":
         return {"dom": 0.3, "wot": 0.95}
     if mapping.get("wot_fault") == "offline":
@@ -362,6 +396,10 @@ def _source_reliability_from_mapping(mapping: dict[str, Any]) -> dict[str, float
 
 
 def _staleness_from_mapping(mapping: dict[str, Any]) -> float:
+    if mapping.get("stale_offset") is not None:
+        return min(2000.0, abs(float(mapping["stale_offset"])) * 800.0)
+    if mapping.get("read_delay_ms") is not None:
+        return float(mapping["read_delay_ms"]) * 2.0
     if mapping.get("dom_fault") == "stale_temperature":
         return 1200.0
     if mapping.get("wot_fault") == "timeout":
@@ -370,6 +408,8 @@ def _staleness_from_mapping(mapping: dict[str, Any]) -> float:
 
 
 def _missing_probability_from_mapping(mapping: dict[str, Any]) -> float:
+    if mapping.get("drop_probability") is not None:
+        return float(mapping["drop_probability"])
     if mapping.get("wot_fault") == "offline":
         return 0.7
     if mapping.get("wot_fault") == "timeout":

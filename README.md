@@ -206,6 +206,11 @@ uv run python -m src.pipeline --live-ambiguous-fusion-dry-run --repetitions 30
 uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 1
 ```
 
+The live ambiguous profiles use fine-grained smart-room fault controls such as
+`stale_offset`, `read_delay_ms`, `drop_probability`, and
+`source_reliability`; these are evaluation hooks, not changes to the production
+fusion gate.
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic
