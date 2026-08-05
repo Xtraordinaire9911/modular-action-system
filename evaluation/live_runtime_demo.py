@@ -632,9 +632,11 @@ async def _system1_reflex_case(
         "repeat_used_system1_fast_path": repeat.system1_fast_path,
         "repeat_still_verified": repeat.final_outcome_verified,
         "routing_latency_recorded": repeat.system1_routing_latency_ms >= 0,
+        "latency_report_links_both_episodes": bool(warmup.episode_id and repeat.episode_id),
     }
     payload = _case_payload("system1_reflex_repeat", repeat, checks)
     payload["warmup_episode_id"] = warmup.episode_id
+    payload["system1_latency_report"] = _system1_latency_report(warmup, repeat, transitions)
     return warmup, repeat, payload
 
 
@@ -798,6 +800,55 @@ def _case_payload(name: str, result: RuntimeStepResult, checks: dict[str, bool])
         "evidence_passed": all(checks.values()),
         "evidence_checks": checks,
         "result": _result_payload(result),
+    }
+
+
+def _system1_latency_report(
+    warmup: RuntimeStepResult,
+    repeat: RuntimeStepResult,
+    transitions: TransitionLedger,
+) -> dict[str, Any]:
+    """Summarize warm-up vs repeated System-1 routing latency from live evidence."""
+
+    warmup_records = transitions.for_episode(warmup.episode_id)
+    repeat_records = transitions.for_episode(repeat.episode_id)
+    warmup_transition_latency = _episode_transition_latency_ms(warmup, warmup_records)
+    repeat_transition_latency = _episode_transition_latency_ms(repeat, repeat_records)
+    episodes = [warmup, repeat]
+    total_transition_latency = warmup_transition_latency + repeat_transition_latency
+    cache_hits = sum(1 for result in episodes if result.system1_cache_hit)
+    return {
+        "episode_ids": [warmup.episode_id, repeat.episode_id],
+        "cache_hit_rate": round(cache_hits / len(episodes), 3),
+        "total_transition_latency_ms": round(total_transition_latency, 3),
+        "amortized_transition_latency_ms": round(total_transition_latency / len(episodes), 3),
+        "warmup": _system1_episode_latency_payload(warmup, warmup_transition_latency, warmup_records),
+        "repeat": _system1_episode_latency_payload(repeat, repeat_transition_latency, repeat_records),
+    }
+
+
+def _episode_transition_latency_ms(result: RuntimeStepResult, records: list[Any]) -> float:
+    if records:
+        return round(sum(float(record.latency_ms) for record in records), 3)
+    if result.execution_result is not None:
+        return round(float(result.execution_result.latency_ms), 3)
+    return 0.0
+
+
+def _system1_episode_latency_payload(
+    result: RuntimeStepResult,
+    transition_latency_ms: float,
+    records: list[Any],
+) -> dict[str, Any]:
+    return {
+        "episode_id": result.episode_id,
+        "cache_hit": result.system1_cache_hit,
+        "fast_path": result.system1_fast_path,
+        "routing_latency_ms": round(float(result.system1_routing_latency_ms), 3),
+        "transition_latency_ms": transition_latency_ms,
+        "total_episode_latency_ms": transition_latency_ms,
+        "transition_count": len(records),
+        "verified": result.final_outcome_verified,
     }
 
 

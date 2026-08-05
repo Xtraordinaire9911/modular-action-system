@@ -141,7 +141,10 @@ The command runs a normal structured goal, transient WoT timeout recovery,
 postcondition-mismatch rollback, DOM/WoT conflict resolution, and a repeated
 System-1 grounding-cache episode. It writes live screenshots, transition and
 failure JSONL ledgers, a recovery report, and episode-derived metrics under
-`artifacts/live_runtime_demo/`.
+`artifacts/live_runtime_demo/`. The System-1 repeat case includes a
+`system1_latency_report` that links the warm-up and repeat episode ids and
+reports cache-hit rate, routing latency, total transition latency, and
+amortized latency from the same transition ledger.
 
 Run the same seeded normal/timeout episodes under full, no-recovery, DOM-only,
 and WoT-only modes:
