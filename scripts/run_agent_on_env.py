@@ -20,6 +20,7 @@ reserved-port errors (WinError 10013) by letting the OS pick a free port.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 import time
 from datetime import datetime
@@ -30,15 +31,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.benchmarks.reflex_policy import select_next  # noqa: E402
+from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
 from src.benchmarks.rule_web_planner import RuleBasedAffordancePlanner, WebPlannerHistory  # noqa: E402
 from src.benchmarks.task_spec import BenchmarkTask  # noqa: E402
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter  # noqa: E402
 from src.benchmarks.web_task_planner import RuleBasedWebTaskPlanner, subgoal_satisfied  # noqa: E402
-from src.contracts.types import Affordance  # noqa: E402
-from src.runtime.action_context import build_action_context  # noqa: E402
-from src.runtime.affordance_controller import AffordanceController  # noqa: E402
-from src.runtime.cognitive_map import CognitiveMap  # noqa: E402
-from src.runtime.system2_planner import System2Planner  # noqa: E402
+from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec  # noqa: E402
 
 
 def _parse_values(pairs: list[str]) -> dict[str, str]:
@@ -59,43 +57,6 @@ def _parse_mapping(pairs: list[str], flag: str) -> dict[str, str]:
         left, right = pair.split("=", 1)
         mapping[left.strip()] = right.strip()
     return mapping
-
-
-def _matches_affordance_target(affordance: Affordance, target: str) -> bool:
-    return affordance.id == target or str(affordance.locator.get("selector", "")) == target
-
-
-def _annotate_affordances(
-    affordances: list[Affordance],
-    *,
-    bindings: dict[str, str],
-    completions: set[str],
-    goal_id: str,
-    goal_state: str,
-) -> list[Affordance]:
-    annotated: list[Affordance] = []
-    for affordance in affordances:
-        locator = dict(affordance.locator)
-        for parameter, target in bindings.items():
-            if _matches_affordance_target(affordance, target):
-                locator["binds_parameter"] = parameter
-        if any(_matches_affordance_target(affordance, target) for target in completions):
-            locator["completion_for"] = goal_id
-            locator["achieves"] = goal_state
-        annotated.append(
-            Affordance(
-                id=affordance.id,
-                source=affordance.source,
-                type=affordance.type,
-                label=affordance.label,
-                action=affordance.action,
-                locator=locator,
-                confidence=affordance.confidence,
-                state=dict(affordance.state),
-                safety_level=affordance.safety_level,
-            )
-        )
-    return annotated
 
 
 def _start_static_server(directory: str):
@@ -197,8 +158,6 @@ def main() -> None:
     task_plan = None
     active_subgoal = 0
     rule_planner = RuleBasedAffordancePlanner()
-    runtime_planner = System2Planner(AffordanceController())
-    runtime_used: set[tuple[str, str]] = set()
     if args.planner == "rule":
         task_plan = RuleBasedWebTaskPlanner().plan(args.goal, values=values)
         print("task plan:")
@@ -209,6 +168,40 @@ def main() -> None:
         print(f"declared bindings: {bindings}")
         print(f"declared completions: {sorted(completions)}")
     try:
+        if args.planner == "runtime":
+            session.screenshot(str(shots / "step_00.png"))
+            runtime_adapter = RuntimeWebEnvironmentAdapter(
+                adapter,
+                task,
+                bindings=bindings,
+                completions=completions,
+                goal_id=args.task_id,
+                goal_state=goal_state,
+            )
+            outcome = asyncio.run(
+                RuntimeEpisodeRunner().run_goal_episode(
+                    runtime_adapter,
+                    RuntimeEpisodeSpec(
+                        task_id=f"{args.env}:{args.task_id}",
+                        goal_id=args.task_id,
+                        goal_state=goal_state,
+                        parameters=values,
+                        data_source="external_web_runtime",
+                    ),
+                )
+            )
+            session.screenshot(str(shots / "final.png"))
+            print(f"runtime entrypoint: RuntimeEpisodeRunner.run_goal_episode")
+            print(f"runtime state: {outcome.result.state.value}")
+            print(f"verified: {outcome.result.final_outcome_verified}")
+            print(f"episode: {outcome.result.episode_id}")
+            print(f"transitions: {len(outcome.transition_ledger.records)}")
+            print(f"metrics: {outcome.metrics.values}")
+            print(f"\nresult: {'SOLVED' if adapter.is_solved(task) else 'not solved'} | screenshots={shots}")
+            if args.pause_at_end:
+                input("press Enter to close the browser...")
+            return
+
         for step in range(args.max_steps):
             pam = adapter.observe(task)
             session.screenshot(str(shots / f"step_{step:02d}.png"))
@@ -216,47 +209,7 @@ def main() -> None:
                 f"[{step:02d}] perceived {len(pam.affordances)} affordances "
                 f"(compression {pam.compression_ratio:.0%})"
             )
-            if args.planner == "runtime":
-                annotated = _annotate_affordances(
-                    pam.affordances,
-                    bindings=bindings,
-                    completions=completions,
-                    goal_id=args.task_id,
-                    goal_state=goal_state,
-                )
-                cmap = CognitiveMap(task_id=f"{args.env}:{args.task_id}")
-                cmap.update_affordances(annotated)
-                context = build_action_context(cmap, request_type="goal_spec")
-                visible_values = {
-                    parameter: values[parameter]
-                    for parameter, target in bindings.items()
-                    if parameter in values and any(_matches_affordance_target(aff, target) for aff in pam.affordances)
-                }
-                plan = runtime_planner.plan(
-                    context,
-                    goal_id=args.task_id,
-                    goal_state=goal_state,
-                    parameters=visible_values,
-                )
-                pending = [
-                    action
-                    for action in plan.actions
-                    if action.action not in {"ask_user", "done", "wait"}
-                    and action.affordance_id
-                    and (pam.url, action.affordance_id) not in runtime_used
-                ]
-                if plan.requires_escalation or not pending:
-                    print(f"     no further runtime action; stopping ({plan.reason})")
-                    break
-                action = pending[0]
-                affordance = pam.by_id(action.affordance_id)
-                if affordance is None:
-                    print(f"     planned affordance disappeared: {action.affordance_id}")
-                    break
-                value = action.value
-                runtime_used.add((pam.url, action.affordance_id))
-                print(f"     runtime action: {action.action} {action.affordance_id}")
-            elif args.planner == "rule":
+            if args.planner == "rule":
                 assert task_plan is not None
                 page_text = adapter.page_text()
                 while active_subgoal < len(task_plan.subgoals) and subgoal_satisfied(

@@ -15,8 +15,8 @@ from src.adaptation.llm_judge import LLMJudge
 from src.adaptation.pattern_miner import FailurePatternMiner
 from src.adaptation.trace_ledger import EpisodeFailureEvent, TraceLedger
 from src.contracts.types import Affordance, Condition, ExecutionResult, Observation, SkillCall, SkillTuple
-from src.runtime.cognitive_map import CognitiveMap
-from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec, StaticRuntimeEnvironmentAdapter
+from src.runtime.live_observation import LiveRuntimeObservation
 from src.runtime.state_machine import RuntimeState
 from src.verification.active_perception import ActivePerceptionResolver
 
@@ -152,117 +152,157 @@ def run_adaptation_demo(output_dir: str | Path = "artifacts/adaptation_demo") ->
 
 
 async def _sensory_conflict_scenario() -> dict[str, Any]:
-    manager = ContinuousInteractionManager(
-        {"set_temperature": _skill_tuple()},
-        {"wot": _DemoExecutor("wot")},
-        CognitiveMap(task_id="demo_sensory_conflict"),
-    )
     observation = Observation(
         device_states={"thermostat_A": {"targetTemperature": 24}},
         accessibility_tree={"page_state": {"thermostat_A": {"targetTemperature": 20}}},
     )
-    result = await manager.run_skill(SkillCall("set_temperature", {"target": 22}), observation)
-    return _result_payload("sensory_conflict_blocks_system1", result)
+    outcome = await RuntimeEpisodeRunner(
+        skill_library={"set_temperature": _skill_tuple()},
+    ).run_skill_episode(
+        StaticRuntimeEnvironmentAdapter({"wot": _DemoExecutor("wot")}, [observation]),
+        SkillCall("set_temperature", {"target": 22}),
+        RuntimeEpisodeSpec(task_id="demo_sensory_conflict", data_source="adaptation_demo"),
+    )
+    return _result_payload(
+        "sensory_conflict_blocks_system1",
+        outcome.result,
+        runtime_entrypoint="RuntimeEpisodeRunner.run_skill_episode",
+    )
 
 
 async def _active_perception_resolved_scenario() -> dict[str, Any]:
-    manager = ContinuousInteractionManager(
-        {"set_temperature": _skill_tuple()},
-        {"wot": _DemoExecutor("wot")},
-        CognitiveMap(task_id="demo_active_perception_resolved"),
-        active_perception_resolver=ActivePerceptionResolver(_DemoActivePerceptionProbe()),
-    )
     observation = Observation(
         device_states={"thermostat_A": {"targetTemperature": 24}},
         accessibility_tree={"page_state": {"thermostat_A": {"targetTemperature": 20}}},
     )
-    result = await manager.run_skill(SkillCall("set_temperature", {"target": 22}), observation)
-    return _result_payload("sensory_conflict_resolved_by_active_perception", result)
+    outcome = await RuntimeEpisodeRunner(
+        skill_library={"set_temperature": _skill_tuple()},
+        active_perception_resolver=ActivePerceptionResolver(_DemoActivePerceptionProbe()),
+    ).run_skill_episode(
+        StaticRuntimeEnvironmentAdapter({"wot": _DemoExecutor("wot")}, [observation]),
+        SkillCall("set_temperature", {"target": 22}),
+        RuntimeEpisodeSpec(task_id="demo_active_perception_resolved", data_source="adaptation_demo"),
+    )
+    return _result_payload(
+        "sensory_conflict_resolved_by_active_perception",
+        outcome.result,
+        runtime_entrypoint="RuntimeEpisodeRunner.run_skill_episode",
+    )
 
 
 async def _timeout_reroute_scenario() -> dict[str, Any]:
-    manager = ContinuousInteractionManager(
-        {
+    outcome = await RuntimeEpisodeRunner(
+        skill_library={
             "set_temperature": _skill_tuple(
                 allowed_backends=["wot", "dom"],
                 preferred_backends=["wot", "dom"],
             )
         },
-        {
-            "wot": _DemoExecutor("wot", exception=TimeoutError("demo timeout")),
-            "dom": _DemoExecutor("dom"),
-        },
-        CognitiveMap(task_id="demo_timeout_reroute"),
+    ).run_skill_episode(
+        StaticRuntimeEnvironmentAdapter(
+            {
+                "wot": _DemoExecutor("wot", exception=TimeoutError("demo timeout")),
+                "dom": _DemoExecutor("dom"),
+            }
+        ),
+        SkillCall("set_temperature", {"target": 22}),
+        RuntimeEpisodeSpec(task_id="demo_timeout_reroute", data_source="adaptation_demo"),
     )
-    result = await manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation())
-    return _result_payload("executor_timeout_reroutes_with_trace", result)
+    return _result_payload(
+        "executor_timeout_reroutes_with_trace",
+        outcome.result,
+        runtime_entrypoint="RuntimeEpisodeRunner.run_skill_episode",
+    )
 
 
 async def _bounded_goal_no_durable_skill_scenario() -> dict[str, Any]:
-    cognitive_map = CognitiveMap(task_id="demo_bounded_goal")
-    cognitive_map.update_affordances(
-        [
-            _dom_affordance("dom_room_input", "input", "Room", "type", "booking_form", parameter="room"),
-            _dom_affordance("dom_time_input", "input", "Time", "type", "booking_form", parameter="time"),
-            _dom_affordance(
-                "dom_confirm_booking",
-                "button",
-                "Confirm booking",
-                "click",
-                "booking_button",
-                completion_for="reserve_room_goal",
-                achieves="booking.confirmed == true",
-            ),
-        ]
-    )
-    manager = ContinuousInteractionManager(
-        {},
+    affordances = [
+        _dom_affordance("dom_room_input", "input", "Room", "type", "booking_form", parameter="room"),
+        _dom_affordance("dom_time_input", "input", "Time", "type", "booking_form", parameter="time"),
+        _dom_affordance(
+            "dom_confirm_booking",
+            "button",
+            "Confirm booking",
+            "click",
+            "booking_button",
+            completion_for="reserve_room_goal",
+            achieves="booking.confirmed == true",
+        ),
+    ]
+    adapter = StaticRuntimeEnvironmentAdapter(
         {"dom": _BookingGoalExecutor()},
-        cognitive_map,
+        [
+            _goal_observation(affordances, {"booking_form": {}, "booking": {"confirmed": False}}),
+            _goal_observation(affordances, {"booking_form": {"room": "A"}, "booking": {"confirmed": False}}),
+            _goal_observation(
+                affordances,
+                {"booking_form": {"room": "A", "time": "14:00"}, "booking": {"confirmed": False}},
+            ),
+            _goal_observation(
+                affordances,
+                {"booking_form": {"room": "A", "time": "14:00"}, "booking": {"confirmed": True}},
+            ),
+        ],
     )
-    result = await manager.run_goal(
-        goal_id="reserve_room_goal",
-        goal_state="booking.confirmed == true",
-        parameters={"room": "A", "time": "14:00"},
-        observation=Observation(),
+    outcome = await RuntimeEpisodeRunner().run_goal_episode(
+        adapter,
+        RuntimeEpisodeSpec(
+            task_id="demo_bounded_goal",
+            goal_id="reserve_room_goal",
+            goal_state="booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+            data_source="adaptation_demo",
+        ),
     )
-    return _result_payload("bounded_goal_executes_without_durable_skill", result)
+    return _result_payload(
+        "bounded_goal_executes_without_durable_skill",
+        outcome.result,
+        runtime_entrypoint="RuntimeEpisodeRunner.run_goal_episode",
+    )
 
 
 async def _llm_advisory_scenario() -> dict[str, Any]:
-    manager = ContinuousInteractionManager(
-        {
+    outcome = await RuntimeEpisodeRunner(
+        skill_library={
             "confirm_booking": _skill_tuple(
                 skill_id="confirm_booking",
                 allowed_backends=["dom", "visual"],
                 preferred_backends=["dom", "visual"],
             )
         },
-        {
-            "dom": _DemoExecutor(
-                "dom",
-                result=ExecutionResult(
-                    skill_id="confirm_booking",
-                    backend_used="dom",
-                    success=False,
-                    latency_ms=10.0,
-                    confidence=0.2,
-                    failure_reason="ambiguous_false_success",
-                ),
-            ),
-            "visual": _DemoExecutor("visual"),
-        },
-        CognitiveMap(task_id="demo_llm_advisory"),
         llm_judge=LLMJudge(client=_DemoJudgeClient()),
         use_llm_judge=True,
+    ).run_skill_episode(
+        StaticRuntimeEnvironmentAdapter(
+            {
+                "dom": _DemoExecutor(
+                    "dom",
+                    result=ExecutionResult(
+                        skill_id="confirm_booking",
+                        backend_used="dom",
+                        success=False,
+                        latency_ms=10.0,
+                        confidence=0.2,
+                        failure_reason="ambiguous_false_success",
+                    ),
+                ),
+                "visual": _DemoExecutor("visual"),
+            }
+        ),
+        SkillCall("confirm_booking", {"room": "A"}),
+        RuntimeEpisodeSpec(task_id="demo_llm_advisory", data_source="adaptation_demo"),
     )
-    result = await manager.run_skill(SkillCall("confirm_booking", {"room": "A"}), Observation())
-    return _result_payload("optional_llm_advisory_judgment", result)
+    return _result_payload(
+        "optional_llm_advisory_judgment",
+        outcome.result,
+        runtime_entrypoint="RuntimeEpisodeRunner.run_skill_episode",
+    )
 
 
-def _result_payload(name: str, result: Any) -> dict[str, Any]:
+def _result_payload(name: str, result: Any, *, runtime_entrypoint: str = "") -> dict[str, Any]:
     return {
         "name": name,
+        "runtime_entrypoint": runtime_entrypoint,
         "state": result.state.value if isinstance(result.state, RuntimeState) else str(result.state),
         "reason": result.reason,
         "selected_backend": result.selected_backend,
@@ -314,6 +354,13 @@ def _dom_affordance(
         action=action,
         locator=locator,
         confidence=0.95,
+    )
+
+
+def _goal_observation(affordances: list[Affordance], page_state: dict[str, Any]) -> LiveRuntimeObservation:
+    return LiveRuntimeObservation(
+        Observation(accessibility_tree={"page_state": page_state}),
+        affordances=affordances,
     )
 
 

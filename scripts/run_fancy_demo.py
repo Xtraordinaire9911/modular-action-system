@@ -19,6 +19,7 @@ Prereqs:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import os as _os
 import sys
 import time
@@ -35,6 +36,7 @@ from src.benchmarks.miniwob_tasks import (  # noqa: E402
     run_task,
 )
 from src.benchmarks.mock_env_tasks import MOCK_TASKS  # noqa: E402
+from src.benchmarks.scripted_runtime import run_scripted_task_episode  # noqa: E402
 
 # ── ANSI colours (work on Win 10+ terminals) ────────────────────────────────────
 _R = "\033[0m"
@@ -103,7 +105,14 @@ def _run_miniwob_group(session: object, suite: list, step_delay: float, base_url
         ctrl.setup_badge("MiniWoB++", task.name)
         t0 = time.monotonic()
         try:
-            outcome = run_task(ctrl, task)
+            episode = asyncio.run(
+                run_scripted_task_episode(
+                    task_id=f"miniwob:{task.name}",
+                    run=lambda task=task: run_task(ctrl, task),
+                    data_source="fancy_demo_scripted",
+                )
+            )
+            outcome = episode.scripted_outcome
         except Exception as exc:
             outcome = {"name": task.name, "success": False, "reward": 0.0, "utterance": "", "title": task.title}
             print(f"    {_RED}[error] {exc}{_R}")
@@ -133,18 +142,18 @@ def _run_mock_group(
         t0 = time.monotonic()
         success = True
         try:
-            task.solve(ctrl)
+            episode = asyncio.run(
+                run_scripted_task_episode(
+                    task_id=f"mock:{task.name}",
+                    run=lambda task=task: _run_mock_task_solver(session, ctrl, task),
+                    data_source="fancy_demo_scripted",
+                )
+            )
+            success = bool(episode.scripted_outcome.get("success"))
         except Exception as exc:
             success = False
             print(f"    {_RED}[error] {exc}{_R}")
         elapsed = time.monotonic() - t0
-        # Check success via page text if a token is specified
-        if success and task.success_text:
-            try:
-                body = session.text_content("body") or ""
-                success = task.success_text.lower() in body.lower()
-            except Exception:
-                pass  # text_content may not be available in all contexts
         screenshot_path = shots / f"mock_{idx:02d}_{task.name}.png"
         try:
             session.screenshot(str(screenshot_path))
@@ -154,6 +163,18 @@ def _run_mock_group(
         outcomes.append({"success": success})
     ok = sum(1 for o in outcomes if o["success"])
     return {"label": env_label, "ok": ok, "n": len(outcomes)}
+
+
+def _run_mock_task_solver(session: object, ctrl: MockEnvController, task: object) -> dict:
+    task.solve(ctrl)
+    success = True
+    if getattr(task, "success_text", ""):
+        try:
+            body = session.text_content("body") or ""
+            success = str(task.success_text).lower() in body.lower()
+        except Exception:
+            success = False
+    return {"name": task.name, "success": success}
 
 
 def main() -> None:

@@ -15,8 +15,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from src.contracts.types import Condition, ExecutionResult, Observation, RollbackSpec, SkillCall, SkillTuple
-from src.runtime.cognitive_map import CognitiveMap
-from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec, StaticRuntimeEnvironmentAdapter
 
 
 class NoOpExecutor:
@@ -54,24 +53,23 @@ def build_smoke_skill_library() -> dict[str, SkillTuple]:
 
 
 async def run_smoke_pipeline(task_id: str = "pipeline_smoke_task") -> dict:
-    cognitive_map = CognitiveMap(task_id=task_id)
-    manager = ContinuousInteractionManager(
+    outcome = await RuntimeEpisodeRunner(
         skill_library=build_smoke_skill_library(),
-        executors={"noop": NoOpExecutor()},
-        cognitive_map=cognitive_map,
-    )
-    result = await manager.run_skill(
+    ).run_skill_episode(
+        StaticRuntimeEnvironmentAdapter({"noop": NoOpExecutor()}),
         SkillCall(skill_id="pipeline_smoke", params={}),
-        Observation(),
+        RuntimeEpisodeSpec(task_id=task_id, data_source="smoke_pipeline"),
     )
+    result = outcome.result
     return {
         "task_id": task_id,
+        "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
         "state": result.state.value,
         "selected_backend": result.selected_backend,
         "reason": result.reason,
         "recovery_tier": result.recovery_tier,
         "execution_result": asdict(result.execution_result) if result.execution_result else None,
-        "cognitive_map": cognitive_map.snapshot(),
+        "cognitive_map": outcome.cognitive_map.snapshot(),
     }
 
 
