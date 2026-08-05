@@ -400,7 +400,7 @@ or statistically validated Bayesian fusion yet.
 | P2 | Smart-room repeated fusion/recovery campaign | `[Yixin - 30×7 live evidence 已完成，后续可做独立 rerun/holdout]` + `[Shared - environment/reset/fault API]` | 现有 7 个 condition 每个至少 30 个独立 trial，总量至少 210；使用 deterministic seeds、每次 reset evidence、独立 oracle、唯一 episode id 和可重放配置 | `evaluation/live_fusion_campaign.py`, `evaluation/live_fusion_calibration.py`, `evaluation/fusion_calibration.py`, `src/pipeline.py`, `tests/test_live_fusion_campaign.py`, `artifacts/live_fusion_campaign_full/fusion_campaign_summary.json` |
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
-| Conditional | Bayesian fusion gate | `[Yixin - 下一步 experimental comparator]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；posterior 必须被 verifier/CIM 实际消费且优于 calibrated heuristic，否则保留 heuristic fallback | 后续单独 PR，不作为当前 claim |
+| Conditional | Bayesian fusion comparator | `[Yixin - experimental comparator 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；posterior 必须被 verifier/CIM 实际消费且优于 calibrated heuristic，否则保留 heuristic fallback | `evaluation/bayesian_fusion_comparator.py`, `tests/test_bayesian_fusion_comparator.py`, `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
 
 ### 14.5.1 Live evidence 记录
 
@@ -475,6 +475,31 @@ or statistically validated Bayesian fusion yet.
 - **Bayesian fusion 结论**：
   - 当前 rule-first fusion 在 holdout 上仍为满分，因此 Bayesian fusion 不能直接 claim 为必要改进。
   - 下一步如果做 Bayesian，应作为 `experimental comparator`，加入 ambiguous/noisy source cases 后比较 posterior 与 locked heuristic，而不是替换 production gate。
+
+### 14.5.4 Bayesian fusion comparator 记录
+
+- **时间**：2026-08-05
+- **输入**：`artifacts/live_fusion_holdout/fusion_holdout_report.json`
+- **输出**：`artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json`
+- **运行命令**：
+  `python -m src.pipeline --bayesian-fusion-comparator --holdout-report artifacts/live_fusion_holdout/fusion_holdout_report.json --output-dir artifacts/bayesian_fusion_comparator --posterior-threshold 0.5`
+- **实现边界**：
+  - Bayesian 只作为 `experimental_comparator`。
+  - production default 仍为 `rule_first_locked_threshold`。
+  - comparator 不接入 CIM，不改变 runtime gate。
+  - holdout 不用于调参；模型只从 calibration threshold/operating point 派生 posterior 形状。
+- **结果**：
+  - Bayesian holdout precision = 1.0
+  - Bayesian holdout recall = 1.0
+  - Bayesian false halt rate = 0.0
+  - Bayesian miss rate = 0.0
+  - Bayesian balanced accuracy = 1.0
+  - Rule-first balanced accuracy = 1.0
+  - delta = 0.0
+  - recommendation = `keep_rule_first_default`
+- **结论**：
+  - 目前 Bayesian 与 locked rule-first 打平，没有证明能改进现有 gate。
+  - 如果后续要让 Bayesian 有意义，需要新增 ambiguous/noisy source cases，例如弱 stale、延迟但最终返回、source reliability 漂移、三源冲突或部分缺失 evidence。
 
 ### 14.6 Planner 职责边界
 

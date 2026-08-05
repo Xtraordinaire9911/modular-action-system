@@ -190,6 +190,21 @@ def run_fusion_holdout_pipeline(
     )
 
 
+def run_bayesian_fusion_comparator_pipeline(
+    holdout_report_path: str | Path = "artifacts/live_fusion_holdout/fusion_holdout_report.json",
+    output_dir: str | Path = "artifacts/bayesian_fusion_comparator",
+    *,
+    posterior_threshold: float = 0.5,
+) -> dict[str, str]:
+    from evaluation.bayesian_fusion_comparator import write_bayesian_fusion_comparator_report
+
+    return write_bayesian_fusion_comparator_report(
+        holdout_report_path,
+        output_dir,
+        posterior_threshold=posterior_threshold,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -201,9 +216,25 @@ def main() -> None:
     parser.add_argument("--fusion-campaign-dry-run", action="store_true", help="Write the repeated campaign plan only.")
     parser.add_argument("--fusion-holdout", action="store_true", help="Build locked calibration/holdout report.")
     parser.add_argument(
+        "--bayesian-fusion-comparator",
+        action="store_true",
+        help="Compare experimental Bayesian posterior against locked rule-first fusion.",
+    )
+    parser.add_argument(
         "--campaign-summary",
         default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
         help="Input campaign summary for --fusion-holdout.",
+    )
+    parser.add_argument(
+        "--holdout-report",
+        default="artifacts/live_fusion_holdout/fusion_holdout_report.json",
+        help="Input locked holdout report for --bayesian-fusion-comparator.",
+    )
+    parser.add_argument(
+        "--posterior-threshold",
+        type=float,
+        default=0.5,
+        help="Posterior blocking threshold for --bayesian-fusion-comparator.",
     )
     parser.add_argument(
         "--calibration-repetitions",
@@ -227,7 +258,13 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.fusion_holdout:
+    if args.bayesian_fusion_comparator:
+        summary = run_bayesian_fusion_comparator_pipeline(
+            args.holdout_report,
+            args.output_dir or "artifacts/bayesian_fusion_comparator",
+            posterior_threshold=args.posterior_threshold,
+        )
+    elif args.fusion_holdout:
         summary = run_fusion_holdout_pipeline(
             args.campaign_summary,
             args.output_dir or "artifacts/live_fusion_holdout",

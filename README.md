@@ -182,6 +182,15 @@ uv run python -m src.pipeline --fusion-holdout \
   --holdout-repetitions 10
 ```
 
+Compare an experimental Bayesian posterior model against the locked rule-first
+holdout. This is a comparator report only; it does not replace the production
+fusion gate:
+
+```bash
+uv run python -m src.pipeline --bayesian-fusion-comparator \
+  --holdout-report artifacts/live_fusion_holdout/fusion_holdout_report.json
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

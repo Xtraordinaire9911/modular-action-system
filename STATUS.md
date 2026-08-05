@@ -25,7 +25,7 @@ a verified release pull request.
 | Visual observation | Partial | Screenshots and existing SoM/VAM contracts are available, but the live smart-room suite does not claim a trained visual detector. | `src/perception/som_parser.py`, `src/vam/` |
 | Fusion calibration | Implemented, initial campaign | A labeled live campaign reports threshold ROC/confusion, false halt/miss, and detection latency. The campaign is intentionally small and should be expanded before publication. | `python -m src.pipeline --fusion-calibration` |
 | Locked fusion holdout | Implemented, initial 20/10 split complete | The full 30×7 campaign can be split per condition into calibration and locked holdout; threshold is selected only on calibration and then reused unchanged on holdout. | `tests/test_fusion_holdout.py`; `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
-| Probabilistic/Bayesian fusion | Future, data-gated | Current production fusion is auditable and calibrated heuristic. Seven initial live scenarios are not enough evidence to justify a Bayesian likelihood model. | See runtime-control TODO plan |
+| Probabilistic/Bayesian fusion | Experimental comparator implemented | A Bayesian posterior comparator can be evaluated against the locked rule-first holdout without replacing the production gate. On the current holdout it ties rule-first and therefore recommends keeping rule-first as default. | `tests/test_bayesian_fusion_comparator.py`; `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
 
 ## Verification
 
