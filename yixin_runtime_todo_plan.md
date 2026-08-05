@@ -402,7 +402,7 @@ or statistically validated Bayesian fusion yet.
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
 | Conditional | Bayesian fusion comparator | `[Yixin - experimental comparator 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；posterior 必须被 verifier/CIM 实际消费且优于 calibrated heuristic，否则保留 heuristic fallback | `evaluation/bayesian_fusion_comparator.py`, `tests/test_bayesian_fusion_comparator.py`, `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
-| Conditional | Live ambiguous fusion profiles | `[Yixin - 细粒度 fault API + 1×4 fine smoke 已完成，30×4 repeated run 待执行]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 comparator summary；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_fine_smoke/live_ambiguous_fusion_summary.json` |
+| Conditional | Live ambiguous fusion profiles | `[Yixin - 细粒度 fault API + 30×4 live evidence 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 comparator summary；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json` |
 
 ### 14.5.1 Live evidence 记录
 
@@ -541,6 +541,7 @@ or statistically validated Bayesian fusion yet.
   - 30×4 dry-run summary: `artifacts/live_ambiguous_fusion_plan/live_ambiguous_fusion_summary.json`
   - 1×4 live smoke summary: `artifacts/live_ambiguous_fusion_smoke/live_ambiguous_fusion_summary.json`
   - 1×4 fine-grained live smoke summary: `artifacts/live_ambiguous_fusion_fine_smoke/live_ambiguous_fusion_summary.json`
+  - 30×4 fine-grained live full summary: `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`
 - **profile mapping**：
   - `weak_stale_signal` -> current dashboard `stale_temperature`
   - `delayed_wot_recovery` -> current WoT `timeout` with short request timeout
@@ -556,7 +557,10 @@ or statistically validated Bayesian fusion yet.
 - **当前边界**：
   - 细粒度 smart-room fault API 已扩展：`stale_offset`、`read_delay_ms`、`drop_probability`、`source_reliability` metadata。
   - 1×4 fine smoke 结果：rule-first balanced accuracy = 0.833；Bayesian balanced accuracy = 1.0；delta = 0.167；production gate unchanged。
-  - 这只证明细粒度 live ambiguous hook 和 comparator evidence 跑通；下一步需要 30×4 repeated live run，再考虑是否值得做 locked holdout。
+  - 30×4 fine-grained live full 结果：trial count = 120；每个 profile = 30；unique episode ids = true；reset evidence complete = true。
+  - Rule-first balanced accuracy = 0.833；recall = 0.667；miss rate = 0.333。
+  - Bayesian comparator balanced accuracy = 1.0；recall = 1.0；miss rate = 0.0；false halt rate = 0.0；delta = 0.167。
+  - Production gate 仍未替换；下一步应设计 Bayesian integration gate/ablation 或对 30×4 做 locked holdout，再决定是否接入 runtime。
 
 ### 14.6 Planner 职责边界
 

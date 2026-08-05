@@ -204,6 +204,7 @@ fault API:
 ```bash
 uv run python -m src.pipeline --live-ambiguous-fusion-dry-run --repetitions 30
 uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 1
+uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 30
 ```
 
 The live ambiguous profiles use fine-grained smart-room fault controls such as
