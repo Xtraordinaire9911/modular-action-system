@@ -1,0 +1,148 @@
+{
+  "condition_counts": {
+    "clean": 1,
+    "layout_shift": 1,
+    "postcondition_mismatch_pre_action": 1,
+    "selector_mutation": 1,
+    "stale_temperature": 1,
+    "wot_offline": 1,
+    "wot_timeout": 1
+  },
+  "data_source": "live_repeated_fusion_campaign",
+  "metrics": {
+    "balanced_accuracy": 1.0,
+    "false_halt_rate": 0.0,
+    "false_negative": 0,
+    "false_positive": 0,
+    "mean_detection_latency_ms": 0.13445025043828146,
+    "miss_rate": 0.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "true_negative": 4,
+    "true_positive": 3
+  },
+  "protocol": {
+    "independent_oracle_complete": true,
+    "minimum_repetitions": 30,
+    "minimum_repetitions_met": false,
+    "required_conditions": [
+      "clean",
+      "layout_shift",
+      "selector_mutation",
+      "stale_temperature",
+      "wot_timeout",
+      "wot_offline",
+      "postcondition_mismatch_pre_action"
+    ],
+    "reset_evidence_complete": true,
+    "trial_count": 7,
+    "unique_episode_ids": true,
+    "unique_seeds": true
+  },
+  "replay_config": {
+    "control_url": "http://127.0.0.1:18081",
+    "dashboard_url": "http://127.0.0.1:13000",
+    "thing_directory_url": "http://127.0.0.1:18082/things",
+    "wot_public_base_url": "http://127.0.0.1:18080"
+  },
+  "trials": [
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.14928355813026428,
+      "episode_id": "fusion_clean_rep_000_seed_900",
+      "expected_blocking": false,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_clean_rep_000_seed_900:reset:0",
+      "scenario": "clean",
+      "seed": 900,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.1162644475698471,
+      "episode_id": "fusion_layout_shift_rep_000_seed_901",
+      "expected_blocking": false,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_layout_shift_rep_000_seed_901:reset:0",
+      "scenario": "layout_shift",
+      "seed": 901,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11691264808177948,
+      "episode_id": "fusion_selector_mutation_rep_000_seed_902",
+      "expected_blocking": false,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_selector_mutation_rep_000_seed_902:reset:0",
+      "scenario": "selector_mutation",
+      "seed": 902,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.9,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13567134737968445,
+      "episode_id": "fusion_stale_temperature_rep_000_seed_903",
+      "expected_blocking": true,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_stale_temperature_rep_000_seed_903:reset:0",
+      "scenario": "stale_temperature",
+      "seed": 903,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.19073858857154846,
+      "episode_id": "fusion_wot_timeout_rep_000_seed_904",
+      "expected_blocking": true,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_wot_timeout_rep_000_seed_904:reset:0",
+      "scenario": "wot_timeout",
+      "seed": 904,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.11959858238697052,
+      "episode_id": "fusion_wot_offline_rep_000_seed_905",
+      "expected_blocking": true,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_wot_offline_rep_000_seed_905:reset:0",
+      "scenario": "wot_offline",
+      "seed": 905,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11268258094787598,
+      "episode_id": "fusion_postcondition_mismatch_pre_action_rep_000_seed_906",
+      "expected_blocking": false,
+      "oracle_source": "fault-injection-label",
+      "repetition": 0,
+      "reset_evidence_id": "fusion_postcondition_mismatch_pre_action_rep_000_seed_906:reset:0",
+      "scenario": "postcondition_mismatch_pre_action",
+      "seed": 906,
+      "source_pair": "DOM+WOT"
+    }
+  ]
+}

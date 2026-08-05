@@ -1,0 +1,15 @@
+{
+  "condition_counts": {
+    "clean": 30,
+    "layout_shift": 30,
+    "postcondition_mismatch_pre_action": 30,
+    "selector_mutation": 30,
+    "stale_temperature": 30,
+    "wot_offline": 30,
+    "wot_timeout": 30
+  },
+  "data_source": "live_repeated_fusion_campaign_plan",
+  "dry_run": true,
+  "plan": "artifacts/live_fusion_campaign_plan/fusion_campaign_plan.json",
+  "planned_trial_count": 210
+}

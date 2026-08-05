@@ -160,6 +160,19 @@ DOM-fault, WoT-timeout/offline, and postcondition-mismatch scenarios:
 uv run python -m src.pipeline --fusion-calibration
 ```
 
+Generate the next-stage repeated fusion/recovery campaign plan without starting
+the long live run:
+
+```bash
+uv run python -m src.pipeline --fusion-campaign-dry-run --repetitions 30
+```
+
+Run the live repeated campaign when the smart-room environment is available:
+
+```bash
+uv run python -m src.pipeline --fusion-campaign --repetitions 30
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

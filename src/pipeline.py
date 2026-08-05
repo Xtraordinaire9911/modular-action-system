@@ -146,6 +146,33 @@ def run_fusion_calibration_pipeline(
     )
 
 
+def run_fusion_campaign_pipeline(
+    output_dir: str | Path = "artifacts/live_fusion_campaign",
+    *,
+    repetitions: int = 30,
+    seed_start: int = 1000,
+    dashboard_url: str = "http://127.0.0.1:3000",
+    thing_directory_url: str = "http://127.0.0.1:8082/things",
+    wot_base_url: str = "http://127.0.0.1:8080",
+    control_url: str = "http://127.0.0.1:8081",
+    headless: bool = True,
+    dry_run: bool = False,
+) -> dict[str, str]:
+    from evaluation.live_fusion_campaign import run_live_repeated_fusion_campaign
+
+    return run_live_repeated_fusion_campaign(
+        output_dir,
+        repetitions=repetitions,
+        seed_start=seed_start,
+        dashboard_url=dashboard_url,
+        thing_directory_url=thing_directory_url,
+        wot_base_url=wot_base_url,
+        control_url=control_url,
+        headless=headless,
+        dry_run=dry_run,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -153,6 +180,10 @@ def main() -> None:
     parser.add_argument("--live-demo", action="store_true", help="Run the Docker + Playwright live tracer bullet.")
     parser.add_argument("--live-ablation", action="store_true", help="Compare live full/no-recovery/DOM/WoT modes.")
     parser.add_argument("--fusion-calibration", action="store_true", help="Run labeled live fusion calibration.")
+    parser.add_argument("--fusion-campaign", action="store_true", help="Run repeated live fusion/recovery campaign.")
+    parser.add_argument("--fusion-campaign-dry-run", action="store_true", help="Write the repeated campaign plan only.")
+    parser.add_argument("--repetitions", type=int, default=30, help="Repeated campaign trials per condition.")
+    parser.add_argument("--seed-start", type=int, default=1000, help="First deterministic campaign seed.")
     parser.add_argument("--output-dir")
     parser.add_argument("--task-id", default="pipeline_smoke_task")
     parser.add_argument("--dashboard-url", default="http://127.0.0.1:3000")
@@ -162,7 +193,19 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.fusion_calibration:
+    if args.fusion_campaign or args.fusion_campaign_dry_run:
+        summary = run_fusion_campaign_pipeline(
+            args.output_dir or "artifacts/live_fusion_campaign",
+            repetitions=args.repetitions,
+            seed_start=args.seed_start,
+            dashboard_url=args.dashboard_url,
+            thing_directory_url=args.thing_directory_url,
+            wot_base_url=args.wot_base_url,
+            control_url=args.control_url,
+            headless=not args.headed,
+            dry_run=args.fusion_campaign_dry_run,
+        )
+    elif args.fusion_calibration:
         summary = run_fusion_calibration_pipeline(
             args.output_dir or "artifacts/live_fusion_calibration",
             dashboard_url=args.dashboard_url,
