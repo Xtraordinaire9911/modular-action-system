@@ -300,6 +300,16 @@ def run_open_web_mock_failure_suite_pipeline(
     return write_open_web_mock_failure_suite_report(output_dir, seed_start=seed_start)
 
 
+def run_open_web_mock_runtime_suite_pipeline(
+    output_dir: str | Path = "artifacts/open_web_mock_runtime_suite",
+    *,
+    seed_start: int = 9000,
+) -> dict[str, str]:
+    from evaluation.open_web_mock_runtime_runner import run_open_web_mock_runtime_suite
+
+    return run_open_web_mock_runtime_suite(output_dir, seed_start=seed_start)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -349,6 +359,11 @@ def main() -> None:
         "--open-web-mock-failure-suite",
         action="store_true",
         help="Write oracle-labeled local mock fixtures/report for open-web-style failure modes.",
+    )
+    parser.add_argument(
+        "--open-web-mock-runtime-suite",
+        action="store_true",
+        help="Run open-web mock failure cases through RuntimeEpisodeRunner with oracle re-observation.",
     )
     parser.add_argument(
         "--campaign-summary",
@@ -404,7 +419,12 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.open_web_mock_failure_suite:
+    if args.open_web_mock_runtime_suite:
+        summary = run_open_web_mock_runtime_suite_pipeline(
+            args.output_dir or "artifacts/open_web_mock_runtime_suite",
+            seed_start=args.seed_start,
+        )
+    elif args.open_web_mock_failure_suite:
         summary = run_open_web_mock_failure_suite_pipeline(
             args.output_dir or "artifacts/open_web_mock_failure_suite",
             seed_start=args.seed_start,

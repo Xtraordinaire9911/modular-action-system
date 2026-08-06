@@ -208,6 +208,14 @@ affordances. It is controlled mock evidence, not real open-web evidence:
 uv run python -m src.pipeline --open-web-mock-failure-suite
 ```
 
+Run those controlled mock cases through the same runtime episode envelope. This
+uses an in-memory mock executor plus fresh oracle re-observation to verify that
+executor success is not treated as task success:
+
+```bash
+uv run python -m src.pipeline --open-web-mock-runtime-suite
+```
+
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:
 
