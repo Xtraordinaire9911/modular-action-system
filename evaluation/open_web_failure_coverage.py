@@ -1,4 +1,4 @@
-"""Open-web failure coverage gap report.
+"""Open-web failure coverage report.
 
 This report is deliberately conservative: it separates mechanisms that exist in
 the runtime from controlled/mock evidence and from real open-web evidence.
@@ -10,22 +10,32 @@ import json
 from pathlib import Path
 from typing import Any
 
+from evaluation.open_web_mock_failure_suite import build_open_web_mock_failure_suite
 
 FAILURE_CLASSES = {
     "optimistic_ui_backend_mismatch": {
         "description": "UI claims success while backend/API state did not change.",
-        "coverage_level": "controlled_evidence",
-        "evidence": ["postcondition mismatch / false-success detection in smart-room"],
+        "coverage_level": "controlled_mock_evidence",
+        "evidence": [
+            "postcondition mismatch / false-success detection in smart-room",
+            "openweb-optimistic-rollback local fixture",
+        ],
     },
     "visible_but_ineffective_affordance": {
         "description": "DOM affordance is visible but execution has no expected effect.",
-        "coverage_level": "mechanism_ready",
-        "evidence": ["expected-effect verification and recovery ledger"],
+        "coverage_level": "controlled_mock_evidence",
+        "evidence": [
+            "expected-effect verification and recovery ledger",
+            "openweb-visible-ineffective-affordance local fixture",
+        ],
     },
     "dom_vs_visual_disagreement": {
         "description": "DOM tree and screenshot/OCR/visual grounding disagree.",
-        "coverage_level": "mechanism_ready",
-        "evidence": ["visual/SoM contracts exist; no systematic live campaign yet"],
+        "coverage_level": "controlled_mock_evidence",
+        "evidence": [
+            "visual/SoM contracts exist",
+            "openweb-dom-visual-disagreement local fixture",
+        ],
     },
     "async_stale_state": {
         "description": "Async refresh/cache causes stale observed state.",
@@ -34,8 +44,11 @@ FAILURE_CLASSES = {
     },
     "overlay_modal_obstruction": {
         "description": "DOM affordance exists but overlay/cookie banner/loading layer blocks operation.",
-        "coverage_level": "mechanism_ready",
-        "evidence": ["overlay filtering and affordance disappearance handling"],
+        "coverage_level": "controlled_mock_evidence",
+        "evidence": [
+            "overlay filtering and affordance disappearance handling",
+            "openweb-overlay-obstruction local fixture",
+        ],
     },
     "ab_layout_selector_drift": {
         "description": "Layout or selector drift makes old grounding unreliable.",
@@ -44,13 +57,16 @@ FAILURE_CLASSES = {
     },
     "session_auth_expiry": {
         "description": "Session or auth expiry leaves stale page content or blocks actions.",
-        "coverage_level": "mechanism_ready",
-        "evidence": ["no dedicated session-expiry benchmark yet"],
+        "coverage_level": "controlled_mock_evidence",
+        "evidence": ["openweb-session-expiry local fixture"],
     },
     "autocomplete_async_validation_mutation": {
         "description": "Autocomplete or async validation mutates submitted value.",
-        "coverage_level": "mechanism_ready",
-        "evidence": ["postcondition verification can detect final value mismatch"],
+        "coverage_level": "controlled_mock_evidence",
+        "evidence": [
+            "postcondition verification can detect final value mismatch",
+            "openweb-autocomplete-validation local fixture",
+        ],
     },
 }
 
@@ -60,12 +76,15 @@ def build_open_web_failure_coverage_report() -> dict[str, Any]:
     counts = {
         "mechanism_ready": sum(1 for row in coverage_by_class.values() if row["coverage_level"] == "mechanism_ready"),
         "controlled_evidence": sum(
-            1 for row in coverage_by_class.values() if row["coverage_level"] == "controlled_evidence"
+            1
+            for row in coverage_by_class.values()
+            if row["coverage_level"] in {"controlled_evidence", "controlled_mock_evidence"}
         ),
         "real_open_web_evidence": sum(
             1 for row in coverage_by_class.values() if row["coverage_level"] == "real_open_web_evidence"
         ),
     }
+    mock_cases = build_open_web_mock_failure_suite()
     return {
         "data_source": "open_web_failure_coverage",
         "summary": {
@@ -73,15 +92,21 @@ def build_open_web_failure_coverage_report() -> dict[str, Any]:
             "mechanism_ready_count": counts["mechanism_ready"],
             "controlled_evidence_count": counts["controlled_evidence"],
             "real_open_web_evidence_count": counts["real_open_web_evidence"],
+            "open_web_mock_case_count": len(mock_cases),
         },
         "coverage_by_class": coverage_by_class,
-        "recommendation": "build_mock_then_real_open_web_evidence",
-        "next_mock_cases": [
-            "session expiry page",
-            "overlay obstruction page",
-            "autocomplete async validation form",
-            "DOM-vs-visual disagreement fixture",
-            "optimistic UI rollback fixture",
+        "mock_suite": {
+            "data_source": "open_web_mock_failure_suite",
+            "coverage_level": "controlled_mock_evidence",
+            "real_open_web_evidence": False,
+            "case_ids": [case.case_id for case in mock_cases],
+        },
+        "recommendation": "connect_mock_cases_to_runtime_episode_runner_then_run_real_open_web_probe",
+        "next_real_open_web_cases": [
+            "MiniWoB++ dynamic form validation",
+            "WebArena-style auth/session expiry",
+            "browser probe for overlay/cookie banner obstruction",
+            "DOM-vs-screenshot/OCR disagreement with real screenshot evidence",
         ],
     }
 

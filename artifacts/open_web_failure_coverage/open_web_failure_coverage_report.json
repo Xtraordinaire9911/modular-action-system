@@ -15,61 +15,79 @@
       ]
     },
     "autocomplete_async_validation_mutation": {
-      "coverage_level": "mechanism_ready",
+      "coverage_level": "controlled_mock_evidence",
       "description": "Autocomplete or async validation mutates submitted value.",
       "evidence": [
-        "postcondition verification can detect final value mismatch"
+        "postcondition verification can detect final value mismatch",
+        "openweb-autocomplete-validation local fixture"
       ]
     },
     "dom_vs_visual_disagreement": {
-      "coverage_level": "mechanism_ready",
+      "coverage_level": "controlled_mock_evidence",
       "description": "DOM tree and screenshot/OCR/visual grounding disagree.",
       "evidence": [
-        "visual/SoM contracts exist; no systematic live campaign yet"
+        "visual/SoM contracts exist",
+        "openweb-dom-visual-disagreement local fixture"
       ]
     },
     "optimistic_ui_backend_mismatch": {
-      "coverage_level": "controlled_evidence",
+      "coverage_level": "controlled_mock_evidence",
       "description": "UI claims success while backend/API state did not change.",
       "evidence": [
-        "postcondition mismatch / false-success detection in smart-room"
+        "postcondition mismatch / false-success detection in smart-room",
+        "openweb-optimistic-rollback local fixture"
       ]
     },
     "overlay_modal_obstruction": {
-      "coverage_level": "mechanism_ready",
+      "coverage_level": "controlled_mock_evidence",
       "description": "DOM affordance exists but overlay/cookie banner/loading layer blocks operation.",
       "evidence": [
-        "overlay filtering and affordance disappearance handling"
+        "overlay filtering and affordance disappearance handling",
+        "openweb-overlay-obstruction local fixture"
       ]
     },
     "session_auth_expiry": {
-      "coverage_level": "mechanism_ready",
+      "coverage_level": "controlled_mock_evidence",
       "description": "Session or auth expiry leaves stale page content or blocks actions.",
       "evidence": [
-        "no dedicated session-expiry benchmark yet"
+        "openweb-session-expiry local fixture"
       ]
     },
     "visible_but_ineffective_affordance": {
-      "coverage_level": "mechanism_ready",
+      "coverage_level": "controlled_mock_evidence",
       "description": "DOM affordance is visible but execution has no expected effect.",
       "evidence": [
-        "expected-effect verification and recovery ledger"
+        "expected-effect verification and recovery ledger",
+        "openweb-visible-ineffective-affordance local fixture"
       ]
     }
   },
   "data_source": "open_web_failure_coverage",
-  "next_mock_cases": [
-    "session expiry page",
-    "overlay obstruction page",
-    "autocomplete async validation form",
-    "DOM-vs-visual disagreement fixture",
-    "optimistic UI rollback fixture"
+  "mock_suite": {
+    "case_ids": [
+      "openweb-overlay-obstruction",
+      "openweb-session-expiry",
+      "openweb-autocomplete-validation",
+      "openweb-optimistic-rollback",
+      "openweb-dom-visual-disagreement",
+      "openweb-visible-ineffective-affordance"
+    ],
+    "coverage_level": "controlled_mock_evidence",
+    "data_source": "open_web_mock_failure_suite",
+    "real_open_web_evidence": false
+  },
+  "next_real_open_web_cases": [
+    "MiniWoB++ dynamic form validation",
+    "WebArena-style auth/session expiry",
+    "browser probe for overlay/cookie banner obstruction",
+    "DOM-vs-screenshot/OCR disagreement with real screenshot evidence"
   ],
-  "recommendation": "build_mock_then_real_open_web_evidence",
+  "recommendation": "connect_mock_cases_to_runtime_episode_runner_then_run_real_open_web_probe",
   "summary": {
-    "controlled_evidence_count": 3,
+    "controlled_evidence_count": 8,
     "failure_class_count": 8,
-    "mechanism_ready_count": 5,
+    "mechanism_ready_count": 0,
+    "open_web_mock_case_count": 6,
     "real_open_web_evidence_count": 0
   }
 }

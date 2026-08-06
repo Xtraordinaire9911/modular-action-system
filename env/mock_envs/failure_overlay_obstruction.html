@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Open-web mock: overlay obstruction</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    #cookie-wall { position: fixed; inset: 0; background: rgba(0,0,0,.55); color: white; display: grid; place-items: center; }
+    .modal { background: #2f2a5f; padding: 1.5rem; border-radius: 12px; }
+  </style>
+</head>
+<body data-case-id="openweb-overlay-obstruction"
+      data-oracle-state='{"overlay_present":true,"primary_action_completed":false}'>
+  <h1>Subscription settings</h1>
+  <button id="primary-action" data-testid="primary-action">Confirm plan</button>
+  <p id="status">Plan not confirmed.</p>
+  <div id="cookie-wall" data-testid="blocking-overlay">
+    <section class="modal">
+      <h2>Cookie preferences</h2>
+      <p>This overlay intentionally blocks the visible primary button.</p>
+      <button id="accept-cookies">Accept cookies first</button>
+    </section>
+  </div>
+</body>
+</html>

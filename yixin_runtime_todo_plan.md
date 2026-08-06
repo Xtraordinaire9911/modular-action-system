@@ -400,7 +400,7 @@ or statistically validated Bayesian fusion yet.
 | P2 | Smart-room repeated fusion/recovery campaign | `[Yixin - 30×7 live evidence 已完成，后续可做独立 rerun/holdout]` + `[Shared - environment/reset/fault API]` | 现有 7 个 condition 每个至少 30 个独立 trial，总量至少 210；使用 deterministic seeds、每次 reset evidence、独立 oracle、唯一 episode id 和可重放配置 | `evaluation/live_fusion_campaign.py`, `evaluation/live_fusion_calibration.py`, `evaluation/fusion_calibration.py`, `src/pipeline.py`, `tests/test_live_fusion_campaign.py`, `artifacts/live_fusion_campaign_full/fusion_campaign_summary.json` |
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
-| P2 | Open-web failure coverage gap | `[Yixin - coverage taxonomy/report 已完成；mock/real evidence 待环境侧补]` + `[Shared - mock/open-web env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure classes 已入 coverage report；每类 case 标注 mechanism/controlled/real-open-web level | `evaluation/open_web_failure_coverage.py`, `tests/test_open_web_failure_coverage.py`, `artifacts/open_web_failure_coverage/open_web_failure_coverage_report.json` |
+| P2 | Open-web failure coverage gap | `[Yixin - taxonomy + controlled mock suite v1 已完成；real open-web evidence 仍待补]` + `[Shared - real/MiniWoB/WebArena env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure classes 已入 coverage report；已新增本地 oracle-labeled mock fixtures；每类 case 标注 mechanism/controlled-mock/real-open-web level | `evaluation/open_web_failure_coverage.py`, `evaluation/open_web_mock_failure_suite.py`, `tests/test_open_web_failure_coverage.py`, `tests/test_open_web_mock_failure_suite.py`, `artifacts/open_web_failure_coverage/open_web_failure_coverage_report.json`, `artifacts/open_web_mock_failure_suite/open_web_mock_failure_suite_report.json` |
 | Conditional | Bayesian fusion comparator/gate | `[Yixin - promotion review + recovery impact 已完成，Bayesian gate 推荐为 default candidate]` | repeated calibration、locked holdout、shadow stability、gate-enabled live ambiguous、gate-enabled runtime recovery impact 均完成；promotion review 推荐 `bayesian_gate` 作为 default candidate，但必须保持 `rule_first` 可配置回退 | `src/verification/conflict_detector.py`, `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/bayesian_gate_promotion_review.py`, `evaluation/gate_enabled_recovery_impact.py`, `tests/test_epistemic_runtime.py`, `tests/test_bayesian_gate_promotion_review.py`, `tests/test_gate_enabled_recovery_impact.py`, `artifacts/bayesian_gate_promotion_review/bayesian_gate_promotion_review.json`, `artifacts/gate_enabled_recovery_impact/gate_enabled_recovery_impact_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
 | Conditional | Live ambiguous fusion profiles | `[Yixin - initial + independent rerun 30×4 live evidence 与 20/10 locked holdout 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 shadow comparator summary；按 profile 做 calibration/holdout split；initial 与 rerun 均保持 Bayesian shadow 正向；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/live_ambiguous_fusion_holdout.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_holdout.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json`, `artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json` |
@@ -675,6 +675,46 @@ or statistically validated Bayesian fusion yet.
   - real open-web evidence count = 0
   - recommendation = `build_mock_then_real_open_web_evidence`
   - 结论边界：smart-room 证据不能直接 claim 为 broad open-web evidence；下一步需补 mock then real open-web cases。
+
+### 14.5.10 Open-web mock failure suite v1 记录
+
+- **时间**：2026-08-06
+- **代码入口**：
+  - `evaluation/open_web_mock_failure_suite.py`
+  - `evaluation/open_web_failure_coverage.py`
+  - CLI: `python -m src.pipeline --open-web-mock-failure-suite --output-dir artifacts/open_web_mock_failure_suite --seed-start 8000`
+- **新增 local mock fixtures**：
+  - `env/mock_envs/failure_overlay_obstruction.html`
+  - `env/mock_envs/failure_session_expiry.html`
+  - `env/mock_envs/failure_autocomplete_validation.html`
+  - `env/mock_envs/failure_optimistic_rollback.html`
+  - `env/mock_envs/failure_dom_visual_disagreement.html`
+  - `env/mock_envs/failure_visible_ineffective_affordance.html`
+- **已生成 artifact**：
+  - `artifacts/open_web_mock_failure_suite/open_web_mock_failure_plan.json`
+  - `artifacts/open_web_mock_failure_suite/open_web_mock_failure_suite_report.json`
+  - `artifacts/open_web_failure_coverage/open_web_failure_coverage_report.json`
+- **覆盖内容**：
+  - overlay/modal obstruction
+  - session/auth expiry
+  - autocomplete / async validation mutation
+  - optimistic UI / backend mismatch
+  - DOM vs visual disagreement
+  - visible but ineffective affordance
+- **结果**：
+  - mock case count = 6
+  - controlled mock evidence count = 6
+  - unique episode ids = true
+  - unique seeds = true
+  - real open-web evidence count = 0
+  - coverage taxonomy failure classes = 8
+  - coverage report controlled evidence count = 8
+  - coverage report mechanism-ready count = 0
+  - recommendation = `connect_mock_cases_to_runtime_episode_runner_then_run_real_open_web_probe`
+- **结论边界**：
+  - 这一步补上的是可复现的本地 open-web-style failure fixtures 和 oracle-labeled report。
+  - 这不是 MiniWoB++、WebArena 或真实互联网运行证据。
+  - 下一步才是把这些 fixture 接进统一 `RuntimeEpisodeRunner` 执行路径，并迁移至少一部分 case 到 MiniWoB++/WebArena-style/真实网页 probe。
 
 ### 14.6 Planner 职责边界
 

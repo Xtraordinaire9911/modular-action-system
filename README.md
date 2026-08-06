@@ -198,6 +198,16 @@ comparator has a plausible role before designing live ambiguous cases:
 uv run python -m src.pipeline --noisy-fusion-stress --repetitions 30
 ```
 
+Generate the controlled open-web mock failure suite. This writes oracle-labeled
+local fixtures and a coverage report for open-web-style failure modes such as
+overlay obstruction, session expiry, async validation mutation, DOM/visual
+disagreement, optimistic UI/backend mismatch, and visible-but-ineffective
+affordances. It is controlled mock evidence, not real open-web evidence:
+
+```bash
+uv run python -m src.pipeline --open-web-mock-failure-suite
+```
+
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:
 

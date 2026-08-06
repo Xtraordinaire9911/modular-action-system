@@ -290,6 +290,16 @@ def run_bayesian_shadow_stability_pipeline(
     return write_bayesian_shadow_stability_report(holdout_report_paths, output_dir)
 
 
+def run_open_web_mock_failure_suite_pipeline(
+    output_dir: str | Path = "artifacts/open_web_mock_failure_suite",
+    *,
+    seed_start: int = 8000,
+) -> dict[str, str]:
+    from evaluation.open_web_mock_failure_suite import write_open_web_mock_failure_suite_report
+
+    return write_open_web_mock_failure_suite_report(output_dir, seed_start=seed_start)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -334,6 +344,11 @@ def main() -> None:
         "--bayesian-shadow-stability",
         action="store_true",
         help="Compare initial and rerun Bayesian shadow holdouts before any production promotion.",
+    )
+    parser.add_argument(
+        "--open-web-mock-failure-suite",
+        action="store_true",
+        help="Write oracle-labeled local mock fixtures/report for open-web-style failure modes.",
     )
     parser.add_argument(
         "--campaign-summary",
@@ -389,7 +404,12 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.bayesian_shadow_stability:
+    if args.open_web_mock_failure_suite:
+        summary = run_open_web_mock_failure_suite_pipeline(
+            args.output_dir or "artifacts/open_web_mock_failure_suite",
+            seed_start=args.seed_start,
+        )
+    elif args.bayesian_shadow_stability:
         summary = run_bayesian_shadow_stability_pipeline(
             args.holdout_reports
             or [

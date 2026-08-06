@@ -11,6 +11,7 @@ from src.pipeline import (
     run_live_ambiguous_fusion_holdout_pipeline,
     run_live_ambiguous_fusion_pipeline,
     run_noisy_fusion_stress_pipeline,
+    run_open_web_mock_failure_suite_pipeline,
     run_runtime_demo_pipeline,
     run_smoke_pipeline,
 )
@@ -192,3 +193,12 @@ def test_bayesian_shadow_stability_pipeline_writes_report(tmp_path):
 
     assert paths["bayesian_shadow_stability_report"].endswith("bayesian_shadow_stability_report.json")
     assert report["recommendation"] == "ready_for_integration_design_review"
+
+
+def test_open_web_mock_failure_suite_pipeline_writes_report(tmp_path):
+    paths = run_open_web_mock_failure_suite_pipeline(tmp_path, seed_start=8300)
+    report = json.loads((tmp_path / "open_web_mock_failure_suite_report.json").read_text())
+
+    assert paths["open_web_mock_failure_suite_report"].endswith("open_web_mock_failure_suite_report.json")
+    assert report["protocol"]["controlled_mock_evidence"] is True
+    assert report["summary"]["real_open_web_evidence_count"] == 0

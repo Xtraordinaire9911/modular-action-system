@@ -9,8 +9,10 @@ def test_open_web_failure_coverage_report_tracks_mechanism_mock_and_real_levels(
     assert report["data_source"] == "open_web_failure_coverage"
     assert report["summary"]["failure_class_count"] >= 8
     assert "session_auth_expiry" in report["coverage_by_class"]
-    assert report["coverage_by_class"]["session_auth_expiry"]["coverage_level"] == "mechanism_ready"
-    assert report["recommendation"] == "build_mock_then_real_open_web_evidence"
+    assert report["coverage_by_class"]["session_auth_expiry"]["coverage_level"] == "controlled_mock_evidence"
+    assert report["summary"]["open_web_mock_case_count"] >= 5
+    assert report["mock_suite"]["real_open_web_evidence"] is False
+    assert report["recommendation"] == "connect_mock_cases_to_runtime_episode_runner_then_run_real_open_web_probe"
 
 
 def test_open_web_failure_coverage_writer_writes_artifact(tmp_path):
