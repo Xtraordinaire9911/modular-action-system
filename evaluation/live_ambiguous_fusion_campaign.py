@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 from urllib.parse import urlencode
 
-from evaluation.noisy_fusion_stress import build_noisy_fusion_stress_report
 from evaluation.fusion_shadow_strategies import score_predictions
+from evaluation.noisy_fusion_stress import build_noisy_fusion_stress_report
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.episode import ObservationRequest
 from src.runtime.live_environment import (
@@ -28,7 +28,6 @@ from src.runtime.live_environment import (
     ThreadedBrowserSession,
 )
 from src.verification.conflict_detector import EpistemicArbiter
-
 
 ORACLE_SOURCE = "ambiguous-fault-profile-label"
 

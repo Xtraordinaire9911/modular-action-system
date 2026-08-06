@@ -20,9 +20,11 @@ def test_live_ambiguous_plan_uses_four_profiles_with_unique_seeded_episode_ids()
 def test_live_ambiguous_summary_reports_protocol_and_comparator_metrics():
     plan = build_live_ambiguous_fusion_plan(repetitions=1, seed_start=700)
     completed = [
-        trial.with_result(conflict_score=0.7, detected_blocking=True, detection_latency_ms=0.2)
-        if trial.expected_blocking
-        else trial.with_result(conflict_score=0.2, detected_blocking=False, detection_latency_ms=0.2)
+        (
+            trial.with_result(conflict_score=0.7, detected_blocking=True, detection_latency_ms=0.2)
+            if trial.expected_blocking
+            else trial.with_result(conflict_score=0.2, detected_blocking=False, detection_latency_ms=0.2)
+        )
         for trial in plan
     ]
 

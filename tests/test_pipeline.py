@@ -4,8 +4,8 @@ import asyncio
 import json
 
 from src.pipeline import (
-    run_bayesian_shadow_stability_pipeline,
     run_bayesian_fusion_comparator_pipeline,
+    run_bayesian_shadow_stability_pipeline,
     run_fusion_ablation_report_pipeline,
     run_fusion_campaign_pipeline,
     run_live_ambiguous_fusion_holdout_pipeline,
@@ -169,9 +169,7 @@ def test_fusion_ablation_report_pipeline_writes_report(tmp_path):
 
     paths = run_fusion_ablation_report_pipeline(source, tmp_path / "ablation")
 
-    assert paths["bayesian_vs_rule_first_ablation_report"].endswith(
-        "bayesian_vs_rule_first_ablation_report.json"
-    )
+    assert paths["bayesian_vs_rule_first_ablation_report"].endswith("bayesian_vs_rule_first_ablation_report.json")
 
 
 def test_bayesian_shadow_stability_pipeline_writes_report(tmp_path):

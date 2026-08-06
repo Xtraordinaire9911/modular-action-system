@@ -31,8 +31,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.benchmarks.reflex_policy import select_next  # noqa: E402
-from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
 from src.benchmarks.rule_web_planner import RuleBasedAffordancePlanner, WebPlannerHistory  # noqa: E402
+from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
 from src.benchmarks.task_spec import BenchmarkTask  # noqa: E402
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter  # noqa: E402
 from src.benchmarks.web_task_planner import RuleBasedWebTaskPlanner, subgoal_satisfied  # noqa: E402
@@ -191,7 +191,7 @@ def main() -> None:
                 )
             )
             session.screenshot(str(shots / "final.png"))
-            print(f"runtime entrypoint: RuntimeEpisodeRunner.run_goal_episode")
+            print("runtime entrypoint: RuntimeEpisodeRunner.run_goal_episode")
             print(f"runtime state: {outcome.result.state.value}")
             print(f"verified: {outcome.result.final_outcome_verified}")
             print(f"episode: {outcome.result.episode_id}")

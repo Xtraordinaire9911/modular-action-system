@@ -19,16 +19,20 @@ def _completed_trials():
                 "conflict_score": score,
                 "detection_latency_ms": 0.1,
                 "reset_evidence_id": f"reset-{trial.episode_id}",
-                "source_reliability": {"dom": 0.3, "wot": 0.95}
-                if trial.profile == "low_reliability_dom"
-                else {"dom": 0.65, "wot": 0.35}
-                if trial.profile == "partial_missing_wot"
-                else {"dom": 0.55, "wot": 0.85},
-                "staleness_ms": 1200.0
-                if trial.profile == "weak_stale_signal"
-                else 900.0
-                if trial.profile == "delayed_wot_recovery"
-                else 100.0,
+                "source_reliability": (
+                    {"dom": 0.3, "wot": 0.95}
+                    if trial.profile == "low_reliability_dom"
+                    else (
+                        {"dom": 0.65, "wot": 0.35}
+                        if trial.profile == "partial_missing_wot"
+                        else {"dom": 0.55, "wot": 0.85}
+                    )
+                ),
+                "staleness_ms": (
+                    1200.0
+                    if trial.profile == "weak_stale_signal"
+                    else 900.0 if trial.profile == "delayed_wot_recovery" else 100.0
+                ),
                 "missing_source_probability": 0.7 if trial.profile == "partial_missing_wot" else 0.0,
             }
         )

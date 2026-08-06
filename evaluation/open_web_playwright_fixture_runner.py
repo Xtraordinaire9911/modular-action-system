@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import inspect
+import json
 from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
@@ -14,6 +14,7 @@ from evaluation.metrics_aggregator import aggregate_metrics, dataset_from_runtim
 from evaluation.open_web_mock_failure_suite import OpenWebMockFailureCase, build_open_web_mock_failure_suite
 from src.adaptation.trace_ledger import TraceLedger
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
+from src.runtime.continuous_interaction_manager import Executor
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec
 
@@ -23,7 +24,7 @@ class BrowserSessionLike(Protocol):
     def click(self, selector: str) -> Any: ...
     def fill(self, selector: str, value: str) -> Any: ...
     def evaluate(self, expression: str, arg: Any | None = None) -> Any: ...
-    def screenshot(self, path: str | None = None) -> bytes: ...
+    def screenshot(self, path: str | None = None) -> Any: ...
     def close(self) -> Any: ...
 
 
@@ -150,20 +151,16 @@ class _PlaywrightFixtureRuntimeAdapter:
             },
         )
 
-    def executors(self) -> dict[str, _PlaywrightFixtureExecutor]:
+    def executors(self) -> dict[str, Executor]:
         return {"dom": self.executor}
 
 
 async def _read_fixture_oracle(session: BrowserSessionLike) -> dict[str, Any]:
-    value = await _maybe_await(
-        session.evaluate(
-        """() => {
+    value = await _maybe_await(session.evaluate("""() => {
             const raw = document.body && document.body.getAttribute('data-oracle-state');
             if (!raw) return {};
             try { return JSON.parse(raw); } catch (error) { return {parse_error: String(error), raw}; }
-        }"""
-        )
-    )
+        }"""))
     return value if isinstance(value, dict) else {}
 
 

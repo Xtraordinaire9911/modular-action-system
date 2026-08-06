@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-
 CORE_METRICS = (
     "TSR",
     "RecoveryTriggerRate",
@@ -29,7 +28,10 @@ def build_gate_enabled_recovery_impact_report(
         gate = float(gate_values.get(metric, 0.0))
         delta = round(gate - baseline, 6)
         rows[metric] = {"baseline": baseline, "bayesian_gate": gate, "delta": delta}
-        if metric in {"TSR", "RecoverySuccessRate", "ExpectedEffectSuccessRate", "FalseSuccessDetectionRate"} and delta < 0:
+        if (
+            metric in {"TSR", "RecoverySuccessRate", "ExpectedEffectSuccessRate", "FalseSuccessDetectionRate"}
+            and delta < 0
+        ):
             regressions.append(metric)
     return {
         "data_source": "gate_enabled_recovery_impact",

@@ -1,6 +1,9 @@
 import json
 
-from evaluation.open_web_failure_coverage import build_open_web_failure_coverage_report, write_open_web_failure_coverage_report
+from evaluation.open_web_failure_coverage import (
+    build_open_web_failure_coverage_report,
+    write_open_web_failure_coverage_report,
+)
 
 
 def test_open_web_failure_coverage_report_tracks_mechanism_mock_and_real_levels():

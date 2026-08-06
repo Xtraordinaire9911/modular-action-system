@@ -273,7 +273,9 @@ def run_live_ambiguous_fusion_holdout_pipeline(
 
 
 def run_fusion_ablation_report_pipeline(
-    holdout_report_path: str | Path = "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+    holdout_report_path: (
+        str | Path
+    ) = "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
     output_dir: str | Path = "artifacts/bayesian_vs_rule_first_ablation",
 ) -> dict[str, str]:
     from evaluation.fusion_ablation_report import write_fusion_ablation_report
