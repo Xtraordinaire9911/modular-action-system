@@ -568,6 +568,34 @@ def test_bayesian_gate_blocks_ambiguous_stale_conflict_without_replacing_fused_s
     assert fused.value == 22.0
 
 
+def test_bayesian_gate_uses_assertion_staleness_metadata_for_live_fault_profiles():
+    cmap = CognitiveMap(task_id="task_bayesian_gate_metadata")
+    cmap.add_state_assertion(
+        StateAssertion(
+            "thermostat",
+            "target_temperature",
+            20.5,
+            "dom",
+            confidence=1.0,
+            timestamp_ms=1000,
+            metadata={"staleness_ms": 1200.0},
+        )
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22.0, "wot", confidence=1.0, timestamp_ms=1000)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 2.0},
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        halt_threshold=1.0,
+        fusion_strategy="bayesian_gate",
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is False
+    assert "bayesian_gate posterior" in decision.reason
+
+
 def test_epistemic_arbiter_halts_on_high_confidence_categorical_conflict():
     cmap = CognitiveMap(task_id="task_categorical")
     cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "dom", confidence=1.0, timestamp_ms=10))

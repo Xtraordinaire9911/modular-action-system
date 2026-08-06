@@ -235,6 +235,12 @@ uv run python -m src.pipeline --live-ambiguous-fusion \
   --seed-start 5300 \
   --output-dir artifacts/live_ambiguous_fusion_rerun
 
+uv run python -m src.pipeline --live-ambiguous-fusion \
+  --fusion-strategy bayesian_gate \
+  --repetitions 30 \
+  --seed-start 7300 \
+  --output-dir artifacts/live_ambiguous_fusion_bayesian_gate_full
+
 uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
   --live-ambiguous-summary artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json \
   --output-dir artifacts/live_ambiguous_fusion_rerun_holdout \

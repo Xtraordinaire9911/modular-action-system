@@ -17,6 +17,7 @@ from typing import Any, Iterable, Sequence
 from urllib.parse import urlencode
 
 from evaluation.noisy_fusion_stress import build_noisy_fusion_stress_report
+from evaluation.fusion_shadow_strategies import score_predictions
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.episode import ObservationRequest
 from src.runtime.live_environment import (
@@ -175,6 +176,7 @@ def build_live_ambiguous_fusion_plan(
 def summarize_live_ambiguous_fusion_trials(
     trials: Iterable[LiveAmbiguousTrial],
     *,
+    fusion_strategy: str = "rule_first",
     rule_threshold: float = 1.0,
     posterior_threshold: float = 0.5,
 ) -> dict[str, Any]:
@@ -201,23 +203,38 @@ def summarize_live_ambiguous_fusion_trials(
         rule_threshold=rule_threshold,
         posterior_threshold=posterior_threshold,
     )
+    gate_metrics = score_predictions(
+        expected=[trial.expected_blocking for trial in materialized],
+        predicted=[trial.detected_blocking for trial in materialized],
+        latencies=[trial.detection_latency_ms for trial in materialized],
+    )
+    gate_changed = fusion_strategy != "rule_first"
+    recommendation = comparator["comparison"]["recommendation"]
+    if gate_changed and float(gate_metrics["miss_rate"]) == 0.0 and float(gate_metrics["false_halt_rate"]) == 0.0:
+        recommendation = "gate_enabled_evaluation_passed"
     return {
         "data_source": "live_ambiguous_fusion_campaign",
         "protocol": {
             "trial_count": len(materialized),
             "profile_counts": _profile_counts(materialized),
             "oracle_source": ORACLE_SOURCE,
-            "production_gate_changed": False,
+            "fusion_strategy": fusion_strategy,
+            "production_gate_changed": gate_changed,
             "fine_grained_fault_api": True,
             "unique_episode_ids": len({trial.episode_id for trial in materialized}) == len(materialized),
             "unique_seeds": len({trial.seed for trial in materialized}) == len(materialized),
             "reset_evidence_complete": all(bool(trial.reset_evidence_id) for trial in materialized),
         },
+        "gate": {
+            "strategy": fusion_strategy,
+            "metrics": gate_metrics,
+        },
         "rule_first": comparator["rule_first"],
         "bayesian": comparator["bayesian"],
         "comparison": {
             **comparator["comparison"],
-            "production_gate_changed": False,
+            "production_gate_changed": gate_changed,
+            "recommendation": recommendation,
         },
         "trials": [asdict(trial) for trial in materialized],
     }
@@ -234,6 +251,7 @@ def run_live_ambiguous_fusion_campaign(
     control_url: str = "http://127.0.0.1:8081",
     headless: bool = True,
     dry_run: bool = False,
+    fusion_strategy: str = "rule_first",
 ) -> dict[str, str]:
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
@@ -250,6 +268,7 @@ def run_live_ambiguous_fusion_campaign(
                     "planned_trial_count": len(plan),
                     "profile_counts": _profile_counts(plan),
                     "fine_grained_fault_api": True,
+                    "fusion_strategy": fusion_strategy,
                     "plan": str(plan_path),
                 },
                 indent=2,
@@ -266,7 +285,15 @@ def run_live_ambiguous_fusion_campaign(
         control_url=control_url,
         output_dir=target,
     )
-    return asyncio.run(_run_with_browser(config, plan, summary_path=summary_path, headless=headless))
+    return asyncio.run(
+        _run_with_browser(
+            config,
+            plan,
+            summary_path=summary_path,
+            headless=headless,
+            fusion_strategy=fusion_strategy,
+        )
+    )
 
 
 async def _run_with_browser(
@@ -275,14 +302,15 @@ async def _run_with_browser(
     *,
     summary_path: Path,
     headless: bool,
+    fusion_strategy: str,
 ) -> dict[str, str]:
     session = ThreadedBrowserSession(config.dashboard_url, headless=headless)
     await session.start()
     try:
-        trials = await _execute_live_ambiguous_trials(session, config, plan)
+        trials = await _execute_live_ambiguous_trials(session, config, plan, fusion_strategy=fusion_strategy)
     finally:
         await session.close()
-    summary = summarize_live_ambiguous_fusion_trials(trials)
+    summary = summarize_live_ambiguous_fusion_trials(trials, fusion_strategy=fusion_strategy)
     summary["replay_config"] = {
         "dashboard_url": config.dashboard_url,
         "thing_directory_url": config.thing_directory_url,
@@ -300,6 +328,8 @@ async def _execute_live_ambiguous_trials(
     session: ThreadedBrowserSession,
     config: LiveEnvironmentConfig,
     plan: Sequence[LiveAmbiguousTrial],
+    *,
+    fusion_strategy: str = "rule_first",
 ) -> list[LiveAmbiguousTrial]:
     profiles = {profile.name: profile for profile in LIVE_AMBIGUOUS_PROFILES}
     control = SmartRoomControlClient(config.control_url, timeout_s=config.request_timeout_s)
@@ -357,11 +387,14 @@ async def _execute_live_ambiguous_trials(
         )
         cognitive_map = CognitiveMap(task_id=f"live_ambiguous_{profile.name}")
         live.apply_to(cognitive_map)
+        _annotate_profile_evidence(cognitive_map, profile)
         arbiter = EpistemicArbiter(
             numeric_tolerances={"target_temperature": 2.0},
-            halt_threshold=0.0001,
+            halt_threshold=1.0,
+            source_reliability=profile.source_reliability,
             required_sources_by_attribute={"target_temperature": {"dom", "wot"}},
             missing_source_mass=1.0,
+            fusion_strategy=fusion_strategy,  # type: ignore[arg-type]
         )
         started = time.perf_counter()
         decision = arbiter.fuse(cognitive_map)
@@ -383,6 +416,21 @@ async def _execute_live_ambiguous_trials(
 def _profile_counts(trials: Sequence[LiveAmbiguousTrial]) -> dict[str, int]:
     profiles = sorted({trial.profile for trial in trials})
     return {profile: sum(1 for trial in trials if trial.profile == profile) for profile in profiles}
+
+
+def _annotate_profile_evidence(cognitive_map: CognitiveMap, profile: LiveAmbiguousProfile) -> None:
+    mapping = profile.fault_mapping()
+    staleness_ms = _staleness_from_mapping(mapping)
+    missing_probability = _missing_probability_from_mapping(mapping)
+    for assertion in cognitive_map.state_assertions:
+        if assertion.entity_id != "thermostat" or assertion.attribute != "target_temperature":
+            continue
+        assertion.metadata = {
+            **assertion.metadata,
+            "live_ambiguous_profile": profile.name,
+            "staleness_ms": staleness_ms,
+            "missing_source_probability": missing_probability,
+        }
 
 
 def _source_reliability_from_mapping(mapping: dict[str, Any]) -> dict[str, float]:

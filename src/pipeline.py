@@ -233,6 +233,7 @@ def run_live_ambiguous_fusion_pipeline(
     control_url: str = "http://127.0.0.1:8081",
     headless: bool = True,
     dry_run: bool = False,
+    fusion_strategy: str = "rule_first",
 ) -> dict[str, str]:
     from evaluation.live_ambiguous_fusion_campaign import run_live_ambiguous_fusion_campaign
 
@@ -246,6 +247,7 @@ def run_live_ambiguous_fusion_pipeline(
         control_url=control_url,
         headless=headless,
         dry_run=dry_run,
+        fusion_strategy=fusion_strategy,
     )
 
 
@@ -358,6 +360,12 @@ def main() -> None:
         help="Posterior blocking threshold for --bayesian-fusion-comparator.",
     )
     parser.add_argument(
+        "--fusion-strategy",
+        choices=["rule_first", "bayesian_gate"],
+        default="rule_first",
+        help="Fusion strategy for live ambiguous campaign runs.",
+    )
+    parser.add_argument(
         "--calibration-repetitions",
         type=int,
         default=20,
@@ -412,6 +420,7 @@ def main() -> None:
             control_url=args.control_url,
             headless=not args.headed,
             dry_run=args.live_ambiguous_fusion_dry_run,
+            fusion_strategy=args.fusion_strategy,
         )
     elif args.noisy_fusion_stress:
         summary = run_noisy_fusion_stress_pipeline(

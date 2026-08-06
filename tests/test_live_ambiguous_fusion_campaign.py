@@ -41,6 +41,28 @@ def test_live_ambiguous_summary_reports_protocol_and_comparator_metrics():
     assert summary["comparison"]["production_gate_changed"] is False
 
 
+def test_live_ambiguous_summary_can_record_gate_enabled_strategy():
+    plan = build_live_ambiguous_fusion_plan(repetitions=1, seed_start=710)
+    completed = [
+        trial.with_result(conflict_score=0.7, detected_blocking=trial.expected_blocking, detection_latency_ms=0.2)
+        for trial in plan
+    ]
+
+    summary = summarize_live_ambiguous_fusion_trials(
+        completed,
+        fusion_strategy="bayesian_gate",
+        rule_threshold=1.0,
+        posterior_threshold=0.5,
+    )
+
+    assert summary["protocol"]["fusion_strategy"] == "bayesian_gate"
+    assert summary["protocol"]["production_gate_changed"] is True
+    assert summary["gate"]["strategy"] == "bayesian_gate"
+    assert summary["gate"]["metrics"]["miss_rate"] == 0.0
+    assert summary["comparison"]["production_gate_changed"] is True
+    assert summary["comparison"]["recommendation"] == "gate_enabled_evaluation_passed"
+
+
 def test_live_ambiguous_profiles_use_fine_grained_fault_parameters():
     mappings = {profile.name: profile.fault_mapping() for profile in LIVE_AMBIGUOUS_PROFILES}
 

@@ -388,12 +388,27 @@ class EpistemicArbiter:
     def _bayesian_blocking_probability(self, cognitive_map: CognitiveMap, conflict: Conflict) -> float:
         latest = self._latest_for_conflict(cognitive_map, conflict)
         timestamps = [assertion.timestamp_ms for assertion in latest.values()]
-        staleness_ms = float(max(timestamps) - min(timestamps)) if len(timestamps) >= 2 else 0.0
+        metadata_staleness = [
+            float(assertion.metadata.get("staleness_ms", 0.0))
+            for assertion in latest.values()
+            if assertion.metadata.get("staleness_ms") is not None
+        ]
+        staleness_ms = max(metadata_staleness, default=0.0)
+        if len(timestamps) >= 2:
+            staleness_ms = max(staleness_ms, float(max(timestamps) - min(timestamps)))
         dom_reliability = self.source_reliability.get("dom", 0.5)
         wot_reliability = self.source_reliability.get("wot", 0.5)
-        missing_probability = 0.0
+        metadata_missing = [
+            float(assertion.metadata.get("missing_source_probability", 0.0))
+            for assertion in latest.values()
+            if assertion.metadata.get("missing_source_probability") is not None
+        ]
+        missing_probability = max(metadata_missing, default=0.0)
         if conflict.conflict_type == "required_source_missing_or_stale":
-            missing_probability = min(1.0, 0.35 + 0.35 * len(conflict.values.get("missing_sources", [])))
+            missing_probability = max(
+                missing_probability,
+                min(1.0, 0.35 + 0.35 * len(conflict.values.get("missing_sources", []))),
+            )
         logit = (
             -2.2
             + 2.8 * float(conflict.conflict_mass)
