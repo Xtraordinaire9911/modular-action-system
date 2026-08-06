@@ -523,6 +523,51 @@ def test_epistemic_arbiter_ignores_low_confidence_visual_noise():
     assert cmap.unresolved_conflicts() == []
 
 
+def test_rule_first_gate_keeps_ambiguous_below_threshold_conflict_non_blocking():
+    cmap = CognitiveMap(task_id="task_rule_first_ambiguous")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 20.5, "dom", confidence=1.0, timestamp_ms=1000)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22.0, "wot", confidence=1.0, timestamp_ms=2200)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 2.0},
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        halt_threshold=1.0,
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert decision.conflicts == []
+
+
+def test_bayesian_gate_blocks_ambiguous_stale_conflict_without_replacing_fused_state_logic():
+    cmap = CognitiveMap(task_id="task_bayesian_gate_ambiguous")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 20.5, "dom", confidence=1.0, timestamp_ms=1000)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22.0, "wot", confidence=1.0, timestamp_ms=2200)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 2.0},
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        halt_threshold=1.0,
+        fusion_strategy="bayesian_gate",
+        bayesian_posterior_threshold=0.5,
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is False
+    assert decision.active_perception_required is True
+    assert decision.conflicts[0].conflict_type == "target_temperature_mismatch"
+    assert "bayesian_gate posterior" in decision.reason
+    fused = next(state for state in decision.fused_states if state.attribute == "target_temperature")
+    assert fused.value == 22.0
+
+
 def test_epistemic_arbiter_halts_on_high_confidence_categorical_conflict():
     cmap = CognitiveMap(task_id="task_categorical")
     cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "dom", confidence=1.0, timestamp_ms=10))

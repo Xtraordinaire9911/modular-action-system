@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -104,6 +105,8 @@ class EpistemicArbiter:
         semantic_rules: list[SemanticConsistencyRule] | None = None,
         required_sources_by_attribute: dict[str, set[str]] | None = None,
         missing_source_mass: float = 1.0,
+        fusion_strategy: Literal["rule_first", "bayesian_gate"] = "rule_first",
+        bayesian_posterior_threshold: float = 0.5,
     ) -> None:
         self.numeric_tolerances = numeric_tolerances or {}
         self.halt_threshold = halt_threshold
@@ -116,8 +119,25 @@ class EpistemicArbiter:
             for attribute, sources in (required_sources_by_attribute or {}).items()
         }
         self.missing_source_mass = max(0.0, missing_source_mass)
+        self.fusion_strategy = fusion_strategy
+        self.bayesian_posterior_threshold = bayesian_posterior_threshold
 
     def check(self, cognitive_map: CognitiveMap) -> list[Conflict]:
+        conflicts, evaluated_conflict_ids, active_conflict_ids = self._candidate_conflicts(
+            cognitive_map,
+            min_conflict_mass=self.halt_threshold,
+        )
+        for conflict in conflicts:
+            cognitive_map.add_conflict(conflict)
+        self._resolve_inactive_conflicts(cognitive_map, evaluated_conflict_ids, active_conflict_ids)
+        return conflicts
+
+    def _candidate_conflicts(
+        self,
+        cognitive_map: CognitiveMap,
+        *,
+        min_conflict_mass: float,
+    ) -> tuple[list[Conflict], set[str], set[str]]:
         conflicts: list[Conflict] = []
         active_conflict_ids: set[str] = set()
         evaluated_conflict_ids: set[str] = set()
@@ -129,25 +149,21 @@ class EpistemicArbiter:
             if self._required_sources(entity_id, attribute):
                 evaluated_conflict_ids.add(missing_id)
             missing = self._missing_required_sources(entity_id, attribute, latest_all, latest_by_source)
-            if missing is not None and missing.conflict_mass >= self.halt_threshold:
-                cognitive_map.add_conflict(missing)
+            if missing is not None and missing.conflict_mass >= min_conflict_mass:
                 conflicts.append(missing)
                 active_conflict_ids.add(missing.id)
             if len(latest_by_source) >= 2:
                 conflict = self._compare_latest(entity_id, attribute, latest_by_source)
-                if conflict and conflict.conflict_mass >= self.halt_threshold:
-                    cognitive_map.add_conflict(conflict)
+                if conflict and conflict.conflict_mass >= min_conflict_mass:
                     conflicts.append(conflict)
                     active_conflict_ids.add(conflict.id)
         for rule in self.semantic_rules:
             evaluated_conflict_ids.add(_semantic_rule_id(rule))
         for conflict in self._check_semantic_rules(cognitive_map):
-            if conflict.conflict_mass >= self.halt_threshold:
-                cognitive_map.add_conflict(conflict)
+            if conflict.conflict_mass >= min_conflict_mass:
                 conflicts.append(conflict)
                 active_conflict_ids.add(conflict.id)
-        self._resolve_inactive_conflicts(cognitive_map, evaluated_conflict_ids, active_conflict_ids)
-        return conflicts
+        return conflicts, evaluated_conflict_ids, active_conflict_ids
 
     def _missing_required_sources(
         self,
@@ -189,8 +205,30 @@ class EpistemicArbiter:
         continue, should actively re-observe, or must halt.
         """
 
-        conflicts = self.check(cognitive_map)
-        blocking = [conflict for conflict in conflicts if conflict.conflict_mass >= self.halt_threshold]
+        if self.fusion_strategy == "bayesian_gate":
+            conflicts, evaluated_conflict_ids, _ = self._candidate_conflicts(
+                cognitive_map,
+                min_conflict_mass=0.0001,
+            )
+            blocking = [
+                conflict
+                for conflict in conflicts
+                if self._bayesian_blocking_probability(cognitive_map, conflict) >= self.bayesian_posterior_threshold
+            ]
+            for conflict in blocking:
+                conflict.description = (
+                    f"{conflict.description}; bayesian_posterior="
+                    f"{self._bayesian_blocking_probability(cognitive_map, conflict):.3f}"
+                )
+                cognitive_map.add_conflict(conflict)
+            self._resolve_inactive_conflicts(
+                cognitive_map,
+                evaluated_conflict_ids,
+                {conflict.id for conflict in blocking},
+            )
+        else:
+            conflicts = self.check(cognitive_map)
+            blocking = [conflict for conflict in conflicts if conflict.conflict_mass >= self.halt_threshold]
         fused_states: list[FusedState] = []
         for (entity_id, attribute), assertions in _group_assertions(cognitive_map.state_assertions).items():
             latest_by_source = self._fresh_latest_by_source(_latest_by_source(assertions))
@@ -222,9 +260,17 @@ class EpistemicArbiter:
             )
 
         if blocking:
+            reason = "blocking sensory conflict requires active perception or escalation"
+            if self.fusion_strategy == "bayesian_gate":
+                strongest = max(blocking, key=lambda conflict: self._bayesian_blocking_probability(cognitive_map, conflict))
+                reason = (
+                    "bayesian_gate posterior "
+                    f"{self._bayesian_blocking_probability(cognitive_map, strongest):.3f} "
+                    "requires active perception or escalation"
+                )
             decision = FusionDecision(
                 allow_system1=False,
-                reason="blocking sensory conflict requires active perception or escalation",
+                reason=reason,
                 fused_states=fused_states,
                 conflicts=blocking,
                 active_perception_required=True,
@@ -338,6 +384,33 @@ class EpistemicArbiter:
             key = _value_key(assertion.value)
             support[key] = support.get(key, 0.0) + self._evidence_weight(assertion, newest_timestamp)
         return support
+
+    def _bayesian_blocking_probability(self, cognitive_map: CognitiveMap, conflict: Conflict) -> float:
+        latest = self._latest_for_conflict(cognitive_map, conflict)
+        timestamps = [assertion.timestamp_ms for assertion in latest.values()]
+        staleness_ms = float(max(timestamps) - min(timestamps)) if len(timestamps) >= 2 else 0.0
+        dom_reliability = self.source_reliability.get("dom", 0.5)
+        wot_reliability = self.source_reliability.get("wot", 0.5)
+        missing_probability = 0.0
+        if conflict.conflict_type == "required_source_missing_or_stale":
+            missing_probability = min(1.0, 0.35 + 0.35 * len(conflict.values.get("missing_sources", [])))
+        logit = (
+            -2.2
+            + 2.8 * float(conflict.conflict_mass)
+            + 2.0 * missing_probability
+            + 1.2 * min(staleness_ms / 1000.0, 2.0)
+            + 1.4 * (1.0 - wot_reliability)
+            - 0.8 * max(0.0, wot_reliability - dom_reliability)
+        )
+        return _sigmoid(logit)
+
+    def _latest_for_conflict(self, cognitive_map: CognitiveMap, conflict: Conflict) -> dict[str, StateAssertion]:
+        assertions = [
+            assertion
+            for assertion in cognitive_map.state_assertions
+            if assertion.entity_id == conflict.entity_id and assertion.attribute == conflict.attribute
+        ]
+        return self._fresh_latest_by_source(_latest_by_source(assertions))
 
     def _fresh_latest_by_source(
         self,
@@ -474,6 +547,14 @@ def _now_ms() -> int:
     import time
 
     return int(time.time() * 1000)
+
+
+def _sigmoid(value: float) -> float:
+    if value >= 0:
+        z = math.exp(-value)
+        return 1 / (1 + z)
+    z = math.exp(value)
+    return z / (1 + z)
 
 
 def _severity(conflict_mass: float) -> Severity:

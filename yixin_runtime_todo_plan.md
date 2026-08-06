@@ -401,7 +401,7 @@ or statistically validated Bayesian fusion yet.
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
 | P2 | Open-web failure coverage gap | `[Yixin - 机制边界梳理 + failure taxonomy]` + `[Shared - mock/open-web env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；补充 overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure cases；每个 case 必须输出 observation/action/verification/recovery ledger，并标注是 mechanism coverage、mock evidence 还是真实 open-web evidence | `src/benchmarks/`, `env/mock_envs/`, `evaluation/`, `artifacts/open_web_failure_suite/` |
-| Conditional | Bayesian fusion comparator | `[Yixin - shadow-mode strategy + independent stability report 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；shadow mode 同时记录 production rule-first 与 Bayesian decision，但 production gate 不变；initial 与 independent rerun holdout 均为正向后，下一步仍需 integration design review，而非直接替换 | `evaluation/bayesian_fusion_comparator.py`, `evaluation/fusion_shadow_strategies.py`, `evaluation/fusion_ablation_report.py`, `evaluation/bayesian_shadow_stability.py`, `tests/test_bayesian_fusion_comparator.py`, `tests/test_fusion_shadow_strategies.py`, `tests/test_fusion_ablation_report.py`, `tests/test_bayesian_shadow_stability.py`, `artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json` |
+| Conditional | Bayesian fusion comparator/gate | `[Yixin - configurable bayesian_gate 已实现，默认 production 仍为 rule_first]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；shadow mode 同时记录 production rule-first 与 Bayesian decision；`EpistemicArbiter(fusion_strategy="bayesian_gate")` 已可真正控制 `allow_system1`，但默认构造仍不切换；下一步需要 gate-enabled live rerun 后才能考虑默认替换 | `src/verification/conflict_detector.py`, `evaluation/bayesian_fusion_comparator.py`, `evaluation/fusion_shadow_strategies.py`, `evaluation/fusion_ablation_report.py`, `evaluation/bayesian_shadow_stability.py`, `tests/test_epistemic_runtime.py`, `tests/test_bayesian_fusion_comparator.py`, `tests/test_fusion_shadow_strategies.py`, `tests/test_fusion_ablation_report.py`, `tests/test_bayesian_shadow_stability.py`, `artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
 | Conditional | Live ambiguous fusion profiles | `[Yixin - initial + independent rerun 30×4 live evidence 与 20/10 locked holdout 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 shadow comparator summary；按 profile 做 calibration/holdout split；initial 与 rerun 均保持 Bayesian shadow 正向；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/live_ambiguous_fusion_holdout.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_holdout.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json`, `artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json` |
 
@@ -609,6 +609,25 @@ or statistically validated Bayesian fusion yet.
   - promotion preconditions 全部通过：positive delta、miss-rate non-regression、false-halt non-regression、profile counts complete、production gate unchanged。
   - recommendation = `ready_for_integration_design_review`
   - 仍不表示已经替换 production gate；下一步是 configurable CIM/verifier integration design，而不是直接默认启用。
+
+### 14.5.8 Configurable Bayesian fusion gate 记录
+
+- **时间**：2026-08-06
+- **代码入口**：
+  - `src/verification/conflict_detector.py`
+  - `tests/test_epistemic_runtime.py`
+- **实现内容**：
+  - `EpistemicArbiter` 新增 `fusion_strategy` 配置，当前支持 `rule_first` 和 `bayesian_gate`。
+  - 默认仍为 `rule_first`，因此既有 production/runtime 构造不被自动切换。
+  - `bayesian_gate` 会对低于 fixed rule threshold 的候选 conflict 计算 posterior blocking probability。
+  - 当 posterior 大于 `bayesian_posterior_threshold` 时，`fuse()` 返回 `allow_system1=false`、`active_perception_required=true`，CIM 会按真实 fusion gate 处理，而不是只写 shadow report。
+  - 当前安全边界：Bayesian 只接管 block/allow；`fused_states` 仍沿用既有 support/selected-state 逻辑，避免同时改变 accepted state semantics。
+- **验收测试**：
+  - 默认 rule-first 对同一 ambiguous low-score conflict 仍不 block。
+  - `fusion_strategy="bayesian_gate"` 对同一 evidence 会 block，并保留既有 fused-state 选择逻辑。
+- **下一步**：
+  - 需要新增 gate-enabled live rerun，把 `bayesian_gate` 真正作为 runtime arbiter 跑完整 live ambiguous / recovery evaluation。
+  - 只有 gate-enabled rerun 的 TSR、false halt、miss rate、recovery impact 和 latency 均通过后，才讨论默认 production 切换。
 
 ### 14.6 Planner 职责边界
 

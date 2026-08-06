@@ -212,6 +212,12 @@ The live ambiguous profiles use fine-grained smart-room fault controls such as
 `source_reliability`; these are evaluation hooks, not changes to the production
 fusion gate.
 
+The runtime arbiter can also be constructed with
+`EpistemicArbiter(fusion_strategy="bayesian_gate")` for gated evaluation. This
+uses the Bayesian posterior to decide `allow_system1` / active perception while
+keeping the existing fused-state selection logic. The default remains
+`rule_first`.
+
 Build a locked holdout from the live ambiguous campaign and compare the
 production rule-first gate against the Bayesian strategy in shadow mode:
 
