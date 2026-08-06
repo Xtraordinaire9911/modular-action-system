@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Open-web mock: visible ineffective affordance</title>
+</head>
+<body data-case-id="openweb-visible-ineffective-affordance"
+      data-oracle-state='{"toggle_clicked":true,"notifications_enabled":false}'>
+  <h1>Notification preferences</h1>
+  <button id="notification-toggle" type="button"
+          onclick="document.getElementById('status').textContent='Click accepted, but notifications remain disabled.'">
+    Enable notifications
+  </button>
+  <p id="status">Notifications disabled.</p>
+</body>
+</html>

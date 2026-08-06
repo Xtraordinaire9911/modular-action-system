@@ -141,7 +141,10 @@ The command runs a normal structured goal, transient WoT timeout recovery,
 postcondition-mismatch rollback, DOM/WoT conflict resolution, and a repeated
 System-1 grounding-cache episode. It writes live screenshots, transition and
 failure JSONL ledgers, a recovery report, and episode-derived metrics under
-`artifacts/live_runtime_demo/`.
+`artifacts/live_runtime_demo/`. The System-1 repeat case includes a
+`system1_latency_report` that links the warm-up and repeat episode ids and
+reports cache-hit rate, routing latency, total transition latency, and
+amortized latency from the same transition ledger.
 
 Run the same seeded normal/timeout episodes under full, no-recovery, DOM-only,
 and WoT-only modes:
@@ -155,6 +158,147 @@ DOM-fault, WoT-timeout/offline, and postcondition-mismatch scenarios:
 
 ```bash
 uv run python -m src.pipeline --fusion-calibration
+```
+
+Generate the next-stage repeated fusion/recovery campaign plan without starting
+the long live run:
+
+```bash
+uv run python -m src.pipeline --fusion-campaign-dry-run --repetitions 30
+```
+
+Run the live repeated campaign when the smart-room environment is available:
+
+```bash
+uv run python -m src.pipeline --fusion-campaign --repetitions 30
+```
+
+After a full campaign is saved, create a locked calibration/holdout report:
+
+```bash
+uv run python -m src.pipeline --fusion-holdout \
+  --campaign-summary artifacts/live_fusion_campaign_full/fusion_campaign_summary.json \
+  --calibration-repetitions 20 \
+  --holdout-repetitions 10
+```
+
+Compare an experimental Bayesian posterior model against the locked rule-first
+holdout. This is a comparator report only; it does not replace the production
+fusion gate:
+
+```bash
+uv run python -m src.pipeline --bayesian-fusion-comparator \
+  --holdout-report artifacts/live_fusion_holdout/fusion_holdout_report.json
+```
+
+Run synthetic ambiguous/noisy fusion stress cases to see whether the Bayesian
+comparator has a plausible role before designing live ambiguous cases:
+
+```bash
+uv run python -m src.pipeline --noisy-fusion-stress --repetitions 30
+```
+
+Generate the controlled open-web mock failure suite. This writes oracle-labeled
+local fixtures and a coverage report for open-web-style failure modes such as
+overlay obstruction, session expiry, async validation mutation, DOM/visual
+disagreement, optimistic UI/backend mismatch, and visible-but-ineffective
+affordances. It is controlled mock evidence, not real open-web evidence:
+
+```bash
+uv run python -m src.pipeline --open-web-mock-failure-suite
+```
+
+Run those controlled mock cases through the same runtime episode envelope. This
+uses an in-memory mock executor plus fresh oracle re-observation to verify that
+executor success is not treated as task success:
+
+```bash
+uv run python -m src.pipeline --open-web-mock-runtime-suite
+```
+
+Run the same local fixtures through real Playwright Chromium execution before
+the runtime verifies the fresh oracle state:
+
+```bash
+uv run python -m src.pipeline --open-web-playwright-fixture-suite
+```
+
+Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
+fault API:
+
+```bash
+uv run python -m src.pipeline --live-ambiguous-fusion-dry-run --repetitions 30
+uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 1
+uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 30
+```
+
+The live ambiguous profiles use fine-grained smart-room fault controls such as
+`stale_offset`, `read_delay_ms`, `drop_probability`, and
+`source_reliability`; these are evaluation hooks, not changes to the production
+fusion gate.
+
+The runtime arbiter can also be constructed with
+`EpistemicArbiter(fusion_strategy="bayesian_gate")` for gated evaluation. This
+uses the Bayesian posterior to decide `allow_system1` / active perception while
+keeping the existing fused-state selection logic. The default remains
+`rule_first`.
+
+Build a locked holdout from the live ambiguous campaign and compare the
+production rule-first gate against the Bayesian strategy in shadow mode:
+
+```bash
+uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
+  --live-ambiguous-summary artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json \
+  --calibration-repetitions 20 \
+  --holdout-repetitions 10
+
+uv run python -m src.pipeline --fusion-ablation-report \
+  --holdout-report artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json
+
+uv run python -m src.pipeline --live-ambiguous-fusion \
+  --repetitions 30 \
+  --seed-start 5300 \
+  --output-dir artifacts/live_ambiguous_fusion_rerun
+
+uv run python -m src.pipeline --live-ambiguous-fusion \
+  --fusion-strategy bayesian_gate \
+  --repetitions 30 \
+  --seed-start 7300 \
+  --output-dir artifacts/live_ambiguous_fusion_bayesian_gate_full
+
+uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
+  --live-ambiguous-summary artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json \
+  --output-dir artifacts/live_ambiguous_fusion_rerun_holdout \
+  --calibration-repetitions 20 \
+  --holdout-repetitions 10
+
+uv run python -m src.pipeline --bayesian-shadow-stability \
+  --holdout-reports \
+    artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json \
+    artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json
+```
+
+Review promotion/impact/open-web coverage artifacts after the gate-enabled
+runs:
+
+```bash
+uv run python - <<'PY'
+from evaluation.bayesian_gate_promotion_review import write_bayesian_gate_promotion_review
+from evaluation.gate_enabled_recovery_impact import write_gate_enabled_recovery_impact_report
+from evaluation.open_web_failure_coverage import write_open_web_failure_coverage_report
+
+write_bayesian_gate_promotion_review(
+    "artifacts/live_ambiguous_fusion_bayesian_gate_full/live_ambiguous_fusion_summary.json",
+    "artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json",
+    "artifacts/bayesian_gate_promotion_review",
+)
+write_gate_enabled_recovery_impact_report(
+    "artifacts/live_runtime_demo_y_runtime_evidence/measured_metrics.json",
+    "artifacts/live_runtime_demo_bayesian_gate/measured_metrics.json",
+    "artifacts/gate_enabled_recovery_impact",
+)
+write_open_web_failure_coverage_report("artifacts/open_web_failure_coverage")
+PY
 ```
 
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and

@@ -45,6 +45,7 @@ class VerificationCase:
     required: bool
     checked: bool
     passed: bool
+    executor_success: bool = False
 
 
 @dataclass
@@ -77,6 +78,7 @@ class PrimitiveAction:
     task_id: str
     action: str
     latency_ms: float
+    recovery_action: str = ""
 
 
 @dataclass
@@ -157,6 +159,27 @@ def dataset_from_runtime_results(
         records = transition_ledger.for_episode(result.episode_id)
         latency_ms = sum(record.latency_ms for record in records)
         task_id = records[0].task_id if records else result.episode_id
+        for record in records:
+            dataset.primitive_actions.append(
+                PrimitiveAction(
+                    task_id=record.task_id,
+                    action=str(record.params.get("primitive_action") or record.skill_id),
+                    latency_ms=record.latency_ms,
+                    recovery_action=record.recovery_action,
+                )
+            )
+            expected_effect = str(record.params.get("expected_effect") or "").strip()
+            if expected_effect or record.postcondition_passed is not None:
+                dataset.verification_cases.append(
+                    VerificationCase(
+                        task_id=record.task_id,
+                        skill_id=record.skill_id,
+                        required=bool(expected_effect),
+                        checked=record.postcondition_passed is not None,
+                        passed=record.postcondition_passed is True,
+                        executor_success=record.execution_success,
+                    )
+                )
         final_success = bool(result.final_outcome_verified)
         dataset.tasks.append(
             TaskOutcome(
@@ -213,6 +236,7 @@ def aggregate_metrics(
         metadata={
             "data_source": data_source,
             "episode_ids": sorted(set(episode_ids or [])),
+            "measurement_counts": _measurement_counts(dataset),
         }
     )
 
@@ -259,6 +283,36 @@ def aggregate_metrics(
         "PCS",
         sum(1 for case in dataset.verification_cases if case.checked and case.passed),
         sum(1 for case in dataset.verification_cases if case.checked),
+    )
+    report.add(
+        "ExpectedEffectSuccessRate",
+        sum(1 for case in dataset.verification_cases if case.required and case.checked and case.passed),
+        sum(1 for case in dataset.verification_cases if case.required and case.checked),
+    )
+    report.add(
+        "RetryTransitionRate",
+        sum(1 for action in dataset.primitive_actions if action.recovery_action == "retry"),
+        len(dataset.primitive_actions),
+    )
+    report.add(
+        "RerouteTransitionRate",
+        sum(1 for action in dataset.primitive_actions if action.recovery_action == "reroute"),
+        len(dataset.primitive_actions),
+    )
+    report.add(
+        "RollbackTransitionRate",
+        sum(1 for action in dataset.primitive_actions if action.recovery_action == "rollback"),
+        len(dataset.primitive_actions),
+    )
+    false_successes = [
+        case
+        for case in dataset.verification_cases
+        if case.executor_success and case.checked and not case.passed
+    ]
+    report.add(
+        "FalseSuccessRate",
+        len(false_successes),
+        sum(1 for case in dataset.verification_cases if case.executor_success),
     )
     report.add(
         "WDSR",
@@ -376,6 +430,20 @@ def aggregate_metrics(
     return report
 
 
+def _measurement_counts(dataset: EvaluationDataset) -> dict[str, int]:
+    return {
+        "tasks": len(dataset.tasks),
+        "recovery_cases": len(dataset.recovery_cases),
+        "routing_cases": len(dataset.routing_cases),
+        "verification_cases": len(dataset.verification_cases),
+        "conflict_cases": len(dataset.conflict_cases),
+        "visual_grounding_cases": len(dataset.visual_grounding_cases),
+        "oracle_cases": len(dataset.oracle_cases),
+        "primitive_actions": len(dataset.primitive_actions),
+        "adaptation_cases": len(dataset.adaptation_cases),
+    }
+
+
 def _recovery_efficiency(task: TaskOutcome) -> float:
     if not task.final_success:
         return 0.0
@@ -396,6 +464,11 @@ def metric_definitions() -> dict[str, str]:
         "UAR": "Unsafe Action Rate = unsafe executed actions / attempted task actions",
         "PCR": "Postcondition Check Rate = checked required postconditions / required postconditions",
         "PCS": "Postcondition Success Rate = passed postcondition checks / checked postconditions",
+        "ExpectedEffectSuccessRate": "Passed primitive expected-effect checks / checked required expected effects",
+        "RetryTransitionRate": "Transitions labeled as retry recovery / primitive transitions",
+        "RerouteTransitionRate": "Transitions labeled as reroute recovery / primitive transitions",
+        "RollbackTransitionRate": "Transitions labeled as rollback recovery / primitive transitions",
+        "FalseSuccessRate": "Executor-success transitions rejected by expected-effect verification / executor-success checks",
         "WDSR": "World-state Disagreement Success Rate = resolved injected conflicts / injected conflicts",
         "CRR": "Conflict Resolution Rate = resolved conflicts / detected conflicts",
         "VGA": "Visual Grounding Accuracy = correct visual mark selections / visual grounding attempts",

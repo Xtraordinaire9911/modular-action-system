@@ -14,6 +14,7 @@ Prereqs: `uv run playwright install chromium` and the miniwob clone under
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 import time
 from datetime import datetime
@@ -23,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
 from src.benchmarks.miniwob_adapter import MiniwobAdapter  # noqa: E402
+from src.benchmarks.scripted_runtime import run_scripted_task_episode  # noqa: E402
 
 
 def main() -> None:
@@ -49,12 +51,20 @@ def main() -> None:
     solved = 0
     try:
         for ep in range(args.episodes):
-            outcome = adapter.run_click_button()
+            episode = asyncio.run(
+                run_scripted_task_episode(
+                    task_id=f"miniwob:{args.task}:ep{ep:02d}",
+                    run=adapter.run_click_button,
+                    data_source="miniwob_scripted",
+                )
+            )
+            outcome = episode.scripted_outcome
             session.screenshot(str(shots / f"ep{ep:02d}.png"))
             solved += 1 if outcome["success"] else 0
             print(
                 f"[ep {ep:02d}] target={outcome['target']!r} "
-                f"reward={outcome['reward']:.2f} -> {'OK' if outcome['success'] else 'miss'}"
+                f"reward={outcome['reward']:.2f} -> {'OK' if outcome['success'] else 'miss'} "
+                f"| episode={episode.result.episode_id}"
             )
             time.sleep(max(0.0, args.step_delay))
         print(f"\nsolved {solved}/{args.episodes} | screenshots={shots}")

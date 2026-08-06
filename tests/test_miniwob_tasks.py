@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from src.benchmarks.miniwob_tasks import (
@@ -15,6 +16,8 @@ from src.benchmarks.miniwob_tasks import (
     solve_enter_text,
     solve_login_user,
 )
+from src.benchmarks.scripted_runtime import run_scripted_task_episode
+from src.runtime.state_machine import RuntimeState
 
 
 def test_quoted_values():
@@ -86,6 +89,27 @@ def test_run_task_starts_then_solves_then_scores():
     outcome = run_task(c, task)
     assert c.calls[0] == ("start",)  # episode started before acting
     assert outcome["success"] and outcome["name"] == "enter-text" and outcome["reward"] == 0.97
+
+
+def test_scripted_miniwob_task_runs_inside_runtime_episode():
+    from src.benchmarks.miniwob_tasks import MiniwobDemoTask
+
+    task = MiniwobDemoTask("enter-text", "Type text and submit", solve_enter_text)
+    c = RecordingController('Enter "hi" into the text field and press Submit.', reward=0.97)
+
+    episode = asyncio.run(
+        run_scripted_task_episode(
+            task_id="miniwob:enter-text",
+            run=lambda: run_task(c, task),
+            data_source="miniwob_scripted",
+        )
+    )
+
+    assert episode.result.state == RuntimeState.COMPLETED
+    assert episode.result.final_outcome_verified
+    assert episode.runtime_entrypoint == "RuntimeEpisodeRunner.run_skill_episode"
+    assert episode.scripted_outcome["name"] == "enter-text"
+    assert episode.transition_ledger.records[0].params["solver_type"] == "scripted"
 
 
 class FakeSession:

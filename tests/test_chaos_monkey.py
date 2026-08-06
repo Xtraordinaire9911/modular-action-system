@@ -1,6 +1,6 @@
 """Tests for deterministic chaos policy and offline injection."""
 
-import pytest
+import asyncio
 
 from evaluation.chaos_monkey import ChaosEvent, ChaosPolicy, OfflineChaosExecutor, live_hook_for_event
 from src.contracts.types import ExecutionResult, Observation, SkillCall
@@ -19,15 +19,14 @@ def test_seeded_policy_is_deterministic():
     assert len(left.events) == 2
 
 
-@pytest.mark.asyncio
-async def test_offline_executor_injects_before_skill_failure():
+def test_offline_executor_injects_before_skill_failure():
     policy = ChaosPolicy(
         seed=1,
         events=[ChaosEvent("e1", "wot_timeout", "wot", "before_skill", skill_id="set_temperature")],
     )
     executor = OfflineChaosExecutor("wot", _OkExecutor(), policy)
 
-    result = await executor.execute(SkillCall("set_temperature", {"target": 22}), Observation())
+    result = asyncio.run(executor.execute(SkillCall("set_temperature", {"target": 22}), Observation()))
 
     assert result.success is False
     assert result.failure_reason == "wot_timeout"
