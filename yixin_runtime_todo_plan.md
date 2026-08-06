@@ -400,9 +400,10 @@ or statistically validated Bayesian fusion yet.
 | P2 | Smart-room repeated fusion/recovery campaign | `[Yixin - 30×7 live evidence 已完成，后续可做独立 rerun/holdout]` + `[Shared - environment/reset/fault API]` | 现有 7 个 condition 每个至少 30 个独立 trial，总量至少 210；使用 deterministic seeds、每次 reset evidence、独立 oracle、唯一 episode id 和可重放配置 | `evaluation/live_fusion_campaign.py`, `evaluation/live_fusion_calibration.py`, `evaluation/fusion_calibration.py`, `src/pipeline.py`, `tests/test_live_fusion_campaign.py`, `artifacts/live_fusion_campaign_full/fusion_campaign_summary.json` |
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
-| Conditional | Bayesian fusion comparator | `[Yixin - experimental comparator 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；posterior 必须被 verifier/CIM 实际消费且优于 calibrated heuristic，否则保留 heuristic fallback | `evaluation/bayesian_fusion_comparator.py`, `tests/test_bayesian_fusion_comparator.py`, `artifacts/bayesian_fusion_comparator/bayesian_fusion_comparator_report.json` |
+| P2 | Open-web failure coverage gap | `[Yixin - 机制边界梳理 + failure taxonomy]` + `[Shared - mock/open-web env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；补充 overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure cases；每个 case 必须输出 observation/action/verification/recovery ledger，并标注是 mechanism coverage、mock evidence 还是真实 open-web evidence | `src/benchmarks/`, `env/mock_envs/`, `evaluation/`, `artifacts/open_web_failure_suite/` |
+| Conditional | Bayesian fusion comparator | `[Yixin - shadow-mode strategy interface + ablation report 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；shadow mode 同时记录 production rule-first 与 Bayesian decision，但 production gate 不变；若要正式替换，必须再做 independent rerun/review | `evaluation/bayesian_fusion_comparator.py`, `evaluation/fusion_shadow_strategies.py`, `evaluation/fusion_ablation_report.py`, `tests/test_bayesian_fusion_comparator.py`, `tests/test_fusion_shadow_strategies.py`, `tests/test_fusion_ablation_report.py`, `artifacts/bayesian_vs_rule_first_ablation/bayesian_vs_rule_first_ablation_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
-| Conditional | Live ambiguous fusion profiles | `[Yixin - 细粒度 fault API + 30×4 live evidence 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 comparator summary；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json` |
+| Conditional | Live ambiguous fusion profiles | `[Yixin - 细粒度 fault API + 30×4 live evidence + 20/10 locked holdout 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 shadow comparator summary；按 profile 做 calibration/holdout split；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/live_ambiguous_fusion_holdout.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_holdout.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json` |
 
 ### 14.5.1 Live evidence 记录
 
@@ -560,7 +561,33 @@ or statistically validated Bayesian fusion yet.
   - 30×4 fine-grained live full 结果：trial count = 120；每个 profile = 30；unique episode ids = true；reset evidence complete = true。
   - Rule-first balanced accuracy = 0.833；recall = 0.667；miss rate = 0.333。
   - Bayesian comparator balanced accuracy = 1.0；recall = 1.0；miss rate = 0.0；false halt rate = 0.0；delta = 0.167。
-  - Production gate 仍未替换；下一步应设计 Bayesian integration gate/ablation 或对 30×4 做 locked holdout，再决定是否接入 runtime。
+  - Production gate 仍未替换；locked holdout 与 shadow ablation 已在 14.5.7 完成；下一步若要接入 runtime，必须先做 independent rerun/review。
+
+### 14.5.7 Bayesian shadow-mode / live ambiguous holdout / ablation 记录
+
+- **时间**：2026-08-06
+- **代码入口**：
+  - `evaluation/fusion_shadow_strategies.py`
+  - `evaluation/live_ambiguous_fusion_holdout.py`
+  - `evaluation/fusion_ablation_report.py`
+  - CLI: `python -m src.pipeline --live-ambiguous-fusion-holdout --live-ambiguous-summary artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json --output-dir artifacts/live_ambiguous_fusion_holdout --calibration-repetitions 20 --holdout-repetitions 10 --posterior-threshold 0.5`
+  - CLI: `python -m src.pipeline --fusion-ablation-report --holdout-report artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json --output-dir artifacts/bayesian_vs_rule_first_ablation`
+- **已生成 artifact**：
+  - `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json`
+  - `artifacts/bayesian_vs_rule_first_ablation/bayesian_vs_rule_first_ablation_report.json`
+- **实现边界**：
+  - Production strategy 仍为 `rule_first_locked_threshold`。
+  - Bayesian 作为 `bayesian_feature_shadow` 同步计算 blocking posterior，并写入 shadow decisions。
+  - `production_gate_changed=false`；没有接入 CIM/verifier 作为默认 gate。
+  - Shadow promotion 条件写入 ablation boundary：必须经过 independent live ambiguous rerun、locked holdout、false-halt/miss review 和 CIM/verifier integration review。
+- **20/10 per-profile holdout 结果**：
+  - calibration trials = 80
+  - holdout trials = 40
+  - holdout profile counts = 10 each
+  - Rule-first balanced accuracy = 0.833；recall = 0.667；miss rate = 0.333；false halt rate = 0.0。
+  - Bayesian shadow balanced accuracy = 1.0；recall = 1.0；miss rate = 0.0；false halt rate = 0.0。
+  - delta = 0.167
+  - recommendation = `consider_shadow_to_gate_promotion_after_independent_rerun`
 
 ### 14.6 Planner 职责边界
 
@@ -636,6 +663,43 @@ MiniWoB++ 用于定位 planner/affordance/runtime 在外部 web task 上的泛�
 
 最终输出不是“又支持了多少个 demo”，而是一个可追溯的 generalization bottleneck report，用于决定下一轮应该改 planner contract、affordance quality、verification 还是 recovery。
 
+#### C. Open-web failure coverage gap
+
+真实开放网页中的 conflict/failure 不会总是呈现为 smart-room 里的标准 `DOM/WoT conflict`。当前代码库已经有 observe-act-reobserve-verify、postcondition checking、stale evidence rejection、required-source-aware fusion、recovery 和 ledger 这些机制，但 evidence 主要来自 smart-room controlled faults。下一阶段不能把这些 controlled faults 直接 claim 成完整 open-web 覆盖。
+
+需要补充的 open-web failure classes：
+
+1. **Optimistic UI / backend mismatch**：页面显示“成功”或状态已更新，但 backend/API/network confirmation 失败或没有发生。
+2. **Visible but ineffective affordance**：按钮或输入框在 DOM 中存在且可见，但点击/输入后没有 expected effect。
+3. **DOM vs screenshot/OCR disagreement**：DOM tree、视觉截图、OCR/SoM/VAM 对页面状态或目标位置给出不一致解释。
+4. **Async stale state**：页面异步刷新、缓存、动画或延迟导致 agent 读到旧状态。
+5. **Overlay/modal obstruction**：DOM affordance 存在，但被弹窗、cookie banner、loading layer 或 disabled overlay 遮挡，实际不可操作。
+6. **A/B layout or selector drift**：页面结构、selector、label 或位置变化导致旧 grounding 误读。
+7. **Session/auth expiry**：登录过期、权限失效或残留旧页面内容导致 action/verification 失真。
+8. **Autocomplete / async validation mutation**：表单 autocomplete、前端 validation 或 server-side normalization 改写最终值。
+
+覆盖分级必须在 artifact 中显式标注：
+
+| Coverage level | 含义 | 当前状态 |
+|---|---|---|
+| mechanism coverage | runtime 有能力检测 expected-effect 缺失、stale evidence、source conflict 或 recovery failure | 部分已有 |
+| controlled/mock evidence | 在 smart-room 或本地 mock web env 中通过 seeded case 可重复触发 | smart-room 部分已有，open-web mock 待补 |
+| real open-web evidence | 在 MiniWoB++/WebArena-style/真实网页任务中自然或半自然触发，并由 ledger 记录 | 当前不足，不能 claim |
+
+Yixin 侧下一步责任：
+
+- 定义 open-web failure taxonomy 与 artifact schema。
+- 确保每个 case 走统一 `RuntimeEpisodeRunner` 或同等 episode envelope。
+- 每个 case 记录 `episode_id`、observation snapshot、selected affordance、primitive action、expected effect、postcondition result、recovery decision 和 final verification。
+- 将 agentic runtime path 与 scripted/environment smoke path 分表。
+- 输出 `open_web_failure_suite_report.json`，明确哪些 failure class 已覆盖、哪些只是 mechanism-ready、哪些仍未覆盖。
+
+Shared/environment owner 侧下一步责任：
+
+- 在 MiniWoB++ 或 WebArena-style mock env 中提供可复现页面/任务。
+- 提供 session reset、oracle state 或独立 success checker。
+- 对 overlay、session expiry、autocomplete/validation、DOM-vs-visual disagreement 等 case 提供环境触发方式。
+
 ### 14.8 下一阶段最终产出
 
 | Deliverable | 内容 | 完成标志 |
@@ -643,6 +707,7 @@ MiniWoB++ 用于定位 planner/affordance/runtime 在外部 web task 上的泛�
 | Planner responsibility specification | 输入、输出、职责和非职责边界 | 报告、README、代码 contract 的表述一致 |
 | Smart-room repeated campaign | seeded faults、reset、independent oracle、repeated trials、holdout | 至少 210 个可追溯 episodes 和统计报告 |
 | MiniWoB++ failure report | 统一 agentic runtime path 和 failure taxonomy | 能用 evidence 说明主要 generalization bottleneck |
+| Open-web failure coverage report | overlay、session expiry、async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 coverage gap | 每类 case 标注 mechanism/mock/real-open-web coverage level，并带 episode ledger |
 | Runtime comparison table | full/no-recovery、backend ablation、smart-room/MiniWoB++ | 指标均由 episode/transition ledger 派生 |
 
 下一阶段对老师的简要表述：
@@ -653,7 +718,9 @@ I will keep the planner bounded to structured GoalSpecs and typed affordances, w
 interpretation, backend selection, and recovery policy remain separate components. I will evaluate the
 same runtime path on MiniWoB++ to identify generalization bottlenecks, and expand the smart-room environment
 into a seeded, oracle-labeled repeated campaign for fusion and recovery. The main deliverables will be
-ledger-derived metrics, calibration/holdout results, and a failure taxonomy rather than additional handcrafted demos.
+ledger-derived metrics, calibration/holdout results, and an explicit failure taxonomy. For open-web claims,
+I will separately track whether each failure class is only mechanism-supported, covered by controlled/mock evidence,
+or supported by real open-environment evidence, rather than treating smart-room faults as complete open-web coverage.
 ```
 
 ### 14.9 展示材料最小组合

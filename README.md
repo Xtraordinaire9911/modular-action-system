@@ -212,6 +212,19 @@ The live ambiguous profiles use fine-grained smart-room fault controls such as
 `source_reliability`; these are evaluation hooks, not changes to the production
 fusion gate.
 
+Build a locked holdout from the live ambiguous campaign and compare the
+production rule-first gate against the Bayesian strategy in shadow mode:
+
+```bash
+uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
+  --live-ambiguous-summary artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json \
+  --calibration-repetitions 20 \
+  --holdout-repetitions 10
+
+uv run python -m src.pipeline --fusion-ablation-report \
+  --holdout-report artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

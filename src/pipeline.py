@@ -249,6 +249,34 @@ def run_live_ambiguous_fusion_pipeline(
     )
 
 
+def run_live_ambiguous_fusion_holdout_pipeline(
+    live_ambiguous_summary_path: str | Path = "artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json",
+    output_dir: str | Path = "artifacts/live_ambiguous_fusion_holdout",
+    *,
+    calibration_repetitions: int = 20,
+    holdout_repetitions: int | None = 10,
+    posterior_threshold: float = 0.5,
+) -> dict[str, str]:
+    from evaluation.live_ambiguous_fusion_holdout import write_live_ambiguous_locked_holdout_report
+
+    return write_live_ambiguous_locked_holdout_report(
+        live_ambiguous_summary_path,
+        output_dir,
+        calibration_repetitions=calibration_repetitions,
+        holdout_repetitions=holdout_repetitions,
+        posterior_threshold=posterior_threshold,
+    )
+
+
+def run_fusion_ablation_report_pipeline(
+    holdout_report_path: str | Path = "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+    output_dir: str | Path = "artifacts/bayesian_vs_rule_first_ablation",
+) -> dict[str, str]:
+    from evaluation.fusion_ablation_report import write_fusion_ablation_report
+
+    return write_fusion_ablation_report(holdout_report_path, output_dir)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -280,6 +308,16 @@ def main() -> None:
         help="Write the live ambiguous fusion profile plan only.",
     )
     parser.add_argument(
+        "--live-ambiguous-fusion-holdout",
+        action="store_true",
+        help="Build locked holdout and shadow-strategy comparison from a live ambiguous fusion summary.",
+    )
+    parser.add_argument(
+        "--fusion-ablation-report",
+        action="store_true",
+        help="Write Bayesian-vs-rule-first fusion ablation report from a shadow holdout report.",
+    )
+    parser.add_argument(
         "--campaign-summary",
         default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
         help="Input campaign summary for --fusion-holdout.",
@@ -287,7 +325,12 @@ def main() -> None:
     parser.add_argument(
         "--holdout-report",
         default="artifacts/live_fusion_holdout/fusion_holdout_report.json",
-        help="Input locked holdout report for --bayesian-fusion-comparator.",
+        help="Input locked holdout report for comparator or ablation commands.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-summary",
+        default="artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json",
+        help="Input live ambiguous summary for --live-ambiguous-fusion-holdout.",
     )
     parser.add_argument(
         "--posterior-threshold",
@@ -317,7 +360,20 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.live_ambiguous_fusion or args.live_ambiguous_fusion_dry_run:
+    if args.fusion_ablation_report:
+        summary = run_fusion_ablation_report_pipeline(
+            args.holdout_report,
+            args.output_dir or "artifacts/bayesian_vs_rule_first_ablation",
+        )
+    elif args.live_ambiguous_fusion_holdout:
+        summary = run_live_ambiguous_fusion_holdout_pipeline(
+            args.live_ambiguous_summary,
+            args.output_dir or "artifacts/live_ambiguous_fusion_holdout",
+            calibration_repetitions=args.calibration_repetitions,
+            holdout_repetitions=args.holdout_repetitions,
+            posterior_threshold=args.posterior_threshold,
+        )
+    elif args.live_ambiguous_fusion or args.live_ambiguous_fusion_dry_run:
         summary = run_live_ambiguous_fusion_pipeline(
             args.output_dir or "artifacts/live_ambiguous_fusion_campaign",
             repetitions=args.repetitions,

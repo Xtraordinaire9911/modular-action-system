@@ -5,7 +5,9 @@ import json
 
 from src.pipeline import (
     run_bayesian_fusion_comparator_pipeline,
+    run_fusion_ablation_report_pipeline,
     run_fusion_campaign_pipeline,
+    run_live_ambiguous_fusion_holdout_pipeline,
     run_live_ambiguous_fusion_pipeline,
     run_noisy_fusion_stress_pipeline,
     run_runtime_demo_pipeline,
@@ -105,3 +107,57 @@ def test_live_ambiguous_fusion_pipeline_dry_run_writes_profile_plan(tmp_path):
     assert summary["dry_run"] is True
     assert summary["planned_trial_count"] == 8
     assert summary["fine_grained_fault_api"] is True
+
+
+def test_live_ambiguous_holdout_pipeline_writes_shadow_report(tmp_path):
+    from evaluation.live_ambiguous_fusion_campaign import build_live_ambiguous_fusion_plan
+
+    trials = []
+    for trial in build_live_ambiguous_fusion_plan(repetitions=30, seed_start=40):
+        score = 0.72 if trial.expected_blocking else 0.0
+        trials.append(
+            {
+                **trial.__dict__,
+                "detected_blocking": score >= 1.0,
+                "conflict_score": score,
+                "detection_latency_ms": 0.1,
+                "reset_evidence_id": f"reset-{trial.episode_id}",
+            }
+        )
+    source = tmp_path / "live_ambiguous_fusion_summary.json"
+    source.write_text(json.dumps({"trials": trials}), encoding="utf-8")
+
+    paths = run_live_ambiguous_fusion_holdout_pipeline(source, tmp_path / "holdout")
+    report = json.loads((tmp_path / "holdout" / "live_ambiguous_fusion_holdout_report.json").read_text())
+
+    assert paths["live_ambiguous_fusion_holdout_report"].endswith("live_ambiguous_fusion_holdout_report.json")
+    assert report["holdout"]["strategy_comparison"]["production_gate_changed"] is False
+
+
+def test_fusion_ablation_report_pipeline_writes_report(tmp_path):
+    holdout = {
+        "holdout": {
+            "trial_count": 1,
+            "strategy_comparison": {
+                "production_strategy": "rule_first_locked_threshold",
+                "production_gate_changed": False,
+                "strategies": {
+                    "rule_first_locked_threshold": {"metrics": {"balanced_accuracy": 0.5}},
+                    "bayesian_feature_shadow": {"metrics": {"balanced_accuracy": 1.0}},
+                },
+                "comparison": {
+                    "best_shadow_strategy": "bayesian_feature_shadow",
+                    "best_shadow_balanced_accuracy_delta": 0.5,
+                    "recommendation": "consider_shadow_to_gate_promotion_after_independent_rerun",
+                },
+            },
+        }
+    }
+    source = tmp_path / "holdout.json"
+    source.write_text(json.dumps(holdout), encoding="utf-8")
+
+    paths = run_fusion_ablation_report_pipeline(source, tmp_path / "ablation")
+
+    assert paths["bayesian_vs_rule_first_ablation_report"].endswith(
+        "bayesian_vs_rule_first_ablation_report.json"
+    )
