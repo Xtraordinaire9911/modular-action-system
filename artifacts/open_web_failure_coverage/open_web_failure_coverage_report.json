@@ -1,0 +1,75 @@
+{
+  "coverage_by_class": {
+    "ab_layout_selector_drift": {
+      "coverage_level": "controlled_evidence",
+      "description": "Layout or selector drift makes old grounding unreliable.",
+      "evidence": [
+        "layout_shift and selector_mutation controlled faults"
+      ]
+    },
+    "async_stale_state": {
+      "coverage_level": "controlled_evidence",
+      "description": "Async refresh/cache causes stale observed state.",
+      "evidence": [
+        "stale DOM / live ambiguous weak stale profile"
+      ]
+    },
+    "autocomplete_async_validation_mutation": {
+      "coverage_level": "mechanism_ready",
+      "description": "Autocomplete or async validation mutates submitted value.",
+      "evidence": [
+        "postcondition verification can detect final value mismatch"
+      ]
+    },
+    "dom_vs_visual_disagreement": {
+      "coverage_level": "mechanism_ready",
+      "description": "DOM tree and screenshot/OCR/visual grounding disagree.",
+      "evidence": [
+        "visual/SoM contracts exist; no systematic live campaign yet"
+      ]
+    },
+    "optimistic_ui_backend_mismatch": {
+      "coverage_level": "controlled_evidence",
+      "description": "UI claims success while backend/API state did not change.",
+      "evidence": [
+        "postcondition mismatch / false-success detection in smart-room"
+      ]
+    },
+    "overlay_modal_obstruction": {
+      "coverage_level": "mechanism_ready",
+      "description": "DOM affordance exists but overlay/cookie banner/loading layer blocks operation.",
+      "evidence": [
+        "overlay filtering and affordance disappearance handling"
+      ]
+    },
+    "session_auth_expiry": {
+      "coverage_level": "mechanism_ready",
+      "description": "Session or auth expiry leaves stale page content or blocks actions.",
+      "evidence": [
+        "no dedicated session-expiry benchmark yet"
+      ]
+    },
+    "visible_but_ineffective_affordance": {
+      "coverage_level": "mechanism_ready",
+      "description": "DOM affordance is visible but execution has no expected effect.",
+      "evidence": [
+        "expected-effect verification and recovery ledger"
+      ]
+    }
+  },
+  "data_source": "open_web_failure_coverage",
+  "next_mock_cases": [
+    "session expiry page",
+    "overlay obstruction page",
+    "autocomplete async validation form",
+    "DOM-vs-visual disagreement fixture",
+    "optimistic UI rollback fixture"
+  ],
+  "recommendation": "build_mock_then_real_open_web_evidence",
+  "summary": {
+    "controlled_evidence_count": 3,
+    "failure_class_count": 8,
+    "mechanism_ready_count": 5,
+    "real_open_web_evidence_count": 0
+  }
+}

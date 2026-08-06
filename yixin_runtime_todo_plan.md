@@ -400,8 +400,8 @@ or statistically validated Bayesian fusion yet.
 | P2 | Smart-room repeated fusion/recovery campaign | `[Yixin - 30×7 live evidence 已完成，后续可做独立 rerun/holdout]` + `[Shared - environment/reset/fault API]` | 现有 7 个 condition 每个至少 30 个独立 trial，总量至少 210；使用 deterministic seeds、每次 reset evidence、独立 oracle、唯一 episode id 和可重放配置 | `evaluation/live_fusion_campaign.py`, `evaluation/live_fusion_calibration.py`, `evaluation/fusion_calibration.py`, `src/pipeline.py`, `tests/test_live_fusion_campaign.py`, `artifacts/live_fusion_campaign_full/fusion_campaign_summary.json` |
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
-| P2 | Open-web failure coverage gap | `[Yixin - 机制边界梳理 + failure taxonomy]` + `[Shared - mock/open-web env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；补充 overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure cases；每个 case 必须输出 observation/action/verification/recovery ledger，并标注是 mechanism coverage、mock evidence 还是真实 open-web evidence | `src/benchmarks/`, `env/mock_envs/`, `evaluation/`, `artifacts/open_web_failure_suite/` |
-| Conditional | Bayesian fusion comparator/gate | `[Yixin - configurable bayesian_gate + gate-enabled live eval 已完成，默认 production 仍为 rule_first]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；shadow mode 同时记录 production rule-first 与 Bayesian decision；`EpistemicArbiter(fusion_strategy="bayesian_gate")` 已可真正控制 `allow_system1`；120-trial gate-enabled live ambiguous run 已通过；默认构造仍不切换，最终默认替换需 owner review | `src/verification/conflict_detector.py`, `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/bayesian_fusion_comparator.py`, `evaluation/fusion_shadow_strategies.py`, `evaluation/fusion_ablation_report.py`, `evaluation/bayesian_shadow_stability.py`, `tests/test_epistemic_runtime.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_bayesian_fusion_comparator.py`, `tests/test_fusion_shadow_strategies.py`, `tests/test_fusion_ablation_report.py`, `tests/test_bayesian_shadow_stability.py`, `artifacts/live_ambiguous_fusion_bayesian_gate_full/live_ambiguous_fusion_summary.json` |
+| P2 | Open-web failure coverage gap | `[Yixin - coverage taxonomy/report 已完成；mock/real evidence 待环境侧补]` + `[Shared - mock/open-web env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure classes 已入 coverage report；每类 case 标注 mechanism/controlled/real-open-web level | `evaluation/open_web_failure_coverage.py`, `tests/test_open_web_failure_coverage.py`, `artifacts/open_web_failure_coverage/open_web_failure_coverage_report.json` |
+| Conditional | Bayesian fusion comparator/gate | `[Yixin - promotion review + recovery impact 已完成，Bayesian gate 推荐为 default candidate]` | repeated calibration、locked holdout、shadow stability、gate-enabled live ambiguous、gate-enabled runtime recovery impact 均完成；promotion review 推荐 `bayesian_gate` 作为 default candidate，但必须保持 `rule_first` 可配置回退 | `src/verification/conflict_detector.py`, `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/bayesian_gate_promotion_review.py`, `evaluation/gate_enabled_recovery_impact.py`, `tests/test_epistemic_runtime.py`, `tests/test_bayesian_gate_promotion_review.py`, `tests/test_gate_enabled_recovery_impact.py`, `artifacts/bayesian_gate_promotion_review/bayesian_gate_promotion_review.json`, `artifacts/gate_enabled_recovery_impact/gate_enabled_recovery_impact_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
 | Conditional | Live ambiguous fusion profiles | `[Yixin - initial + independent rerun 30×4 live evidence 与 20/10 locked holdout 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 shadow comparator summary；按 profile 做 calibration/holdout split；initial 与 rerun 均保持 Bayesian shadow 正向；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/live_ambiguous_fusion_holdout.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_holdout.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json`, `artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json` |
 
@@ -635,6 +635,46 @@ or statistically validated Bayesian fusion yet.
   - Rule-first comparator balanced accuracy = 0.833；recall = 0.667；miss rate = 0.333；false halt rate = 0.0。
   - recommendation = `gate_enabled_evaluation_passed`。
   - 默认 production 构造仍为 `rule_first`；是否默认替换需要 repo owner / team review。
+
+### 14.5.9 Bayesian gate promotion / recovery impact / open-web coverage 记录
+
+- **时间**：2026-08-06
+- **代码入口**：
+  - `evaluation/bayesian_gate_promotion_review.py`
+  - `evaluation/gate_enabled_recovery_impact.py`
+  - `evaluation/open_web_failure_coverage.py`
+  - `evaluation/live_runtime_demo.py`
+  - `src.pipeline.run_live_demo_pipeline(..., fusion_strategy="bayesian_gate")`
+- **已生成 artifact**：
+  - `artifacts/bayesian_gate_promotion_review/bayesian_gate_promotion_review.json`
+  - `artifacts/live_runtime_demo_bayesian_gate/measured_metrics.json`
+  - `artifacts/live_runtime_demo_bayesian_gate/episode_report.json`
+  - `artifacts/live_runtime_demo_bayesian_gate/transition_ledger.jsonl`
+  - `artifacts/live_runtime_demo_bayesian_gate/failure_ledger.jsonl`
+  - `artifacts/live_runtime_demo_bayesian_gate/recovery_report.json`
+  - `artifacts/gate_enabled_recovery_impact/gate_enabled_recovery_impact_report.json`
+  - `artifacts/open_web_failure_coverage/open_web_failure_coverage_report.json`
+- **TODO 1：promotion review 结论**：
+  - decision = `promote_bayesian_gate_as_default_candidate`
+  - default_switch_recommended = true
+  - must_remain_configurable = true
+  - scope = fusion gate only；fused-state selection 仍保持 support-based 逻辑。
+- **TODO 2：gate-enabled recovery impact 结论**：
+  - baseline metrics 来自 `artifacts/live_runtime_demo_y_runtime_evidence/measured_metrics.json`
+  - gate metrics 来自 `artifacts/live_runtime_demo_bayesian_gate/measured_metrics.json`
+  - TSR delta = 0.0
+  - RecoveryTriggerRate delta = 0.0
+  - RecoverySuccessRate delta = 0.0
+  - ExpectedEffectSuccessRate delta = 0.0
+  - no_regression = true
+  - recommendation = `bayesian_gate_runtime_impact_passed`
+- **TODO 3：open-web failure coverage 结论**：
+  - failure class count = 8
+  - controlled evidence count = 3
+  - mechanism-ready count = 5
+  - real open-web evidence count = 0
+  - recommendation = `build_mock_then_real_open_web_evidence`
+  - 结论边界：smart-room 证据不能直接 claim 为 broad open-web evidence；下一步需补 mock then real open-web cases。
 
 ### 14.6 Planner 职责边界
 

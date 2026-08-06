@@ -253,6 +253,29 @@ uv run python -m src.pipeline --bayesian-shadow-stability \
     artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json
 ```
 
+Review promotion/impact/open-web coverage artifacts after the gate-enabled
+runs:
+
+```bash
+uv run python - <<'PY'
+from evaluation.bayesian_gate_promotion_review import write_bayesian_gate_promotion_review
+from evaluation.gate_enabled_recovery_impact import write_gate_enabled_recovery_impact_report
+from evaluation.open_web_failure_coverage import write_open_web_failure_coverage_report
+
+write_bayesian_gate_promotion_review(
+    "artifacts/live_ambiguous_fusion_bayesian_gate_full/live_ambiguous_fusion_summary.json",
+    "artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json",
+    "artifacts/bayesian_gate_promotion_review",
+)
+write_gate_enabled_recovery_impact_report(
+    "artifacts/live_runtime_demo_y_runtime_evidence/measured_metrics.json",
+    "artifacts/live_runtime_demo_bayesian_gate/measured_metrics.json",
+    "artifacts/gate_enabled_recovery_impact",
+)
+write_open_web_failure_coverage_report("artifacts/open_web_failure_coverage")
+PY
+```
+
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic

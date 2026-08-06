@@ -89,6 +89,7 @@ def run_live_demo_pipeline(
     wot_base_url: str = "http://127.0.0.1:8080",
     control_url: str = "http://127.0.0.1:8081",
     headless: bool = True,
+    fusion_strategy: str = "rule_first",
 ) -> dict[str, str]:
     """Run the real Docker + Playwright runtime-control tracer bullet."""
 
@@ -101,6 +102,7 @@ def run_live_demo_pipeline(
         wot_base_url=wot_base_url,
         control_url=control_url,
         headless=headless,
+        fusion_strategy=fusion_strategy,
     )
 
 
@@ -480,6 +482,7 @@ def main() -> None:
             wot_base_url=args.wot_base_url,
             control_url=args.control_url,
             headless=not args.headed,
+            fusion_strategy=args.fusion_strategy,
         )
     elif args.demo:
         summary = run_runtime_demo_pipeline(args.output_dir or "artifacts/adaptation_demo")
