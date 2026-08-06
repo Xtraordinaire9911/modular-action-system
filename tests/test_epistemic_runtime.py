@@ -209,6 +209,31 @@ def test_system2_payload_generated_for_unresolved_conflict():
     assert suggest_system2_decision(decision.payload)["decision"] == "active_perception"
 
 
+def test_active_perception_rechecks_production_fusion_before_resuming():
+    cmap = CognitiveMap(task_id="production-fusion-recheck")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 20, "dom", timestamp_ms=1))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 24, "wot", timestamp_ms=2))
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill_tuple(allowed_backends=["wot"], preferred_backends=["wot"])},
+        {"wot": _RecordingExecutor("wot")},
+        cmap,
+        epistemic_arbiter=EpistemicArbiter(
+            {"temperature": 2.0},
+            required_sources_by_attribute={"temperature": {"dom", "wot", "visual"}},
+            missing_source_mass=1.0,
+        ),
+        active_perception_resolver=ActivePerceptionResolver(_ResolvingProbe()),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_type == "sensory_conflict"
+    assert result.execution_result is None
+    assert result.fusion_decision["allow_system1"] is False
+    assert result.active_perception_trace
+
+
 def test_demo_artifacts_are_written(tmp_path):
     paths = write_demo_artifacts(tmp_path)
 

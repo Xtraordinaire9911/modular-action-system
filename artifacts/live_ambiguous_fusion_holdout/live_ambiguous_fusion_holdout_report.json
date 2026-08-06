@@ -74,7 +74,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -86,15 +86,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -117,7 +117,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -129,15 +129,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -160,7 +160,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -172,15 +172,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -203,7 +203,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -215,15 +215,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -246,7 +246,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -258,15 +258,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -289,7 +289,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -301,15 +301,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -332,7 +332,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -344,15 +344,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -375,7 +375,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -387,15 +387,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -418,7 +418,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -430,15 +430,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -461,7 +461,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -473,15 +473,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -504,7 +504,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -516,15 +516,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -547,7 +547,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -559,15 +559,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -590,7 +590,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -602,15 +602,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -633,7 +633,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -645,15 +645,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -676,7 +676,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -688,15 +688,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -719,7 +719,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -731,15 +731,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -762,7 +762,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -774,15 +774,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -805,7 +805,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -817,15 +817,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -848,7 +848,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -860,15 +860,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -891,7 +891,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -903,15 +903,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -946,15 +946,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -989,15 +989,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1032,15 +1032,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1075,15 +1075,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1118,15 +1118,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1161,15 +1161,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1204,15 +1204,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1247,15 +1247,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1290,15 +1290,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1333,15 +1333,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1376,15 +1376,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1419,15 +1419,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1462,15 +1462,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1505,15 +1505,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1548,15 +1548,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1591,15 +1591,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1634,15 +1634,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1677,15 +1677,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1720,15 +1720,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -1763,15 +1763,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -1794,7 +1794,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -1806,15 +1806,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -1837,7 +1837,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -1849,15 +1849,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -1880,7 +1880,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -1892,15 +1892,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -1923,7 +1923,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -1935,15 +1935,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -1966,7 +1966,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -1978,15 +1978,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2009,7 +2009,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2021,15 +2021,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2052,7 +2052,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2064,15 +2064,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2095,7 +2095,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2107,15 +2107,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2138,7 +2138,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2150,15 +2150,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2181,7 +2181,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2193,15 +2193,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2224,7 +2224,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2236,15 +2236,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2267,7 +2267,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2279,15 +2279,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2310,7 +2310,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2322,15 +2322,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2353,7 +2353,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2365,15 +2365,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2396,7 +2396,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2408,15 +2408,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2439,7 +2439,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2451,15 +2451,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2482,7 +2482,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2494,15 +2494,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2525,7 +2525,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2537,15 +2537,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2568,7 +2568,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2580,15 +2580,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -2611,7 +2611,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -2623,15 +2623,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2666,15 +2666,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2709,15 +2709,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2752,15 +2752,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2795,15 +2795,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2838,15 +2838,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2881,15 +2881,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2924,15 +2924,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -2967,15 +2967,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3010,15 +3010,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3053,15 +3053,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3096,15 +3096,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3139,15 +3139,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3182,15 +3182,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3225,15 +3225,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3268,15 +3268,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3311,15 +3311,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3354,15 +3354,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3397,15 +3397,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3440,15 +3440,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -3483,15 +3483,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         }
       ]
     },
@@ -3626,7 +3626,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3638,15 +3638,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3669,7 +3669,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3681,15 +3681,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3712,7 +3712,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3724,15 +3724,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3755,7 +3755,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3767,15 +3767,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3798,7 +3798,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3810,15 +3810,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3841,7 +3841,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3853,15 +3853,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3884,7 +3884,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3896,15 +3896,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3927,7 +3927,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3939,15 +3939,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -3970,7 +3970,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -3982,15 +3982,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4013,7 +4013,7 @@
             "stale_offset": null,
             "wot_fault": "timeout"
           },
-          "missing_source_probability": 0.15,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4025,15 +4025,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.867611
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.6,
-            "wot": 0.9
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 900.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4068,15 +4068,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4111,15 +4111,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4154,15 +4154,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4197,15 +4197,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4240,15 +4240,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4283,15 +4283,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4326,15 +4326,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4369,15 +4369,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4412,15 +4412,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.0,
@@ -4455,15 +4455,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": false,
-              "score": 0.073782
+              "score": 0.182426
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.3,
-            "wot": 0.95
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4486,7 +4486,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4498,15 +4498,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4529,7 +4529,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4541,15 +4541,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4572,7 +4572,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4584,15 +4584,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4615,7 +4615,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4627,15 +4627,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4658,7 +4658,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4670,15 +4670,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4701,7 +4701,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4713,15 +4713,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4744,7 +4744,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4756,15 +4756,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4787,7 +4787,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4799,15 +4799,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4830,7 +4830,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4842,15 +4842,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 1.0,
@@ -4873,7 +4873,7 @@
             "stale_offset": null,
             "wot_fault": "offline"
           },
-          "missing_source_probability": 0.7,
+          "missing_source_probability": 0.0,
           "oracle_source": "ambiguous-fault-profile-label",
           "production_decision_source": "rule_first_locked_threshold",
           "production_detected_blocking": true,
@@ -4885,15 +4885,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.953911
+              "score": 0.785835
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.65,
-            "wot": 0.35
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 100.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -4928,15 +4928,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -4971,15 +4971,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5014,15 +5014,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5057,15 +5057,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5100,15 +5100,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5143,15 +5143,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5186,15 +5186,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5229,15 +5229,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5272,15 +5272,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         },
         {
           "conflict_score": 0.7124999999999999,
@@ -5315,15 +5315,15 @@
           "shadow_decisions": {
             "bayesian_feature_shadow": {
               "detected_blocking": true,
-              "score": 0.769413
+              "score": 0.621284
             }
           },
           "source_pair": "DOM+WOT",
           "source_reliability": {
-            "dom": 0.55,
-            "wot": 0.85
+            "dom": 0.5,
+            "wot": 0.5
           },
-          "staleness_ms": 1200.0
+          "staleness_ms": 0.0
         }
       ]
     },
@@ -6578,7 +6578,14 @@
       "ambiguous_weak_stale_signal_rep_029_seed_4329"
     ],
     "holdout_repetitions_per_profile": 10,
+    "live_fault_mapping_used_for_shadow_features": false,
     "locked_after_calibration": true,
+    "observed_feature_completeness": {
+      "missing_source_probability_present": 0,
+      "source_reliability_present": 0,
+      "staleness_ms_present": 0,
+      "trial_count": 120
+    },
     "posterior_threshold_locked_before_holdout": 0.5,
     "production_gate_changed": false,
     "profile_count": 4,
@@ -6588,7 +6595,8 @@
       "partial_missing_wot",
       "weak_stale_signal"
     ],
-    "rule_threshold_locked_before_holdout": 1.0
+    "rule_threshold_locked_before_holdout": 1.0,
+    "shadow_feature_source": "recorded_runtime_trial_fields"
   },
   "source_live_ambiguous_summary": "artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json"
 }

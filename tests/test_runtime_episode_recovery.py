@@ -172,6 +172,7 @@ def test_episode_policy_can_disable_retries_even_when_cascade_default_allows_the
     result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
 
     assert result.state == RuntimeState.ESCALATED
+    assert result.recovery_attempted is False
     assert result.attempts == 1
     assert len(executor.calls) == 1
     retry_step = next(step for step in result.recovery_trace if step["policy"] == "retry")

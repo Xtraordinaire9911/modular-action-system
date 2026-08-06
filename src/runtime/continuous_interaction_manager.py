@@ -417,7 +417,6 @@ class ContinuousInteractionManager:
                 boundary=analysis.boundary.value,
                 max_retry_attempts=episode.policy.max_retry_attempts,
             )
-            recovery_attempted = True
             next_recovery_tier = trace.selected_tier
             next_recovery_action = trace.selected_action
             selected_recovery_of_transition_id = transition_id
@@ -458,6 +457,7 @@ class ContinuousInteractionManager:
             )
 
             if action.action_type == "retry":
+                recovery_attempted = True
                 recovery_action = next_recovery_action
                 recovery_tier = next_recovery_tier
                 recovering_transition_id = selected_recovery_of_transition_id
@@ -478,6 +478,7 @@ class ContinuousInteractionManager:
                 )
                 candidate = decision.backend or action.backend
                 if candidate in self.executors and candidate in skill_tuple.allowed_backends:
+                    recovery_attempted = True
                     recovery_action = next_recovery_action
                     recovery_tier = next_recovery_tier
                     recovering_transition_id = selected_recovery_of_transition_id
@@ -489,6 +490,7 @@ class ContinuousInteractionManager:
                 action.reason = "reroute selected no executable alternative backend"
 
             if action.action_type == "rollback":
+                recovery_attempted = True
                 rollback_succeeded, rollback_result, rollback_transition_id = await self._execute_rollback(
                     action.rollback_call,
                     original_call=skill_call,
@@ -518,7 +520,7 @@ class ContinuousInteractionManager:
                     episode_id=episode.episode_id,
                     attempts=episode.step_count,
                     transition_ids=transition_ids,
-                    recovery_attempted=True,
+                    recovery_attempted=recovery_attempted,
                     recovery_succeeded=rollback_succeeded,
                     final_outcome_verified=False,
                 )
@@ -542,7 +544,7 @@ class ContinuousInteractionManager:
                 episode_id=episode.episode_id,
                 attempts=episode.step_count,
                 transition_ids=transition_ids,
-                recovery_attempted=True,
+                recovery_attempted=recovery_attempted,
                 recovery_succeeded=False,
                 final_outcome_verified=False,
             )
@@ -971,7 +973,6 @@ class ContinuousInteractionManager:
                 boundary=analysis.boundary.value,
                 max_retry_attempts=episode.policy.max_retry_attempts,
             )
-            recovery_attempted = True
             next_recovery_tier = trace.selected_tier
             next_recovery_action = trace.selected_action
             selected_recovery_of_transition_id = transition_id
@@ -1014,6 +1015,7 @@ class ContinuousInteractionManager:
             )
 
             if recovery_action.action_type == "retry":
+                recovery_attempted = True
                 selected_recovery_action = next_recovery_action
                 recovery_tier = next_recovery_tier
                 recovering_transition_id = selected_recovery_of_transition_id
@@ -1031,6 +1033,7 @@ class ContinuousInteractionManager:
                     preferred_backend=recovery_action.backend,
                 )
                 if alternative is not None:
+                    recovery_attempted = True
                     selected_recovery_action = next_recovery_action
                     recovery_tier = next_recovery_tier
                     recovering_transition_id = selected_recovery_of_transition_id
@@ -1052,7 +1055,7 @@ class ContinuousInteractionManager:
                 failure_boundary=analysis.boundary.value,
                 failure_type=analysis.failure_type,
                 recovery_tier=trace.selected_tier,
-                recovery_attempted=True,
+                recovery_attempted=recovery_attempted,
                 recovery_trace=recovery_trace,
                 transition_ids=transition_ids,
                 active_perception_trace=active_trace,
@@ -1394,7 +1397,21 @@ class ContinuousInteractionManager:
                 if resolution.resolved:
                     fusion = self.epistemic_arbiter.fuse(self.cognitive_map)
                     self._last_fusion_decision = _fusion_payload(fusion)
-                    return None
+                    if fusion.allow_system1:
+                        return None
+                    conflicts = fusion.conflicts or self.cognitive_map.unresolved_conflicts()
+                    if not conflicts:
+                        self.state = RuntimeState.ESCALATED
+                        return RuntimeStepResult(
+                            self.state,
+                            None,
+                            recovery_tier=4,
+                            reason=f"fusion still blocks System 1 after active perception: {fusion.reason}",
+                            failure_boundary="recoverable_execution_failure",
+                            failure_type="sensory_conflict",
+                            active_perception_trace=self._last_active_perception_trace,
+                            fusion_decision=self._last_fusion_decision,
+                        )
                 conflicts = [
                     conflict
                     for conflict in self.cognitive_map.unresolved_conflicts()

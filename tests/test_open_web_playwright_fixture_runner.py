@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
 
-from evaluation.open_web_playwright_fixture_runner import run_open_web_playwright_fixture_suite
+from evaluation.open_web_mock_failure_suite import build_open_web_mock_failure_suite
+from evaluation.open_web_playwright_fixture_runner import (
+    _expected_effect_satisfied,
+    run_open_web_playwright_fixture_suite,
+)
 from src.pipeline import run_open_web_playwright_fixture_suite_pipeline
 
 
@@ -71,3 +75,17 @@ def test_open_web_playwright_fixture_suite_pipeline_accepts_session_factory_for_
 
     assert paths["open_web_playwright_fixture_report"].endswith("open_web_playwright_fixture_report.json")
     assert report["summary"]["executor_success_count"] == report["summary"]["case_count"]
+
+
+def test_playwright_fixture_expected_effect_is_derived_from_oracle_state():
+    cases = {case.case_id: case for case in build_open_web_mock_failure_suite()}
+
+    assert _expected_effect_satisfied(cases["openweb-session-expiry"], {"profile_update_persisted": True})
+    assert _expected_effect_satisfied(
+        cases["openweb-autocomplete-validation"],
+        {"requested_city": "New York", "submitted_city": "New York"},
+    )
+    assert not _expected_effect_satisfied(
+        cases["openweb-autocomplete-validation"],
+        {"requested_city": "New York", "submitted_city": "New York, NY"},
+    )

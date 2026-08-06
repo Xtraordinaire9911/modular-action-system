@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 from urllib.parse import urlencode
@@ -76,6 +76,9 @@ class LiveAmbiguousTrial:
     oracle_source: str
     live_fault_mapping: dict[str, Any]
     conflict_type: str = ""
+    source_reliability: dict[str, float] = field(default_factory=dict)
+    staleness_ms: float = 0.0
+    missing_source_probability: float = 0.0
 
     def with_result(
         self,
@@ -85,6 +88,9 @@ class LiveAmbiguousTrial:
         detection_latency_ms: float,
         conflict_type: str = "",
         reset_evidence_id: str | None = None,
+        source_reliability: dict[str, float] | None = None,
+        staleness_ms: float | None = None,
+        missing_source_probability: float | None = None,
     ) -> "LiveAmbiguousTrial":
         return LiveAmbiguousTrial(
             profile=self.profile,
@@ -100,6 +106,11 @@ class LiveAmbiguousTrial:
             oracle_source=self.oracle_source,
             live_fault_mapping=self.live_fault_mapping,
             conflict_type=conflict_type,
+            source_reliability=dict(source_reliability if source_reliability is not None else self.source_reliability),
+            staleness_ms=self.staleness_ms if staleness_ms is None else staleness_ms,
+            missing_source_probability=(
+                self.missing_source_probability if missing_source_probability is None else missing_source_probability
+            ),
         )
 
 
@@ -191,9 +202,9 @@ def summarize_live_ambiguous_fusion_trials(
             "conflict_score": trial.conflict_score,
             "detection_latency_ms": trial.detection_latency_ms,
             "source_pair": trial.source_pair,
-            "source_reliability": _source_reliability_from_mapping(trial.live_fault_mapping),
-            "staleness_ms": _staleness_from_mapping(trial.live_fault_mapping),
-            "missing_source_probability": _missing_probability_from_mapping(trial.live_fault_mapping),
+            "source_reliability": trial.source_reliability,
+            "staleness_ms": trial.staleness_ms,
+            "missing_source_probability": trial.missing_source_probability,
             "oracle_source": trial.oracle_source,
         }
         for trial in materialized
@@ -346,6 +357,7 @@ async def _execute_live_ambiguous_trials(
                 read_delay_ms=profile.read_delay_ms,
                 drop_probability=profile.drop_probability,
                 source_reliability=profile.source_reliability,
+                seed=planned.seed,
             )
         url = config.dashboard_url
         if profile.dom_fault:
@@ -396,6 +408,7 @@ async def _execute_live_ambiguous_trials(
             missing_source_mass=1.0,
             fusion_strategy=fusion_strategy,  # type: ignore[arg-type]
         )
+        observed_features = _observed_ambiguous_features(cognitive_map, arbiter)
         started = time.perf_counter()
         decision = arbiter.fuse(cognitive_map)
         latency_ms = (time.perf_counter() - started) * 1000
@@ -407,6 +420,9 @@ async def _execute_live_ambiguous_trials(
                 detection_latency_ms=latency_ms,
                 conflict_type=strongest.conflict_type if strongest is not None else "",
                 reset_evidence_id=reset_evidence_id,
+                source_reliability=observed_features["source_reliability"],
+                staleness_ms=observed_features["staleness_ms"],
+                missing_source_probability=observed_features["missing_source_probability"],
             )
         )
     await control.reset()
@@ -431,6 +447,33 @@ def _annotate_profile_evidence(cognitive_map: CognitiveMap, profile: LiveAmbiguo
             "staleness_ms": staleness_ms,
             "missing_source_probability": missing_probability,
         }
+
+
+def _observed_ambiguous_features(cognitive_map: CognitiveMap, arbiter: EpistemicArbiter) -> dict[str, Any]:
+    target_assertions = [
+        assertion
+        for assertion in cognitive_map.state_assertions
+        if assertion.entity_id == "thermostat" and assertion.attribute == "target_temperature"
+    ]
+    source_reliability = {
+        assertion.source: float(arbiter.source_reliability.get(assertion.source, 0.5))
+        for assertion in target_assertions
+    }
+    staleness_values = [
+        float(assertion.metadata.get("staleness_ms", 0.0))
+        for assertion in target_assertions
+        if assertion.metadata.get("staleness_ms") is not None
+    ]
+    missing_values = [
+        float(assertion.metadata.get("missing_source_probability", 0.0))
+        for assertion in target_assertions
+        if assertion.metadata.get("missing_source_probability") is not None
+    ]
+    return {
+        "source_reliability": source_reliability,
+        "staleness_ms": max(staleness_values, default=0.0),
+        "missing_source_probability": max(missing_values, default=0.0),
+    }
 
 
 def _source_reliability_from_mapping(mapping: dict[str, Any]) -> dict[str, float]:

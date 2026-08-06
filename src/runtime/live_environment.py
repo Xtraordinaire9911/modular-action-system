@@ -499,12 +499,15 @@ class SmartRoomControlClient:
         read_delay_ms: int | None = None,
         drop_probability: float | None = None,
         source_reliability: dict[str, float] | None = None,
+        seed: int | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {"thing": thing, "type": failure_type, "delay_ms": delay_ms}
         if read_delay_ms is not None:
             payload["read_delay_ms"] = read_delay_ms
         if drop_probability is not None:
             payload["drop_probability"] = drop_probability
+        if seed is not None:
+            payload["seed"] = seed
         if source_reliability is not None:
             payload["source_reliability"] = source_reliability
         return await self._post(

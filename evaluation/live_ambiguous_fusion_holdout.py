@@ -53,6 +53,9 @@ def build_live_ambiguous_locked_holdout_report(
         "protocol": {
             "locked_after_calibration": True,
             "production_gate_changed": False,
+            "shadow_feature_source": "recorded_runtime_trial_fields",
+            "live_fault_mapping_used_for_shadow_features": False,
+            "observed_feature_completeness": _observed_feature_completeness(calibration + holdout),
             "calibration_repetitions_per_profile": calibration_repetitions,
             "holdout_repetitions_per_profile": holdout_repetitions
             if holdout_repetitions is not None
@@ -122,46 +125,40 @@ def write_live_ambiguous_locked_holdout_report(
 
 
 def _strategy_row(row: dict[str, Any]) -> dict[str, Any]:
-    mapping = dict(row.get("live_fault_mapping") or {})
     return {
         **row,
         "scenario": row.get("profile", row.get("scenario", "")),
-        "source_reliability": _source_reliability_from_mapping(mapping),
-        "staleness_ms": _staleness_from_mapping(mapping),
-        "missing_source_probability": _missing_probability_from_mapping(mapping),
+        "source_reliability": _observed_source_reliability(row),
+        "staleness_ms": _observed_staleness(row),
+        "missing_source_probability": _observed_missing_probability(row),
     }
 
 
-def _source_reliability_from_mapping(mapping: dict[str, Any]) -> dict[str, float]:
-    if mapping.get("source_reliability"):
-        return {str(key): float(value) for key, value in dict(mapping["source_reliability"]).items()}
-    if mapping.get("dom_fault") == "layout_shift":
-        return {"dom": 0.3, "wot": 0.95}
-    if mapping.get("wot_fault") == "offline":
-        return {"dom": 0.65, "wot": 0.35}
-    return {"dom": 0.55, "wot": 0.85}
+def _observed_source_reliability(row: dict[str, Any]) -> dict[str, float]:
+    reliability = row.get("source_reliability") or {}
+    if isinstance(reliability, dict) and reliability:
+        return {str(key): float(value) for key, value in reliability.items()}
+    return {"dom": 0.5, "wot": 0.5}
 
 
-def _staleness_from_mapping(mapping: dict[str, Any]) -> float:
-    if mapping.get("stale_offset") is not None:
-        return min(2000.0, abs(float(mapping["stale_offset"])) * 800.0)
-    if mapping.get("read_delay_ms") is not None:
-        return float(mapping["read_delay_ms"]) * 2.0
-    if mapping.get("dom_fault") == "stale_temperature":
-        return 1200.0
-    if mapping.get("wot_fault") == "timeout":
-        return 900.0
-    return 100.0
+def _observed_staleness(row: dict[str, Any]) -> float:
+    return float(row.get("staleness_ms") or 0.0)
 
 
-def _missing_probability_from_mapping(mapping: dict[str, Any]) -> float:
-    if mapping.get("drop_probability") is not None:
-        return float(mapping["drop_probability"])
-    if mapping.get("wot_fault") == "offline":
-        return 0.7
-    if mapping.get("wot_fault") == "timeout":
-        return 0.15
-    return 0.0
+def _observed_missing_probability(row: dict[str, Any]) -> float:
+    return float(row.get("missing_source_probability") or 0.0)
+
+
+def _observed_feature_completeness(trials: list[dict[str, Any]]) -> dict[str, Any]:
+    total = len(trials)
+    return {
+        "trial_count": total,
+        "source_reliability_present": sum(1 for trial in trials if bool(trial.get("source_reliability"))),
+        "staleness_ms_present": sum(1 for trial in trials if trial.get("staleness_ms") is not None),
+        "missing_source_probability_present": sum(
+            1 for trial in trials if trial.get("missing_source_probability") is not None
+        ),
+    }
 
 
 def _profile_counts(trials: list[dict[str, Any]]) -> dict[str, int]:

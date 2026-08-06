@@ -26,7 +26,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-05fae7463acd",
+        "episode_id": "episode-81789a14a559",
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -39,11 +39,11 @@
           false
         ],
         "reason": "automated recovery exhausted",
-        "recovery_attempted": true,
+        "recovery_attempted": false,
         "recovery_succeeded": false,
         "state": "escalated",
         "transition_ids": [
-          "episode-05fae7463acd:transition-0001"
+          "episode-81789a14a559:transition-0001"
         ]
       }
     },
@@ -69,7 +69,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-29b2873c979a",
+        "episode_id": "episode-893899d7e2fc",
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -82,11 +82,11 @@
           false
         ],
         "reason": "automated recovery exhausted",
-        "recovery_attempted": true,
+        "recovery_attempted": false,
         "recovery_succeeded": false,
         "state": "escalated",
         "transition_ids": [
-          "episode-29b2873c979a:transition-0001"
+          "episode-893899d7e2fc:transition-0001"
         ]
       }
     },
@@ -112,7 +112,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-8178ff1eb93f",
+        "episode_id": "episode-970db5767203",
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -125,11 +125,11 @@
           false
         ],
         "reason": "automated recovery exhausted",
-        "recovery_attempted": true,
+        "recovery_attempted": false,
         "recovery_succeeded": false,
         "state": "escalated",
         "transition_ids": [
-          "episode-8178ff1eb93f:transition-0001"
+          "episode-970db5767203:transition-0001"
         ]
       }
     },
@@ -155,7 +155,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-b400e8536c8e",
+        "episode_id": "episode-7c95d8caa718",
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -168,11 +168,11 @@
           false
         ],
         "reason": "automated recovery exhausted",
-        "recovery_attempted": true,
+        "recovery_attempted": false,
         "recovery_succeeded": false,
         "state": "escalated",
         "transition_ids": [
-          "episode-b400e8536c8e:transition-0001"
+          "episode-7c95d8caa718:transition-0001"
         ]
       }
     },
@@ -198,7 +198,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-3e906494cc3d",
+        "episode_id": "episode-c4ae386b9c70",
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -211,11 +211,11 @@
           false
         ],
         "reason": "automated recovery exhausted",
-        "recovery_attempted": true,
+        "recovery_attempted": false,
         "recovery_succeeded": false,
         "state": "escalated",
         "transition_ids": [
-          "episode-3e906494cc3d:transition-0001"
+          "episode-c4ae386b9c70:transition-0001"
         ]
       }
     },
@@ -241,7 +241,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-c7bb6d0da93c",
+        "episode_id": "episode-6f4b379119e4",
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
@@ -254,11 +254,11 @@
           false
         ],
         "reason": "automated recovery exhausted",
-        "recovery_attempted": true,
+        "recovery_attempted": false,
         "recovery_succeeded": false,
         "state": "escalated",
         "transition_ids": [
-          "episode-c7bb6d0da93c:transition-0001"
+          "episode-6f4b379119e4:transition-0001"
         ]
       }
     }
@@ -268,19 +268,19 @@
     "metadata": {
       "data_source": "open_web_mock_runtime_suite",
       "episode_ids": [
-        "episode-05fae7463acd",
-        "episode-29b2873c979a",
-        "episode-3e906494cc3d",
-        "episode-8178ff1eb93f",
-        "episode-b400e8536c8e",
-        "episode-c7bb6d0da93c"
+        "episode-6f4b379119e4",
+        "episode-7c95d8caa718",
+        "episode-81789a14a559",
+        "episode-893899d7e2fc",
+        "episode-970db5767203",
+        "episode-c4ae386b9c70"
       ],
       "measurement_counts": {
         "adaptation_cases": 6,
         "conflict_cases": 0,
         "oracle_cases": 0,
         "primitive_actions": 6,
-        "recovery_cases": 6,
+        "recovery_cases": 0,
         "routing_cases": 0,
         "tasks": 6,
         "verification_cases": 6,
@@ -313,7 +313,7 @@
       "PolicyProposalRate": 0.0,
       "RE": 0.0,
       "RecoverySuccessRate": 0.0,
-      "RecoveryTriggerRate": 1.0,
+      "RecoveryTriggerRate": 0.0,
       "RerouteTransitionRate": 0.0,
       "RetryTransitionRate": 0.0,
       "RollbackTransitionRate": 0.0,
@@ -344,7 +344,7 @@
     "failure_record_count": 6,
     "final_success_count": 0,
     "postcondition_failures_detected": 6,
-    "recovery_attempted_count": 6,
+    "recovery_attempted_count": 0,
     "runtime_episode_count": 6,
     "transition_record_count": 6,
     "unique_episode_ids": true

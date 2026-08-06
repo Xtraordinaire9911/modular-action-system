@@ -743,7 +743,8 @@ or statistically validated Bayesian fusion yet.
   - TSR = 0.0
   - ExpectedEffectSuccessRate = 0.0
   - FalseSuccessRate = 1.0
-  - RecoveryTriggerRate = 1.0
+  - recovery attempted count = 0
+  - RecoveryTriggerRate = 0.0
 - **结论边界**：
   - 这一步证明 open-web-style mock cases 已经能走统一 runtime envelope，并且 runtime 不把 executor success 当成 task success。
   - 这仍不是 Playwright 真实点击 HTML fixture，也不是真实 open-web evidence。
@@ -778,7 +779,8 @@ or statistically validated Bayesian fusion yet.
   - TSR = 0.0
   - ExpectedEffectSuccessRate = 0.0
   - FalseSuccessRate = 1.0
-  - RecoveryTriggerRate = 1.0
+  - recovery attempted count = 0
+  - RecoveryTriggerRate = 0.0
 - **结论边界**：
   - 这一步已经是真实浏览器执行本地 HTML fixtures，不再是 in-memory executor。
   - 这仍不是 MiniWoB++、WebArena 或真实互联网网页。

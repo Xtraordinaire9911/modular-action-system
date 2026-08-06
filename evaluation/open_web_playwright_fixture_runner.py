@@ -133,7 +133,7 @@ class _PlaywrightFixtureRuntimeAdapter:
         return Observation(
             device_states={
                 "oracle": {
-                    "expected_effect_satisfied": False,
+                    "expected_effect_satisfied": _expected_effect_satisfied(self.case, oracle),
                     "case_id": self.case.case_id,
                     "failure_class": self.case.failure_class,
                     "state": oracle,
@@ -165,6 +165,30 @@ async def _read_fixture_oracle(session: BrowserSessionLike) -> dict[str, Any]:
         )
     )
     return value if isinstance(value, dict) else {}
+
+
+def _expected_effect_satisfied(case: OpenWebMockFailureCase, oracle: dict[str, Any]) -> bool:
+    if case.case_id == "openweb-overlay-obstruction":
+        return bool(oracle.get("primary_action_completed"))
+    if case.case_id == "openweb-session-expiry":
+        return bool(oracle.get("profile_update_persisted"))
+    if case.case_id == "openweb-autocomplete-validation":
+        return (
+            "submitted_city" in oracle
+            and "requested_city" in oracle
+            and oracle.get("submitted_city") == oracle.get("requested_city")
+        )
+    if case.case_id == "openweb-optimistic-rollback":
+        return bool(oracle.get("backend_order_confirmed"))
+    if case.case_id == "openweb-dom-visual-disagreement":
+        return (
+            "dom_selected_plan" in oracle
+            and "visual_highlighted_plan" in oracle
+            and oracle.get("dom_selected_plan") == oracle.get("visual_highlighted_plan")
+        )
+    if case.case_id == "openweb-visible-ineffective-affordance":
+        return bool(oracle.get("notifications_enabled"))
+    return False
 
 
 def _skill_for_case(case: OpenWebMockFailureCase) -> SkillTuple:

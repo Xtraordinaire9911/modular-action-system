@@ -41,15 +41,23 @@ const INITIAL = {
 let state = structuredClone(INITIAL);
 
 // ── fault injection registry ─────────────────────────────────────────────────
-// faults[thing] = { type, delay_ms, read_delay_ms, drop_probability, source_reliability }
+// faults[thing] = { type, delay_ms, read_delay_ms, drop_probability, drop_seed, drop_rng_state, source_reliability }
 const faults = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function seededRandom(f) {
+  if (!Number.isFinite(f.drop_rng_state)) return Math.random();
+  // Numerical Recipes LCG. Keep unsigned 32-bit state so repeated seeded
+  // campaigns replay the same drop/read sequence.
+  f.drop_rng_state = (Math.imul(1664525, f.drop_rng_state >>> 0) + 1013904223) >>> 0;
+  return f.drop_rng_state / 0x100000000;
+}
 
 function shouldDropRead(f) {
   if (!f || !f.drop_probability) return false;
   const probability = Math.max(0, Math.min(1, Number(f.drop_probability) || 0));
   if (probability <= 0) return false;
-  return Math.random() < probability;
+  return seededRandom(f) < probability;
 }
 
 async function guard(thing, { read = false } = {}) {
@@ -241,6 +249,8 @@ function startControlPlane(port = 8081) {
             delay_ms: f.delay_ms,
             read_delay_ms: f.read_delay_ms,
             drop_probability: f.drop_probability,
+            drop_seed: Number.isFinite(Number(f.seed)) ? Number(f.seed) >>> 0 : undefined,
+            drop_rng_state: Number.isFinite(Number(f.seed)) ? Number(f.seed) >>> 0 : undefined,
             source_reliability: f.source_reliability,
           };
         }

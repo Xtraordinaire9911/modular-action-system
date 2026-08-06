@@ -78,6 +78,8 @@ def test_smart_room_fault_sources_expose_fine_grained_fault_hooks():
 
     assert "read_delay_ms" in node_source
     assert "drop_probability" in node_source
+    assert "drop_rng_state" in node_source
+    assert "Math.random() < probability" not in node_source
     assert "source_reliability" in node_source
     assert "stale_offset" in dashboard_source
     assert "source_reliability" in dashboard_source
