@@ -4,6 +4,7 @@ import asyncio
 import json
 
 from src.pipeline import (
+    run_bayesian_shadow_stability_pipeline,
     run_bayesian_fusion_comparator_pipeline,
     run_fusion_ablation_report_pipeline,
     run_fusion_campaign_pipeline,
@@ -161,3 +162,26 @@ def test_fusion_ablation_report_pipeline_writes_report(tmp_path):
     assert paths["bayesian_vs_rule_first_ablation_report"].endswith(
         "bayesian_vs_rule_first_ablation_report.json"
     )
+
+
+def test_bayesian_shadow_stability_pipeline_writes_report(tmp_path):
+    holdout = {
+        "condition_counts": {"holdout": {"a": 10, "b": 10}},
+        "holdout": {
+            "trial_count": 20,
+            "rule_first": {"metrics": {"balanced_accuracy": 0.8, "miss_rate": 0.2, "false_halt_rate": 0.0}},
+            "bayesian_shadow": {"metrics": {"balanced_accuracy": 1.0, "miss_rate": 0.0, "false_halt_rate": 0.0}},
+            "comparison": {"best_shadow_balanced_accuracy_delta": 0.2},
+            "strategy_comparison": {"production_gate_changed": False},
+        },
+    }
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    first.write_text(json.dumps(holdout), encoding="utf-8")
+    second.write_text(json.dumps(holdout), encoding="utf-8")
+
+    paths = run_bayesian_shadow_stability_pipeline([first, second], tmp_path / "stability")
+    report = json.loads((tmp_path / "stability" / "bayesian_shadow_stability_report.json").read_text())
+
+    assert paths["bayesian_shadow_stability_report"].endswith("bayesian_shadow_stability_report.json")
+    assert report["recommendation"] == "ready_for_integration_design_review"

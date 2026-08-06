@@ -223,6 +223,22 @@ uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
 
 uv run python -m src.pipeline --fusion-ablation-report \
   --holdout-report artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json
+
+uv run python -m src.pipeline --live-ambiguous-fusion \
+  --repetitions 30 \
+  --seed-start 5300 \
+  --output-dir artifacts/live_ambiguous_fusion_rerun
+
+uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
+  --live-ambiguous-summary artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json \
+  --output-dir artifacts/live_ambiguous_fusion_rerun_holdout \
+  --calibration-repetitions 20 \
+  --holdout-repetitions 10
+
+uv run python -m src.pipeline --bayesian-shadow-stability \
+  --holdout-reports \
+    artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json \
+    artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json
 ```
 
 Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and

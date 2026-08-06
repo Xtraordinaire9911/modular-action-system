@@ -401,9 +401,9 @@ or statistically validated Bayesian fusion yet.
 | P2 | Calibration / locked holdout | `[Yixin - 初始 20/10 split 已完成，后续可补跨 seed 方差/置信区间]` | calibration set 选择并锁定 threshold；holdout 禁止继续调参；报告 precision、recall、false halt、miss、balanced accuracy、detection latency、downstream TSR/recovery 和跨 seed 方差/置信区间 | `evaluation/fusion_holdout.py`, `evaluation/fusion_calibration.py`, `tests/test_fusion_holdout.py`, `artifacts/live_fusion_holdout/fusion_holdout_report.json` |
 | P2 | MiniWoB++ generalization study | `[Yixin - runtime contract/failure analysis]` + `[Shared - environment/affordance adapter]` | 任务必须走与 smart-room 相同的 `GoalSpec -> affordance -> primitive -> execute -> verify` runtime path；agentic 与 task-specific scripted solver 分表；输出按 failure taxonomy 聚合的 bottleneck report | `src/benchmarks/`, `scripts/run_miniwob.py`, `evaluation/` |
 | P2 | Open-web failure coverage gap | `[Yixin - 机制边界梳理 + failure taxonomy]` + `[Shared - mock/open-web env cases]` | 不把 smart-room controlled faults 等同于真实开放网页覆盖；补充 overlay、session expiry、autocomplete/async validation、DOM-vs-visual disagreement、optimistic UI/backend mismatch 等 failure cases；每个 case 必须输出 observation/action/verification/recovery ledger，并标注是 mechanism coverage、mock evidence 还是真实 open-web evidence | `src/benchmarks/`, `env/mock_envs/`, `evaluation/`, `artifacts/open_web_failure_suite/` |
-| Conditional | Bayesian fusion comparator | `[Yixin - shadow-mode strategy interface + ablation report 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；shadow mode 同时记录 production rule-first 与 Bayesian decision，但 production gate 不变；若要正式替换，必须再做 independent rerun/review | `evaluation/bayesian_fusion_comparator.py`, `evaluation/fusion_shadow_strategies.py`, `evaluation/fusion_ablation_report.py`, `tests/test_bayesian_fusion_comparator.py`, `tests/test_fusion_shadow_strategies.py`, `tests/test_fusion_ablation_report.py`, `artifacts/bayesian_vs_rule_first_ablation/bayesian_vs_rule_first_ablation_report.json` |
+| Conditional | Bayesian fusion comparator | `[Yixin - shadow-mode strategy + independent stability report 已完成，未替换 production gate]` | 只有 repeated calibration + locked holdout 数据支持时才比较 posterior；shadow mode 同时记录 production rule-first 与 Bayesian decision，但 production gate 不变；initial 与 independent rerun holdout 均为正向后，下一步仍需 integration design review，而非直接替换 | `evaluation/bayesian_fusion_comparator.py`, `evaluation/fusion_shadow_strategies.py`, `evaluation/fusion_ablation_report.py`, `evaluation/bayesian_shadow_stability.py`, `tests/test_bayesian_fusion_comparator.py`, `tests/test_fusion_shadow_strategies.py`, `tests/test_fusion_ablation_report.py`, `tests/test_bayesian_shadow_stability.py`, `artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json` |
 | Conditional | Ambiguous/noisy fusion stress | `[Yixin - synthetic stress 已完成，live ambiguous cases 待设计]` | 构造弱 stale、延迟恢复、低可靠 DOM、部分缺失 WoT 等模糊 evidence；若 Bayesian 在 synthetic 上有增益，再设计 live ambiguous benchmark，不直接改 production gate | `evaluation/noisy_fusion_stress.py`, `tests/test_noisy_fusion_stress.py`, `artifacts/noisy_fusion_stress/noisy_fusion_stress_report.json` |
-| Conditional | Live ambiguous fusion profiles | `[Yixin - 细粒度 fault API + 30×4 live evidence + 20/10 locked holdout 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 shadow comparator summary；按 profile 做 calibration/holdout split；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/live_ambiguous_fusion_holdout.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_holdout.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json` |
+| Conditional | Live ambiguous fusion profiles | `[Yixin - initial + independent rerun 30×4 live evidence 与 20/10 locked holdout 已完成，production gate 未替换]` | 将 weak stale、delayed recovery、low-reliability DOM、partial missing WoT 映射到细粒度 live fault API；记录 profile、seed、episode id、fault mapping 和 shadow comparator summary；按 profile 做 calibration/holdout split；initial 与 rerun 均保持 Bayesian shadow 正向；不改变 production gate | `evaluation/live_ambiguous_fusion_campaign.py`, `evaluation/live_ambiguous_fusion_holdout.py`, `tests/test_live_ambiguous_fusion_campaign.py`, `tests/test_live_ambiguous_fusion_holdout.py`, `env/node_wot_server/server.js`, `env/react_dashboard/src/App.jsx`, `artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json`, `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json`, `artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json` |
 
 ### 14.5.1 Live evidence 记录
 
@@ -570,11 +570,16 @@ or statistically validated Bayesian fusion yet.
   - `evaluation/fusion_shadow_strategies.py`
   - `evaluation/live_ambiguous_fusion_holdout.py`
   - `evaluation/fusion_ablation_report.py`
+  - `evaluation/bayesian_shadow_stability.py`
   - CLI: `python -m src.pipeline --live-ambiguous-fusion-holdout --live-ambiguous-summary artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json --output-dir artifacts/live_ambiguous_fusion_holdout --calibration-repetitions 20 --holdout-repetitions 10 --posterior-threshold 0.5`
   - CLI: `python -m src.pipeline --fusion-ablation-report --holdout-report artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json --output-dir artifacts/bayesian_vs_rule_first_ablation`
+  - CLI: `python -m src.pipeline --bayesian-shadow-stability --holdout-reports artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json --output-dir artifacts/bayesian_shadow_stability`
 - **已生成 artifact**：
   - `artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json`
   - `artifacts/bayesian_vs_rule_first_ablation/bayesian_vs_rule_first_ablation_report.json`
+  - `artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json`
+  - `artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json`
+  - `artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json`
 - **实现边界**：
   - Production strategy 仍为 `rule_first_locked_threshold`。
   - Bayesian 作为 `bayesian_feature_shadow` 同步计算 blocking posterior，并写入 shadow decisions。
@@ -588,6 +593,22 @@ or statistically validated Bayesian fusion yet.
   - Bayesian shadow balanced accuracy = 1.0；recall = 1.0；miss rate = 0.0；false halt rate = 0.0。
   - delta = 0.167
   - recommendation = `consider_shadow_to_gate_promotion_after_independent_rerun`
+- **Independent rerun 结果**：
+  - rerun seed_start = 5300
+  - rerun trials = 120；每个 profile = 30
+  - rerun holdout trials = 40；每个 profile = 10
+  - Rerun rule-first balanced accuracy = 0.833；recall = 0.667；miss rate = 0.333；false halt rate = 0.0。
+  - Rerun Bayesian shadow balanced accuracy = 1.0；recall = 1.0；miss rate = 0.0；false halt rate = 0.0。
+  - Rerun delta = 0.167
+- **Stability report 结论**：
+  - compared holdouts = 2
+  - total holdout trials = 80
+  - min balanced accuracy delta = 0.167
+  - max Bayesian false halt rate = 0.0
+  - max Bayesian miss rate = 0.0
+  - promotion preconditions 全部通过：positive delta、miss-rate non-regression、false-halt non-regression、profile counts complete、production gate unchanged。
+  - recommendation = `ready_for_integration_design_review`
+  - 仍不表示已经替换 production gate；下一步是 configurable CIM/verifier integration design，而不是直接默认启用。
 
 ### 14.6 Planner 职责边界
 

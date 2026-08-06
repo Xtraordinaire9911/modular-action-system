@@ -1,0 +1,76 @@
+{
+  "aggregate": {
+    "max_bayesian_false_halt_rate": 0.0,
+    "max_bayesian_miss_rate": 0.0,
+    "min_balanced_accuracy_delta": 0.166667,
+    "total_holdout_trials": 80
+  },
+  "boundary": {
+    "does_not_replace_runtime_gate": true,
+    "next_step_if_ready": "design configurable CIM/verifier integration, then rerun locked evaluation",
+    "shadow_mode_only": true
+  },
+  "data_source": "bayesian_shadow_stability",
+  "holdout_count": 2,
+  "holdouts": [
+    {
+      "balanced_accuracy_delta": 0.166667,
+      "bayesian_balanced_accuracy": 1.0,
+      "bayesian_false_halt_rate": 0.0,
+      "bayesian_miss_rate": 0.0,
+      "index": 0,
+      "production_gate_changed": false,
+      "profile_counts": {
+        "delayed_wot_recovery": 10,
+        "low_reliability_dom": 10,
+        "partial_missing_wot": 10,
+        "weak_stale_signal": 10
+      },
+      "profile_counts_complete": true,
+      "recommendation": "consider_shadow_to_gate_promotion_after_independent_rerun",
+      "rule_first_balanced_accuracy": 0.8333333333333333,
+      "rule_first_false_halt_rate": 0.0,
+      "rule_first_miss_rate": 0.3333333333333333,
+      "source_live_ambiguous_summary": "artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json",
+      "trial_count": 40
+    },
+    {
+      "balanced_accuracy_delta": 0.166667,
+      "bayesian_balanced_accuracy": 1.0,
+      "bayesian_false_halt_rate": 0.0,
+      "bayesian_miss_rate": 0.0,
+      "index": 1,
+      "production_gate_changed": false,
+      "profile_counts": {
+        "delayed_wot_recovery": 10,
+        "low_reliability_dom": 10,
+        "partial_missing_wot": 10,
+        "weak_stale_signal": 10
+      },
+      "profile_counts_complete": true,
+      "recommendation": "consider_shadow_to_gate_promotion_after_independent_rerun",
+      "rule_first_balanced_accuracy": 0.8333333333333333,
+      "rule_first_false_halt_rate": 0.0,
+      "rule_first_miss_rate": 0.3333333333333333,
+      "source_live_ambiguous_summary": "artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json",
+      "trial_count": 40
+    }
+  ],
+  "mode": "independent_rerun_stability_check",
+  "production_gate_changed": false,
+  "production_strategy": "rule_first_locked_threshold",
+  "promotion_preconditions": {
+    "at_least_two_holdouts": true,
+    "false_halt_not_regressed": true,
+    "miss_rate_not_regressed": true,
+    "positive_delta_in_all_holdouts": true,
+    "production_gate_unchanged_during_shadow": true,
+    "profile_counts_complete": true
+  },
+  "recommendation": "ready_for_integration_design_review",
+  "shadow_strategy": "bayesian_feature_shadow",
+  "source_holdout_reports": [
+    "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+    "artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json"
+  ]
+}

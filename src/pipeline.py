@@ -277,6 +277,15 @@ def run_fusion_ablation_report_pipeline(
     return write_fusion_ablation_report(holdout_report_path, output_dir)
 
 
+def run_bayesian_shadow_stability_pipeline(
+    holdout_report_paths: list[str | Path],
+    output_dir: str | Path = "artifacts/bayesian_shadow_stability",
+) -> dict[str, str]:
+    from evaluation.bayesian_shadow_stability import write_bayesian_shadow_stability_report
+
+    return write_bayesian_shadow_stability_report(holdout_report_paths, output_dir)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -318,6 +327,11 @@ def main() -> None:
         help="Write Bayesian-vs-rule-first fusion ablation report from a shadow holdout report.",
     )
     parser.add_argument(
+        "--bayesian-shadow-stability",
+        action="store_true",
+        help="Compare initial and rerun Bayesian shadow holdouts before any production promotion.",
+    )
+    parser.add_argument(
         "--campaign-summary",
         default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
         help="Input campaign summary for --fusion-holdout.",
@@ -326,6 +340,11 @@ def main() -> None:
         "--holdout-report",
         default="artifacts/live_fusion_holdout/fusion_holdout_report.json",
         help="Input locked holdout report for comparator or ablation commands.",
+    )
+    parser.add_argument(
+        "--holdout-reports",
+        nargs="+",
+        help="Input holdout reports for --bayesian-shadow-stability.",
     )
     parser.add_argument(
         "--live-ambiguous-summary",
@@ -360,7 +379,16 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.fusion_ablation_report:
+    if args.bayesian_shadow_stability:
+        summary = run_bayesian_shadow_stability_pipeline(
+            args.holdout_reports
+            or [
+                "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+                "artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json",
+            ],
+            args.output_dir or "artifacts/bayesian_shadow_stability",
+        )
+    elif args.fusion_ablation_report:
         summary = run_fusion_ablation_report_pipeline(
             args.holdout_report,
             args.output_dir or "artifacts/bayesian_vs_rule_first_ablation",
