@@ -310,6 +310,27 @@ def run_open_web_mock_runtime_suite_pipeline(
     return run_open_web_mock_runtime_suite(output_dir, seed_start=seed_start)
 
 
+def run_open_web_playwright_fixture_suite_pipeline(
+    output_dir: str | Path = "artifacts/open_web_playwright_fixture_suite",
+    *,
+    seed_start: int = 10000,
+    headless: bool = True,
+    action_timeout_ms: int = 1000,
+    capture_screenshots: bool = True,
+    session_factory=None,
+) -> dict[str, str]:
+    from evaluation.open_web_playwright_fixture_runner import run_open_web_playwright_fixture_suite
+
+    return run_open_web_playwright_fixture_suite(
+        output_dir,
+        seed_start=seed_start,
+        headless=headless,
+        action_timeout_ms=action_timeout_ms,
+        capture_screenshots=capture_screenshots,
+        session_factory=session_factory,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -366,6 +387,11 @@ def main() -> None:
         help="Run open-web mock failure cases through RuntimeEpisodeRunner with oracle re-observation.",
     )
     parser.add_argument(
+        "--open-web-playwright-fixture-suite",
+        action="store_true",
+        help="Run local open-web mock fixtures through Playwright and RuntimeEpisodeRunner.",
+    )
+    parser.add_argument(
         "--campaign-summary",
         default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
         help="Input campaign summary for --fusion-holdout.",
@@ -419,7 +445,13 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.open_web_mock_runtime_suite:
+    if args.open_web_playwright_fixture_suite:
+        summary = run_open_web_playwright_fixture_suite_pipeline(
+            args.output_dir or "artifacts/open_web_playwright_fixture_suite",
+            seed_start=args.seed_start,
+            headless=not args.headed,
+        )
+    elif args.open_web_mock_runtime_suite:
         summary = run_open_web_mock_runtime_suite_pipeline(
             args.output_dir or "artifacts/open_web_mock_runtime_suite",
             seed_start=args.seed_start,

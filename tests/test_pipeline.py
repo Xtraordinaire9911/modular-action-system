@@ -13,6 +13,7 @@ from src.pipeline import (
     run_noisy_fusion_stress_pipeline,
     run_open_web_mock_failure_suite_pipeline,
     run_open_web_mock_runtime_suite_pipeline,
+    run_open_web_playwright_fixture_suite_pipeline,
     run_runtime_demo_pipeline,
     run_smoke_pipeline,
 )
@@ -211,4 +212,20 @@ def test_open_web_mock_runtime_suite_pipeline_writes_episode_report(tmp_path):
 
     assert paths["open_web_mock_runtime_episode_report"].endswith("open_web_mock_runtime_episode_report.json")
     assert report["protocol"]["runtime_entrypoint"] == "RuntimeEpisodeRunner.run_skill_episode"
+    assert report["summary"]["postcondition_failures_detected"] == report["summary"]["case_count"]
+
+
+def test_open_web_playwright_fixture_suite_pipeline_writes_browser_report_with_fake_session(tmp_path):
+    from tests.test_open_web_playwright_fixture_runner import _fake_session_factory
+
+    paths = run_open_web_playwright_fixture_suite_pipeline(
+        tmp_path,
+        seed_start=8500,
+        session_factory=_fake_session_factory,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "open_web_playwright_fixture_report.json").read_text())
+
+    assert paths["open_web_playwright_fixture_report"].endswith("open_web_playwright_fixture_report.json")
+    assert report["protocol"]["browser_execution"] is True
     assert report["summary"]["postcondition_failures_detected"] == report["summary"]["case_count"]

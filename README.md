@@ -216,6 +216,13 @@ executor success is not treated as task success:
 uv run python -m src.pipeline --open-web-mock-runtime-suite
 ```
 
+Run the same local fixtures through real Playwright Chromium execution before
+the runtime verifies the fresh oracle state:
+
+```bash
+uv run python -m src.pipeline --open-web-playwright-fixture-suite
+```
+
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:
 

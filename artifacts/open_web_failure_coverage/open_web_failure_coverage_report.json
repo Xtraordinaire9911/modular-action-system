@@ -1,4 +1,18 @@
 {
+  "browser_fixture_suite": {
+    "case_ids": [
+      "openweb-overlay-obstruction",
+      "openweb-session-expiry",
+      "openweb-autocomplete-validation",
+      "openweb-optimistic-rollback",
+      "openweb-dom-visual-disagreement",
+      "openweb-visible-ineffective-affordance"
+    ],
+    "coverage_level": "controlled_browser_fixture_evidence",
+    "data_source": "open_web_playwright_fixture_suite",
+    "real_open_web_evidence": false,
+    "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode"
+  },
   "coverage_by_class": {
     "ab_layout_selector_drift": {
       "coverage_level": "controlled_evidence",
@@ -84,6 +98,7 @@
   ],
   "recommendation": "connect_mock_cases_to_runtime_episode_runner_then_run_real_open_web_probe",
   "summary": {
+    "controlled_browser_fixture_case_count": 6,
     "controlled_evidence_count": 8,
     "failure_class_count": 8,
     "mechanism_ready_count": 0,

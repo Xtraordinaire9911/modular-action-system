@@ -91,6 +91,7 @@ def build_open_web_failure_coverage_report() -> dict[str, Any]:
             "failure_class_count": len(coverage_by_class),
             "mechanism_ready_count": counts["mechanism_ready"],
             "controlled_evidence_count": counts["controlled_evidence"],
+            "controlled_browser_fixture_case_count": len(mock_cases),
             "real_open_web_evidence_count": counts["real_open_web_evidence"],
             "open_web_mock_case_count": len(mock_cases),
         },
@@ -98,6 +99,13 @@ def build_open_web_failure_coverage_report() -> dict[str, Any]:
         "mock_suite": {
             "data_source": "open_web_mock_failure_suite",
             "coverage_level": "controlled_mock_evidence",
+            "real_open_web_evidence": False,
+            "case_ids": [case.case_id for case in mock_cases],
+        },
+        "browser_fixture_suite": {
+            "data_source": "open_web_playwright_fixture_suite",
+            "coverage_level": "controlled_browser_fixture_evidence",
+            "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
             "real_open_web_evidence": False,
             "case_ids": [case.case_id for case in mock_cases],
         },
