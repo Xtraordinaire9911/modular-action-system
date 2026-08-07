@@ -65,9 +65,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Build and validate builder stage
+        run: docker build --target builder -t action-system-builder:${{ github.sha }} .
+
       - name: Build production image
         run: docker build --target runner -t action-system:${{ github.sha }} .
-
       - name: Export and archive image
         if: github.event_name == 'push'
         run: docker save action-system:${{ github.sha }} | gzip > artifact.tar.gz
