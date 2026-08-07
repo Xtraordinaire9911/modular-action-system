@@ -17,6 +17,12 @@ from src.perception.page_affordance_model import PageAffordanceModel
 _INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea", "label", "form", "option"])
 _STRIP_TAGS = frozenset(["script", "style", "meta", "link", "noscript", "head", "svg"])
 _VOID_STRIP_TAGS = frozenset(["meta", "link"])
+# Demo overlays (cursor, highlight ring, task badge) tag *live* page elements with
+# __cua_* ids/classes while a run is being shown. Those are our own artifacts, so
+# perception must ignore them: otherwise the transducer emits fabricated locators
+# such as "#__cua_target" (confidence 1.0) that only exist mid-demo and change on
+# every step, which is exactly the overlay-contamination / unstable-locator issue.
+_OVERLAY_ATTR_PREFIX = "__cua_"
 _ARIA_ACTION_MAP = {
     "button": "click",
     "link": "click",
@@ -49,6 +55,22 @@ _AFFORDANCE_TYPE = {"click": "button", "type": "input", "select": "input"}
 _SELECTOR_CONFIDENCE = {"id": 1.0, "testid": 0.97, "name": 0.85, "class": 0.7, "positional": 0.55}
 
 
+def _strip_overlay_attrs(attr: dict[str, str]) -> dict[str, str]:
+    """Drop demo-overlay ids/classes so derived locators stay page-stable.
+
+    The element itself is kept (it is a real page element that merely carries our
+    marker); only the injected id/class are removed, so selector derivation falls
+    through to the next genuine strategy instead of locking onto our own marker.
+    """
+    if attr.get("id", "").startswith(_OVERLAY_ATTR_PREFIX):
+        attr = {k: v for k, v in attr.items() if k != "id"}
+    classes = attr.get("class", "")
+    if _OVERLAY_ATTR_PREFIX in classes:
+        kept = " ".join(c for c in classes.split() if not c.startswith(_OVERLAY_ATTR_PREFIX))
+        attr = {**attr, "class": kept} if kept else {k: v for k, v in attr.items() if k != "class"}
+    return attr
+
+
 class _InteractiveParser(HTMLParser):
     """Single-pass collector for interactable DOM nodes."""
 
@@ -75,7 +97,7 @@ class _InteractiveParser(HTMLParser):
                 self._depth = max(0, self._depth - 1)
             return
 
-        attr = {k: (v or "") for k, v in attrs}
+        attr = _strip_overlay_attrs({k: (v or "") for k, v in attrs})
         role = attr.get("role", "")
         if "hidden" in attr or attr.get("aria-hidden") == "true":
             return
