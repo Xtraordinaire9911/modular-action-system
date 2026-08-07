@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: ["main", "develop"]
 
+# Supersede in-flight runs for the same ref so a stale red run cannot be
+# mistaken for the current state of a branch.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-test:
     runs-on: ubuntu-latest
@@ -42,10 +48,12 @@ jobs:
       - name: Demo smoke
         run: python run_demo.py
 
+  # Runs on pull requests as well: gating the image build behind `push` meant a
+  # broken Dockerfile passed review and only turned the branch red after the
+  # merge landed on develop/main.
   docker-build:
     runs-on: ubuntu-latest
     needs: lint-test
-    if: github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@v4
@@ -53,12 +61,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and export production image
-        run: |
-          docker build --target runner -t action-system:${{ github.sha }} .
-          docker save action-system:${{ github.sha }} | gzip > artifact.tar.gz
+      - name: Build production image
+        run: docker build --target runner -t action-system:${{ github.sha }} .
+
+      - name: Export and archive image
+        if: github.event_name == 'push'
+        run: docker save action-system:${{ github.sha }} | gzip > artifact.tar.gz
 
       - name: Archive artifact
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: action-system-${{ github.sha }}

@@ -17,3 +17,9 @@ artifact.tar.gz
 screenshots
 logs
 results
+# Kept out of the build context now that the Dockerfile copies the whole tree:
+# cloned external benchmarks and demo run outputs are large and never needed to
+# build or test the image.
+.external_envs
+eval_outputs
+node_modules
