@@ -19,13 +19,18 @@ from __future__ import annotations
 
 from typing import Any, Protocol, Sequence
 
-# Returns one entry per selector, in order: [x, y, w, h] or null when the element
-# is absent, detached, or not rendered. Invalid selectors are caught so a single
-# bad locator cannot abort the whole measurement pass.
+# Input is [selector, occurrence] pairs; output is one [x, y, w, h] or null each.
+# The occurrence index matters: class-derived selectors are not unique (four
+# "Add to cart" buttons all resolve to "button.add-cart-btn"), and querySelector
+# would hand back the first match every time, so every one of those affordances
+# would report the *first* button's rectangle. Indexing into querySelectorAll
+# keeps each affordance bound to its own element. Invalid selectors are caught so
+# a single bad locator cannot abort the whole measurement pass.
 _MEASURE_JS = (
-    "(sels)=>sels.map((s)=>{"
-    "let el=null;"
-    "try{el=document.querySelector(s);}catch(e){return null;}"
+    "(items)=>items.map((it)=>{"
+    "let els=[];"
+    "try{els=document.querySelectorAll(it[0]);}catch(e){return null;}"
+    "const el=els[it[1]];"
     "if(!el)return null;"
     "const r=el.getBoundingClientRect();"
     "if(!(r.width>0&&r.height>0))return null;"
@@ -52,11 +57,23 @@ def _coerce_box(value: Any) -> list[int] | None:
 
 
 def measure_bboxes(session: _EvaluatingSession, selectors: Sequence[str]) -> list[list[int] | None]:
-    """Measure each selector in one round trip; unmeasurable entries are None."""
+    """Measure each selector in one round trip; unmeasurable entries are None.
+
+    Repeated selectors are resolved positionally: the nth affordance carrying a
+    given selector is matched to the nth element that selector selects, in
+    document order. Affordances are produced in document order too, so the two
+    line up and shared class selectors stop collapsing onto one element.
+    """
     if not selectors:
         return []
+    seen: dict[str, int] = {}
+    items: list[list[Any]] = []
+    for selector in selectors:
+        occurrence = seen.get(selector, 0)
+        seen[selector] = occurrence + 1
+        items.append([selector, occurrence])
     try:
-        raw = session.evaluate(_MEASURE_JS, list(selectors))
+        raw = session.evaluate(_MEASURE_JS, items)
     except Exception:
         return [None] * len(selectors)  # a failed probe measures nothing; it invents nothing
     if not isinstance(raw, (list, tuple)):

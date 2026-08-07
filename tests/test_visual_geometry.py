@@ -21,18 +21,33 @@ from src.perception.visual_geometry import (
 
 
 class RectSession:
-    """Stands in for a live page: returns rects for known selectors only."""
+    """Stands in for a live page: returns rects for known selectors only.
 
-    def __init__(self, rects: dict[str, list[int]], *, fail: bool = False) -> None:
+    A selector maps either to one box or to a list of boxes, mirroring a real
+    page where one selector can match several elements.
+    """
+
+    def __init__(self, rects: dict[str, Any], *, fail: bool = False) -> None:
         self.rects = rects
         self.fail = fail
-        self.calls: list[list[str]] = []
+        self.calls: list[list[Any]] = []
+
+    def _boxes_for(self, selector: str) -> list[Any]:
+        value = self.rects.get(selector)
+        if value is None:
+            return []
+        return list(value) if value and isinstance(value[0], (list, tuple)) else [value]
 
     def evaluate(self, expression: str, arg: Any | None = None) -> Any:
         if self.fail:
             raise RuntimeError("page closed")
-        self.calls.append(list(arg or []))
-        return [self.rects.get(sel) for sel in (arg or [])]
+        items = list(arg or [])
+        self.calls.append(items)
+        out = []
+        for selector, occurrence in items:
+            boxes = self._boxes_for(selector)
+            out.append(boxes[occurrence] if occurrence < len(boxes) else None)
+        return out
 
 
 def _pam(html: str):
@@ -56,6 +71,25 @@ def test_zero_area_and_malformed_rects_are_not_boxes():
 def test_probe_failure_measures_nothing_and_invents_nothing():
     session = RectSession({}, fail=True)
     assert measure_bboxes(session, ["#a", "#b"]) == [None, None]
+
+
+def test_repeated_selector_resolves_to_distinct_elements():
+    """Shared class selectors must not collapse onto the first matching element.
+
+    Four "Add to cart" buttons all derive the selector "button.add-cart-btn";
+    querySelector would return the same rectangle four times, so three marks
+    would describe geometry that is not theirs.
+    """
+    session = RectSession({"button.add-cart-btn": [[0, 10, 100, 20], [0, 40, 100, 20], [0, 70, 100, 20]]})
+    boxes = measure_bboxes(session, ["button.add-cart-btn"] * 3)
+
+    assert boxes == [[0, 10, 100, 20], [0, 40, 100, 20], [0, 70, 100, 20]]
+    assert len({tuple(b) for b in boxes if b}) == 3, "each occurrence needs its own geometry"
+
+
+def test_extra_occurrence_beyond_matches_is_not_measured():
+    session = RectSession({"button.x": [[0, 0, 5, 5]]})
+    assert measure_bboxes(session, ["button.x", "button.x"]) == [[0, 0, 5, 5], None]
 
 
 def test_empty_selector_list_short_circuits():

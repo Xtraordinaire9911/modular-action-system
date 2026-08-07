@@ -20,6 +20,8 @@ htmlcov/
 results/
 logs/
 screenshots/
+# Per-run demo output (screenshots, traces): regenerated on every run.
+eval_outputs/
 .external_envs/
 
 # Local paper / presentation artifacts
