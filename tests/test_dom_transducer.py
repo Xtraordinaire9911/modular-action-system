@@ -63,3 +63,41 @@ def test_compression_ratio_reported():
     assert pam.kept_node_count < pam.raw_node_count
     assert 0.0 < pam.compression_ratio < 1.0
     assert pam.to_dict()["page_id"] == "booking_dashboard"
+
+
+def test_runtime_overlay_elements_and_their_descendants_are_excluded():
+    html = """
+    <button id="before" aria-label="Real before">Real before</button>
+    <div id="__cua_cursor" role="button" aria-label="Cursor overlay">
+      <button id="nested-cursor-action">Nested cursor action</button>
+    </div>
+    <button id="__cua_cap">Caption overlay</button>
+    <section data-agent-overlay="true">
+      <a href="/agent-only">Agent overlay link</a>
+    </section>
+    <input data-runtime-overlay="true" aria-label="Runtime overlay input">
+    <button id="after" aria-label="Real after">Real after</button>
+    """
+
+    pam = DomTransducer().transduce(html)
+
+    assert [affordance.label for affordance in pam.affordances] == ["Real before", "Real after"]
+    assert [affordance.locator["selector"] for affordance in pam.affordances] == ["#before", "#after"]
+
+
+def test_void_elements_inside_runtime_overlays_do_not_hide_following_affordances():
+    html = """
+    <div data-runtime-overlay="true">
+      <img src="cursor.png" alt="Overlay cursor">
+    </div>
+    <div data-agent-overlay="true">
+      <img src="badge.png" alt="Overlay badge" />
+      <button aria-label="Nested overlay action">Ignore me</button>
+    </div>
+    <button id="real-action" aria-label="Real action">Run</button>
+    """
+
+    pam = DomTransducer().transduce(html)
+
+    assert [affordance.label for affordance in pam.affordances] == ["Real action"]
+    assert pam.affordances[0].locator["selector"] == "#real-action"

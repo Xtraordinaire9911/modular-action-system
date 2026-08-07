@@ -132,8 +132,12 @@ class ThreadedBrowserSession:
         self.action_timeout_ms = action_timeout_ms
         self._worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="live-browser")
         self._session: BrowserSession | None = None
+        self._closed = False
+        self.context_generation = 0
 
     async def start(self) -> None:
+        if self._closed:
+            raise LiveEnvironmentError("browser session has been closed")
         if self._session is not None:
             return
 
@@ -145,6 +149,20 @@ class ThreadedBrowserSession:
             )
 
         self._session = await self._submit(launch)
+        self.context_generation += 1
+
+    async def recreate(self) -> None:
+        """Replace the current BrowserContext while keeping adapter references stable."""
+
+        await self.stop()
+        await self.start()
+
+    async def stop(self) -> None:
+        """Close only the current context; the worker remains reusable."""
+
+        if self._session is not None:
+            await self._session_call("close")
+            self._session = None
 
     async def open(self, url: str) -> None:
         await self._session_call("open", url)
@@ -171,10 +189,11 @@ class ThreadedBrowserSession:
         return await self._submit(execute)
 
     async def close(self) -> None:
-        if self._session is not None:
-            await self._session_call("close")
-            self._session = None
+        if self._closed:
+            return
+        await self.stop()
         self._worker.shutdown(wait=True, cancel_futures=True)
+        self._closed = True
 
     async def _session_call(self, method: str, *args: Any, **kwargs: Any) -> Any:
         def call() -> Any:
@@ -237,6 +256,14 @@ class SmartRoomLiveEnvironment:
         self.thing_models: list[ThingAffordanceModel] = []
         self.latest_affordances: dict[str, Affordance] = {}
         self._observation_index = 0
+        self._episode_id = "preflight"
+
+    def begin_episode(self, episode_id: str) -> None:
+        """Clear per-episode perception caches after a new context is provisioned."""
+
+        self._episode_id = episode_id
+        self.latest_affordances.clear()
+        self._observation_index = 0
 
     async def initialize(self) -> None:
         """Discover live TDs and rewrite container-local forms for the host runtime."""
@@ -277,7 +304,8 @@ class SmartRoomLiveEnvironment:
             ]
         self.latest_affordances = {affordance.id: affordance for affordance in affordances}
 
-        screenshot_dir = self.config.output_dir / "screenshots" / request.task_id
+        episode_id = request.episode_id or self._episode_id
+        screenshot_dir = self.config.output_dir / "screenshots" / request.task_id / episode_id
         screenshot_dir.mkdir(parents=True, exist_ok=True)
         screenshot_path = screenshot_dir / f"{self._observation_index:03d}_{request.reason}.png"
         screenshot = await self.session.screenshot(str(screenshot_path))
@@ -486,9 +514,80 @@ class SmartRoomControlClient:
     def __init__(self, control_url: str, *, timeout_s: float = 2.0) -> None:
         self.control_url = control_url.rstrip("/")
         self.timeout_s = timeout_s
+        self._lease_id = ""
+
+    @property
+    def lease_id(self) -> str:
+        return self._lease_id
+
+    async def acquire_lease(self, episode_id: str) -> dict[str, Any] | None:
+        """Atomically checkpoint and reset the server, or return ``None`` while busy."""
+
+        if self._lease_id:
+            raise LiveEnvironmentError("this control client already holds an episode lease")
+        async with httpx.AsyncClient(timeout=self.timeout_s) as client:
+            response = await client.post(
+                f"{self.control_url}/lease/acquire",
+                json={"episode_id": episode_id},
+            )
+            if response.status_code == 409:
+                return None
+            response.raise_for_status()
+            payload = response.json()
+        lease_id = payload.get("lease_id") if isinstance(payload, dict) else None
+        checkpoint = payload.get("checkpoint") if isinstance(payload, dict) else None
+        if not isinstance(lease_id, str) or not lease_id or not isinstance(checkpoint, dict):
+            raise LiveEnvironmentError("control plane returned an invalid episode lease")
+        self._lease_id = lease_id
+        return copy.deepcopy(payload)
+
+    async def restore_lease(self) -> dict[str, Any]:
+        """Restore the server-held baseline without releasing this client's lease."""
+
+        self._require_lease()
+        return await self._post("/lease/restore", None)
+
+    async def release_lease(self) -> dict[str, Any]:
+        """Restore the server-held baseline and release this client's lease."""
+
+        self._require_lease()
+        lease_id = self._lease_id
+        async with httpx.AsyncClient(timeout=self.timeout_s) as client:
+            response = await client.post(
+                f"{self.control_url}/lease/release",
+                json=None,
+                headers={"X-Episode-Lease": lease_id},
+            )
+            if response.status_code == 409:
+                payload = response.json()
+                if isinstance(payload, dict) and payload.get("error") in {
+                    "no episode lease is active",
+                    "stale episode lease",
+                }:
+                    self._lease_id = ""
+                    return {"status": "already_released", **payload}
+            response.raise_for_status()
+            payload = response.json()
+        if not isinstance(payload, dict) or payload.get("status") != "released":
+            raise LiveEnvironmentError("control plane returned an invalid lease release")
+        if self._lease_id == lease_id:
+            self._lease_id = ""
+        return payload
 
     async def reset(self) -> dict[str, Any]:
         return await self._post("/reset", None)
+
+    async def checkpoint(self) -> dict[str, Any]:
+        """Capture an independent copy of the complete simulated WoT state."""
+
+        return copy.deepcopy(await self.state())
+
+    async def restore(self, checkpoint: dict[str, Any]) -> dict[str, Any]:
+        """Restore a checkpoint previously returned by :meth:`checkpoint`."""
+
+        if not isinstance(checkpoint, dict):
+            raise TypeError("checkpoint must be a dictionary")
+        return await self._post("/restore", copy.deepcopy(checkpoint))
 
     async def inject(self, thing: str, failure_type: str, *, delay_ms: int = 0) -> dict[str, Any]:
         return await self._post(
@@ -507,9 +606,16 @@ class SmartRoomControlClient:
 
     async def _post(self, path: str, payload: dict[str, Any] | None) -> dict[str, Any]:
         async with httpx.AsyncClient(timeout=self.timeout_s) as client:
-            response = await client.post(f"{self.control_url}{path}", json=payload)
+            kwargs: dict[str, Any] = {"json": payload}
+            if self._lease_id:
+                kwargs["headers"] = {"X-Episode-Lease": self._lease_id}
+            response = await client.post(f"{self.control_url}{path}", **kwargs)
             response.raise_for_status()
             return response.json()
+
+    def _require_lease(self) -> None:
+        if not self._lease_id:
+            raise LiveEnvironmentError("this control client does not hold an episode lease")
 
 
 class FaultClearingExecutor:

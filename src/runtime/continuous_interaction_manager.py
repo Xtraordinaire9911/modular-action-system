@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import time
 from collections.abc import Sequence
@@ -15,6 +16,7 @@ from src.adaptation.rule_classifier import RuleFailureClassifier
 from src.adaptation.trace_ledger import EpisodeFailureEvent, TraceLedger
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
 from src.effectors.system1_reflex_library import System1ReflexLibrary
+from src.isolation.episode import EpisodeIsolationProvider, EpisodeIsolationSession
 from src.recovery.recovery_cascade import RecoveryCascade
 from src.runtime.action_context import build_action_context
 from src.runtime.affordance_controller import AffordanceController
@@ -32,6 +34,15 @@ from src.runtime.episode import (
     stable_affordance_key,
 )
 from src.runtime.goal_spec import GoalSpec
+from src.runtime.intervention import (
+    InterventionAction,
+    InterventionBroker,
+    InterventionDecision,
+    InterventionKind,
+    InterventionLedger,
+    InterventionRecord,
+    InterventionRequest,
+)
 from src.runtime.live_observation import LiveRuntimeObservation
 from src.runtime.plan_validator import PlanValidator
 from src.runtime.primitive_action import PrimitiveAction
@@ -93,6 +104,16 @@ class _PrimitiveOutcome:
     recovery_trace: list[dict[str, object]] = field(default_factory=list)
     transition_ids: list[str] = field(default_factory=list)
     active_perception_trace: list[dict[str, object]] = field(default_factory=list)
+    replan_required: bool = False
+    intervention_id: str = ""
+
+
+@dataclass
+class _InterventionOutcome:
+    decision: InterventionDecision | None
+    observation: Observation
+    intervention_id: str = ""
+    observation_failure: str = ""
 
 
 class ContinuousInteractionManager:
@@ -117,6 +138,9 @@ class ContinuousInteractionManager:
         failure_ledger: TraceLedger | None = None,
         reflex_library: System1ReflexLibrary | None = None,
         cancellation_token: CancellationToken | None = None,
+        isolation_provider: EpisodeIsolationProvider | None = None,
+        intervention_broker: InterventionBroker | None = None,
+        intervention_ledger: InterventionLedger | None = None,
     ) -> None:
         self.skill_library = skill_library
         self.executors = executors
@@ -142,8 +166,93 @@ class ContinuousInteractionManager:
         self._last_system1_cache_hit = False
         self._last_system1_routing_latency_ms = 0.0
         self.cancellation_token = cancellation_token or CancellationToken()
+        # A cancellation token belongs to one top-level episode.  Keep the
+        # constructor-supplied token for the first run (so callers can cancel
+        # it before startup), then rotate it before every later episode.
+        self._cancellation_token_used = False
+        self.isolation_provider = isolation_provider
+        self.intervention_broker = intervention_broker
+        broker_ledger = getattr(intervention_broker, "ledger", None)
+        self.intervention_ledger = intervention_ledger or broker_ledger or InterventionLedger()
+        self._active_isolation_session: EpisodeIsolationSession | None = None
 
-    async def run_skill(self, skill_call: SkillCall, observation: Observation) -> RuntimeStepResult:
+    def _new_episode(self) -> EpisodeContext:
+        if self._cancellation_token_used:
+            self.cancellation_token = CancellationToken()
+        self._cancellation_token_used = True
+        return EpisodeContext(
+            self.cognitive_map.task_id,
+            self.episode_policy,
+            cancellation=self.cancellation_token,
+        )
+
+    async def _provision_episode(self, episode: EpisodeContext) -> EpisodeIsolationSession:
+        if self.isolation_provider is None:
+            raise RuntimeError("run_isolated_* requires an isolation provider")
+        if self.observation_provider is None:
+            raise RuntimeError("run_isolated_* requires an observation provider")
+        if self._active_isolation_session is not None:
+            raise RuntimeError(f"manager already owns episode {self._active_isolation_session.episode_id}")
+
+        session = await self.isolation_provider.provision(episode)
+        self._active_isolation_session = session
+        try:
+            self.cognitive_map.reset_for_episode()
+            begin_episode = getattr(self.observation_provider, "begin_episode", None)
+            if begin_episode is not None:
+                started = begin_episode(episode.episode_id)
+                if inspect.isawaitable(started):
+                    await started
+            return session
+        except BaseException as initialization_error:
+            try:
+                await self._dispose_episode(session)
+            except BaseException as cleanup_error:
+                raise cleanup_error from initialization_error
+            raise
+
+    async def _dispose_episode(self, session: EpisodeIsolationSession) -> None:
+        try:
+            if self.isolation_provider is not None:
+                await self.isolation_provider.dispose(session)
+        finally:
+            if self._active_isolation_session is session:
+                self._active_isolation_session = None
+
+    async def _capture_episode_start(self, episode: EpisodeContext) -> Observation:
+        if self.observation_provider is None:
+            raise RuntimeError("episode observation provider is unavailable")
+        observed = await self.observation_provider.observe(
+            ObservationRequest(
+                task_id=self.cognitive_map.task_id,
+                episode_id=episode.episode_id,
+                reason="episode_start",
+                step=0,
+            )
+        )
+        if isinstance(observed, LiveRuntimeObservation):
+            return observed.apply_affordances_to(self.cognitive_map)
+        return observed
+
+    async def run_isolated_skill(self, skill_call: SkillCall) -> RuntimeStepResult:
+        """Provision a clean Project-PiP session before the first observation."""
+
+        episode = self._new_episode()
+        session = await self._provision_episode(episode)
+        try:
+            observation = await self._capture_episode_start(episode)
+            return await self.run_skill(skill_call, observation, _episode=episode)
+        finally:
+            await self._dispose_episode(session)
+
+    async def run_skill(
+        self,
+        skill_call: SkillCall,
+        observation: Observation,
+        *,
+        _episode: EpisodeContext | None = None,
+        _resume_intervention_id: str = "",
+    ) -> RuntimeStepResult:
         skill_tuple = self._lookup_skill(skill_call.skill_id)
         if skill_tuple is None:
             analysis = self.failure_classifier.classify_unknown_skill(skill_call.skill_id)
@@ -155,17 +264,31 @@ class ContinuousInteractionManager:
                 failure_boundary=analysis.boundary.value,
                 failure_type=analysis.failure_type,
             )
-        episode = EpisodeContext(
-            self.cognitive_map.task_id,
-            self.episode_policy,
-            cancellation=self.cancellation_token,
-        )
+        episode = _episode or self._new_episode()
         self.cognitive_map.set_current_skill(skill_call)
         self.cognitive_map.update_from_observation(observation)
 
         gate = await self._run_fusion_gate(observation)
         if gate is not None:
             gate.episode_id = episode.episode_id
+            intervention = await self._request_intervention(
+                episode,
+                observation,
+                reason=gate.reason,
+                kind=InterventionKind.RECOVERY,
+                pending_action=skill_call,
+                metadata={"failure_type": gate.failure_type, "recovery_tier": 4},
+            )
+            if intervention.decision is not None and intervention.decision.requires_replan:
+                if intervention.observation_failure:
+                    gate.reason = intervention.observation_failure
+                    return gate
+                return await self.run_skill(
+                    skill_call,
+                    intervention.observation,
+                    _episode=episode,
+                    _resume_intervention_id=intervention.intervention_id,
+                )
             return gate
         active_perception_trace = self._last_active_perception_trace
         fusion_payload = self._last_fusion_decision
@@ -174,7 +297,7 @@ class ContinuousInteractionManager:
             self.state = RuntimeState.ESCALATED
             conflicts = self.cognitive_map.unresolved_conflicts()
             strongest = max(conflicts, key=lambda conflict: conflict.conflict_mass)
-            return RuntimeStepResult(
+            escalated = RuntimeStepResult(
                 self.state,
                 None,
                 recovery_tier=4,
@@ -185,11 +308,79 @@ class ContinuousInteractionManager:
                 active_perception_trace=active_perception_trace,
                 fusion_decision=fusion_payload,
             )
+            intervention = await self._request_intervention(
+                episode,
+                observation,
+                reason=escalated.reason,
+                kind=InterventionKind.RECOVERY,
+                pending_action=skill_call,
+                metadata={"failure_type": "sensory_conflict", "recovery_tier": 4},
+            )
+            if intervention.decision is not None and intervention.decision.requires_replan:
+                if intervention.observation_failure:
+                    escalated.reason = intervention.observation_failure
+                    return escalated
+                return await self.run_skill(
+                    skill_call,
+                    intervention.observation,
+                    _episode=episode,
+                    _resume_intervention_id=intervention.intervention_id,
+                )
+            return escalated
+
+        if _resume_intervention_id:
+            # A takeover invalidates the old execution decision.  Fusion has
+            # just run again above; now verify whether the human already
+            # satisfied the requested outcome before routing any new action.
+            self._mark_intervention_replanned(_resume_intervention_id)
+            if skill_tuple.postconditions and self.postconditions.passes(
+                skill_tuple.postconditions,
+                self.cognitive_map,
+            ):
+                self.state = RuntimeState.COMPLETED
+                return RuntimeStepResult(
+                    self.state,
+                    None,
+                    recovery_tier=4,
+                    reason="human correction satisfied the skill after fresh verification",
+                    episode_id=episode.episode_id,
+                    attempts=episode.step_count,
+                    recovery_attempted=True,
+                    recovery_succeeded=True,
+                    final_outcome_verified=True,
+                )
 
         safety_decision = self.safety.decide(skill_call, skill_tuple)
         if not safety_decision.allowed:
-            self.state = RuntimeState.ESCALATED
-            return RuntimeStepResult(self.state, None, recovery_tier=4, reason=safety_decision.reason)
+            intervention = await self._request_intervention(
+                episode,
+                observation,
+                reason=safety_decision.reason,
+                kind=InterventionKind.SAFETY_CONFIRMATION,
+                pending_action=skill_call,
+                metadata={"recovery_tier": 4},
+            )
+            if intervention.decision is None:
+                self.state = RuntimeState.ESCALATED
+                return RuntimeStepResult(self.state, None, recovery_tier=4, reason=safety_decision.reason)
+            if intervention.decision.action == InterventionAction.APPROVE:
+                safety_decision = self.safety.decide(skill_call, skill_tuple, human_confirmed=True)
+            elif intervention.decision.requires_replan and not intervention.observation_failure:
+                return await self.run_skill(
+                    skill_call,
+                    intervention.observation,
+                    _episode=episode,
+                    _resume_intervention_id=intervention.intervention_id,
+                )
+            else:
+                self.state = RuntimeState.ESCALATED
+                return RuntimeStepResult(
+                    self.state,
+                    None,
+                    recovery_tier=4,
+                    reason=intervention.decision.note or intervention.observation_failure or safety_decision.reason,
+                    episode_id=episode.episode_id,
+                )
 
         self.state = RuntimeState.PRECHECK
         if not self.preconditions.passes(skill_tuple.preconditions, self.cognitive_map):
@@ -345,6 +536,35 @@ class ContinuousInteractionManager:
                 gate.transition_ids = transition_ids
                 gate.recovery_attempted = recovery_attempted
                 gate.final_outcome_verified = False
+                intervention = await self._request_intervention(
+                    episode,
+                    current_observation,
+                    reason=gate.reason,
+                    kind=InterventionKind.RECOVERY,
+                    pending_action=skill_call,
+                    metadata={
+                        "failure_type": gate.failure_type,
+                        "failed_transition_id": transition_id,
+                        "recovery_tier": 4,
+                    },
+                )
+                if intervention.decision is not None and intervention.decision.requires_replan:
+                    if intervention.observation_failure:
+                        gate.reason = intervention.observation_failure
+                    else:
+                        resumed = await self.run_skill(
+                            skill_call,
+                            intervention.observation,
+                            _episode=episode,
+                            _resume_intervention_id=intervention.intervention_id,
+                        )
+                        resumed.recovery_attempted = True
+                        resumed.recovery_trace = [*recovery_trace, *resumed.recovery_trace]
+                        resumed.transition_ids = [*transition_ids, *resumed.transition_ids]
+                        resumed.attempts = episode.step_count
+                        return resumed
+                elif intervention.decision is not None:
+                    gate.reason = intervention.decision.note or gate.reason
                 return gate
 
             self.state = RuntimeState.VERIFYING
@@ -523,6 +743,37 @@ class ContinuousInteractionManager:
                     final_outcome_verified=False,
                 )
 
+            if action.action_type == "escalate_human":
+                intervention = await self._request_intervention(
+                    episode,
+                    current_observation,
+                    reason=action.reason,
+                    kind=InterventionKind.RECOVERY,
+                    pending_action=skill_call,
+                    metadata={
+                        "failure_type": analysis.failure_type,
+                        "failed_transition_id": selected_recovery_of_transition_id,
+                        "recovery_tier": 4,
+                    },
+                )
+                if intervention.decision is not None and intervention.decision.requires_replan:
+                    if intervention.observation_failure:
+                        action.reason = intervention.observation_failure
+                    else:
+                        resumed = await self.run_skill(
+                            skill_call,
+                            intervention.observation,
+                            _episode=episode,
+                            _resume_intervention_id=intervention.intervention_id,
+                        )
+                        resumed.recovery_attempted = True
+                        resumed.recovery_trace = [*recovery_trace, *resumed.recovery_trace]
+                        resumed.transition_ids = [*transition_ids, *resumed.transition_ids]
+                        resumed.attempts = episode.step_count
+                        return resumed
+                elif intervention.decision is not None:
+                    action.reason = intervention.decision.note or action.reason
+
             self.state = RuntimeState.ESCALATED if action.action_type == "escalate_human" else RuntimeState.FAILED
             return RuntimeStepResult(
                 self.state,
@@ -555,6 +806,7 @@ class ContinuousInteractionManager:
         parameters: dict[str, object] | None = None,
         observation: Observation | None = None,
         goal_spec: GoalSpec | None = None,
+        _episode: EpisodeContext | None = None,
     ) -> RuntimeStepResult:
         """Run a bounded no-durable-skill goal over current affordances.
 
@@ -584,16 +836,33 @@ class ContinuousInteractionManager:
 
         observation = observation or Observation()
         goal_call = SkillCall(goal_id, dict(parameters or {}))
-        episode = EpisodeContext(
-            self.cognitive_map.task_id,
-            self.episode_policy,
-            cancellation=self.cancellation_token,
-        )
+        episode = _episode or self._new_episode()
         self.cognitive_map.set_current_skill(goal_call)
         self.cognitive_map.update_from_observation(observation)
         gate = await self._run_fusion_gate(observation)
         if gate is not None:
             gate.episode_id = episode.episode_id
+            intervention = await self._request_intervention(
+                episode,
+                observation,
+                reason=gate.reason,
+                kind=InterventionKind.RECOVERY,
+                pending_action=goal_call,
+                metadata={"failure_type": gate.failure_type, "recovery_tier": 4},
+            )
+            if intervention.decision is not None and intervention.decision.requires_replan:
+                if intervention.observation_failure:
+                    gate.reason = intervention.observation_failure
+                    return gate
+                self._mark_intervention_replanned(intervention.intervention_id)
+                return await self.run_goal(
+                    goal_id=goal_id,
+                    goal_state=goal_state,
+                    parameters=parameters,
+                    observation=intervention.observation,
+                    goal_spec=goal_spec,
+                    _episode=episode,
+                )
             return gate
 
         safety_constraints = ["do not use raw selectors", "do not bypass unresolved sensory conflicts"]
@@ -607,6 +876,31 @@ class ContinuousInteractionManager:
             safety_constraints=safety_constraints,
             episode=episode,
         )
+
+    async def run_isolated_goal(
+        self,
+        *,
+        goal_id: str = "",
+        goal_state: str = "",
+        parameters: dict[str, object] | None = None,
+        goal_spec: GoalSpec | None = None,
+    ) -> RuntimeStepResult:
+        """Run one goal in a fresh browser/WoT session and always restore it."""
+
+        episode = self._new_episode()
+        session = await self._provision_episode(episode)
+        try:
+            observation = await self._capture_episode_start(episode)
+            return await self.run_goal(
+                goal_id=goal_id,
+                goal_state=goal_state,
+                parameters=parameters,
+                observation=observation,
+                goal_spec=goal_spec,
+                _episode=episode,
+            )
+        finally:
+            await self._dispose_episode(session)
 
     async def _execute_goal_episode(
         self,
@@ -628,8 +922,15 @@ class ContinuousInteractionManager:
         selected_backend = ""
         recovery_attempted = False
         recovery_tier: int | None = None
+        pending_replan_intervention_id = ""
 
         while True:
+            if pending_replan_intervention_id:
+                # The pre-takeover plan has been discarded.  Record the
+                # replan before re-evaluating the goal, because a human may
+                # already have completed it and no new primitive is needed.
+                self._mark_intervention_replanned(pending_replan_intervention_id)
+                pending_replan_intervention_id = ""
             if goal_state and self.postconditions.passes([Condition(goal_state)], self.cognitive_map):
                 self.state = RuntimeState.COMPLETED
                 return RuntimeStepResult(
@@ -679,7 +980,7 @@ class ContinuousInteractionManager:
             validation = self.plan_validator.validate(context, plan.actions)
             if plan.requires_escalation or not validation.valid:
                 self.state = RuntimeState.ESCALATED
-                return RuntimeStepResult(
+                escalated = RuntimeStepResult(
                     self.state,
                     last_result,
                     recovery_tier=4,
@@ -696,6 +997,25 @@ class ContinuousInteractionManager:
                     recovery_attempted=recovery_attempted,
                     final_outcome_verified=False,
                 )
+                intervention = await self._request_intervention(
+                    episode,
+                    current_observation,
+                    reason=escalated.reason,
+                    kind=InterventionKind.CLARIFICATION,
+                    pending_action=goal_call,
+                    metadata={"failure_type": escalated.failure_type, "recovery_tier": 4},
+                )
+                if intervention.decision is not None and intervention.decision.requires_replan:
+                    if intervention.observation_failure:
+                        escalated.reason = intervention.observation_failure
+                        return escalated
+                    current_observation = intervention.observation
+                    completed_steps.clear()
+                    pending_replan_intervention_id = intervention.intervention_id
+                    continue
+                if intervention.decision is not None:
+                    escalated.reason = intervention.decision.note or escalated.reason
+                return escalated
 
             action = next(
                 (
@@ -714,7 +1034,7 @@ class ContinuousInteractionManager:
                     else "planner produced no new action while goal remains unverified"
                 )
                 self.state = RuntimeState.ESCALATED
-                return RuntimeStepResult(
+                escalated = RuntimeStepResult(
                     self.state,
                     last_result,
                     recovery_tier=4,
@@ -730,6 +1050,25 @@ class ContinuousInteractionManager:
                     recovery_attempted=recovery_attempted,
                     final_outcome_verified=False,
                 )
+                intervention = await self._request_intervention(
+                    episode,
+                    current_observation,
+                    reason=escalated.reason,
+                    kind=InterventionKind.CLARIFICATION,
+                    pending_action=goal_call,
+                    metadata={"failure_type": escalated.failure_type, "recovery_tier": 4},
+                )
+                if intervention.decision is not None and intervention.decision.requires_replan:
+                    if intervention.observation_failure:
+                        escalated.reason = intervention.observation_failure
+                        return escalated
+                    current_observation = intervention.observation
+                    completed_steps.clear()
+                    pending_replan_intervention_id = intervention.intervention_id
+                    continue
+                if intervention.decision is not None:
+                    escalated.reason = intervention.decision.note or escalated.reason
+                return escalated
 
             primitive_plan.append(_primitive_payload(action))
             outcome = await self._execute_primitive_with_recovery(
@@ -747,6 +1086,10 @@ class ContinuousInteractionManager:
             recovery_trace.extend(outcome.recovery_trace)
             transition_ids.extend(outcome.transition_ids)
             active_perception_trace.extend(outcome.active_perception_trace)
+            if outcome.replan_required:
+                completed_steps.clear()
+                pending_replan_intervention_id = outcome.intervention_id
+                continue
             if not outcome.succeeded:
                 self.state = RuntimeState.ESCALATED
                 return RuntimeStepResult(
@@ -842,20 +1185,50 @@ class ContinuousInteractionManager:
             )
             safety = self.safety.decide(primitive_call, primitive_skill)
             if not safety.allowed:
-                return _PrimitiveOutcome(
-                    False,
+                intervention = await self._request_intervention(
+                    episode,
                     current_observation,
-                    None,
-                    backend=backend,
                     reason=safety.reason,
-                    failure_boundary="unsafe_governance_boundary",
-                    failure_type="unsafe_primitive_action",
-                    recovery_tier=4,
-                    recovery_attempted=recovery_attempted,
-                    recovery_trace=recovery_trace,
-                    transition_ids=transition_ids,
-                    active_perception_trace=active_trace,
+                    kind=InterventionKind.SAFETY_CONFIRMATION,
+                    pending_action=primitive_call,
+                    metadata={"affordance_id": current_action.affordance_id, "recovery_tier": 4},
                 )
+                if intervention.decision is not None and intervention.decision.action == InterventionAction.APPROVE:
+                    safety = self.safety.decide(primitive_call, primitive_skill, human_confirmed=True)
+                elif intervention.decision is not None and intervention.decision.requires_replan:
+                    if not intervention.observation_failure:
+                        return _PrimitiveOutcome(
+                            False,
+                            intervention.observation,
+                            None,
+                            backend=backend,
+                            recovery_tier=4,
+                            recovery_attempted=recovery_attempted,
+                            recovery_trace=recovery_trace,
+                            transition_ids=transition_ids,
+                            active_perception_trace=active_trace,
+                            replan_required=True,
+                            intervention_id=intervention.intervention_id,
+                        )
+                    safety.reason = intervention.observation_failure
+                else:
+                    if intervention.decision is not None:
+                        safety.reason = intervention.decision.note or safety.reason
+                if not safety.allowed:
+                    return _PrimitiveOutcome(
+                        False,
+                        current_observation,
+                        None,
+                        backend=backend,
+                        reason=safety.reason,
+                        failure_boundary="unsafe_governance_boundary",
+                        failure_type="unsafe_primitive_action",
+                        recovery_tier=4,
+                        recovery_attempted=recovery_attempted,
+                        recovery_trace=recovery_trace,
+                        transition_ids=transition_ids,
+                        active_perception_trace=active_trace,
+                    )
 
             state_before = abstract_state_id(self.cognitive_map)
             try:
@@ -905,6 +1278,40 @@ class ContinuousInteractionManager:
                     recovery_of_transition_id=recovering_transition_id,
                 )
                 transition_ids.append(transition_id)
+                intervention = await self._request_intervention(
+                    episode,
+                    current_observation,
+                    reason=gate.reason,
+                    kind=InterventionKind.RECOVERY,
+                    pending_action=primitive_call,
+                    metadata={
+                        "affordance_id": current_action.affordance_id,
+                        "failed_transition_id": transition_id,
+                        "failure_type": gate.failure_type,
+                        "recovery_tier": 4,
+                    },
+                )
+                if intervention.decision is not None and intervention.decision.requires_replan:
+                    if not intervention.observation_failure:
+                        return _PrimitiveOutcome(
+                            False,
+                            intervention.observation,
+                            result,
+                            backend=backend,
+                            reason=gate.reason,
+                            failure_boundary=gate.failure_boundary,
+                            failure_type=gate.failure_type,
+                            recovery_tier=4,
+                            recovery_attempted=True,
+                            recovery_trace=recovery_trace,
+                            transition_ids=transition_ids,
+                            active_perception_trace=active_trace,
+                            replan_required=True,
+                            intervention_id=intervention.intervention_id,
+                        )
+                    gate.reason = intervention.observation_failure
+                elif intervention.decision is not None:
+                    gate.reason = intervention.decision.note or gate.reason
                 return _PrimitiveOutcome(
                     False,
                     current_observation,
@@ -1043,6 +1450,39 @@ class ContinuousInteractionManager:
                     self.state = RuntimeState.RECOVERING
                     continue
 
+            if recovery_action.action_type == "escalate_human":
+                intervention = await self._request_intervention(
+                    episode,
+                    current_observation,
+                    reason=recovery_action.reason,
+                    kind=InterventionKind.RECOVERY,
+                    pending_action=primitive_call,
+                    metadata={
+                        "affordance_id": current_action.affordance_id,
+                        "failed_transition_id": selected_recovery_of_transition_id,
+                        "failure_type": analysis.failure_type,
+                        "recovery_tier": 4,
+                    },
+                )
+                if intervention.decision is not None and intervention.decision.requires_replan:
+                    if not intervention.observation_failure:
+                        return _PrimitiveOutcome(
+                            False,
+                            intervention.observation,
+                            result,
+                            backend=backend,
+                            recovery_tier=4,
+                            recovery_attempted=True,
+                            recovery_trace=recovery_trace,
+                            transition_ids=transition_ids,
+                            active_perception_trace=active_trace,
+                            replan_required=True,
+                            intervention_id=intervention.intervention_id,
+                        )
+                    recovery_action.reason = intervention.observation_failure
+                elif intervention.decision is not None:
+                    recovery_action.reason = intervention.decision.note or recovery_action.reason
+
             return _PrimitiveOutcome(
                 False,
                 current_observation,
@@ -1113,6 +1553,125 @@ class ContinuousInteractionManager:
             observation=observation,
             goal_spec=goal_spec,
         )
+
+    async def _request_intervention(
+        self,
+        episode: EpisodeContext,
+        observation: Observation,
+        *,
+        reason: str,
+        kind: InterventionKind,
+        pending_action: SkillCall | None = None,
+        metadata: dict[str, object] | None = None,
+    ) -> _InterventionOutcome:
+        """Pause the agent and await an operator without unwinding the episode."""
+
+        if self.intervention_broker is None:
+            return _InterventionOutcome(None, observation)
+
+        fingerprint = ""
+        if pending_action is not None:
+            fingerprint = json.dumps(
+                {"skill_id": pending_action.skill_id, "params": pending_action.params},
+                sort_keys=True,
+                default=str,
+            )
+        request = InterventionRequest(
+            episode_id=episode.episode_id,
+            task_id=self.cognitive_map.task_id,
+            kind=kind,
+            reason=reason,
+            state_id=abstract_state_id(self.cognitive_map),
+            pending_action_fingerprint=fingerprint,
+            metadata=dict(metadata or {}),
+        )
+
+        self.state = RuntimeState.PAUSING
+        episode.pause_clock()
+        if self.isolation_provider is not None and self._active_isolation_session is not None:
+            await self.isolation_provider.pause(self._active_isolation_session)
+        self.state = RuntimeState.AWAITING_HUMAN
+
+        try:
+            decision = await self.intervention_broker.request(request)
+        except asyncio.CancelledError:
+            episode.cancellation.cancel("intervention waiter cancelled")
+            raise
+        finally:
+            episode.resume_clock()
+
+        if not any(record.intervention_id == request.intervention_id for record in self.intervention_ledger.records):
+            self.intervention_ledger.record(InterventionRecord.from_resolution(request, decision))
+
+        if self.isolation_provider is not None and self._active_isolation_session is not None:
+            await self.isolation_provider.resume(self._active_isolation_session)
+
+        if decision.action == InterventionAction.CANCEL:
+            episode.cancellation.cancel(decision.note or "operator cancelled task")
+        if not decision.allows_agent_execution:
+            self.state = RuntimeState.ESCALATED
+            return _InterventionOutcome(decision, observation, request.intervention_id)
+
+        self.state = RuntimeState.RESUMING
+        if not decision.requires_replan:
+            return _InterventionOutcome(decision, observation, request.intervention_id)
+
+        if pending_action is not None:
+            for backend in self.executors:
+                self.reflex_library.forget(pending_action.skill_id, backend)
+        fresh, failure = await self._observe_after_intervention(episode, observation)
+        self.intervention_ledger.mark_resume_evidence(
+            request.intervention_id,
+            reobserved=failure == "",
+            replanned=False,
+            correction_applied=decision.correction_applied,
+        )
+        return _InterventionOutcome(
+            decision,
+            fresh,
+            request.intervention_id,
+            observation_failure=failure,
+        )
+
+    async def _observe_after_intervention(
+        self,
+        episode: EpisodeContext,
+        current: Observation,
+    ) -> tuple[Observation, str]:
+        if self.observation_provider is None:
+            return current, "fresh_observation_unavailable"
+        try:
+            observed = await self.observation_provider.observe(
+                ObservationRequest(
+                    task_id=self.cognitive_map.task_id,
+                    episode_id=episode.episode_id,
+                    reason="human_intervention_resume",
+                    step=episode.step_count,
+                )
+            )
+        except Exception as exc:
+            return current, f"observation_provider_error:{type(exc).__name__}"
+        if isinstance(observed, LiveRuntimeObservation):
+            fresh = observed.apply_to(self.cognitive_map)
+        else:
+            fresh = observed
+            self.cognitive_map.update_from_observation(observed)
+        gate = await self._run_fusion_gate(fresh)
+        return (fresh, gate.reason) if gate is not None else (fresh, "")
+
+    def _mark_intervention_replanned(self, intervention_id: str) -> None:
+        if not intervention_id:
+            return
+        record = next(
+            (record for record in self.intervention_ledger.records if record.intervention_id == intervention_id),
+            None,
+        )
+        if record is not None:
+            self.intervention_ledger.mark_resume_evidence(
+                intervention_id,
+                reobserved=record.reobserved,
+                replanned=True,
+            )
 
     async def _execute_call(
         self,

@@ -162,6 +162,26 @@ Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic
 white-box path.
 
+### 6. Project PiP MVP: isolated task sessions
+
+The first PiP milestone is implemented as a cross-platform task-session boundary.
+Call `ContinuousInteractionManager.run_isolated_goal()` or
+`run_isolated_skill()` with a `BrowserWotIsolationProvider`. The runtime then:
+
+1. saves the exact smart-room state and faults;
+2. resets the room and creates a fresh Playwright browser context before the
+   first observation;
+3. pauses at Tier 4 while an `InterventionBroker` waits for Approve, Reject,
+   Resume, or Cancel;
+4. re-observes and replans after a human takeover; and
+5. restores the saved room state and closes the browser context in `finally`.
+
+The mock WoT server has one global room, so a server-held episode lease
+deliberately serializes isolated episodes, even when separate managers create
+separate providers. It is not the Windows RDP child desktop from the UFO2 paper:
+independent Windows input queues, application processes, and a visible nested
+desktop remain a later Windows-specific provider.
+
 ## Demo
 
 1. Open http://localhost:3000.
@@ -229,7 +249,8 @@ white-box path.
 | WoT environment in Docker | `env/docker-compose.yml`, `env/node_wot_server/server.js`, `config/wot_td/*.td.json`. |
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
 | External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
-| PiP/session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. |
+| Project PiP MVP | `src/isolation/episode.py` provisions a fresh browser context, checkpoints/resets/restores WoT state, serializes episodes, and transfers the input lease during human takeover. `src/runtime/intervention.py` records supervised Tier-4 decisions. |
+| Full UFO2 Windows PiP | Future Windows-specific provider; RDP child desktop and independent OS input/process isolation are not claimed by this MVP. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
 | WoT TD parsing | `src/perception/td_affordance_parser.py`, including HATEOAS forms, methods, security, rate limits, state sources. |
