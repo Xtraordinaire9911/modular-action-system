@@ -33,15 +33,35 @@ class _PageDriver(Protocol):
     def screenshot(self, **kwargs: Any) -> bytes: ...
 
 
+_VIEWPORT = {"width": 1280, "height": 800}
+
+
+def _fresh_context(browser: Any, storage_state: dict[str, Any] | None = None) -> Any:
+    """Create a context with the settings every episode must share."""
+    kwargs: dict[str, Any] = {"viewport": dict(_VIEWPORT), "device_scale_factor": 1}
+    if storage_state:
+        kwargs["storage_state"] = storage_state
+    return browser.new_context(**kwargs)
+
+
 class BrowserSession:
     """One isolated browser context. Construct via :meth:`launch` for a real
     browser, or pass a ``page`` driver directly for tests."""
 
-    def __init__(self, page: _PageDriver, *, url: str = "", _owner: Any = None) -> None:
+    def __init__(
+        self,
+        page: _PageDriver,
+        *,
+        url: str = "",
+        _owner: Any = None,
+        action_timeout_ms: int = 8000,
+    ) -> None:
         self._page = page
         self._url = url
         self._owner = _owner  # (playwright, browser) kept alive until close()
         self._transducer = DomTransducer()
+        self._action_timeout_ms = action_timeout_ms  # reapplied to each new episode page
+        self._episode_index = 0
 
     # ── lifecycle ────────────────────────────────────────────────────────────
     @classmethod
@@ -58,10 +78,7 @@ class BrowserSession:
                 "--no-sandbox",
             ],
         )
-        context = browser.new_context(
-            viewport={"width": 1280, "height": 800},
-            device_scale_factor=1,
-        )  # ← isolation boundary (PiP analogue)
+        context = _fresh_context(browser)  # ← isolation boundary (PiP analogue)
         page = context.new_page()
         # Cap action waits so a mistargeted click fails fast instead of hanging
         # the default 30s (e.g. clicking a non-actionable element).
@@ -80,16 +97,81 @@ class BrowserSession:
             browser.close()
             pw.stop()
             raise last_error
-        return cls(cast(_PageDriver, page), url=url, _owner=(pw, browser, context))
+        return cls(
+            cast(_PageDriver, page),
+            url=url,
+            _owner=(pw, browser, context),
+            action_timeout_ms=action_timeout_ms,
+        )
 
     def open(self, url: str) -> None:
         self._url = url
         self._page.goto(url)
 
     def reset(self) -> None:
-        """Return the context to its initial page — cheap per-trial reset."""
+        """Return the context to its initial page — cheap per-trial reset.
+
+        This is navigation only. Cookies, localStorage and sessionStorage all
+        survive it, so it is *not* an episode boundary: use :meth:`new_episode`
+        when the next run must not observe what the previous one wrote.
+        """
         if self._url:
             self._page.goto(self._url)
+
+    @property
+    def episode_index(self) -> int:
+        """How many isolated episodes this session has started (0 = the first)."""
+        return self._episode_index
+
+    def storage_snapshot(self) -> dict[str, Any]:
+        """Cookies and per-origin storage for the live context.
+
+        Returns ``{}`` when there is no real context (injected page driver) or
+        the driver cannot report one, so a caller can distinguish "nothing to
+        restore" from "restored an empty state".
+        """
+        if self._owner is None:
+            return {}
+        _pw, _browser, context = self._owner
+        getter = getattr(context, "storage_state", None)
+        if getter is None:
+            return {}
+        try:
+            state = getter()
+        except Exception:
+            return {}
+        return dict(state) if isinstance(state, dict) else {}
+
+    def new_episode(self, *, url: str | None = None, storage_state: dict[str, Any] | None = None) -> bool:
+        """Start the next episode in a brand-new browser context.
+
+        Recreating the context — not re-navigating — is the real isolation
+        boundary: it is what drops cookies, localStorage, sessionStorage and
+        cache, so a later episode cannot observe state an earlier one left
+        behind. Pass ``storage_state`` (from :meth:`storage_snapshot`) to seed
+        the fresh context, which is how a verified rollback is performed.
+
+        Returns False when there is no real context to recreate (injected page
+        driver in tests); the session is then only re-navigated.
+        """
+        target = url or self._url
+        if self._owner is None:
+            if target:
+                self.open(target)
+            return False
+        pw, browser, context = self._owner
+        context.close()  # drop the old boundary before opening the new one
+        context = _fresh_context(browser, storage_state)
+        page = context.new_page()
+        setter = getattr(page, "set_default_timeout", None)
+        if setter is not None:
+            setter(self._action_timeout_ms)
+        self._page = cast(_PageDriver, page)
+        self._owner = (pw, browser, context)
+        self._episode_index += 1
+        if target:
+            self.open(target)
+        return True
 
     def close(self) -> None:
         if self._owner is not None:
