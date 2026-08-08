@@ -20,6 +20,7 @@ recording had two windows to follow and the screen flickered between scenes.
 from __future__ import annotations
 
 import argparse
+import inspect
 import json
 import sys
 import time
@@ -455,6 +456,7 @@ def main() -> int:
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--scene", default="", help="Run one scene by page name, e.g. forum.html")
     parser.add_argument("--hold", type=float, default=12.0, help="Seconds to stay on the final summary.")
+    parser.add_argument("--record", action="store_true", help="Record the page to a video file.")
     args = parser.parse_args()
 
     from src.perception.browser_session import BrowserSession
@@ -466,7 +468,17 @@ def main() -> int:
 
     httpd, port = _start_static_server(str(repo / "env" / "mock_envs"))
     base = f"http://127.0.0.1:{port}"
-    session = BrowserSession.launch(f"{base}/{scenes[0].page}", headless=args.headless)
+    # Video capture records the page, not the desktop, so the file contains one
+    # window and nothing else that happened to be open. It arrives with a later
+    # branch, so ask before using it rather than assuming.
+    launch_kwargs: dict[str, Any] = {"headless": args.headless}
+    if args.record:
+        if "record_video_dir" in inspect.signature(BrowserSession.launch).parameters:
+            launch_kwargs["record_video_dir"] = str(out)
+        else:
+            print("  [warn] this checkout cannot record video; running without it")
+
+    session = BrowserSession.launch(f"{base}/{scenes[0].page}", **launch_kwargs)
     session.content_html = lambda: session._page.content()  # type: ignore[attr-defined]
 
     print(f"\n{_LINE}\n  AGENT LOOP - observe / measure / plan / act / verify / recover\n{_LINE}")
