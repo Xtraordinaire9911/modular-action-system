@@ -182,6 +182,50 @@ class WotExecutor:
     def get_affordance(self, aff_id: str) -> Affordance | None:
         return self._affordances.get(aff_id)
 
+    # ── episode isolation support ─────────────────────────────────────────────
+    # Device state outlives a browser context: a thing left at 26 degrees stays
+    # there for the next episode. These accessors let an episode snapshot the
+    # properties the TDs expose and put them back afterwards.
+    def state_sources(self) -> list[StateAssertionSource]:
+        """Property endpoints the loaded TDs expose, in load order."""
+        return list(self._state_sources.values())
+
+    def read_state(self, source: StateAssertionSource) -> Any:
+        """Current value of one property."""
+        status, parsed = self._request(source.thing_id, source.method or "GET", source.href, None)
+        if status >= 400:
+            raise RuntimeError(f"WoT read {source.href} returned HTTP {status}")
+        return parsed
+
+    def write_state(self, source: StateAssertionSource, value: Any) -> None:
+        """Put one property back to a previous value.
+
+        Prefers the TD's own write form when the property has one; otherwise
+        falls back to the read href with PUT, which is the common WoT shape.
+        """
+        writer = self._affordances.get(f"wot_{source.thing_id}_{source.property}")
+        if writer is not None and writer.action == "write_property":
+            href = str(writer.locator.get("href", source.href))
+            method = str(writer.locator.get("method", "PUT")).upper()
+        else:
+            href, method = source.href, "PUT"
+        status, _parsed = self._request(source.thing_id, method, href, value)
+        if status >= 400:
+            raise RuntimeError(f"WoT {method} {href} returned HTTP {status}")
+
+    def _request(self, thing_id: str, method: str, href: str, body: Any) -> tuple[int, Any]:
+        scheme = self._security.get(thing_id)
+        headers, params = build_auth(scheme, self._credentials.get(thing_id))
+        headers = {**headers, "Content-Type": "application/json"}
+        return self._send(
+            method.upper(),
+            href,
+            json=body,
+            headers=headers,
+            params=params,
+            timeout_s=self._timeout_ms / 1000.0,
+        )
+
     async def probe_availability(self) -> bool:
         if not _HTTPX_AVAILABLE or not (self._affordances or self._state_sources):
             return False
