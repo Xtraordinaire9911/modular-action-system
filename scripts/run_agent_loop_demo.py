@@ -85,6 +85,7 @@ class Trajectory:
     diagnosis: dict[str, Any] = field(default_factory=dict)  # why it failed, and the tier chosen
     fault_kind: str = ""
     escalated: bool = False
+    goal_met: bool = False
 
     def add(self, phase: str, detail: str, ok: bool = True) -> None:
         self.steps.append(StepRecord(phase, detail, ok))
@@ -365,6 +366,19 @@ class Scene:
     expect: str  # text that must appear there
     fault: str = ""  # which fault to inject: displace | vanish | inert
     fault_selector: str = ""  # the element the fault acts on
+
+    @property
+    def expected_cause(self) -> str:
+        """Ground truth for scoring only. Never reaches the diagnosis."""
+        from src.demos.diagnosis import CAUSE_INERT, CAUSE_MOVED, CAUSE_VANISHED
+
+        return {"displace": CAUSE_MOVED, "vanish": CAUSE_VANISHED, "inert": CAUSE_INERT}.get(self.fault, "")
+
+    @property
+    def expected_tier(self) -> int:
+        """The tier this fault warrants: retry a move, reroute around a removal,
+        and refuse to retry something that provably does nothing."""
+        return {"displace": 1, "vanish": 2, "inert": 4}.get(self.fault, 0)
 
 
 # Four scenes, three of them faulted, and each fault of a different kind so the
@@ -724,8 +738,31 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
             time.sleep(pace * 1.6)
             console.hide_banner()
 
+    traj.goal_met = ok
     session.evaluate(_CLEAR_POINT_JS)
     return traj
+
+
+def episode_result(scene: Scene, traj: Trajectory) -> Any:
+    """Score one run against the fault that was injected.
+
+    The expected cause and tier come from the scene definition, which the
+    diagnosis never sees. Scoring the agent's answer against something it could
+    not read is what makes the accuracy figures mean anything.
+    """
+    from src.demos.campaign import EpisodeResult
+
+    return EpisodeResult(
+        scene=scene.title,
+        fault=scene.fault,
+        expected_cause=scene.expected_cause,
+        expected_tier=scene.expected_tier,
+        diagnosed_cause=str(traj.diagnosis.get("cause", "")),
+        chosen_tier=int(traj.diagnosis.get("tier", 0) or 0),
+        failure_detected=bool(traj.diagnosis),
+        goal_met=traj.goal_met,
+        escalated=traj.escalated,
+    )
 
 
 def compile_experience(traj: Trajectory) -> Any:
@@ -782,8 +819,15 @@ def main() -> int:
         default=0.08,
         help="Seconds per executed source line while the highlight follows the code.",
     )
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="Run the scene list N times and report campaign metrics (TSR, RTR, RSR, RTA, DA).",
+    )
     args = parser.parse_args()
 
+    from src.demos.campaign import Campaign
     from src.perception.browser_session import BrowserSession
 
     repo = Path(__file__).resolve().parents[1]
@@ -810,14 +854,22 @@ def main() -> int:
     console = AgentConsole(session)
     results: list[tuple[Scene, Trajectory]] = []
 
+    campaign = Campaign()
+
     try:
-        for index, scene in enumerate(scenes):
-            print(f"\n  --- scene {index + 1}/{len(scenes)}: {scene.title}")
-            session.open(f"{base}/{scene.page}")
-            time.sleep(0.6)
-            traj = run_scene(session, console, scene, pace=args.pace, trace_delay=args.trace_delay)
-            session.screenshot(str(out / f"scene{index + 1}_{scene.page.replace('.html', '')}.png"))
-            results.append((scene, traj))
+        for repetition in range(args.repeat):
+            for index, scene in enumerate(scenes):
+                label = f"scene {index + 1}/{len(scenes)}"
+                if args.repeat > 1:
+                    label = f"rep {repetition + 1}/{args.repeat}  {label}"
+                print(f"\n  --- {label}: {scene.title}")
+                session.open(f"{base}/{scene.page}")
+                time.sleep(0.6)
+                traj = run_scene(session, console, scene, pace=args.pace, trace_delay=args.trace_delay)
+                campaign.add(episode_result(scene, traj))
+                if repetition == 0:
+                    session.screenshot(str(out / f"scene{index + 1}_{scene.page.replace('.html', '')}.png"))
+                    results.append((scene, traj))
 
         # Stay on a readable summary instead of closing the moment the last
         # scene ends, which gave a viewer no time to take anything in.
@@ -847,6 +899,10 @@ def main() -> int:
         console.close()
         session.close()
         httpd.shutdown()
+
+    print(f"\n{_LINE}\n  CAMPAIGN - repeated episodes, scored against the fault injected\n{_LINE}")
+    print(campaign.report())
+    (out / "campaign.json").write_text(json.dumps(campaign.to_dict(), indent=2), encoding="utf-8")
 
     print(f"\n{_LINE}\n  SELF-EVOLUTION - what a failure taught the system\n{_LINE}")
     failing = next((t for _, t in results if t.failures()), None)
