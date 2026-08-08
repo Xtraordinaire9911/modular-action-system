@@ -119,6 +119,7 @@ def prove_wot_isolation() -> tuple[bool, str, list[str]]:
     """Restore a drifted setpoint; never write the read-only sensor."""
     try:
         from src.effectors.wot_episode_isolation import restore_state, snapshot_state
+
         from src.effectors.wot_executor import WotExecutor
     except ImportError as exc:
         return False, f"not in this checkout ({exc.name})", []
@@ -197,9 +198,7 @@ def prove_bootstrap_present() -> tuple[bool, str, list[str]]:
     script = REPO_ROOT / "scripts" / "bootstrap.py"
     if not script.is_file():
         return False, "scripts/bootstrap.py is not in this checkout", []
-    completed = subprocess.run(
-        [sys.executable, str(script), "--check"], cwd=REPO_ROOT, capture_output=True, text=True
-    )
+    completed = subprocess.run([sys.executable, str(script), "--check"], cwd=REPO_ROOT, capture_output=True, text=True)
     ok = completed.returncode == 0
     return ok, "bootstrap.py --check reports the environment as usable" if ok else "environment check failed", []
 
