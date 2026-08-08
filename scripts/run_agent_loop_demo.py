@@ -444,6 +444,19 @@ SCENES = [
         check_in="#cart-items",
         expect="Mechanical Keyboard",
     ),
+    # The third surface: a device driven through its Thing Description, not a
+    # page. Same loop, same verification rule, different world.
+    Scene(
+        page="smart_room.html",
+        title="Smart room - the device accepts the write and ignores it",
+        goal_text="Set the thermostat to 22 degrees",
+        utterance="Set the thermostat to 22 degrees.",
+        target="targetTemperature",
+        check_in="#target",
+        expect="22",
+        fault="inert",
+        fault_selector="",
+    ),
 ]
 
 
@@ -743,6 +756,153 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     return traj
 
 
+def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_delay: float, faulty: bool) -> Trajectory:
+    """Drive a device through its Thing Description, on the same loop.
+
+    The project claims one action system across DOM, WoT and visual surfaces,
+    but the loop demo only ever showed two of them. This is the third: property
+    endpoints parsed from the project's own thermostat TD, read and written over
+    the forms the description declares.
+
+    The fault here is the one the review named - the write is acknowledged and
+    the device state does not follow - and it is invisible in the response. Only
+    reading the property back can catch it, which is the whole argument for
+    verifying independently of the executor.
+    """
+    from src.demos.wot_scene import (
+        FakeServient,
+        load_thermostat_td,
+        perceive_device,
+        read_property,
+        verify_device,
+        write_property,
+    )
+
+    traj = Trajectory(goal="Set the thermostat to 22 degrees")
+    servient = FakeServient({"targetTemperature": 18, "currentTemperature": 18})
+    td = load_thermostat_td()
+
+    def show() -> None:
+        session.evaluate(
+            "(s)=>window.__setDevice&&window.__setDevice(s)",
+            {
+                "target": servient.state["targetTemperature"],
+                "current": servient.state["currentTemperature"],
+                "stale": faulty,
+            },
+        )
+        recent = servient.calls[-3:]
+        session.evaluate(
+            "(t)=>window.__setExchange&&window.__setExchange(t)",
+            "\n".join(f"{m:<5} {p:<20} {v if v is not None else ''}" for m, p, v in recent) or "no request yet",
+        )
+
+    title = "Smart room - the device accepts the write and ignores it" if faulty else "Smart room - clean device write"
+    console.open(f"{title}  |  said: “Set the thermostat to 22 degrees.”")
+    console.banner(f"SCENE: {title}", "#4f46e5")
+    time.sleep(pace * 0.8)
+    console.hide_banner()
+    show()
+
+    console.step(
+        "1/4",
+        "PERCEIVE DEVICE",
+        "Parsing the Thing Description into property endpoints.",
+        "The device publishes what it can do, including which properties are writable "
+        "and which are sensors. Nothing about this thermostat is written into the agent.",
+        perceive_device,
+    )
+    sources = console.run_traced(perceive_device, td, line_delay=trace_delay)
+    writable = next(s for s in sources if not s.read_only)
+    traj.add("perceive", f"{len(sources)} properties from the TD; '{writable.property}' is writable")
+    console.result("perceive", f"{len(sources)} properties parsed", True, f"{len(sources)} device properties")
+    time.sleep(pace * 0.7)
+
+    console.step(
+        "2/4",
+        "READ",
+        "Reading the current value through the form the TD declares.",
+        "The starting state has to be observed, not assumed, or there is nothing to "
+        "compare the result against afterwards.",
+        read_property,
+    )
+    before = console.run_traced(read_property, servient.send, writable, line_delay=trace_delay)
+    traj.add("read", f"{writable.property} = {before}")
+    console.result("read", f"{writable.property} = {before}", True, f"device reads {before}")
+    time.sleep(pace * 0.7)
+
+    if faulty:
+        servient.silent_failure = True
+        console.step(
+            "!",
+            "FAULT: silent write",
+            "The device will accept the next write and leave its state unchanged.",
+            "This is the failure mode the review singled out. The response is a normal "
+            "success; nothing in it reveals the problem.",
+            "servient.silent_failure = True   # answers 204, stores nothing",
+        )
+        traj.fault_kind = "silent_write"
+        console.result("fault", "device will acknowledge and ignore", False, "fault injected: silent write")
+        console.banner("The device will report success and do nothing.", "#b91c1c")
+        time.sleep(pace * 1.4)
+        console.hide_banner()
+
+    console.step(
+        "3/4",
+        "WRITE",
+        "Asking the device to change to 22 degrees.",
+        "Sent over the TD's own write form, honouring the security scheme and rate " "limit the description declares.",
+        write_property,
+    )
+    console.run_traced(write_property, servient.send, writable, 22, line_delay=trace_delay)
+    show()
+    traj.add("write", "device accepted the write (204)")
+    console.result("write", "accepted, HTTP 204", True, "the device said yes")
+    time.sleep(pace * 0.8)
+
+    console.step(
+        "4/4",
+        "VERIFY",
+        "Reading the property back to see whether it actually changed.",
+        "A 204 is not evidence. The only way to tell an applied write from an ignored "
+        "one is to observe the state again.",
+        verify_device,
+    )
+    ok = console.run_traced(verify_device, servient.send, writable, 22, line_delay=trace_delay)
+    show()
+    traj.add("verify", f"{writable.property} reads {servient.state['targetTemperature']}", ok)
+    console.result(
+        "verify",
+        f"reads {servient.state['targetTemperature']}, wanted 22",
+        ok,
+        "device state confirmed" if ok else "the device did not change",
+    )
+    time.sleep(pace)
+
+    if not ok:
+        # Nothing moved and the endpoint is still there, so a second identical
+        # write would be ignored identically. The honest response is to hand over.
+        console.step(
+            "5/5",
+            "DIAGNOSE and ESCALATE",
+            "The write was accepted, the state did not follow, and the endpoint is unchanged.",
+            "Retrying would send the same request to the same endpoint and be ignored the "
+            "same way. The agent stops and hands over instead of burning attempts.",
+            escalate,
+        )
+        metrics = escalate("silent device write: acknowledged but not applied")
+        traj.escalated = True
+        traj.diagnosis = {"cause": "action_had_no_effect", "strategy": "escalate_to_human", "tier": 4}
+        traj.add("escalate", f"handed over; correction rate {metrics['correction_rate']:.2f}")
+        console.result("escalate", "paused and handed over", True, "escalated, as designed")
+        console.banner("Caught a failure the response never revealed.", "#b45309")
+        time.sleep(pace * 1.8)
+        console.hide_banner()
+
+    traj.goal_met = ok
+    return traj
+
+
 def episode_result(scene: Scene, traj: Trajectory) -> Any:
     """Score one run against the fault that was injected.
 
@@ -865,7 +1025,16 @@ def main() -> int:
                 print(f"\n  --- {label}: {scene.title}")
                 session.open(f"{base}/{scene.page}")
                 time.sleep(0.6)
-                traj = run_scene(session, console, scene, pace=args.pace, trace_delay=args.trace_delay)
+                if scene.page == "smart_room.html":
+                    traj = run_wot_scene(
+                        session,
+                        console,
+                        pace=args.pace,
+                        trace_delay=args.trace_delay,
+                        faulty=bool(scene.fault),
+                    )
+                else:
+                    traj = run_scene(session, console, scene, pace=args.pace, trace_delay=args.trace_delay)
                 campaign.add(episode_result(scene, traj))
                 if repetition == 0:
                     session.screenshot(str(out / f"scene{index + 1}_{scene.page.replace('.html', '')}.png"))
