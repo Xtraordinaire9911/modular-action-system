@@ -108,6 +108,10 @@ class Campaign:
             summary[fault] = {
                 "episodes": len(group),
                 "handled": sum(1 for e in group if e.handled_well),
+                # How many of the group had a cause to get right at all. A clean
+                # run has none, and reporting it as 0% accuracy would read as a
+                # failure rather than as nothing to score.
+                "scored": len(scored),
                 "DA": _rate(sum(1 for e in scored if e.diagnosis_correct), len(scored)),
                 "RTA": _rate(sum(1 for e in scored if e.tier_correct), len(scored)),
                 "tiers_used": sorted({e.chosen_tier for e in group if e.chosen_tier}),
@@ -131,15 +135,14 @@ class Campaign:
             f"  DA   diagnosis accuracy           {metrics['DA']:6.1%}",
             f"       escalations                  {metrics['escalations']}",
             "",
-            f"  {'fault':<12} {'eps':>4} {'handled':>8} {'DA':>7} {'RTA':>7}  tiers",
-            f"  {'-' * 54}",
+            f"  {'fault':<21} {'eps':>4} {'handled':>8} {'DA':>7} {'RTA':>7}  tiers",
+            f"  {'-' * 62}",
         ]
         for fault, row in self.by_fault().items():
             tiers = ",".join(str(t) for t in row["tiers_used"]) or "-"
-            lines.append(
-                f"  {fault:<12} {row['episodes']:>4} {row['handled']:>8} "
-                f"{row['DA']:>6.0%} {row['RTA']:>6.0%}  {tiers}"
-            )
+            da = f"{row['DA']:>6.0%}" if row["scored"] else f"{'-':>6}"
+            rta = f"{row['RTA']:>6.0%}" if row["scored"] else f"{'-':>6}"
+            lines.append(f"  {fault:<21} {row['episodes']:>4} {row['handled']:>8} {da} {rta}  {tiers}")
         return "\n".join(lines)
 
     def to_dict(self) -> dict[str, Any]:
