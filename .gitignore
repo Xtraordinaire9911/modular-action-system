@@ -22,6 +22,11 @@ logs/
 screenshots/
 # Per-run demo output (screenshots, traces): regenerated on every run.
 eval_outputs/
+# Recorded demo videos. Kept out of history on purpose: a few MB per recording
+# would live in the repository forever. Publish one by dragging it into a GitHub
+# comment box and linking the returned user-attachments URL from the README.
+demo_video/
+*.webm
 .external_envs/
 
 # Local paper / presentation artifacts
