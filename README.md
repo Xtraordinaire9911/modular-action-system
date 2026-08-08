@@ -1,18 +1,42 @@
 # Modular Action System Architecture
 
-Smart-room demo for the TUM Automatic Agents Praktikum. The repository
-shows how an agent can perceive and act across three surfaces without hard-coded
-UI or device assumptions:
+Smart-room project for the TUM Automatic Agents Praktikum. The system perceives
+and acts across three surfaces through one affordance contract, so no part of
+the agent hard-codes a selector, a device API, or a screen coordinate:
 
-- DOM: a React dashboard is transduced into a Page Affordance Model (PAM).
-- WoT: W3C Thing Descriptions are parsed at runtime into executable affordances.
-- Visual: screenshots are represented through Set-of-Marks (SoM) targets so the
-  VAM selects a `mark_id`, not raw coordinates.
+- **DOM** — a live page is transduced into a Page Affordance Model (PAM):
+  stable locators, labels, action types, ranked by how reliable each locator is.
+- **WoT** — W3C Thing Descriptions are parsed at runtime into the same
+  affordance shape, including forms, security schemes and rate limits.
+- **Visual** — elements are numbered as Set-of-Marks targets, so the visual path
+  selects a `mark_id` rather than a raw coordinate.
 
-The demo is intentionally small, but it is wired end to end around the core
-architecture requested for this week: DOM Transduction Pattern -> PAM -> runtime
-Cognitive Map, System-1 reflex execution, backend routing, pre/postcondition
-checks, recovery hooks, and failure-injection evaluation.
+Around that contract sits a complete loop — observe, plan, act, verify,
+recover — with backend routing, pre/postcondition checks, a recovery cascade,
+and failure-injection evaluation.
+
+## What is implemented, and what is not
+
+This table is the one to read before believing anything else in this file. It is
+kept deliberately blunt because the value of the project rests on its claims
+matching its code.
+
+| Capability | State | What that means precisely |
+|---|---|---|
+| Observe → plan → act → verify → recover | **Implemented** | Runs end to end in one process; see `scripts/run_agent_loop_demo.py`. |
+| Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
+| Intent (natural language) → GoalSpec | **Implemented, model optional** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. |
+| Set-of-Marks target selection | **Implemented, model optional** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. |
+| Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
+| Recovery | **Partial** | One strategy is exercised end to end (re-observe and retry). The four-tier cascade exists in `src/recovery/` but the loop demo drives only the first tier. |
+| Generalisation evidence | **Limited** | Three local mock environments plus MiniWoB++. Sample sizes are small and the environments are of similar shape; this is not yet a generalisation result. |
+| MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
+| Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
+| Picture-in-Picture supervised interface | **Not implemented here** | Browser-context isolation is implemented and is a weaker property; the PiP interface is separate work owned by another team member. |
+
+Every runtime decision records whether it came from a model or a deterministic
+fallback, and both paths are written to a JSONL ledger under `artifacts/`, so
+the distinction can be audited rather than taken on trust.
 
 ## Current Release State
 
@@ -21,7 +45,8 @@ checks, recovery hooks, and failure-injection evaluation.
 | Branch group | What it adds |
 |---|---|
 | B-101 – B-108 (Week 6) | DOM/WoT/Visual perception, System-1 effectors, cost-aware router, backend eval, browser-session retry |
-| B-109 (Week 7-8) | External CUA benchmark environments: MiniWoB++ (academic) + three WebArena-style local mock envs (shopping, email, forum); cross-environment fancy demo runner with periwinkle cursor trail, env badge overlay, and M1 generalisation score table |
+| B-109 (Week 7-8) | External CUA benchmark environments: MiniWoB++ plus three WebArena-style local mock envs (shopping, email, forum), and a cross-environment runner reporting per-environment task success. Solvers are scripted, so the figures measure the suite, not the agent. |
+| B-111 to B-117 (Week 9-11) | Perception hardened against demo-overlay contamination; browser and WoT episode isolation with verified rollback; visual marks measured in the live browser instead of read from fixtures; a demo registry; and the intent and Set-of-Marks planning layers, each recording whether a model or a deterministic fallback produced its answer |
 
 Branch discipline:
 
