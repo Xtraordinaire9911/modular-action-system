@@ -63,6 +63,15 @@ _PANEL_CSS = """
 #__cua_c .steps div{padding:1px 0}
 #__cua_c .steps .d{color:#4ade80}
 #__cua_c .steps .x{color:#fca5a5}
+/* One div per source line so a single line can be highlighted as it executes.
+   The panel used to hold the source as one text node, which is why it read as
+   a screenshot of the file rather than as code running. */
+#__cua_c .ln{padding:0 16px;white-space:pre-wrap;overflow-wrap:break-word}
+#__cua_c .ln.on{background:#8383ff;color:#0f0f23;font-weight:700;
+  box-shadow:0 0 14px rgba(131,131,255,.7)}
+#__cua_c .vars{padding:8px 16px;background:#141430;border-top:1px solid #2a2a4a;
+  color:#a5b4cf;font-size:10.5px;max-height:96px;overflow:auto}
+#__cua_c .vars b{color:#8383ff;font-weight:700}
 body{margin-right:430px !important}
 """
 
@@ -84,9 +93,34 @@ _OPEN_JS = (
     '<div class="why" id="__y"></div></div>'
     '<div class="lbl" style="padding:9px 16px 0">CODE RUNNING NOW</div>'
     '<div class="code" id="__s"></div>'
+    '<div class="vars" id="__v"></div>'
     '<div class="res run" id="__r">running...</div>'
     '<div class="steps" id="__l"></div>\';'
     "return 'inline';}"
+)
+
+# Renders the source as one div per line, which is what makes a moving
+# highlight possible at all.
+_CODE_LINES_JS = (
+    "(a)=>{const s=document.getElementById('__s');if(!s)return false;"
+    "s.innerHTML='';"
+    "a.lines.forEach((t,i)=>{const d=document.createElement('div');"
+    "d.className='ln';d.id='__ln'+i;d.textContent=t||' ';s.appendChild(d);});"
+    "const v=document.getElementById('__v');if(v)v.textContent='';"
+    "return true;}"
+)
+
+# Moves the highlight to the line the interpreter is on, and shows the locals
+# as they stand at that moment.
+_MARK_LINE_JS = (
+    "(a)=>{const s=document.getElementById('__s');if(!s)return false;"
+    "const prev=s.querySelector('.ln.on');if(prev)prev.classList.remove('on');"
+    "const el=document.getElementById('__ln'+a.index);"
+    "if(el){el.classList.add('on');"
+    "const top=el.offsetTop-s.clientHeight/2;s.scrollTop=top>0?top:0;}"
+    "const v=document.getElementById('__v');"
+    "if(v)v.innerHTML=a.vars.map(p=>'<b>'+p[0]+'</b> = '+p[1]).join('<br>');"
+    "return true;}"
 )
 
 _STEP_JS = (
@@ -165,6 +199,34 @@ class AgentConsole:
     def step(self, num: str, phase: str, what: str, why: str, code: Callable[..., Any] | str) -> None:
         """Announce a step before it runs: phase, plain language, reason, source."""
         self._js(_STEP_JS, {"num": num, "phase": phase, "what": what, "why": why, "code": source_of(code)})
+
+    def show_code(self, lines: list[str]) -> None:
+        """Load the source to be executed, one element per line."""
+        self._js(_CODE_LINES_JS, {"lines": lines})
+
+    def mark_line(self, index: int, variables: dict[str, str]) -> None:
+        """Move the highlight to the line now executing, and show its locals."""
+        self._js(_MARK_LINE_JS, {"index": index, "vars": [[k, v] for k, v in variables.items()]})
+
+    def run_traced(self, func: Any, *args: Any, line_delay: float = 0.06, **kwargs: Any) -> Any:
+        """Run ``func(*args)`` with the panel following its real execution.
+
+        The highlight is driven by sys.settrace on the actual call, so what a
+        viewer watches is the interpreter's own path through the function, loops
+        and early returns included - not a scripted animation of it.
+        """
+        from src.demos.live_tracer import run_traced as _run
+        from src.demos.live_tracer import source_of as _source_of
+
+        traced = _source_of(func)
+        self.show_code(traced.lines)
+
+        def on_line(lineno: int, variables: dict[str, str]) -> None:
+            index = traced.index_of(lineno)
+            if index >= 0:
+                self.mark_line(index, variables)
+
+        return _run(func, on_line, *args, line_delay=line_delay, **kwargs)
 
     def result(self, phase: str, detail: str, ok: bool, headline: str = "") -> None:
         """Report the outcome of the step that just ran."""

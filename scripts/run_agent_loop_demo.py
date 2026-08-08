@@ -285,7 +285,7 @@ def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -
     )
 
 
-def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float) -> Trajectory:
+def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float, trace_delay: float) -> Trajectory:
     traj = Trajectory(goal=scene.goal_text)
     console.open(f"{scene.title}  |  said: “{scene.utterance}”")
     console.banner(f"SCENE: {scene.title}", "#4f46e5")
@@ -304,7 +304,7 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
         interpret,
     )
     time.sleep(pace)
-    goal_plan = interpret(scene.utterance)
+    goal_plan = console.run_traced(interpret, scene.utterance, line_delay=trace_delay)
     traj.intent = goal_plan.to_dict()
     understood = goal_plan.ok
     traj.add(
@@ -342,10 +342,11 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
         "Reading the page the way the agent sees it.",
         "The agent never hard-codes what is on screen. It re-derives every clickable "
         "thing from the live page, so the same code works on a page it has not seen.",
-        observe,
+        "",
     )
-    time.sleep(pace)
-    pam = observe(session)
+    # Executed under the tracer, so the highlight follows the interpreter's own
+    # path through the function rather than an animation of it.
+    pam = console.run_traced(observe, session, line_delay=trace_delay)
     traj.add("observe", f"{len(pam.affordances)} affordances perceived")
     console.result(
         "observe",
@@ -364,7 +365,7 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
         measure,
     )
     time.sleep(pace)
-    n = measure(session, pam)
+    n = console.run_traced(measure, session, pam, line_delay=trace_delay)
     traj.add("measure", f"{n} boxes measured")
     console.result("measure", f"{n} real screen positions", True, f"measured {n} on-screen positions")
     time.sleep(pace * 0.6)
@@ -379,7 +380,7 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
         choose_target,
     )
     time.sleep(pace)
-    selection_result = choose_target(pam, scene.target)
+    selection_result = console.run_traced(choose_target, pam, scene.target, line_delay=trace_delay)
     traj.decision = selection_result.to_dict()
 
     # Show the deliberation, not only its outcome. Both paths explain themselves
@@ -455,7 +456,7 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
         verify,
     )
     time.sleep(pace)
-    ok = verify(session, scene.check_in, scene.expect)
+    ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
     traj.add("verify", "goal state confirmed" if ok else "expected effect NOT observed", ok)
     console.result(
         "verify",
@@ -478,7 +479,7 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
             recover,
         )
         time.sleep(pace)
-        retry = recover(session, scene.target)
+        retry = console.run_traced(recover, session, scene.target, line_delay=trace_delay)
         if retry is not None:
             point_at(session, console, retry, "#f59e0b")
         traj.recovered = retry is not None
@@ -486,7 +487,7 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
         console.result("recover", "re-observed and retried", traj.recovered, "retried after looking again")
         time.sleep(pace)
 
-        ok = verify(session, scene.check_in, scene.expect)
+        ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
         traj.add("verify", "confirmed after recovery" if ok else "still failing", ok)
         console.result(
             "verify",
@@ -550,6 +551,12 @@ def main() -> int:
     parser.add_argument("--scene", default="", help="Run one scene by page name, e.g. forum.html")
     parser.add_argument("--hold", type=float, default=12.0, help="Seconds to stay on the final summary.")
     parser.add_argument("--record", action="store_true", help="Record the page to a video file.")
+    parser.add_argument(
+        "--trace-delay",
+        type=float,
+        default=0.08,
+        help="Seconds per executed source line while the highlight follows the code.",
+    )
     args = parser.parse_args()
 
     from src.perception.browser_session import BrowserSession
@@ -583,7 +590,7 @@ def main() -> int:
             print(f"\n  --- scene {index + 1}/{len(scenes)}: {scene.title}")
             session.open(f"{base}/{scene.page}")
             time.sleep(0.6)
-            traj = run_scene(session, console, scene, pace=args.pace)
+            traj = run_scene(session, console, scene, pace=args.pace, trace_delay=args.trace_delay)
             session.screenshot(str(out / f"scene{index + 1}_{scene.page.replace('.html', '')}.png"))
             results.append((scene, traj))
 
