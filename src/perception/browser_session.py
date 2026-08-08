@@ -1,9 +1,14 @@
-"""Isolated Playwright browser session — the web analogue of PiP isolation.
+"""Isolated Playwright browser session: one browser context per episode.
 
-The advisor's "PiP session isolation for CUA" (§9.2) means the agent must drive
-the GUI inside a sandbox that cannot interfere with the host or other runs. For
-a web target this is an **isolated Playwright browser context** (incognito-like:
-its own cookies, storage, and cache), one per task, inside the Docker network.
+What this provides is **browser-context isolation** - incognito-like, with its
+own cookies, storage and cache - so one run cannot observe or disturb another.
+
+It is deliberately *not* described as Picture-in-Picture. An earlier revision of
+this docstring called it "the web analogue of PiP isolation", which the review
+identified as a misreading of the referenced paper: PiP means a supervised
+picture-in-picture interface, where the agent operates in a visibly separate
+session a human can watch and take over. That interface is a distinct piece of
+work; conflating the two made a weaker property look like the requested one.
 
 ``BrowserSession`` is the single perception+action surface over that context:
 
@@ -36,11 +41,23 @@ class _PageDriver(Protocol):
 _VIEWPORT = {"width": 1280, "height": 800}
 
 
-def _fresh_context(browser: Any, storage_state: dict[str, Any] | None = None) -> Any:
-    """Create a context with the settings every episode must share."""
+def _fresh_context(
+    browser: Any,
+    storage_state: dict[str, Any] | None = None,
+    record_video_dir: str | None = None,
+) -> Any:
+    """Create a context with the settings every episode must share.
+
+    ``record_video_dir`` records the page itself rather than the desktop, so a
+    demo capture contains one window and nothing the recorder happened to have
+    open. Playwright writes the file when the context closes.
+    """
     kwargs: dict[str, Any] = {"viewport": dict(_VIEWPORT), "device_scale_factor": 1}
     if storage_state:
         kwargs["storage_state"] = storage_state
+    if record_video_dir:
+        kwargs["record_video_dir"] = record_video_dir
+        kwargs["record_video_size"] = dict(_VIEWPORT)
     return browser.new_context(**kwargs)
 
 
@@ -65,7 +82,14 @@ class BrowserSession:
 
     # ── lifecycle ────────────────────────────────────────────────────────────
     @classmethod
-    def launch(cls, url: str, *, headless: bool = True, action_timeout_ms: int = 8000) -> "BrowserSession":
+    def launch(
+        cls,
+        url: str,
+        *,
+        headless: bool = True,
+        action_timeout_ms: int = 8000,
+        record_video_dir: str | None = None,
+    ) -> "BrowserSession":
         """Start Playwright, open a fresh isolated context, and navigate."""
         from playwright.sync_api import sync_playwright  # lazy
 
@@ -78,7 +102,8 @@ class BrowserSession:
                 "--no-sandbox",
             ],
         )
-        context = _fresh_context(browser)  # ← isolation boundary (PiP analogue)
+        # The isolation boundary: its own cookies, storage and cache.
+        context = _fresh_context(browser, record_video_dir=record_video_dir)
         page = context.new_page()
         # Cap action waits so a mistargeted click fails fast instead of hanging
         # the default 30s (e.g. clicking a non-actionable element).
