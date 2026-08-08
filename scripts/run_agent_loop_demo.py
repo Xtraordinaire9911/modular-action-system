@@ -1,4 +1,4 @@
-"""The agent driving several environments, narrated inside one browser window.
+﻿"""The agent driving several environments, narrated inside one browser window.
 
     python scripts/run_agent_loop_demo.py
 
@@ -32,9 +32,10 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
+from src.demos.deliberation import deliberate  # noqa: E402
 from src.demos.pip_console import AgentConsole  # noqa: E402
 from src.perception.dom_transducer import DomTransducer  # noqa: E402
-from src.perception.som_parser import marks_from_affordances, select_mark  # noqa: E402
+from src.perception.som_parser import marks_from_affordances  # noqa: E402
 
 _LINE = "=" * 78
 
@@ -80,6 +81,7 @@ class Trajectory:
     goal: str
     steps: list[StepRecord] = field(default_factory=list)
     recovered: bool = False
+    decision: dict[str, Any] = field(default_factory=dict)  # the full plan ranking
 
     def add(self, phase: str, detail: str, ok: bool = True) -> None:
         self.steps.append(StepRecord(phase, detail, ok))
@@ -120,13 +122,16 @@ def measure(session: Any, pam: Any) -> int:
 
 
 def plan(pam: Any, goal: str) -> Any:
-    """Pick the affordance that satisfies the goal.
+    """Score every perceived element against the goal and keep the ranking.
 
-    A deliberately small planner: match the goal against affordance labels and
-    return a visual mark, so the action comes from what was perceived rather
-    than from a selector written in advance.
+    Returns a Decision, not just a winner: the alternatives, each score and the
+    reason each one lost stay on the record, so a wrong choice can be explained
+    afterwards instead of guessed at.
+
+    Deterministic scoring, not a language model. There is no prompt and no
+    sampling here, and calling it reasoning would overstate it.
     """
-    return select_mark(marks_from_affordances(pam.affordances), goal)
+    return deliberate(marks_from_affordances(pam.affordances), goal)
 
 
 def act(session: Any, selection: Any) -> None:
@@ -135,7 +140,7 @@ def act(session: Any, selection: Any) -> None:
     Driven by the visual mark, not by a CSS selector, which is what makes this
     the Set-of-Marks path rather than ordinary DOM automation.
     """
-    session.click_xy(*selection.center)
+    session.click_xy(*selection.bbox.center)
 
 
 def verify(session: Any, where: str, expect: str) -> bool:
@@ -156,10 +161,10 @@ def recover(session: Any, goal: str) -> Any:
     """
     fresh = observe(session)
     measure(session, fresh)
-    selection = plan(fresh, goal)
-    if selection is not None:
-        act(session, selection)
-    return selection
+    decision = plan(fresh, goal)
+    if decision.chosen_mark is not None:
+        act(session, decision.chosen_mark)
+    return decision.chosen_mark
 
 
 def inject_fault(session: Any, selector: str) -> bool:
@@ -246,16 +251,16 @@ SCENES = [
 
 def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -> None:
     """Move the pointer and ring onto the mark the agent is about to use."""
-    box = selection.bbox
+    box = selection.bbox  # BoundingBox: x/y/w/h, with .center
     session.evaluate(
         _POINT_JS,
         {
-            "x": selection.center[0],
-            "y": selection.center[1],
-            "bx": box[0],
-            "by": box[1],
-            "bw": box[2] - box[0],
-            "bh": box[3] - box[1],
+            "x": box.center[0],
+            "y": box.center[1],
+            "bx": box.x,
+            "by": box.y,
+            "bw": box.w,
+            "bh": box.h,
             "color": colour,
         },
     )
@@ -304,19 +309,43 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
     console.step(
         "3/5",
         "PLAN",
-        f"Choosing which element satisfies: {scene.goal_text}.",
-        "The choice is made from what was just perceived. Nothing in this step knows " "the page in advance.",
+        f"Scoring every element on the page against: {scene.goal_text}.",
+        "Deterministic scoring, not a language model - no prompt and no sampling. What "
+        "it buys is auditability: the alternatives and the reason each lost are on the "
+        "record, so a wrong choice can be explained rather than guessed at.",
         plan,
     )
     time.sleep(pace)
-    selection = plan(pam, scene.target)
-    if selection is None:
-        traj.add("plan", "no mark matched the goal", False)
-        console.result("plan", "no matching element", False, "could not find a way to do this")
+    decision = plan(pam, scene.target)
+    traj.decision = decision.to_dict()
+
+    # Show the deliberation itself, not only its outcome. This is the part that
+    # was previously invisible: the panel displayed the planner's source but the
+    # planner produced no record of what it weighed.
+    console.step(
+        "3/5",
+        "PLAN - deliberation",
+        f"{decision.considered} candidates were scored and ranked.",
+        "Every option the agent could see, with the score it earned and why it "
+        "lost. The winner's margin says how close the call was.",
+        decision.explain(),
+    )
+    time.sleep(pace * 1.9)
+
+    if decision.chosen is None:
+        traj.add("plan", f"none of {decision.considered} candidates qualified", False)
+        console.result("plan", "no candidate qualified", False, "could not find a way to do this")
         time.sleep(pace)
         return traj
-    traj.add("plan", f"selected {selection.mark_id} '{selection.label}'")
-    console.result("plan", f"{selection.mark_id}: {selection.label}", True, f"picked {selection.mark_id}")
+
+    selection = decision.chosen_mark
+    traj.add("plan", f"{decision.chosen.mark_id} '{decision.chosen.label}' (margin {decision.margin:.0f})")
+    console.result(
+        "plan",
+        f"{decision.chosen.mark_id} by {decision.margin:.0f} points",
+        True,
+        f"picked {decision.chosen.mark_id} of {decision.considered}",
+    )
     point_at(session, console, selection, "#8383ff")
     time.sleep(pace)
 
@@ -349,8 +378,8 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
     )
     time.sleep(pace)
     act(session, selection)
-    traj.add("act", f"clicked {selection.center}")
-    console.result("act", f"clicked at {selection.center}", True, "click sent")
+    traj.add("act", f"clicked {selection.bbox.center}")
+    console.result("act", f"clicked at {selection.bbox.center}", True, "click sent")
     time.sleep(pace * 0.8)
 
     console.step(
