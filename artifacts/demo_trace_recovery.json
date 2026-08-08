@@ -58,13 +58,13 @@
     "details": {
       "conflicts": [
         {
-          "attribute": "targetTemperature",
-          "conflict_mass": 2.0,
-          "conflict_type": "targetTemperature_mismatch",
+          "attribute": "target_temperature",
+          "conflict_mass": 4.0,
+          "conflict_type": "target_temperature_mismatch",
           "decision": null,
-          "description": "Conflicting targetTemperature assertions for thermostat_A: {'dom': 20, 'wot': 24}; support={'20': 0.8, '24': 1.0}",
+          "description": "Conflicting target_temperature assertions for thermostat_A: {'dom': 20, 'wot': 24}; support={'20': 0.8, '24': 1.0}",
           "entity_id": "thermostat_A",
-          "id": "thermostat_A.targetTemperature",
+          "id": "thermostat_A.target_temperature",
           "resolved": false,
           "severity": "high",
           "sources": [
