@@ -31,6 +31,41 @@ Branch discipline:
 
 ## Quick Start
 
+### 0. From a clean clone, in one command
+
+On a machine that has only Python 3.11+ and `git`:
+
+```bash
+git clone <repo-url> && cd A-Modular-Action-System-Architecture
+python scripts/bootstrap.py --demo --headed
+```
+
+That installs the project and dev dependencies, downloads the one browser the
+demos need, runs the full test suite, and then runs the visual demo. It uses the
+standard library only, so it works before any dependency is installed, and it
+echoes every command it runs so a failure points at something you can repeat by
+hand.
+
+| Invocation | Does |
+|---|---|
+| `python scripts/bootstrap.py --check` | reports the environment and stops |
+| `python scripts/bootstrap.py` | install + test |
+| `python scripts/bootstrap.py --demo` | install + test + demo (headless) |
+| `python scripts/bootstrap.py --demo --headed` | same, with a visible browser |
+| `python scripts/bootstrap.py --skip-install --demo` | re-run on an already-set-up machine |
+
+Notes:
+
+- The MiniWoB++ clone is optional. Without it the demo runs the local mock
+  environments only and says so; see step 3 to add it.
+- **No fixed ports.** Every local server binds to `127.0.0.1:0`, so the OS picks
+  a free port at run time. This avoids the Windows reserved-port ranges that
+  Docker/Hyper-V claim (which surface as `WinError 10013`) and makes concurrent
+  runs safe. The only fixed ports in the project belong to the optional Docker
+  smart-room environment (3000, 8080, 8081), listed in step 4.
+
+The sections below are the individual pieces, for when you want to run just one.
+
 ### 1. Python verification
 
 Use `uv` if available:
