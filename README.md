@@ -31,48 +31,6 @@ Branch discipline:
 
 ## Quick Start
 
-### 0. Which demo can I run right now?
-
-Demos live across several scripts and `src.pipeline` flags. One command lists
-them all and says which are runnable on this machine:
-
-```bash
-python scripts/demo.py list
-python scripts/demo.py doctor          # why something is not runnable, and the fix
-python scripts/demo.py run cross-env --headed
-python scripts/demo.py run --all       # every currently runnable demo
-```
-
-```text
-DEMO               STATUS       TIME     TITLE
-------------------------------------------------------------------------------
-offline            ready        ~5s      Deterministic offline trace
-visual-grounding   ready        ~15s     Visual grounding smoke trace
-mock-envs          ready        ~1min    WebArena-style mock environments
-cross-env          ready        ~2min    Cross-environment suite (academic + industrial)
-miniwob            ready        ~1min    MiniWoB++ curated suite
-live-runtime       needs setup  ~2min    Live runtime tracer bullet
-adaptation         ready        ~10s     Adaptation and policy proposal
-```
-
-`offline` never needs a browser, a clone or Docker, so there is always something
-to show. The individual scripts are unchanged and still run directly; the
-registry only discovers them.
-
-**Adding a demo** is one entry in `src/demos/registry.py` — no runner change:
-
-```python
-Demo(
-    name="my-demo",
-    title="What it shows",
-    summary="One line for the listing.",
-    command=("scripts/run_my_demo.py",),
-    requires=("browser",),          # browser | miniwob | smart_room
-    headed_args=("--headed",),
-    duration_hint="~30s",
-)
-```
-
 ### 1. Python verification
 
 Use `uv` if available:
@@ -406,6 +364,51 @@ white-box path.
    ```text
    http://localhost:3000/?fault=layout_shift,selector_mutation
    ```
+
+## Running the demos
+
+Demos live across several scripts and `src.pipeline` flags. One command lists
+them all and says which are runnable on this machine:
+
+```bash
+python scripts/demo.py list
+python scripts/demo.py doctor          # why something is not runnable, and the fix
+python scripts/demo.py run cross-env --headed
+python scripts/demo.py run --all       # every currently runnable demo
+```
+
+```text
+DEMO               STATUS       TIME     TITLE
+------------------------------------------------------------------------------
+offline            ready        ~5s      Deterministic offline trace
+visual-grounding   ready        ~15s     Visual grounding smoke trace
+mock-envs          ready        ~1min    WebArena-style mock environments
+cross-env          ready        ~2min    Cross-environment suite (academic + industrial)
+miniwob            ready        ~1min    MiniWoB++ curated suite
+live-runtime       needs setup  ~2min    Live runtime tracer bullet
+adaptation         ready        ~10s     Adaptation and policy proposal
+```
+
+`offline` needs no browser, no clone and no Docker, so there is always something
+to show. The individual scripts are unchanged and still run directly; the
+registry only discovers them.
+
+**Adding a demo** is one entry in `src/demos/registry.py` — no runner change:
+
+```python
+Demo(
+    name="my-demo",
+    title="What it shows",
+    summary="One line for the listing.",
+    command=("scripts/run_my_demo.py",),
+    requires=("browser",),          # browser | miniwob | smart_room
+    headed_args=("--headed",),
+    duration_hint="~30s",
+)
+```
+
+A demo whose script is not in the current checkout is listed as `not here`
+rather than raising, so the registry stays valid while a feature is in review.
 
 ## Architecture Map
 
