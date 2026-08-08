@@ -145,6 +145,31 @@ def _selector_for(node: dict[str, Any]) -> tuple[str, float]:
     return f"{tag}:nth-of-type({node['nth']})", _SELECTOR_CONFIDENCE["positional"]
 
 
+# Attributes that tell otherwise-identical controls apart, most stable first.
+# data-* hooks come before these because they exist to identify an element.
+_DISAMBIGUATING_ATTRS = ("aria-label", "title", "value", "placeholder", "type", "href", "alt")
+
+
+def _disambiguate(node: dict[str, Any], base: str, twins: list[dict[str, Any]]) -> str:
+    """Narrow a selector that matches several elements down to one.
+
+    A class name is shared by design, so "button.add-cart-btn" names every
+    product on the page at once. Anything that then queries it - a probe asking
+    whether the target is disabled, say - silently measures the first match
+    instead of the intended element, and reports a healthy control while the
+    real one is dead. The attributes tried here are the ones that actually
+    distinguish the elements, and only a value unique among the twins is used.
+    """
+    attr = node["attr"]
+    keys = [k for k in attr if k.startswith("data-") and k != "data-bbox"]
+    keys += [k for k in _DISAMBIGUATING_ATTRS if attr.get(k)]
+    for key in keys:
+        value = attr.get(key, "").strip()
+        if value and sum(1 for twin in twins if twin["attr"].get(key, "").strip() == value) == 1:
+            return f"{base}[{key}='{_escape_attr(value)}']"
+    return base
+
+
 def _label_for(node: dict[str, Any]) -> str:
     attr = node["attr"]
     for key in ("aria-label", "value", "placeholder", "title", "alt", "name", "id"):
@@ -194,11 +219,24 @@ class DomTransducer:
         parser.feed(html or "")
         parser.close()
 
+        # A selector shared by four buttons is not a locator. Group the derived
+        # selectors first, refine the collisions, and drop the confidence of any
+        # that stays ambiguous so the rest of the system can tell.
+        derived = [_selector_for(node) for node in parser.nodes]
+        by_selector: dict[str, list[dict[str, Any]]] = {}
+        for node, (selector, _) in zip(parser.nodes, derived):
+            by_selector.setdefault(selector, []).append(node)
+
         affordances: list[Affordance] = []
-        for node in parser.nodes:
+        for node, (selector, confidence) in zip(parser.nodes, derived):
             attr = node["attr"]
             action = _action_for(node)
-            selector, confidence = _selector_for(node)
+            twins = by_selector[selector]
+            if len(twins) > 1:
+                refined = _disambiguate(node, selector, twins)
+                if refined == selector:
+                    confidence = _SELECTOR_CONFIDENCE["positional"]  # still ambiguous, and says so
+                selector = refined
             disabled = "disabled" in attr or attr.get("aria-disabled") == "true"
             locator: dict[str, Any] = {"selector": selector, "strategy": "css"}
             bbox = _bbox_from_attrs(attr)

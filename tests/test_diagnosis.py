@@ -143,7 +143,7 @@ def test_every_diagnosis_records_what_it_checked():
 def test_explanation_names_conclusion_strategy_and_tier():
     text = diagnose(attempted=TARGET, fresh_marks=[TARGET], goal="g", world_changed=False).explain()
 
-    assert "what the agent checked" in text
+    assert "what the agent measured" in text
     assert "conclusion:" in text and "strategy:" in text and "tier" in text
 
 

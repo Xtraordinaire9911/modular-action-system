@@ -31,12 +31,35 @@ CAUSE_MOVED = "target_moved"
 CAUSE_VANISHED = "target_vanished"
 CAUSE_INERT = "action_had_no_effect"
 CAUSE_OBSCURED = "target_not_actionable"
+CAUSE_OCCLUDED = "target_occluded"
 CAUSE_UNKNOWN = "undiagnosed"
 
 STRATEGY_RETRY = "retry_from_fresh_observation"
 STRATEGY_REROUTE = "reroute_to_alternative_affordance"
+STRATEGY_CLEAR = "clear_the_obstruction_then_retry"
 STRATEGY_ROLLBACK = "rollback_then_retry"
 STRATEGY_ESCALATE = "escalate_to_human"
+
+# One plain sentence per conclusion, shown next to the evidence so a viewer can
+# judge the reasoning rather than take the label on trust.
+CAUSE_EXPLANATION = {
+    CAUSE_MOVED: "The control is still on the page, just not where it was when the plan "
+    "was made. The plan went stale, so looking again is enough.",
+    CAUSE_OCCLUDED: "The control is present and enabled, but something else is receiving "
+    "the click. Repeating the click would hit the same obstruction, so the "
+    "obstruction has to be dealt with first.",
+    CAUSE_OBSCURED: "The control is visible and refuses input. Nothing is broken - a "
+    "precondition simply is not met yet, so the answer is to satisfy it "
+    "rather than to keep clicking.",
+    CAUSE_INERT: "The action was accepted and the state the goal named did not follow. A "
+    "second identical attempt would be accepted and ignored identically, so "
+    "retrying would only waste it.",
+    CAUSE_VANISHED: "The control the plan named is no longer in the document, so no amount "
+    "of retrying can reach it. Either another route exists, or the goal "
+    "cannot be met from here.",
+    CAUSE_UNKNOWN: "The evidence does not distinguish between the possible causes, so "
+    "acting on a guess would be worse than handing over.",
+}
 
 
 @dataclass
@@ -51,17 +74,25 @@ class Diagnosis:
     confidence: float = 0.0
 
     def explain(self) -> str:
-        lines = ["what the agent checked:"]
+        lines = ["what the agent measured:"]
         lines += [f"  - {item}" for item in self.evidence]
         lines += [
             "",
             f"conclusion: {self.cause}",
+            "",
+            CAUSE_EXPLANATION.get(self.cause, ""),
+            "",
             f"strategy:   {self.strategy}  (tier {self.tier})",
             f"confidence: {self.confidence:.2f}",
         ]
         if self.alternative_label:
             lines.append(f"alternative: {self.alternative_label!r}")
         return "\n".join(lines)
+
+    @property
+    def reasoning(self) -> str:
+        """The one-sentence account of why this conclusion follows."""
+        return CAUSE_EXPLANATION.get(self.cause, "")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -167,8 +198,108 @@ def diagnose(
     )
 
 
+def diagnose_with_probes(
+    observation: Any, *, moved: bool, still_present: bool, alternative_label: str = ""
+) -> Diagnosis:
+    """Reach a conclusion from measurements rather than from two coordinates.
+
+    Order matters here, and it follows what can be ruled out most firmly:
+
+    1. If the click point is held by another element, the target was never
+       reached - that is decided by a hit test, not by inference.
+    2. If the target refuses input, no amount of aiming would have helped.
+    3. If it simply sits elsewhere, the plan was stale.
+    4. If it is gone, the question becomes whether another route exists.
+    5. If it is present, reachable and unmoved, the action was accepted and
+       did not take effect - the one case where retrying is provably useless.
+    """
+    evidence = list(observation.evidence())
+
+    # Nothing was actually measured, so any conclusion would be invented.
+    if not (observation.hit.ok or observation.interact.ok or observation.occlusion.ok):
+        return Diagnosis(
+            cause=CAUSE_UNKNOWN,
+            strategy=STRATEGY_ESCALATE,
+            tier=4,
+            evidence=evidence + ["no probe could run, so nothing was measured"],
+            confidence=0.2,
+        )
+
+    if observation.occlusion.ok and observation.occlusion.covered:
+        return Diagnosis(
+            cause=CAUSE_OCCLUDED,
+            strategy=STRATEGY_CLEAR,
+            tier=2,
+            evidence=evidence,
+            alternative_label=observation.occlusion.coverer_text.strip()[:40],
+            confidence=0.9,
+        )
+
+    if observation.interact.ok and observation.interact.exists and not observation.interact.actionable:
+        return Diagnosis(
+            cause=CAUSE_OBSCURED,
+            strategy=STRATEGY_ROLLBACK,
+            tier=3,
+            evidence=evidence,
+            confidence=0.85,
+        )
+
+    # A target that has moved only explains the failure if the click missed it.
+    # When the hit test says the intended element received the click, the action
+    # was delivered, and where the element sits now is a consequence of the page
+    # reacting - not the reason nothing happened.
+    delivered = observation.hit.ok and observation.hit.is_target
+    if still_present and moved and not delivered:
+        return Diagnosis(
+            cause=CAUSE_MOVED,
+            strategy=STRATEGY_RETRY,
+            tier=1,
+            evidence=evidence + ["the click did not land on the intended element"],
+            confidence=0.9,
+        )
+
+    if not still_present:
+        if alternative_label:
+            return Diagnosis(
+                cause=CAUSE_VANISHED,
+                strategy=STRATEGY_REROUTE,
+                tier=2,
+                evidence=evidence,
+                alternative_label=alternative_label,
+                confidence=0.8,
+            )
+        return Diagnosis(
+            cause=CAUSE_VANISHED,
+            strategy=STRATEGY_ESCALATE,
+            tier=4,
+            evidence=evidence + ["no remaining affordance can advance this goal"],
+            confidence=0.85,
+        )
+
+    # Present, reachable, in the same place, and the goal state still absent.
+    # Whether the region reverted to a rejection message or never moved at all,
+    # the action was accepted and did not take effect, so a repeat of it would
+    # be accepted and ignored the same way.
+    detail = (
+        "the region changed, but not to the state the goal named"
+        if observation.region_changed
+        else "the region did not change at all"
+    )
+    return Diagnosis(
+        cause=CAUSE_INERT,
+        strategy=STRATEGY_ESCALATE,
+        tier=4,
+        evidence=evidence + [detail, "a second identical attempt would behave identically"],
+        confidence=0.7 if observation.region_changed else 0.8,
+    )
+
+
 __all__ = [
+    "CAUSE_EXPLANATION",
     "CAUSE_INERT",
+    "CAUSE_OCCLUDED",
+    "STRATEGY_CLEAR",
+    "diagnose_with_probes",
     "CAUSE_MOVED",
     "CAUSE_OBSCURED",
     "CAUSE_UNKNOWN",
