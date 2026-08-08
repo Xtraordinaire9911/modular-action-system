@@ -32,7 +32,6 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
-from src.demos.deliberation import deliberate  # noqa: E402
 from src.demos.pip_console import AgentConsole  # noqa: E402
 from src.perception.dom_transducer import DomTransducer  # noqa: E402
 from src.perception.som_parser import marks_from_affordances  # noqa: E402
@@ -81,7 +80,8 @@ class Trajectory:
     goal: str
     steps: list[StepRecord] = field(default_factory=list)
     recovered: bool = False
-    decision: dict[str, Any] = field(default_factory=dict)  # the full plan ranking
+    intent: dict[str, Any] = field(default_factory=dict)  # layer 1: utterance -> goal
+    decision: dict[str, Any] = field(default_factory=dict)  # layer 3: which mark, and why
 
     def add(self, phase: str, detail: str, ok: bool = True) -> None:
         self.steps.append(StepRecord(phase, detail, ok))
@@ -94,6 +94,8 @@ class Trajectory:
         return {
             "goal": self.goal,
             "recovered": self.recovered,
+            "intent": self.intent,
+            "decision": self.decision,
             "steps": [{"phase": s.phase, "detail": s.detail, "ok": s.ok} for s in self.steps],
         }
 
@@ -121,17 +123,30 @@ def measure(session: Any, pam: Any) -> int:
     return attach_measured_bboxes(pam, session)
 
 
-def plan(pam: Any, goal: str) -> Any:
-    """Score every perceived element against the goal and keep the ranking.
+def interpret(intent: str) -> Any:
+    """Layer 1: turn what a person said into a structured goal.
 
-    Returns a Decision, not just a winner: the alternatives, each score and the
-    reason each one lost stay on the record, so a wrong choice can be explained
-    afterwards instead of guessed at.
-
-    Deterministic scoring, not a language model. There is no prompt and no
-    sampling here, and calling it reasoning would overstate it.
+    A run starts from an utterance, not from a goal someone wrote by hand. The
+    result records whether a model interpreted it or the deterministic fallback
+    matched a phrasing, so the difference is never guessed at.
     """
-    return deliberate(marks_from_affordances(pam.affordances), goal)
+    from src.planner.intent_planner import IntentPlanner, available_client
+
+    return IntentPlanner(client=available_client()).plan(intent)
+
+
+def choose_target(pam: Any, goal: str) -> Any:
+    """Layer 3: pick which Set-of-Marks target advances the goal.
+
+    This is what the numbering exists for: a model answers with an identifier
+    like "M002" rather than guessing pixel coordinates. With no model
+    configured the deterministic scorer answers instead, and the result says
+    which of the two it was.
+    """
+    from src.planner.intent_planner import available_client
+    from src.planner.mark_selector import MarkSelector
+
+    return MarkSelector(client=available_client()).select(marks_from_affordances(pam.affordances), goal)
 
 
 def act(session: Any, selection: Any) -> None:
@@ -161,10 +176,10 @@ def recover(session: Any, goal: str) -> Any:
     """
     fresh = observe(session)
     measure(session, fresh)
-    decision = plan(fresh, goal)
-    if decision.chosen_mark is not None:
-        act(session, decision.chosen_mark)
-    return decision.chosen_mark
+    result = choose_target(fresh, goal)
+    if result.ok:
+        act(session, result.mark)
+    return result.mark
 
 
 def inject_fault(session: Any, selector: str) -> bool:
@@ -214,6 +229,7 @@ class Scene:
     page: str
     title: str
     goal_text: str
+    utterance: str
     target: str  # label fragment the planner looks for
     check_in: str  # selector whose text proves the effect
     expect: str  # text that must appear there
@@ -225,6 +241,7 @@ SCENES = [
         page="shopping.html",
         title="Online shop - with an injected fault",
         goal_text="Add the Wireless Headphones to the cart",
+        utterance="Could you put the wireless headphones in my cart?",
         target="Headphones",
         check_in="#cart-items",
         expect="Wireless Headphones",
@@ -234,6 +251,7 @@ SCENES = [
         page="email_inbox.html",
         title="Email client",
         goal_text="Open Alice's message and archive it",
+        utterance="Please archive that message from Alice.",
         target="Archive",
         check_in="body",
         expect="archive",
@@ -242,6 +260,7 @@ SCENES = [
         page="forum.html",
         title="Discussion forum",
         goal_text="Upvote the top-ranked post",
+        utterance="Give the top post an upvote.",
         target="Upvote post: AI agents",
         check_in="body",
         expect="upvote",
@@ -268,10 +287,54 @@ def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -
 
 def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float) -> Trajectory:
     traj = Trajectory(goal=scene.goal_text)
-    console.open(f"{scene.title}  |  goal: {scene.goal_text}")
+    console.open(f"{scene.title}  |  said: “{scene.utterance}”")
     console.banner(f"SCENE: {scene.title}", "#4f46e5")
     time.sleep(pace * 0.8)
     console.hide_banner()
+
+    # Layer 1. A run starts from an utterance, not from a goal written by hand.
+    console.step(
+        "0/5",
+        "INTERPRET",
+        f"Someone said: “{scene.utterance}”",
+        "Turning a sentence into a structured goal the runtime can act on. The "
+        "result records whether a model interpreted it or a phrasing rule matched, "
+        "because a fallback that reads as understanding would make the whole claim "
+        "unverifiable.",
+        interpret,
+    )
+    time.sleep(pace)
+    goal_plan = interpret(scene.utterance)
+    traj.intent = goal_plan.to_dict()
+    understood = goal_plan.ok
+    traj.add(
+        "interpret",
+        f"{goal_plan.source}: {goal_plan.goal.goal_state if goal_plan.ok else 'not understood'}",
+        understood,
+    )
+    console.step(
+        "0/5",
+        f"INTERPRET - {goal_plan.source}",
+        (
+            f"Understood as: {goal_plan.goal.goal_state}"
+            if understood
+            else "Could not turn this sentence into a supported goal."
+        ),
+        (
+            "A model interpreted this."
+            if goal_plan.is_model_derived
+            else "No model is configured, so a phrasing rule matched instead. Labelled as "
+            "such rather than presented as understanding."
+        ),
+        json.dumps(goal_plan.to_dict(), indent=2),
+    )
+    console.result(
+        "interpret",
+        f"{goal_plan.source} (confidence {goal_plan.confidence:.2f})",
+        understood,
+        f"understood as {goal_plan.goal.goal_state}" if understood else "did not understand the request",
+    )
+    time.sleep(pace * 1.4)
 
     console.step(
         "1/5",
@@ -308,43 +371,44 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float)
 
     console.step(
         "3/5",
-        "PLAN",
-        f"Scoring every element on the page against: {scene.goal_text}.",
-        "Deterministic scoring, not a language model - no prompt and no sampling. What "
-        "it buys is auditability: the alternatives and the reason each lost are on the "
-        "record, so a wrong choice can be explained rather than guessed at.",
-        plan,
+        "DECIDE",
+        f"Choosing which of the {len(pam.affordances)} elements advances the goal.",
+        "This is what numbering the elements is for: the answer is an identifier "
+        "like M002, not a pixel coordinate. A model answers when one is configured; "
+        "otherwise deterministic scoring does, and the result says which.",
+        choose_target,
     )
     time.sleep(pace)
-    decision = plan(pam, scene.target)
-    traj.decision = decision.to_dict()
+    selection_result = choose_target(pam, scene.target)
+    traj.decision = selection_result.to_dict()
 
-    # Show the deliberation itself, not only its outcome. This is the part that
-    # was previously invisible: the panel displayed the planner's source but the
-    # planner produced no record of what it weighed.
+    # Show the deliberation, not only its outcome. Both paths explain themselves
+    # in the same field, so the panel reads the same either way.
+    provenance = "a language model" if selection_result.is_model_derived else "deterministic scoring"
     console.step(
         "3/5",
-        "PLAN - deliberation",
-        f"{decision.considered} candidates were scored and ranked.",
-        "Every option the agent could see, with the score it earned and why it "
-        "lost. The winner's margin says how close the call was.",
-        decision.explain(),
+        f"DECIDE - {selection_result.source}",
+        f"{selection_result.considered} candidates were considered; the choice came from {provenance}.",
+        "Whichever path answered, it has to say why. A model gives its reason; the "
+        "scorer gives the ranking and the margin. Neither is allowed to be silent.",
+        f"chosen: {selection_result.mark_id}\nconfidence: {selection_result.confidence:.2f}\n\n"
+        f"{selection_result.reason}",
     )
     time.sleep(pace * 1.9)
 
-    if decision.chosen is None:
-        traj.add("plan", f"none of {decision.considered} candidates qualified", False)
-        console.result("plan", "no candidate qualified", False, "could not find a way to do this")
+    if not selection_result.ok:
+        traj.add("decide", f"none of {selection_result.considered} candidates qualified", False)
+        console.result("decide", selection_result.reason[:60], False, "could not find a way to do this")
         time.sleep(pace)
         return traj
 
-    selection = decision.chosen_mark
-    traj.add("plan", f"{decision.chosen.mark_id} '{decision.chosen.label}' (margin {decision.margin:.0f})")
+    selection = selection_result.mark
+    traj.add("decide", f"{selection_result.mark_id} via {selection_result.source}")
     console.result(
-        "plan",
-        f"{decision.chosen.mark_id} by {decision.margin:.0f} points",
+        "decide",
+        f"{selection_result.mark_id} ({selection_result.source})",
         True,
-        f"picked {decision.chosen.mark_id} of {decision.considered}",
+        f"chose {selection_result.mark_id} of {selection_result.considered}",
     )
     point_at(session, console, selection, "#8383ff")
     time.sleep(pace)
