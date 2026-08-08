@@ -82,6 +82,9 @@ class Trajectory:
     recovered: bool = False
     intent: dict[str, Any] = field(default_factory=dict)  # layer 1: utterance -> goal
     decision: dict[str, Any] = field(default_factory=dict)  # layer 3: which mark, and why
+    diagnosis: dict[str, Any] = field(default_factory=dict)  # why it failed, and the tier chosen
+    fault_kind: str = ""
+    escalated: bool = False
 
     def add(self, phase: str, detail: str, ok: bool = True) -> None:
         self.steps.append(StepRecord(phase, detail, ok))
@@ -96,6 +99,9 @@ class Trajectory:
             "recovered": self.recovered,
             "intent": self.intent,
             "decision": self.decision,
+            "diagnosis": self.diagnosis,
+            "fault_kind": self.fault_kind,
+            "escalated": self.escalated,
             "steps": [{"phase": s.phase, "detail": s.detail, "ok": s.ok} for s in self.steps],
         }
 
@@ -168,21 +174,139 @@ def verify(session: Any, where: str, expect: str) -> bool:
     return expect.lower() in (session.text_content(where) or "").lower()
 
 
-def recover(session: Any, goal: str) -> Any:
-    """Re-observe, re-plan, and retry once.
+def app_html(session: Any) -> str:
+    """The page as the application renders it, with our own overlays removed.
 
-    Recovery re-derives the plan from a fresh observation instead of replaying
-    the failed action, so an element that moved is picked up at its new place.
+    Change detection has to ignore the narration panel, cursor and rings: they
+    update on every step, so comparing raw HTML would report "the page changed"
+    even when the agent's click did nothing at all - which is exactly the case
+    the diagnosis needs to be able to see.
     """
+    return str(session.evaluate("""()=>{const c=document.body.cloneNode(true);
+               c.querySelectorAll('[id^="__cua"]').forEach(e=>e.remove());
+               return c.innerHTML;}""") or "")
+
+
+def diagnose_failure(session: Any, attempted: Any, goal: str, page_before: str) -> Any:
+    """Work out *why* the step failed, from what can be seen afterwards.
+
+    Nothing here is told which fault was injected. It re-observes, looks for the
+    element it acted on, compares the page against how it looked before, and
+    lets those answers pick the recovery tier.
+    """
+    from src.demos.diagnosis import diagnose
+
+    fresh_pam = observe(session)
+    measure(session, fresh_pam)
+    fresh_marks = marks_from_affordances(fresh_pam.affordances)
+    changed = app_html(session) != page_before
+
+    def find_alternative(marks: list[Any], want: str) -> Any:
+        result = choose_target(fresh_pam, want)
+        return result.mark if result.ok else None
+
+    return diagnose(
+        attempted=attempted,
+        fresh_marks=fresh_marks,
+        goal=goal,
+        world_changed=changed,
+        alternative_finder=find_alternative,
+    )
+
+
+def apply_recovery(session: Any, diagnosis: Any, goal: str) -> bool:
+    """Carry out the tier the diagnosis selected.
+
+    Each branch is a genuinely different response, not the same retry wearing
+    different labels: tier 1 looks again and repeats, tier 2 acts on a different
+    affordance, tier 4 stops and hands over rather than trying anything.
+    """
+    from src.demos.diagnosis import STRATEGY_ESCALATE, STRATEGY_REROUTE, STRATEGY_RETRY
+
+    if diagnosis.strategy == STRATEGY_ESCALATE:
+        return False  # deliberately does not act; the handover is the response
+
     fresh = observe(session)
     measure(session, fresh)
     result = choose_target(fresh, goal)
-    if result.ok:
+    if not result.ok:
+        return False
+    if diagnosis.strategy in (STRATEGY_RETRY, STRATEGY_REROUTE):
         act(session, result.mark)
-    return result.mark
+        return True
+    return False
 
 
-def inject_fault(session: Any, selector: str) -> bool:
+def escalate(reason: str) -> Any:
+    """Tier 4: pause, hand to a supervisor, and record what they did.
+
+    An unattended demo cannot wait for a person, so the handover is recorded as
+    approved-without-change. That still exercises the real path, and the
+    correction rate stays honest about it.
+    """
+    from src.recovery.supervised_takeover import SupervisedTakeover
+
+    takeover = SupervisedTakeover()
+    takeover.pause("loop-demo", reason)
+    takeover.resume()  # approved, nothing changed
+    return takeover.metrics()
+
+
+def inject_vanish(session: Any, selector: str) -> bool:
+    """Remove the target entirely, leaving a marker where it was.
+
+    The agent's plan now names something that no longer exists, so re-observing
+    and retrying cannot help. It has to notice the absence and find another
+    route, which is a different recovery from a target that merely moved.
+    """
+    return bool(
+        session.evaluate(
+            """(sel)=>{
+                const b = document.querySelector(sel);
+                if (!b) return false;
+                const r = b.getBoundingClientRect();
+                const ghost = document.createElement('div');
+                ghost.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;
+                    width:${Math.max(r.width,120)}px;height:${Math.max(r.height,26)}px;
+                    z-index:2147483643;border:2px dashed #f87171;border-radius:8px;
+                    pointer-events:none;display:flex;align-items:center;
+                    justify-content:center;color:#f87171;font:600 10px system-ui;
+                    background:rgba(248,113,113,.08)`;
+                ghost.textContent = 'this control no longer exists';
+                document.body.appendChild(ghost);
+                b.remove();
+                return true;
+            }""",
+            selector,
+        )
+    )
+
+
+def inject_inert(session: Any, selector: str) -> bool:
+    """Leave the control in place but disconnect it from its effect.
+
+    This is the failure the review singled out: the action is accepted, the
+    control behaves as though it worked, and the state the goal named never
+    changes. Retrying the identical action would produce the identical nothing,
+    so the only correct response is to stop and escalate.
+    """
+    return bool(
+        session.evaluate(
+            """(sel)=>{
+                const b = document.querySelector(sel);
+                if (!b) return false;
+                const clone = b.cloneNode(true);   // drops every listener
+                clone.style.outline = '3px solid #f59e0b';
+                clone.title = 'accepts clicks, does nothing';
+                b.replaceWith(clone);
+                return true;
+            }""",
+            selector,
+        )
+    )
+
+
+def inject_displace(session: Any, selector: str) -> bool:
     """Move the target after it was perceived, and mark where it used to be.
 
     This is the DOM-mutation fault the supervisor named: the page changes
@@ -211,8 +335,14 @@ def inject_fault(session: Any, selector: str) -> bool:
                 ghost.textContent = 'agent planned to click here';
                 document.body.appendChild(ghost);
 
+                // Move whichever way has room. A fixed offset pushed elements
+                // near the top of the page off-screen, where nothing could
+                // click them and the fault stopped being recoverable at all.
+                const room_above = r.top - 60;
+                const room_below = window.innerHeight - r.bottom - 60;
+                const shift = Math.min(150, Math.max(room_above, room_below));
                 b.style.position = 'relative';
-                b.style.top = '-150px';        // stays inside its own card
+                b.style.top = (room_above >= room_below ? -shift : shift) + 'px';
                 b.style.outline = '3px solid #f59e0b';
                 return true;
             }""",
@@ -233,39 +363,87 @@ class Scene:
     target: str  # label fragment the planner looks for
     check_in: str  # selector whose text proves the effect
     expect: str  # text that must appear there
-    fault: str = ""  # selector to displace, empty means no fault
+    fault: str = ""  # which fault to inject: displace | vanish | inert
+    fault_selector: str = ""  # the element the fault acts on
 
 
+# Four scenes, three of them faulted, and each fault of a different kind so the
+# agent has to diagnose rather than apply one rehearsed answer. Which recovery
+# tier each ends up using is decided at run time from what it observes, and is
+# not written down here.
+# Five scenes, four of them faulted, with three distinct kinds of fault. Each
+# verify checks a precise state change rather than a word that already appears
+# on the page, so a fault cannot pass unnoticed. Which recovery tier each ends
+# up using is decided at run time from what the agent observes; it is not
+# written down here, and the recovery code is never told which fault was used.
 SCENES = [
     Scene(
         page="shopping.html",
-        title="Online shop - with an injected fault",
+        title="Online shop - the target moves after being seen",
         goal_text="Add the Wireless Headphones to the cart",
         utterance="Could you put the wireless headphones in my cart?",
         target="Headphones",
         check_in="#cart-items",
         expect="Wireless Headphones",
-        fault="button.add-cart-btn[data-id='headphones']",
+        fault="displace",
+        fault_selector="button.add-cart-btn[data-id='headphones']",
     ),
     Scene(
-        page="email_inbox.html",
-        title="Email client",
-        goal_text="Open Alice's message and archive it",
-        utterance="Please archive that message from Alice.",
-        target="Archive",
-        check_in="body",
-        expect="archive",
+        page="shopping.html",
+        title="Online shop - the control accepts the click and does nothing",
+        goal_text="Add the Pro Laptop to the cart",
+        utterance="Add the pro laptop to my cart please.",
+        target="Laptop",
+        check_in="#cart-items",
+        expect="Pro Laptop",
+        fault="inert",
+        fault_selector="button.add-cart-btn[data-id='laptop']",
     ),
     Scene(
         page="forum.html",
-        title="Discussion forum",
+        title="Discussion forum - the target disappears entirely",
+        goal_text="Upvote a post",
+        utterance="Give a post an upvote.",
+        target="Upvote",
+        check_in="#votes-2",
+        expect="29",
+        fault="vanish",
+        fault_selector="button.upvote-btn[data-post='1']",
+    ),
+    Scene(
+        page="forum.html",
+        title="Discussion forum - the target moves after being seen",
         goal_text="Upvote the top-ranked post",
-        utterance="Give the top post an upvote.",
-        target="Upvote post: AI agents",
-        check_in="body",
-        expect="upvote",
+        utterance="Upvote the top post.",
+        target="AI agents",
+        check_in="#votes-1",
+        expect="43",
+        fault="displace",
+        fault_selector="button.upvote-btn[data-post='1']",
+    ),
+    Scene(
+        page="shopping.html",
+        title="Online shop - clean run, nothing injected",
+        goal_text="Add the Mechanical Keyboard to the cart",
+        utterance="Add the mechanical keyboard to my cart.",
+        target="Keyboard",
+        check_in="#cart-items",
+        expect="Mechanical Keyboard",
     ),
 ]
+
+
+FAULTS = {
+    "displace": inject_displace,
+    "vanish": inject_vanish,
+    "inert": inject_inert,
+}
+
+FAULT_BLURB = {
+    "displace": "The target is still on the page, but somewhere else than where the agent saw it.",
+    "vanish": "The target has been removed from the page entirely.",
+    "inert": "The control still accepts clicks and now does nothing at all.",
+}
 
 
 def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -> None:
@@ -417,21 +595,23 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     if scene.fault:
         console.step(
             "!",
-            "FAULT INJECTED",
-            "The page is being changed behind the agent's back.",
-            "A real site can move things at any moment. The agent planned against where the "
-            "button WAS. The red dashed outline shows where it just went.",
-            inject_fault,
+            f"FAULT: {scene.fault}",
+            FAULT_BLURB[scene.fault],
+            "A real site can change under an agent at any moment, and not always in the "
+            "same way. Which fault this is will not be passed to the recovery code: the "
+            "agent has to work it out from what it can observe afterwards.",
+            FAULTS[scene.fault],
         )
         time.sleep(pace * 0.5)
-        moved = inject_fault(session, scene.fault)
-        traj.add("fault", "target displaced after perception" if moved else "injection missed")
-        console.result(
-            "fault", "target moved away from the planned position", False, "the target moved after the agent looked"
-        )
-        console.banner("The page changed after the agent planned. Watch it miss.", "#b91c1c")
+        injected = FAULTS[scene.fault](session, scene.fault_selector)
+        traj.fault_kind = scene.fault
+        traj.add("fault", f"{scene.fault} applied to the target" if injected else "injection missed")
+        console.result("fault", FAULT_BLURB[scene.fault], False, f"fault injected: {scene.fault}")
+        console.banner("The page changed after the agent planned. Watch what it does.", "#b91c1c")
         time.sleep(pace * 1.4)
         console.hide_banner()
+
+    page_before_action = app_html(session)
 
     console.step(
         "4/5",
@@ -467,37 +647,82 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     time.sleep(pace)
 
     if not ok:
-        console.banner("Failure detected by the agent itself. Recovering.", "#b45309")
+        console.banner("Failure detected by the agent itself. Diagnosing.", "#b45309")
         time.sleep(pace)
         console.hide_banner()
-        console.step(
-            "6/6",
-            "RECOVER",
-            "Looking again, re-planning, and retrying once.",
-            "Recovery does not repeat the failed click. It re-observes the page, so the "
-            "element is found wherever it moved to.",
-            recover,
-        )
-        time.sleep(pace)
-        retry = console.run_traced(recover, session, scene.target, line_delay=trace_delay)
-        if retry is not None:
-            point_at(session, console, retry, "#f59e0b")
-        traj.recovered = retry is not None
-        traj.add("recover", "retried from a fresh observation", traj.recovered)
-        console.result("recover", "re-observed and retried", traj.recovered, "retried after looking again")
-        time.sleep(pace)
 
-        ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
-        traj.add("verify", "confirmed after recovery" if ok else "still failing", ok)
-        console.result(
-            "verify",
-            "confirmed after recovery" if ok else "still failing",
-            ok,
-            "recovered successfully" if ok else "could not recover",
+        # 6a. Work out why, before deciding what to do. This is the step that
+        # separates diagnosis from a rehearsed answer.
+        console.step(
+            "6/7",
+            "DIAGNOSE",
+            "Asking why it failed, before deciding what to try.",
+            "Nothing tells this code which fault was injected. It re-observes, looks for "
+            "the element it acted on, and compares the page with how it looked before. "
+            "Those answers pick the recovery tier.",
+            diagnose_failure,
         )
-        console.banner("Recovered without human help." if ok else "Recovery failed.", "#15803d" if ok else "#b91c1c")
-        time.sleep(pace * 1.6)
-        console.hide_banner()
+        diagnosis = console.run_traced(
+            diagnose_failure, session, selection, scene.target, page_before_action, line_delay=trace_delay
+        )
+        traj.diagnosis = diagnosis.to_dict()
+        traj.add("diagnose", f"{diagnosis.cause} -> tier {diagnosis.tier} ({diagnosis.strategy})")
+
+        console.step(
+            "6/7",
+            f"DIAGNOSE - {diagnosis.cause}",
+            f"Concluded: {diagnosis.cause}. Chosen response: tier {diagnosis.tier}.",
+            "The evidence it used is listed here. A different fault produces different "
+            "evidence and a different tier, which is what makes this a decision rather "
+            "than a script.",
+            diagnosis.explain(),
+        )
+        console.result(
+            "diagnose",
+            f"tier {diagnosis.tier}: {diagnosis.strategy}",
+            True,
+            f"diagnosed: {diagnosis.cause}",
+        )
+        time.sleep(pace * 1.8)
+
+        # 6b. Carry out whatever the diagnosis chose.
+        console.step(
+            "7/7",
+            f"RECOVER - tier {diagnosis.tier}",
+            f"Applying: {diagnosis.strategy.replace('_', ' ')}.",
+            "Tier 1 looks again and repeats. Tier 2 acts on a different affordance. "
+            "Tier 4 deliberately does not act: it stops and hands over, because "
+            "repeating an action that provably does nothing would just waste the attempt.",
+            apply_recovery,
+        )
+        acted = console.run_traced(apply_recovery, session, diagnosis, scene.target, line_delay=trace_delay)
+        time.sleep(pace * 0.6)
+
+        if diagnosis.tier >= 4:
+            metrics = escalate(f"{diagnosis.cause}: {diagnosis.strategy}")
+            traj.escalated = True
+            traj.add("escalate", f"handed to a supervisor; correction rate {metrics['correction_rate']:.2f}")
+            console.result("escalate", "paused and handed over", True, "escalated to a human, as designed")
+            console.banner("Correctly refused to retry. Escalated to a human.", "#b45309")
+            time.sleep(pace * 1.8)
+            console.hide_banner()
+        else:
+            traj.add("recover", f"tier {diagnosis.tier} applied", acted)
+            ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
+            traj.recovered = ok
+            traj.add("verify", "confirmed after recovery" if ok else "still failing", ok)
+            console.result(
+                "verify",
+                "confirmed after recovery" if ok else "still failing",
+                ok,
+                "recovered on its own" if ok else "could not recover",
+            )
+            console.banner(
+                "Recovered without human help." if ok else "Recovery failed.",
+                "#15803d" if ok else "#b91c1c",
+            )
+            time.sleep(pace * 1.6)
+            console.hide_banner()
 
     session.evaluate(_CLEAR_POINT_JS)
     return traj
