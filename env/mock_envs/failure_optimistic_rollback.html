@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Open-web mock: optimistic UI backend mismatch</title>
+</head>
+<body data-case-id="openweb-optimistic-rollback"
+      data-oracle-state='{"ui_order_submitted":true,"backend_order_confirmed":false}'>
+  <h1>Checkout</h1>
+  <button id="place-order" type="button"
+          onclick="document.getElementById('ui-status').textContent='Order submitted'; document.getElementById('api-status').textContent='Backend confirmation failed'">
+    Place order
+  </button>
+  <p id="ui-status">Order not submitted.</p>
+  <p id="api-status" data-testid="backend-oracle">Backend pending.</p>
+</body>
+</html>

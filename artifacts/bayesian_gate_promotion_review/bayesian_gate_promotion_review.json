@@ -1,0 +1,57 @@
+{
+  "data_source": "bayesian_gate_promotion_review",
+  "decision": "promote_bayesian_gate_as_default_candidate",
+  "default_switch_recommended": true,
+  "default_switch_scope": "fusion gate only; fused-state selection remains support-based",
+  "evidence": {
+    "gate_enabled_trial_count": 120,
+    "gate_metrics": {
+      "balanced_accuracy": 1.0,
+      "false_halt_rate": 0.0,
+      "false_negative": 0,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.18413250024120012,
+      "miss_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative": 30,
+      "true_positive": 90
+    },
+    "rule_first_metrics": {
+      "balanced_accuracy": 0.8333333333333333,
+      "false_halt_rate": 0.0,
+      "false_negative": 30,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.18413250024120012,
+      "miss_rate": 0.3333333333333333,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "true_negative": 30,
+      "true_positive": 60
+    },
+    "shadow_stability_aggregate": {
+      "max_bayesian_false_halt_rate": 0.0,
+      "max_bayesian_miss_rate": 0.0,
+      "min_balanced_accuracy_delta": 0.166667,
+      "total_holdout_trials": 80
+    },
+    "shadow_stability_preconditions": {
+      "at_least_two_holdouts": true,
+      "false_halt_not_regressed": true,
+      "miss_rate_not_regressed": true,
+      "positive_delta_in_all_holdouts": true,
+      "production_gate_unchanged_during_shadow": true,
+      "profile_counts_complete": true
+    }
+  },
+  "mode": "evidence_based_default_switch_review",
+  "must_remain_configurable": true,
+  "required_followups_after_switch": [
+    "keep rule_first rollback/config option",
+    "run full live runtime recovery impact suite",
+    "monitor false halt and active perception trigger rate",
+    "do not claim broad open-web coverage from smart-room evidence"
+  ],
+  "source_gate_enabled_summary": "artifacts/live_ambiguous_fusion_bayesian_gate_full/live_ambiguous_fusion_summary.json",
+  "source_stability_report": "artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json"
+}

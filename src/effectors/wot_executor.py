@@ -26,6 +26,11 @@ _SKILL_TO_AFFORDANCE_ID = {
     "set_lighting": "wot_lights_A_setBrightness",
     "verify_readiness": "wot_readiness_check",
 }
+_SKILL_TO_AFFORDANCE_LABEL = {
+    "turn_on_projector": "setPower",
+    "set_temperature": "setTargetTemperature",
+    "set_lighting": "setBrightness",
+}
 _SKILL_TO_PAYLOAD_KEY = {
     "turn_on_projector": "power",
     "set_temperature": "targetTemperature",
@@ -177,6 +182,50 @@ class WotExecutor:
     def get_affordance(self, aff_id: str) -> Affordance | None:
         return self._affordances.get(aff_id)
 
+    # ── episode isolation support ─────────────────────────────────────────────
+    # Device state outlives a browser context: a thing left at 26 degrees stays
+    # there for the next episode. These accessors let an episode snapshot the
+    # properties the TDs expose and put them back afterwards.
+    def state_sources(self) -> list[StateAssertionSource]:
+        """Property endpoints the loaded TDs expose, in load order."""
+        return list(self._state_sources.values())
+
+    def read_state(self, source: StateAssertionSource) -> Any:
+        """Current value of one property."""
+        status, parsed = self._request(source.thing_id, source.method or "GET", source.href, None)
+        if status >= 400:
+            raise RuntimeError(f"WoT read {source.href} returned HTTP {status}")
+        return parsed
+
+    def write_state(self, source: StateAssertionSource, value: Any) -> None:
+        """Put one property back to a previous value.
+
+        Prefers the TD's own write form when the property has one; otherwise
+        falls back to the read href with PUT, which is the common WoT shape.
+        """
+        writer = self._affordances.get(f"wot_{source.thing_id}_{source.property}")
+        if writer is not None and writer.action == "write_property":
+            href = str(writer.locator.get("href", source.href))
+            method = str(writer.locator.get("method", "PUT")).upper()
+        else:
+            href, method = source.href, "PUT"
+        status, _parsed = self._request(source.thing_id, method, href, value)
+        if status >= 400:
+            raise RuntimeError(f"WoT {method} {href} returned HTTP {status}")
+
+    def _request(self, thing_id: str, method: str, href: str, body: Any) -> tuple[int, Any]:
+        scheme = self._security.get(thing_id)
+        headers, params = build_auth(scheme, self._credentials.get(thing_id))
+        headers = {**headers, "Content-Type": "application/json"}
+        return self._send(
+            method.upper(),
+            href,
+            json=body,
+            headers=headers,
+            params=params,
+            timeout_s=self._timeout_ms / 1000.0,
+        )
+
     async def probe_availability(self) -> bool:
         if not _HTTPX_AVAILABLE or not (self._affordances or self._state_sources):
             return False
@@ -197,13 +246,13 @@ class WotExecutor:
 
     async def _execute_skill(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         start = time.monotonic()
-        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id)
-        if affordance_id is None:
+        affordance = self._affordance_for_skill(skill_call.skill_id)
+        if affordance is None and skill_call.skill_id not in _SKILL_TO_AFFORDANCE_ID:
             return self._skill_failure(
                 skill_call, start, f"no WoT affordance mapping for skill '{skill_call.skill_id}'"
             )
-        affordance = self._affordances.get(affordance_id)
         if affordance is None:
+            affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_call.skill_id, "")
             return self._skill_failure(
                 skill_call, start, f"affordance '{affordance_id}' not loaded; call load_tds() first"
             )
@@ -213,9 +262,9 @@ class WotExecutor:
         payload_key = _SKILL_TO_PAYLOAD_KEY.get(skill_call.skill_id)
         payload: Any = {}
         if payload_key and payload_key in skill_call.params:
-            payload = {payload_key: skill_call.params[payload_key]}
+            payload = skill_call.params[payload_key]
         elif skill_call.skill_id == "turn_on_projector":
-            payload = {"power": "on"}
+            payload = "on"
 
         thing_id = str(affordance.locator.get("thing_id", "unknown"))
         href = str(affordance.locator.get("href", ""))
@@ -250,6 +299,22 @@ class WotExecutor:
             latency_ms=(time.monotonic() - start) * 1000.0,
             confidence=0.0,
             failure_reason=reason,
+        )
+
+    def _affordance_for_skill(self, skill_id: str) -> Affordance | None:
+        affordance_id = _SKILL_TO_AFFORDANCE_ID.get(skill_id)
+        if affordance_id and affordance_id in self._affordances:
+            return self._affordances[affordance_id]
+        label = _SKILL_TO_AFFORDANCE_LABEL.get(skill_id)
+        if label is None:
+            return None
+        return next(
+            (
+                affordance
+                for affordance in self._affordances.values()
+                if affordance.label == label and affordance.action == "invoke"
+            ),
+            None,
         )
 
     async def read_property(self, thing_id: str, property_name: str) -> Any:

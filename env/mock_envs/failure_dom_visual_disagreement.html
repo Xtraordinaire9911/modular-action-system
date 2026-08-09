@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Open-web mock: DOM visual disagreement</title>
+  <style>
+    [data-plan] { border: 1px solid #bbb; margin: .75rem 0; padding: 1rem; width: 18rem; }
+    .visual-highlight { outline: 4px solid #7c3aed; background: #f5f3ff; }
+  </style>
+</head>
+<body data-case-id="openweb-dom-visual-disagreement"
+      data-oracle-state='{"dom_selected_plan":"premium","visual_highlighted_plan":"basic"}'>
+  <h1>Choose plan</h1>
+  <section data-plan="basic" class="visual-highlight" aria-selected="false">
+    <h2>Basic</h2>
+    <button id="choose-basic">Choose Basic</button>
+  </section>
+  <section data-plan="premium" aria-selected="true">
+    <h2>Premium</h2>
+    <button id="choose-premium">Choose Premium</button>
+  </section>
+  <p id="status">DOM selected: premium. Visual highlight: basic.</p>
+</body>
+</html>

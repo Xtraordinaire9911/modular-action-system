@@ -1,0 +1,1186 @@
+{
+  "all_evidence_checks_passed": true,
+  "cases": [
+    {
+      "case": "normal_structured_goal",
+      "evidence_checks": {
+        "final_goal_verified": true,
+        "planned_multiple_live_actions": true,
+        "transition_chain_persisted": true
+      },
+      "evidence_passed": true,
+      "result": {
+        "active_perception_trace": [],
+        "attempts": 3,
+        "conflict_ids": [],
+        "episode_id": "episode-a1db07907fa5",
+        "execution_result": {
+          "attempt": 3,
+          "backend_used": "dom",
+          "confidence": 0.97,
+          "failure_reason": null,
+          "latency_ms": 37.737,
+          "metadata": {
+            "affordance_id": "dom_button_1",
+            "affordance_source": "DOM",
+            "live_execution": true
+          },
+          "observation_source": "dom",
+          "skill_id": "book_room",
+          "success": true,
+          "transition_id": "episode-a1db07907fa5:transition-0003"
+        },
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
+        "fusion_decision": {
+          "active_perception_required": false,
+          "allow_system1": true,
+          "conflicts": [],
+          "fused_states": [
+            {
+              "attribute": "url",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'http://127.0.0.1:13000/'": 0.8
+              },
+              "value": "http://127.0.0.1:13000/"
+            },
+            {
+              "attribute": "page_id",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'live_normal_goal_full'": 0.8
+              },
+              "value": "live_normal_goal_full"
+            },
+            {
+              "attribute": "affordance_count",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "5": 0.8
+              },
+              "value": 5
+            },
+            {
+              "attribute": "confirmed",
+              "confidence": 1.0,
+              "entity_id": "booking",
+              "selected_support": 0.76,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "True": 0.76
+              },
+              "value": true
+            },
+            {
+              "attribute": "room",
+              "confidence": 1.0,
+              "entity_id": "booking",
+              "selected_support": 0.76,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'C'": 0.76
+              },
+              "value": "C"
+            },
+            {
+              "attribute": "time",
+              "confidence": 1.0,
+              "entity_id": "booking",
+              "selected_support": 0.76,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'15:30'": 0.76
+              },
+              "value": "15:30"
+            },
+            {
+              "attribute": "target_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "20": 1.0
+              },
+              "value": 20
+            },
+            {
+              "attribute": "current_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "19": 1.0
+              },
+              "value": 19
+            },
+            {
+              "attribute": "brightness",
+              "confidence": 1.0,
+              "entity_id": "lights",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "power",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
+              "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "occupied",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "False": 1.0
+              },
+              "value": false
+            },
+            {
+              "attribute": "people_count",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "0": 1.0
+              },
+              "value": 0
+            }
+          ],
+          "reason": "no blocking sensory conflict"
+        },
+        "llm_failure_boundary": "",
+        "llm_failure_type": "",
+        "llm_judge_evidence": [],
+        "plan_validation_errors": [],
+        "primitive_plan": [
+          {
+            "action": "type",
+            "affordance_id": "dom_input_1",
+            "expected_effect": "room == 'C'",
+            "value": "C"
+          },
+          {
+            "action": "type",
+            "affordance_id": "dom_input_2",
+            "expected_effect": "time == '15:30'",
+            "value": "15:30"
+          },
+          {
+            "action": "click",
+            "affordance_id": "dom_button_1",
+            "expected_effect": "booking.confirmed == true",
+            "value": null
+          }
+        ],
+        "reason": "goal completed",
+        "recovery_attempted": false,
+        "recovery_succeeded": false,
+        "recovery_tier": null,
+        "recovery_trace": [],
+        "routing_reason": "observe-plan-act-reobserve loop",
+        "selected_backend": "dom",
+        "state": "completed",
+        "system1_cache_hit": false,
+        "system1_fast_path": false,
+        "system1_routing_latency_ms": 0.0,
+        "transition_ids": [
+          "episode-a1db07907fa5:transition-0001",
+          "episode-a1db07907fa5:transition-0002",
+          "episode-a1db07907fa5:transition-0003"
+        ]
+      }
+    },
+    {
+      "case": "wot_timeout_retry",
+      "evidence_checks": {
+        "recovery_reached_verified_goal": true,
+        "same_action_was_retried": true,
+        "transient_failure_triggered_recovery": true
+      },
+      "evidence_passed": true,
+      "result": {
+        "active_perception_trace": [],
+        "attempts": 2,
+        "conflict_ids": [],
+        "episode_id": "episode-c9aceedc9a91",
+        "execution_result": {
+          "attempt": 2,
+          "backend_used": "wot",
+          "confidence": 1.0,
+          "failure_reason": null,
+          "latency_ms": 5.34,
+          "metadata": {
+            "affordance_id": "wot_thermostat_setTargetTemperature",
+            "affordance_source": "WOT",
+            "live_execution": true
+          },
+          "observation_source": "wot",
+          "skill_id": "set_temperature_live",
+          "success": true,
+          "transition_id": "episode-c9aceedc9a91:transition-0002"
+        },
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
+        "fusion_decision": {
+          "active_perception_required": false,
+          "allow_system1": true,
+          "conflicts": [],
+          "fused_states": [
+            {
+              "attribute": "url",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'http://127.0.0.1:13000/'": 0.8
+              },
+              "value": "http://127.0.0.1:13000/"
+            },
+            {
+              "attribute": "page_id",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'live_timeout_retry_full'": 0.8
+              },
+              "value": "live_timeout_retry_full"
+            },
+            {
+              "attribute": "affordance_count",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "5": 0.8
+              },
+              "value": 5
+            },
+            {
+              "attribute": "target_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "22": 1.0
+              },
+              "value": 22
+            },
+            {
+              "attribute": "current_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "22": 1.0
+              },
+              "value": 22
+            },
+            {
+              "attribute": "brightness",
+              "confidence": 1.0,
+              "entity_id": "lights",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "power",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
+              "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "occupied",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "False": 1.0
+              },
+              "value": false
+            },
+            {
+              "attribute": "people_count",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "0": 1.0
+              },
+              "value": 0
+            }
+          ],
+          "reason": "no blocking sensory conflict"
+        },
+        "llm_failure_boundary": "",
+        "llm_failure_type": "",
+        "llm_judge_evidence": [],
+        "plan_validation_errors": [],
+        "primitive_plan": [
+          {
+            "action": "invoke",
+            "affordance_id": "wot_thermostat_setTargetTemperature",
+            "expected_effect": "target == 22",
+            "value": 22
+          }
+        ],
+        "reason": "goal completed",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 1,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "transient failure",
+            "recovery_of_transition_id": "episode-c9aceedc9a91:transition-0001",
+            "selected": true,
+            "selected_action": "retry",
+            "tier": 1
+          }
+        ],
+        "routing_reason": "observe-plan-act-reobserve loop",
+        "selected_backend": "wot",
+        "state": "completed",
+        "system1_cache_hit": false,
+        "system1_fast_path": false,
+        "system1_routing_latency_ms": 0.0,
+        "transition_ids": [
+          "episode-c9aceedc9a91:transition-0001",
+          "episode-c9aceedc9a91:transition-0002"
+        ]
+      }
+    },
+    {
+      "case": "postcondition_mismatch_rollback",
+      "evidence_checks": {
+        "checkpoint_restore_verified": true,
+        "false_http_success_detected": true,
+        "original_goal_not_falsely_claimed": true,
+        "rollback_was_executed": true
+      },
+      "evidence_passed": true,
+      "result": {
+        "active_perception_trace": [],
+        "attempts": 2,
+        "conflict_ids": [],
+        "episode_id": "episode-5deb7d2bb37f",
+        "execution_result": {
+          "attempt": 1,
+          "backend_used": "restore",
+          "confidence": 1.0,
+          "failure_reason": null,
+          "latency_ms": 4.276,
+          "metadata": {
+            "affordance_id": "wot_thermostat_setTargetTemperature",
+            "affordance_source": "WOT",
+            "checkpoint_restore": true,
+            "cleared_fault_for": "thermostat",
+            "live_execution": true
+          },
+          "observation_source": "wot",
+          "skill_id": "restore_temperature_live",
+          "success": true,
+          "transition_id": "episode-5deb7d2bb37f:transition-0002"
+        },
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "fusion_decision": {
+          "active_perception_required": false,
+          "allow_system1": true,
+          "conflicts": [],
+          "fused_states": [
+            {
+              "attribute": "url",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'http://127.0.0.1:13000/'": 0.8
+              },
+              "value": "http://127.0.0.1:13000/"
+            },
+            {
+              "attribute": "page_id",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'live_postcondition_rollback'": 0.8
+              },
+              "value": "live_postcondition_rollback"
+            },
+            {
+              "attribute": "affordance_count",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "5": 0.8
+              },
+              "value": 5
+            },
+            {
+              "attribute": "target_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "20": 1.0
+              },
+              "value": 20
+            },
+            {
+              "attribute": "current_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "20": 1.0
+              },
+              "value": 20
+            },
+            {
+              "attribute": "brightness",
+              "confidence": 1.0,
+              "entity_id": "lights",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "power",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
+              "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "occupied",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "False": 1.0
+              },
+              "value": false
+            },
+            {
+              "attribute": "people_count",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "0": 1.0
+              },
+              "value": 0
+            }
+          ],
+          "reason": "no blocking sensory conflict"
+        },
+        "llm_failure_boundary": "",
+        "llm_failure_type": "",
+        "llm_judge_evidence": [],
+        "plan_validation_errors": [],
+        "primitive_plan": [],
+        "reason": "rollback executed and verified",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 3,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "retry not applicable",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "rollback",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "reroute",
+            "reason": "no alternate backend available",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "rollback",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "rollback",
+            "reason": "rollback spec available",
+            "recovery_of_transition_id": "episode-5deb7d2bb37f:transition-0001",
+            "selected": true,
+            "selected_action": "rollback",
+            "tier": 3
+          }
+        ],
+        "routing_reason": "selected wot for set_temperature_live",
+        "selected_backend": "restore",
+        "state": "failed",
+        "system1_cache_hit": false,
+        "system1_fast_path": false,
+        "system1_routing_latency_ms": 0.0,
+        "transition_ids": [
+          "episode-5deb7d2bb37f:transition-0001",
+          "episode-5deb7d2bb37f:transition-0002"
+        ]
+      }
+    },
+    {
+      "case": "dom_wot_conflict_active_perception",
+      "evidence_checks": {
+        "active_perception_was_triggered": true,
+        "conflict_was_resolved": true,
+        "system1_continued_only_after_resolution": true
+      },
+      "evidence_passed": true,
+      "result": {
+        "active_perception_trace": [
+          {
+            "action": "active_perception_probe",
+            "attempt": 1,
+            "reason": "fresh observation removed blocking conflict",
+            "resolved": true
+          }
+        ],
+        "attempts": 3,
+        "conflict_ids": [],
+        "episode_id": "episode-5e07b5691906",
+        "execution_result": {
+          "attempt": 3,
+          "backend_used": "dom",
+          "confidence": 0.97,
+          "failure_reason": null,
+          "latency_ms": 31.113,
+          "metadata": {
+            "affordance_id": "dom_button_1",
+            "affordance_source": "DOM",
+            "live_execution": true
+          },
+          "observation_source": "dom",
+          "skill_id": "book_room",
+          "success": true,
+          "transition_id": "episode-5e07b5691906:transition-0003"
+        },
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
+        "fusion_decision": {
+          "active_perception_required": false,
+          "allow_system1": true,
+          "conflicts": [],
+          "fused_states": [
+            {
+              "attribute": "url",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'http://127.0.0.1:13000/?fault=stale_temperature'": 0.8
+              },
+              "value": "http://127.0.0.1:13000/?fault=stale_temperature"
+            },
+            {
+              "attribute": "page_id",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'live_conflict_resolution'": 0.8
+              },
+              "value": "live_conflict_resolution"
+            },
+            {
+              "attribute": "affordance_count",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "5": 0.8
+              },
+              "value": 5
+            },
+            {
+              "attribute": "confirmed",
+              "confidence": 1.0,
+              "entity_id": "booking",
+              "selected_support": 0.76,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "True": 0.76
+              },
+              "value": true
+            },
+            {
+              "attribute": "room",
+              "confidence": 1.0,
+              "entity_id": "booking",
+              "selected_support": 0.76,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'A'": 0.76
+              },
+              "value": "A"
+            },
+            {
+              "attribute": "time",
+              "confidence": 1.0,
+              "entity_id": "booking",
+              "selected_support": 0.76,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'16:00'": 0.76
+              },
+              "value": "16:00"
+            },
+            {
+              "attribute": "target_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.76,
+              "sources": [
+                "dom",
+                "wot"
+              ],
+              "support": {
+                "20": 1.76
+              },
+              "value": 20
+            },
+            {
+              "attribute": "current_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "19": 1.0
+              },
+              "value": 19
+            },
+            {
+              "attribute": "brightness",
+              "confidence": 1.0,
+              "entity_id": "lights",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "power",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
+              "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "occupied",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "False": 1.0
+              },
+              "value": false
+            },
+            {
+              "attribute": "people_count",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "0": 1.0
+              },
+              "value": 0
+            }
+          ],
+          "reason": "no blocking sensory conflict"
+        },
+        "llm_failure_boundary": "",
+        "llm_failure_type": "",
+        "llm_judge_evidence": [],
+        "plan_validation_errors": [],
+        "primitive_plan": [
+          {
+            "action": "type",
+            "affordance_id": "dom_input_1",
+            "expected_effect": "room == 'A'",
+            "value": "A"
+          },
+          {
+            "action": "type",
+            "affordance_id": "dom_input_2",
+            "expected_effect": "time == '16:00'",
+            "value": "16:00"
+          },
+          {
+            "action": "click",
+            "affordance_id": "dom_button_1",
+            "expected_effect": "booking.confirmed == true",
+            "value": null
+          }
+        ],
+        "reason": "goal completed",
+        "recovery_attempted": false,
+        "recovery_succeeded": false,
+        "recovery_tier": null,
+        "recovery_trace": [],
+        "routing_reason": "observe-plan-act-reobserve loop",
+        "selected_backend": "dom",
+        "state": "completed",
+        "system1_cache_hit": false,
+        "system1_fast_path": false,
+        "system1_routing_latency_ms": 0.0,
+        "transition_ids": [
+          "episode-5e07b5691906:transition-0001",
+          "episode-5e07b5691906:transition-0002",
+          "episode-5e07b5691906:transition-0003"
+        ]
+      }
+    },
+    {
+      "case": "system1_reflex_repeat",
+      "evidence_checks": {
+        "latency_report_links_both_episodes": true,
+        "repeat_cache_hit": true,
+        "repeat_still_verified": true,
+        "repeat_used_system1_fast_path": true,
+        "routing_latency_recorded": true,
+        "warmup_verified": true
+      },
+      "evidence_passed": true,
+      "result": {
+        "active_perception_trace": [],
+        "attempts": 1,
+        "conflict_ids": [],
+        "episode_id": "episode-725c06a69888",
+        "execution_result": {
+          "attempt": 1,
+          "backend_used": "wot",
+          "confidence": 1.0,
+          "failure_reason": null,
+          "latency_ms": 4.337,
+          "metadata": {
+            "affordance_id": "wot_thermostat_setTargetTemperature",
+            "affordance_source": "WOT",
+            "live_execution": true
+          },
+          "observation_source": "wot",
+          "skill_id": "set_temperature_reflex",
+          "success": true,
+          "transition_id": "episode-725c06a69888:transition-0001"
+        },
+        "failure_boundary": "",
+        "failure_type": "",
+        "final_outcome_verified": true,
+        "fusion_decision": {
+          "active_perception_required": false,
+          "allow_system1": true,
+          "conflicts": [],
+          "fused_states": [
+            {
+              "attribute": "url",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'http://127.0.0.1:13000/'": 0.8
+              },
+              "value": "http://127.0.0.1:13000/"
+            },
+            {
+              "attribute": "page_id",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "'live_system1_reflex'": 0.8
+              },
+              "value": "live_system1_reflex"
+            },
+            {
+              "attribute": "affordance_count",
+              "confidence": 1.0,
+              "entity_id": "page",
+              "selected_support": 0.8,
+              "sources": [
+                "dom"
+              ],
+              "support": {
+                "5": 0.8
+              },
+              "value": 5
+            },
+            {
+              "attribute": "target_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "21": 1.0
+              },
+              "value": 21
+            },
+            {
+              "attribute": "current_temperature",
+              "confidence": 1.0,
+              "entity_id": "thermostat",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "21": 1.0
+              },
+              "value": 21
+            },
+            {
+              "attribute": "brightness",
+              "confidence": 1.0,
+              "entity_id": "lights",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "power",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
+              "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "occupied",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "False": 1.0
+              },
+              "value": false
+            },
+            {
+              "attribute": "people_count",
+              "confidence": 1.0,
+              "entity_id": "occupancy",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "0": 1.0
+              },
+              "value": 0
+            }
+          ],
+          "reason": "no blocking sensory conflict"
+        },
+        "llm_failure_boundary": "",
+        "llm_failure_type": "",
+        "llm_judge_evidence": [],
+        "plan_validation_errors": [],
+        "primitive_plan": [],
+        "reason": "skill completed",
+        "recovery_attempted": false,
+        "recovery_succeeded": false,
+        "recovery_tier": null,
+        "recovery_trace": [],
+        "routing_reason": "system1 cached grounding wot_thermostat_setTargetTemperature",
+        "selected_backend": "wot",
+        "state": "completed",
+        "system1_cache_hit": true,
+        "system1_fast_path": true,
+        "system1_routing_latency_ms": 0.00710412859916687,
+        "transition_ids": [
+          "episode-725c06a69888:transition-0001"
+        ]
+      },
+      "system1_latency_report": {
+        "amortized_transition_latency_ms": 4.48,
+        "cache_hit_rate": 0.5,
+        "episode_ids": [
+          "episode-e690b487d55a",
+          "episode-725c06a69888"
+        ],
+        "repeat": {
+          "cache_hit": true,
+          "episode_id": "episode-725c06a69888",
+          "fast_path": true,
+          "routing_latency_ms": 0.007,
+          "total_episode_latency_ms": 4.337,
+          "transition_count": 1,
+          "transition_latency_ms": 4.337,
+          "verified": true
+        },
+        "total_transition_latency_ms": 8.961,
+        "warmup": {
+          "cache_hit": false,
+          "episode_id": "episode-e690b487d55a",
+          "fast_path": false,
+          "routing_latency_ms": 0.02,
+          "total_episode_latency_ms": 4.624,
+          "transition_count": 1,
+          "transition_latency_ms": 4.624,
+          "verified": true
+        }
+      },
+      "warmup_episode_id": "episode-e690b487d55a"
+    }
+  ],
+  "data_source": "live",
+  "environment": {
+    "control_url": "http://127.0.0.1:18081",
+    "dashboard_url": "http://127.0.0.1:13000",
+    "thing_directory_url": "http://127.0.0.1:18082/things",
+    "wot_public_base_url": "http://127.0.0.1:18080"
+  }
+}

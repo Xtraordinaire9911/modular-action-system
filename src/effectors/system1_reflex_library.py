@@ -66,6 +66,13 @@ class System1ReflexLibrary:
         best = max(candidates, key=lambda e: e.affordance.confidence)
         return best.affordance
 
+    def forget(self, skill_id: str, backend: str | None = None) -> None:
+        """Invalidate stale grounding after execution or verification failure."""
+
+        for key in list(self._cache):
+            if key[0] == skill_id and (backend is None or key[1].lower() == backend.lower()):
+                del self._cache[key]
+
     # ── System-1 / System-2 gate ─────────────────────────────────────────────
     def is_reflex(self, affordance: Affordance) -> bool:
         """A reflex is a deterministic backend grounded at high confidence."""

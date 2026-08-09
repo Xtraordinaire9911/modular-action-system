@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "data_source": "live",
+    "episode_ids": [
+      "episode-5deb7d2bb37f",
+      "episode-5e07b5691906",
+      "episode-725c06a69888",
+      "episode-a1db07907fa5",
+      "episode-c9aceedc9a91",
+      "episode-e690b487d55a"
+    ],
+    "measurement_counts": {
+      "adaptation_cases": 6,
+      "conflict_cases": 0,
+      "oracle_cases": 0,
+      "primitive_actions": 12,
+      "recovery_cases": 2,
+      "routing_cases": 0,
+      "tasks": 6,
+      "verification_cases": 12,
+      "visual_grounding_cases": 0
+    }
+  },
+  "values": {
+    "ATL": 35.2216666667,
+    "BRA": 0.0,
+    "BackwardRetention": 0.0,
+    "BoundaryClassificationRate": 0.16666666666666666,
+    "CER": 0.0,
+    "CRR": 0.0,
+    "CSR": 0.8333333333333334,
+    "CascadeTraceCoverage": 0.3333333333333333,
+    "ControlRecoveryRatio": 1.0,
+    "CounterfactualOutcomeDeviation": 0.0,
+    "ExpectedEffectSuccessRate": 0.875,
+    "FPR": 0.0,
+    "FalseSuccessDetectionRate": 0.0,
+    "FalseSuccessRate": 0.09090909090909091,
+    "HeldOutGain": 0.0,
+    "ImprovementEfficiency": 0.0,
+    "MTL": 70.4433333333,
+    "MeanTimeToRecovery": 0.0,
+    "OSR": 0.0,
+    "PCR": 1.0,
+    "PCS": 0.8333333333333334,
+    "PathAttributionCoverage": 0.16666666666666666,
+    "PolicyProposalRate": 0.0,
+    "RE": 0.25,
+    "RTA": 1.0,
+    "RecoverySuccessRate": 1.0,
+    "RecoveryTriggerRate": 0.3333333333333333,
+    "RerouteTransitionRate": 0.0,
+    "RetryTransitionRate": 0.16666666666666666,
+    "RollbackTransitionRate": 0.16666666666666666,
+    "SafetyNonRegression": 1.0,
+    "TSR": 0.8333333333333334,
+    "UAR": 0.0,
+    "VGA": 0.0,
+    "WDSR": 0.0
+  }
+}

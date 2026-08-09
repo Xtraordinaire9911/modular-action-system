@@ -20,9 +20,34 @@ htmlcov/
 results/
 logs/
 screenshots/
+# Per-run demo output (screenshots, traces): regenerated on every run.
+eval_outputs/
+# Recorded demo videos. Every run writes one and they are a few MB each, so the
+# per-run recordings stay out of history - but exactly one canonical recording is
+# tracked, so a reader of the repository can watch the loop without installing a
+# browser or waiting two and a half minutes. Replace that file rather than adding
+# dated copies beside it, or the thing this rule prevents comes back.
+demo_video/*
+!demo_video/agent_loop_demo.mp4
+*.webm
 .external_envs/
 
 # Local paper / presentation artifacts
 local_docs/
 docs/
 *.png
+
+# Local report and presentation drafts. Kept out of the repository: the course
+# requires these to be written by hand, so a draft in history invites the wrong
+# thing being submitted.
+reports/
+
+# Runtime ledger of intent-planner calls, appended to on every run.
+artifacts/intent_planner/
+
+# B-113 Development artifacts - added to ignore list
+B113_Development_Summary_CN_EN.md
+B113_Presentation_Script_10min.md
+B113_Presentation_Slides.html
+B113_Presentation_Slides.pdf
+presentation_build/

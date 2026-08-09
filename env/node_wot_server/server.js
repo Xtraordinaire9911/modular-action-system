@@ -10,10 +10,18 @@
  *   property:  http://localhost:8080/<thing>/properties/<name>
  *   action:    http://localhost:8080/<thing>/actions/<name>
  *
+ * A runtime Thing Directory on :8082 (W3C WoT Discovery style) lets any agent
+ * discover the available TDs without hard-coding device names — this is what
+ * makes dynamic Thing Description passing between agents possible:
+ *   GET /things        -> array of every live Thing Description
+ *   GET /things/links  -> lightweight registration entries {id, td}
+ *
  * A separate control plane on :8081 drives WoT-side failure injection used by
  * the Chaos-Monkey evaluation (advisor §11.1):
  *   POST /failure  {"type":"timeout|offline|postcondition_mismatch|malformed",
- *                   "thing":"thermostat", "delay_ms":1000}
+ *                   "thing":"thermostat", "delay_ms":1000,
+ *                   "read_delay_ms":450, "drop_probability":0.7,
+ *                   "source_reliability":{"wot":0.35}}
  *   POST /reset
  */
 "use strict";
@@ -33,13 +41,22 @@ const INITIAL = {
 let state = structuredClone(INITIAL);
 
 // ── fault injection registry ─────────────────────────────────────────────────
-// faults[thing] = { type, delay_ms }
+// faults[thing] = { type, delay_ms, read_delay_ms, drop_probability, source_reliability }
 const faults = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function guard(thing) {
+function shouldDropRead(f) {
+  if (!f || !f.drop_probability) return false;
+  const probability = Math.max(0, Math.min(1, Number(f.drop_probability) || 0));
+  if (probability <= 0) return false;
+  return Math.random() < probability;
+}
+
+async function guard(thing, { read = false } = {}) {
   const f = faults[thing];
   if (!f) return;
+  if (read && f.read_delay_ms) await sleep(f.read_delay_ms);
+  if (read && shouldDropRead(f)) throw new Error("backend dropped read (injected)");
   if (f.type === "timeout") await sleep(f.delay_ms || 1500);
   if (f.type === "offline") throw new Error("backend offline (injected)");
 }
@@ -56,7 +73,7 @@ async function exposeThing(servient, def) {
   const thing = await wot.produce(def.td);
   for (const [name, key] of Object.entries(def.readables)) {
     thing.setPropertyReadHandler(name, async () => {
-      await guard(def.thing);
+      await guard(def.thing, { read: true });
       if (faults[def.thing] && faults[def.thing].type === "malformed") return "NOT_A_NUMBER";
       return state[def.thing][key];
     });
@@ -159,6 +176,50 @@ function buildDefs() {
   ];
 }
 
+// ── runtime Thing Directory (WoT Discovery) ──────────────────────────────────
+function httpGetJson(url) {
+  return new Promise((resolve, reject) => {
+    http
+      .get(url, (res) => {
+        let data = "";
+        res.on("data", (c) => (data += c));
+        res.on("end", () => {
+          if (res.statusCode && res.statusCode >= 400) return reject(new Error(`HTTP ${res.statusCode} from ${url}`));
+          try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+        });
+      })
+      .on("error", reject);
+  });
+}
+
+function startThingDirectory(thingNames, port = 8082, wotPort = 8080) {
+  const srv = http.createServer(async (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    if (req.method === "GET" && (req.url === "/things" || req.url === "/.well-known/wot")) {
+      // Aggregate the *live* TDs the servient is exposing, so discovery always
+      // reflects the real forms/security rather than a hand-maintained copy.
+      const tds = [];
+      for (const name of thingNames) {
+        try {
+          tds.push(await httpGetJson(`http://localhost:${wotPort}/${name}`));
+        } catch (e) {
+          // A Thing that is momentarily unavailable is simply omitted.
+        }
+      }
+      return res.end(JSON.stringify(tds));
+    }
+    if (req.method === "GET" && req.url === "/things/links") {
+      return res.end(
+        JSON.stringify(thingNames.map((n) => ({ id: n, td: `http://localhost:${wotPort}/${n}` }))),
+      );
+    }
+    res.statusCode = 404;
+    res.end(JSON.stringify({ error: "not found" }));
+  });
+  srv.listen(port, () => console.log(`thing directory on :${port} (GET /things)`));
+}
+
 // ── control plane (failure injection) ────────────────────────────────────────
 function startControlPlane(port = 8081) {
   const srv = http.createServer((req, res) => {
@@ -174,7 +235,15 @@ function startControlPlane(port = 8081) {
       if (req.method === "POST" && req.url === "/failure") {
         const f = JSON.parse(body || "{}");
         if (f.clear) delete faults[f.thing];
-        else faults[f.thing] = { type: f.type, delay_ms: f.delay_ms };
+        else {
+          faults[f.thing] = {
+            type: f.type,
+            delay_ms: f.delay_ms,
+            read_delay_ms: f.read_delay_ms,
+            drop_probability: f.drop_probability,
+            source_reliability: f.source_reliability,
+          };
+        }
         return res.end(JSON.stringify({ status: "ok", faults }));
       }
       if (req.method === "GET" && req.url === "/state") {
@@ -190,11 +259,13 @@ function startControlPlane(port = 8081) {
 async function main() {
   const servient = new Servient();
   servient.addServer(new HttpServer({ port: 8080 }));
-  for (const def of buildDefs()) {
+  const defs = buildDefs();
+  for (const def of defs) {
     await exposeThing(servient, def);
   }
   startControlPlane(8081);
-  console.log("smart-room WoT servient ready on :8080 (TDs at /<thing>)");
+  startThingDirectory(defs.map((d) => d.thing), 8082, 8080);
+  console.log("smart-room WoT servient ready on :8080 (TDs at /<thing>, directory at :8082/things)");
 }
 
 main().catch((e) => {

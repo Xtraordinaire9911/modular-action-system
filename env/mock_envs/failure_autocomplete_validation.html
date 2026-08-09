@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Open-web mock: autocomplete async validation</title>
+</head>
+<body data-case-id="openweb-autocomplete-validation"
+      data-oracle-state='{"requested_city":"New York","submitted_city":"New York, NY"}'>
+  <h1>Shipping address</h1>
+  <label>City <input id="city" data-testid="city-input" placeholder="City" /></label>
+  <button id="submit-city" type="button"
+          onclick="document.getElementById('city').value='New York, NY'; document.getElementById('status').textContent='Submitted city: New York, NY'">
+    Continue
+  </button>
+  <p id="status">Waiting for city.</p>
+</body>
+</html>

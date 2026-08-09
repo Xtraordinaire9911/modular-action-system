@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Mapping, Protocol, Sequence
+
+from src.runtime.episode import TransitionLedger
 
 
 @dataclass
@@ -14,13 +16,16 @@ class TaskOutcome:
     recovery_triggered: bool = False
     unsafe_executed: bool = False
     unresolved_conflict: bool = False
+    constraints_satisfied: bool | None = None
+    chaos_exposed: bool = False
+    attempts: int = 1
 
 
 @dataclass
 class RecoveryCase:
     task_id: str
     failure_type: str
-    expected_tier: int
+    expected_tier: int | None
     triggered_tier: int | None
     recovery_success: bool
     final_success: bool
@@ -40,6 +45,7 @@ class VerificationCase:
     required: bool
     checked: bool
     passed: bool
+    executor_success: bool = False
 
 
 @dataclass
@@ -58,21 +64,54 @@ class VisualGroundingCase:
 
 
 @dataclass
+class OracleCase:
+    task_id: str
+    skill_id: str
+    claimed_success: bool
+    oracle_success: bool
+    false_positive: bool = False
+    false_negative: bool = False
+
+
+@dataclass
 class PrimitiveAction:
     task_id: str
     action: str
     latency_ms: float
+    recovery_action: str = ""
+
+
+@dataclass
+class AdaptationCase:
+    task_id: str
+    failure_classified: bool
+    full_cascade_trace: bool
+    recoverable: bool
+    recovered: bool
+    policy_proposal_created: bool
+    time_to_recovery_ms: float = 0.0
+    false_success_case: bool = False
+    false_success_detected: bool = False
+    normal_outcome_score: float = 0.0
+    failure_outcome_score: float = 0.0
+    before_heldout_success_rate: float = 0.0
+    after_heldout_success_rate: float = 0.0
+    before_normal_success_rate: float = 0.0
+    after_normal_success_rate: float = 0.0
+    safety_regression: bool = False
+    path_attributed: bool = False
 
 
 @dataclass
 class MetricReport:
     values: dict[str, float] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def add(self, name: str, numerator: float, denominator: float) -> None:
         self.values[name] = safe_divide(numerator, denominator)
 
     def add_mean(self, name: str, values: list[float]) -> None:
-        self.values[name] = sum(values) / len(values) if values else 0.0
+        self.values[name] = round(sum(values) / len(values), 10) if values else 0.0
 
 
 @dataclass
@@ -83,16 +122,123 @@ class EvaluationDataset:
     verification_cases: list[VerificationCase] = field(default_factory=list)
     conflict_cases: list[ConflictCase] = field(default_factory=list)
     visual_grounding_cases: list[VisualGroundingCase] = field(default_factory=list)
+    oracle_cases: list[OracleCase] = field(default_factory=list)
     primitive_actions: list[PrimitiveAction] = field(default_factory=list)
+    adaptation_cases: list[AdaptationCase] = field(default_factory=list)
 
 
 def safe_divide(numerator: float, denominator: float) -> float:
     return numerator / denominator if denominator else 0.0
 
 
-def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
+class RuntimeResultLike(Protocol):
+    episode_id: str
+    attempts: int
+    recovery_tier: int | None
+    recovery_attempted: bool
+    recovery_succeeded: bool
+    final_outcome_verified: bool
+    failure_type: str
+    recovery_trace: list[dict[str, object]]
+
+
+def dataset_from_runtime_results(
+    results: Sequence[RuntimeResultLike],
+    transition_ledger: TransitionLedger,
+    *,
+    expected_recovery_tiers: Mapping[str, int] | None = None,
+) -> EvaluationDataset:
+    """Derive evaluation rows from executed episodes.
+
+    Expected tiers are evaluation-oracle labels keyed by episode ID (preferred)
+    or task ID. They must not be inferred from the runtime-selected tier.
+    """
+
+    dataset = EvaluationDataset()
+    for result in results:
+        records = transition_ledger.for_episode(result.episode_id)
+        latency_ms = sum(record.latency_ms for record in records)
+        task_id = records[0].task_id if records else result.episode_id
+        for record in records:
+            dataset.primitive_actions.append(
+                PrimitiveAction(
+                    task_id=record.task_id,
+                    action=str(record.params.get("primitive_action") or record.skill_id),
+                    latency_ms=record.latency_ms,
+                    recovery_action=record.recovery_action,
+                )
+            )
+            expected_effect = str(record.params.get("expected_effect") or "").strip()
+            if expected_effect or record.postcondition_passed is not None:
+                dataset.verification_cases.append(
+                    VerificationCase(
+                        task_id=record.task_id,
+                        skill_id=record.skill_id,
+                        required=bool(expected_effect),
+                        checked=record.postcondition_passed is not None,
+                        passed=record.postcondition_passed is True,
+                        executor_success=record.execution_success,
+                    )
+                )
+        final_success = bool(result.final_outcome_verified)
+        dataset.tasks.append(
+            TaskOutcome(
+                task_id=task_id,
+                final_success=final_success,
+                latency_ms=latency_ms,
+                recovery_triggered=result.recovery_attempted,
+                attempts=result.attempts,
+            )
+        )
+        if result.recovery_attempted:
+            # A verified rollback is a successful recovery even though the
+            # original task goal remains incomplete. TSR records goal success;
+            # RecoverySuccessRate records restoration of a verified safe state.
+            verified_recovery = bool(result.recovery_succeeded)
+            expected_tier = None
+            if expected_recovery_tiers is not None:
+                expected_tier = expected_recovery_tiers.get(
+                    result.episode_id,
+                    expected_recovery_tiers.get(task_id),
+                )
+            dataset.recovery_cases.append(
+                RecoveryCase(
+                    task_id=task_id,
+                    failure_type=result.failure_type or "execution_failure",
+                    expected_tier=expected_tier,
+                    triggered_tier=result.recovery_tier,
+                    recovery_success=verified_recovery,
+                    final_success=final_success,
+                )
+            )
+        dataset.adaptation_cases.append(
+            AdaptationCase(
+                task_id=task_id,
+                failure_classified=bool(result.failure_type),
+                full_cascade_trace=bool(result.recovery_trace),
+                recoverable=result.recovery_attempted,
+                recovered=bool(result.recovery_succeeded),
+                policy_proposal_created=False,
+                path_attributed=bool(result.failure_type and records),
+            )
+        )
+    return dataset
+
+
+def aggregate_metrics(
+    dataset: EvaluationDataset,
+    *,
+    data_source: str = "unspecified",
+    episode_ids: list[str] | None = None,
+) -> MetricReport:
     """Compute the project metrics from structured evaluation rows."""
-    report = MetricReport()
+    report = MetricReport(
+        metadata={
+            "data_source": data_source,
+            "episode_ids": sorted(set(episode_ids or [])),
+            "measurement_counts": _measurement_counts(dataset),
+        }
+    )
 
     report.add(
         "TSR",
@@ -100,7 +246,7 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         len(dataset.tasks),
     )
     report.add(
-        "RUR",
+        "RecoveryTriggerRate",
         sum(1 for task in dataset.tasks if task.recovery_triggered),
         len(dataset.tasks),
     )
@@ -109,11 +255,13 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         sum(1 for case in dataset.recovery_cases if case.recovery_success),
         len(dataset.recovery_cases),
     )
-    report.add(
-        "RTA",
-        sum(1 for case in dataset.recovery_cases if case.triggered_tier == case.expected_tier),
-        len(dataset.recovery_cases),
-    )
+    tier_oracle_cases = [case for case in dataset.recovery_cases if case.expected_tier is not None]
+    if tier_oracle_cases:
+        report.add(
+            "RTA",
+            sum(1 for case in tier_oracle_cases if case.triggered_tier == case.expected_tier),
+            len(tier_oracle_cases),
+        )
     report.add(
         "BRA",
         sum(1 for case in dataset.routing_cases if case.selected_backend == case.expected_backend),
@@ -137,6 +285,36 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         sum(1 for case in dataset.verification_cases if case.checked),
     )
     report.add(
+        "ExpectedEffectSuccessRate",
+        sum(1 for case in dataset.verification_cases if case.required and case.checked and case.passed),
+        sum(1 for case in dataset.verification_cases if case.required and case.checked),
+    )
+    report.add(
+        "RetryTransitionRate",
+        sum(1 for action in dataset.primitive_actions if action.recovery_action == "retry"),
+        len(dataset.primitive_actions),
+    )
+    report.add(
+        "RerouteTransitionRate",
+        sum(1 for action in dataset.primitive_actions if action.recovery_action == "reroute"),
+        len(dataset.primitive_actions),
+    )
+    report.add(
+        "RollbackTransitionRate",
+        sum(1 for action in dataset.primitive_actions if action.recovery_action == "rollback"),
+        len(dataset.primitive_actions),
+    )
+    false_successes = [
+        case
+        for case in dataset.verification_cases
+        if case.executor_success and case.checked and not case.passed
+    ]
+    report.add(
+        "FalseSuccessRate",
+        len(false_successes),
+        sum(1 for case in dataset.verification_cases if case.executor_success),
+    )
+    report.add(
         "WDSR",
         sum(1 for case in dataset.conflict_cases if case.detected and case.resolved),
         len(dataset.conflict_cases),
@@ -151,15 +329,133 @@ def aggregate_metrics(dataset: EvaluationDataset) -> MetricReport:
         sum(1 for case in dataset.visual_grounding_cases if case.selected_mark_id == case.expected_mark_id),
         len(dataset.visual_grounding_cases),
     )
+    report.add(
+        "CSR",
+        sum(
+            1
+            for task in dataset.tasks
+            if (task.constraints_satisfied if task.constraints_satisfied is not None else task.final_success)
+        ),
+        len(dataset.tasks),
+    )
+    report.add(
+        "OSR",
+        sum(1 for case in dataset.oracle_cases if case.oracle_success),
+        len(dataset.oracle_cases),
+    )
+    report.add(
+        "FPR",
+        sum(
+            1
+            for case in dataset.oracle_cases
+            if case.false_positive or (case.claimed_success and not case.oracle_success)
+        ),
+        sum(1 for case in dataset.oracle_cases if case.claimed_success),
+    )
+    report.add(
+        "CER",
+        sum(1 for task in dataset.tasks if task.chaos_exposed and task.final_success),
+        sum(1 for task in dataset.tasks if task.chaos_exposed),
+    )
+    report.add_mean(
+        "RE",
+        [_recovery_efficiency(task) for task in dataset.tasks if task.recovery_triggered or task.chaos_exposed],
+    )
+    report.add(
+        "CascadeTraceCoverage",
+        sum(1 for case in dataset.adaptation_cases if case.full_cascade_trace),
+        len(dataset.adaptation_cases),
+    )
+    report.add(
+        "BoundaryClassificationRate",
+        sum(1 for case in dataset.adaptation_cases if case.failure_classified),
+        len(dataset.adaptation_cases),
+    )
+    report.add(
+        "PolicyProposalRate",
+        sum(1 for case in dataset.adaptation_cases if case.policy_proposal_created),
+        len(dataset.adaptation_cases),
+    )
+    report.add(
+        "ControlRecoveryRatio",
+        sum(1 for case in dataset.adaptation_cases if case.recoverable and case.recovered),
+        sum(1 for case in dataset.adaptation_cases if case.recoverable),
+    )
+    report.add_mean(
+        "MeanTimeToRecovery",
+        [case.time_to_recovery_ms for case in dataset.adaptation_cases if case.time_to_recovery_ms > 0],
+    )
+    report.add(
+        "FalseSuccessDetectionRate",
+        sum(1 for case in dataset.adaptation_cases if case.false_success_case and case.false_success_detected),
+        sum(1 for case in dataset.adaptation_cases if case.false_success_case),
+    )
+    report.add_mean(
+        "CounterfactualOutcomeDeviation",
+        [
+            abs(case.normal_outcome_score - case.failure_outcome_score)
+            for case in dataset.adaptation_cases
+            if case.normal_outcome_score or case.failure_outcome_score
+        ],
+    )
+    report.add_mean(
+        "HeldOutGain",
+        [
+            case.after_heldout_success_rate - case.before_heldout_success_rate
+            for case in dataset.adaptation_cases
+            if case.before_heldout_success_rate or case.after_heldout_success_rate
+        ],
+    )
+    report.add_mean(
+        "BackwardRetention",
+        [
+            safe_divide(case.after_normal_success_rate, case.before_normal_success_rate)
+            for case in dataset.adaptation_cases
+            if case.before_normal_success_rate
+        ],
+    )
+    report.add(
+        "SafetyNonRegression",
+        sum(1 for case in dataset.adaptation_cases if not case.safety_regression),
+        len(dataset.adaptation_cases),
+    )
+    proposal_count = sum(1 for case in dataset.adaptation_cases if case.policy_proposal_created)
+    report.values["ImprovementEfficiency"] = safe_divide(report.values["HeldOutGain"], proposal_count)
+    report.add(
+        "PathAttributionCoverage",
+        sum(1 for case in dataset.adaptation_cases if case.path_attributed),
+        len(dataset.adaptation_cases),
+    )
 
     return report
+
+
+def _measurement_counts(dataset: EvaluationDataset) -> dict[str, int]:
+    return {
+        "tasks": len(dataset.tasks),
+        "recovery_cases": len(dataset.recovery_cases),
+        "routing_cases": len(dataset.routing_cases),
+        "verification_cases": len(dataset.verification_cases),
+        "conflict_cases": len(dataset.conflict_cases),
+        "visual_grounding_cases": len(dataset.visual_grounding_cases),
+        "oracle_cases": len(dataset.oracle_cases),
+        "primitive_actions": len(dataset.primitive_actions),
+        "adaptation_cases": len(dataset.adaptation_cases),
+    }
+
+
+def _recovery_efficiency(task: TaskOutcome) -> float:
+    if not task.final_success:
+        return 0.0
+    attempts = max(1, int(task.attempts or 1))
+    return 1.0 / attempts
 
 
 def metric_definitions() -> dict[str, str]:
     """Short definitions used by reports and notebooks."""
     return {
         "TSR": "Task Success Rate = successful tasks / total tasks",
-        "RUR": "Recovery Utilization Rate = tasks with recovery triggered / total tasks",
+        "RecoveryTriggerRate": "Tasks with at least one executed recovery attempt / total tasks",
         "RecoverySuccessRate": "Recovered tasks / recovery-triggered cases",
         "RTA": "Recovery Tier Accuracy = cases with expected tier selected / failure cases",
         "BRA": "Backend Routing Accuracy = correct backend selections / routing decisions",
@@ -168,9 +464,33 @@ def metric_definitions() -> dict[str, str]:
         "UAR": "Unsafe Action Rate = unsafe executed actions / attempted task actions",
         "PCR": "Postcondition Check Rate = checked required postconditions / required postconditions",
         "PCS": "Postcondition Success Rate = passed postcondition checks / checked postconditions",
+        "ExpectedEffectSuccessRate": "Passed primitive expected-effect checks / checked required expected effects",
+        "RetryTransitionRate": "Transitions labeled as retry recovery / primitive transitions",
+        "RerouteTransitionRate": "Transitions labeled as reroute recovery / primitive transitions",
+        "RollbackTransitionRate": "Transitions labeled as rollback recovery / primitive transitions",
+        "FalseSuccessRate": "Executor-success transitions rejected by expected-effect verification / executor-success checks",
         "WDSR": "World-state Disagreement Success Rate = resolved injected conflicts / injected conflicts",
         "CRR": "Conflict Resolution Rate = resolved conflicts / detected conflicts",
         "VGA": "Visual Grounding Accuracy = correct visual mark selections / visual grounding attempts",
+        "CSR": "Constraint Satisfaction Rate = tasks satisfying final constraints / total tasks",
+        "OSR": "Oracle Success Rate = independently verified successes / oracle checks",
+        "FPR": "False Positive Rate = claimed successes rejected by oracle / claimed successes",
+        "CER": "Chaos Exposure Recovery Rate = chaos-exposed tasks that still succeed / chaos-exposed tasks",
+        "RE": "Recovery Efficiency = mean successful recovery score, where fewer attempts score higher",
+        "CascadeTraceCoverage": "Failure cases with full tier-by-tier recovery trace / total adaptation cases",
+        "BoundaryClassificationRate": "Classified failures / total adaptation cases",
+        "PolicyProposalRate": "Policy proposals generated / total adaptation cases",
+        "ControlRecoveryRatio": "Recovered failures / recoverable adaptation cases",
+        "MeanTimeToRecovery": "Mean time from failure detection to recovered/escalated state in milliseconds",
+        "FalseSuccessDetectionRate": (
+            "Cases where reported success was contradicted by postcondition/state checks / false-success cases"
+        ),
+        "CounterfactualOutcomeDeviation": "Mean distance between normal-run and failure-run final outcome scores",
+        "HeldOutGain": "Mean held-out success-rate improvement after proposal",
+        "BackwardRetention": "Mean normal-suite retention after proposal / before proposal",
+        "SafetyNonRegression": "Adaptation cases without safety regression / total adaptation cases",
+        "ImprovementEfficiency": "HeldOutGain / number of generated policy proposals",
+        "PathAttributionCoverage": "Adaptation cases with subsystem credit/path attribution / total adaptation cases",
     }
 
 

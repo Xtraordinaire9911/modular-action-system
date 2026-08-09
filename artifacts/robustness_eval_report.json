@@ -1,0 +1,297 @@
+{
+  "level": 3,
+  "metrics": {
+    "ATL": 0.0,
+    "BRA": 0.0,
+    "CER": 1.0,
+    "CRR": 0.0,
+    "CSR": 1.0,
+    "FPR": 0.16666666666666666,
+    "MTL": 0.0,
+    "OSR": 0.8571428571428571,
+    "PCR": 0.0,
+    "PCS": 0.0,
+    "RE": 0.14285714285714285,
+    "RTA": 0.0,
+    "RUR": 1.0,
+    "RecoverySuccessRate": 0.0,
+    "TSR": 1.0,
+    "UAR": 0.0,
+    "VGA": 0.0,
+    "WDSR": 0.0
+  },
+  "seeds": [
+    101
+  ],
+  "split": "dev",
+  "tasks": [
+    {
+      "base_task_id": "prepare_room_A_1400",
+      "chaos_events": [
+        {
+          "event_id": "chaos_101_1",
+          "failure_type": "wot_postcondition_mismatch",
+          "metadata": {},
+          "severity": 2,
+          "skill_id": "set_temperature",
+          "target": "wot",
+          "timing": "after_success"
+        },
+        {
+          "event_id": "chaos_101_2",
+          "failure_type": "dom_selector_mutation",
+          "metadata": {},
+          "severity": 1,
+          "skill_id": "confirm_booking",
+          "target": "dom",
+          "timing": "before_skill"
+        }
+      ],
+      "chaos_exposed": true,
+      "constraints_satisfied": true,
+      "expected_final_state": {
+        "booked": true,
+        "light_brightness": 40,
+        "projector": "on",
+        "readiness": true,
+        "target_temperature": 22
+      },
+      "final_state": {
+        "booked": true,
+        "light_brightness": 40,
+        "projector": "on",
+        "readiness": true,
+        "target_temperature": 22
+      },
+      "level": 3,
+      "recovery_triggered": true,
+      "seed": 101,
+      "steps": [
+        {
+          "attempts": 2,
+          "execution_result": {
+            "backend_used": "visual",
+            "confidence": 1.0,
+            "failure_reason": null,
+            "latency_ms": 10.0,
+            "raw_observation_delta": {
+              "booking_confirmed": true,
+              "booking_status": "confirmed"
+            },
+            "skill_id": "confirm_booking",
+            "success": true
+          },
+          "oracle": {
+            "claimed_success": true,
+            "false_negative": false,
+            "false_positive": false,
+            "mismatch_reason": "",
+            "oracle_success": true,
+            "skill_id": "confirm_booking",
+            "task_id": "prepare_room_A_1400__seed_101"
+          },
+          "oracle_attempts": [
+            {
+              "claimed_success": false,
+              "false_negative": true,
+              "false_positive": false,
+              "mismatch_reason": "",
+              "oracle_success": true,
+              "skill_id": "confirm_booking",
+              "task_id": "prepare_room_A_1400__seed_101"
+            },
+            {
+              "claimed_success": true,
+              "false_negative": false,
+              "false_positive": false,
+              "mismatch_reason": "",
+              "oracle_success": true,
+              "skill_id": "confirm_booking",
+              "task_id": "prepare_room_A_1400__seed_101"
+            }
+          ],
+          "reason": "skill completed",
+          "recovery_tier": 2,
+          "selected_backend": "visual",
+          "skill_id": "confirm_booking",
+          "success": true
+        },
+        {
+          "attempts": 1,
+          "execution_result": {
+            "backend_used": "wot",
+            "confidence": 1.0,
+            "failure_reason": null,
+            "latency_ms": 10.0,
+            "raw_observation_delta": {
+              "projector_A": {
+                "power": "on"
+              }
+            },
+            "skill_id": "turn_on_projector",
+            "success": true
+          },
+          "oracle": {
+            "claimed_success": true,
+            "false_negative": false,
+            "false_positive": false,
+            "mismatch_reason": "",
+            "oracle_success": true,
+            "skill_id": "turn_on_projector",
+            "task_id": "prepare_room_A_1400__seed_101"
+          },
+          "oracle_attempts": [
+            {
+              "claimed_success": true,
+              "false_negative": false,
+              "false_positive": false,
+              "mismatch_reason": "",
+              "oracle_success": true,
+              "skill_id": "turn_on_projector",
+              "task_id": "prepare_room_A_1400__seed_101"
+            }
+          ],
+          "reason": "skill completed",
+          "recovery_tier": 0,
+          "selected_backend": "wot",
+          "skill_id": "turn_on_projector",
+          "success": true
+        },
+        {
+          "attempts": 2,
+          "execution_result": {
+            "backend_used": "wot",
+            "confidence": 1.0,
+            "failure_reason": null,
+            "latency_ms": 10.0,
+            "raw_observation_delta": {
+              "thermostat_A": {
+                "targetTemperature": 22
+              }
+            },
+            "skill_id": "set_temperature",
+            "success": true
+          },
+          "oracle": {
+            "claimed_success": true,
+            "false_negative": false,
+            "false_positive": false,
+            "mismatch_reason": "",
+            "oracle_success": true,
+            "skill_id": "set_temperature",
+            "task_id": "prepare_room_A_1400__seed_101"
+          },
+          "oracle_attempts": [
+            {
+              "claimed_success": true,
+              "false_negative": false,
+              "false_positive": true,
+              "mismatch_reason": "target_temperature is 21, expected 22",
+              "oracle_success": false,
+              "skill_id": "set_temperature",
+              "task_id": "prepare_room_A_1400__seed_101"
+            },
+            {
+              "claimed_success": true,
+              "false_negative": false,
+              "false_positive": false,
+              "mismatch_reason": "",
+              "oracle_success": true,
+              "skill_id": "set_temperature",
+              "task_id": "prepare_room_A_1400__seed_101"
+            }
+          ],
+          "reason": "skill completed",
+          "recovery_tier": 3,
+          "selected_backend": "wot",
+          "skill_id": "set_temperature",
+          "success": true
+        },
+        {
+          "attempts": 1,
+          "execution_result": {
+            "backend_used": "wot",
+            "confidence": 1.0,
+            "failure_reason": null,
+            "latency_ms": 10.0,
+            "raw_observation_delta": {
+              "lights": {
+                "brightness": 40
+              }
+            },
+            "skill_id": "set_lighting",
+            "success": true
+          },
+          "oracle": {
+            "claimed_success": true,
+            "false_negative": false,
+            "false_positive": false,
+            "mismatch_reason": "",
+            "oracle_success": true,
+            "skill_id": "set_lighting",
+            "task_id": "prepare_room_A_1400__seed_101"
+          },
+          "oracle_attempts": [
+            {
+              "claimed_success": true,
+              "false_negative": false,
+              "false_positive": false,
+              "mismatch_reason": "",
+              "oracle_success": true,
+              "skill_id": "set_lighting",
+              "task_id": "prepare_room_A_1400__seed_101"
+            }
+          ],
+          "reason": "skill completed",
+          "recovery_tier": 0,
+          "selected_backend": "wot",
+          "skill_id": "set_lighting",
+          "success": true
+        },
+        {
+          "attempts": 1,
+          "execution_result": {
+            "backend_used": "wot",
+            "confidence": 1.0,
+            "failure_reason": null,
+            "latency_ms": 10.0,
+            "raw_observation_delta": {
+              "readiness": {
+                "ready": true
+              }
+            },
+            "skill_id": "verify_readiness",
+            "success": true
+          },
+          "oracle": {
+            "claimed_success": true,
+            "false_negative": false,
+            "false_positive": false,
+            "mismatch_reason": "",
+            "oracle_success": true,
+            "skill_id": "verify_readiness",
+            "task_id": "prepare_room_A_1400__seed_101"
+          },
+          "oracle_attempts": [
+            {
+              "claimed_success": true,
+              "false_negative": false,
+              "false_positive": false,
+              "mismatch_reason": "",
+              "oracle_success": true,
+              "skill_id": "verify_readiness",
+              "task_id": "prepare_room_A_1400__seed_101"
+            }
+          ],
+          "reason": "skill completed",
+          "recovery_tier": 0,
+          "selected_backend": "wot",
+          "skill_id": "verify_readiness",
+          "success": true
+        }
+      ],
+      "task_id": "prepare_room_A_1400__seed_101",
+      "task_success": true
+    }
+  ]
+}

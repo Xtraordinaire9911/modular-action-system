@@ -14,6 +14,18 @@ function useFaults() {
   return faults;
 }
 
+function useFaultConfig() {
+  return useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    const staleOffset = Number(params.get("stale_offset") ?? "-4");
+    const reliability = params.get("source_reliability");
+    return {
+      stale_offset: Number.isFinite(staleOffset) ? staleOffset : -4,
+      source_reliability: reliability || "",
+    };
+  }, []);
+}
+
 async function readProp(thing, prop) {
   try {
     const r = await fetch(`${WOT}/${thing}/properties/${prop}`, { headers: { "X-API-Key": "demo" } });
@@ -103,6 +115,7 @@ function DemoPointer({ pointer }) {
 
 export default function App() {
   const faults = useFaults();
+  const faultConfig = useFaultConfig();
   const [booked, setBooked] = useState(false);
   const [room, setRoom] = useState("A");
   const [time, setTime] = useState("14:00");
@@ -159,7 +172,9 @@ export default function App() {
     };
   }, []);
 
-  const shownTarget = faults.has("stale_temperature") ? device.targetTemperature - 4 : device.targetTemperature;
+  const shownTarget = faults.has("stale_temperature")
+    ? device.targetTemperature + faultConfig.stale_offset
+    : device.targetTemperature;
   const bookTestId = faults.has("selector_mutation") ? "book-room-button-v2" : "book-room-button";
   const shiftStyle = faults.has("layout_shift") ? { marginLeft: 50 } : {};
   const bookDisabled = faults.has("disabled_button");
@@ -210,6 +225,11 @@ export default function App() {
         <div>
           Target: <Value testid="target-temp" value={shownTarget} suffix=" C" />
         </div>
+        {faultConfig.source_reliability ? (
+          <div data-testid="source-reliability" style={{ fontSize: 12, color: "#666" }}>
+            source_reliability={faultConfig.source_reliability}
+          </div>
+        ) : null}
         <div>
           Current: <Value testid="current-temp" value={device.currentTemperature} suffix=" C" />
         </div>

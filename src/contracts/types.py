@@ -54,6 +54,7 @@ class SkillTuple:
     timeout_ms: int
     safety_level: Literal["low", "medium", "high"]
     irreversible: bool
+    idempotent: bool = False
 
 
 @dataclass
@@ -153,9 +154,26 @@ class ExecutionResult:
     confidence: float
     failure_reason: str | None = None
     raw_observation_delta: dict[str, Any] = field(default_factory=dict)
+    observation_source: Literal["dom", "visual", "wot", "system"] | None = None
+    attempt: int = 1
+    transition_id: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 # ── Observation (owned by runtime control) ──────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class ObservedAssertion:
+    """One source-attributed fact supplied by a perception adapter."""
+
+    entity_id: str
+    attribute: str
+    value: Any
+    source: Literal["dom", "visual", "wot", "system"]
+    confidence: float | None = None
+    timestamp_ms: int = 0
+    provenance: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -166,6 +184,7 @@ class Observation:
     wot_tds: list[dict[str, Any]] | None = None
     device_states: dict[str, Any] = field(default_factory=dict)
     execution_history: list[dict[str, Any]] = field(default_factory=list)
+    assertions: list[ObservedAssertion] = field(default_factory=list)
 
 
 # ── Trace logging ─────────────────────────────────────────────────────────────

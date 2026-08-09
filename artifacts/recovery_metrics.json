@@ -1,13 +1,43 @@
 {
+  "metadata": {
+    "data_source": "unspecified",
+    "episode_ids": [],
+    "measurement_counts": {
+      "adaptation_cases": 0,
+      "conflict_cases": 0,
+      "oracle_cases": 0,
+      "primitive_actions": 3,
+      "recovery_cases": 1,
+      "routing_cases": 0,
+      "tasks": 2,
+      "verification_cases": 0,
+      "visual_grounding_cases": 0
+    }
+  },
   "rows": [
     {
       "definition": "Average primitive action latency in milliseconds",
       "metric": "ATL",
-      "value": 43.333333333333336
+      "value": 43.3333333333
     },
     {
       "definition": "Backend Routing Accuracy = correct backend selections / routing decisions",
       "metric": "BRA",
+      "value": 0.0
+    },
+    {
+      "definition": "Mean normal-suite retention after proposal / before proposal",
+      "metric": "BackwardRetention",
+      "value": 0.0
+    },
+    {
+      "definition": "Classified failures / total adaptation cases",
+      "metric": "BoundaryClassificationRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Chaos Exposure Recovery Rate = chaos-exposed tasks that still succeed / chaos-exposed tasks",
+      "metric": "CER",
       "value": 0.0
     },
     {
@@ -16,9 +46,69 @@
       "value": 0.0
     },
     {
+      "definition": "Constraint Satisfaction Rate = tasks satisfying final constraints / total tasks",
+      "metric": "CSR",
+      "value": 1.0
+    },
+    {
+      "definition": "Failure cases with full tier-by-tier recovery trace / total adaptation cases",
+      "metric": "CascadeTraceCoverage",
+      "value": 0.0
+    },
+    {
+      "definition": "Recovered failures / recoverable adaptation cases",
+      "metric": "ControlRecoveryRatio",
+      "value": 0.0
+    },
+    {
+      "definition": "Mean distance between normal-run and failure-run final outcome scores",
+      "metric": "CounterfactualOutcomeDeviation",
+      "value": 0.0
+    },
+    {
+      "definition": "Passed primitive expected-effect checks / checked required expected effects",
+      "metric": "ExpectedEffectSuccessRate",
+      "value": 0.0
+    },
+    {
+      "definition": "False Positive Rate = claimed successes rejected by oracle / claimed successes",
+      "metric": "FPR",
+      "value": 0.0
+    },
+    {
+      "definition": "Cases where reported success was contradicted by postcondition/state checks / false-success cases",
+      "metric": "FalseSuccessDetectionRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Executor-success transitions rejected by expected-effect verification / executor-success checks",
+      "metric": "FalseSuccessRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Mean held-out success-rate improvement after proposal",
+      "metric": "HeldOutGain",
+      "value": 0.0
+    },
+    {
+      "definition": "HeldOutGain / number of generated policy proposals",
+      "metric": "ImprovementEfficiency",
+      "value": 0.0
+    },
+    {
       "definition": "Mean Task Latency in milliseconds",
       "metric": "MTL",
       "value": 140.0
+    },
+    {
+      "definition": "Mean time from failure detection to recovered/escalated state in milliseconds",
+      "metric": "MeanTimeToRecovery",
+      "value": 0.0
+    },
+    {
+      "definition": "Oracle Success Rate = independently verified successes / oracle checks",
+      "metric": "OSR",
+      "value": 0.0
     },
     {
       "definition": "Postcondition Check Rate = checked required postconditions / required postconditions",
@@ -31,19 +121,54 @@
       "value": 0.0
     },
     {
+      "definition": "Adaptation cases with subsystem credit/path attribution / total adaptation cases",
+      "metric": "PathAttributionCoverage",
+      "value": 0.0
+    },
+    {
+      "definition": "Policy proposals generated / total adaptation cases",
+      "metric": "PolicyProposalRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Recovery Efficiency = mean successful recovery score, where fewer attempts score higher",
+      "metric": "RE",
+      "value": 1.0
+    },
+    {
       "definition": "Recovery Tier Accuracy = cases with expected tier selected / failure cases",
       "metric": "RTA",
       "value": 1.0
     },
     {
-      "definition": "Recovery Utilization Rate = tasks with recovery triggered / total tasks",
-      "metric": "RUR",
-      "value": 0.5
-    },
-    {
       "definition": "Recovered tasks / recovery-triggered cases",
       "metric": "RecoverySuccessRate",
       "value": 1.0
+    },
+    {
+      "definition": "Tasks with at least one executed recovery attempt / total tasks",
+      "metric": "RecoveryTriggerRate",
+      "value": 0.5
+    },
+    {
+      "definition": "Transitions labeled as reroute recovery / primitive transitions",
+      "metric": "RerouteTransitionRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Transitions labeled as retry recovery / primitive transitions",
+      "metric": "RetryTransitionRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Transitions labeled as rollback recovery / primitive transitions",
+      "metric": "RollbackTransitionRate",
+      "value": 0.0
+    },
+    {
+      "definition": "Adaptation cases without safety regression / total adaptation cases",
+      "metric": "SafetyNonRegression",
+      "value": 0.0
     },
     {
       "definition": "Task Success Rate = successful tasks / total tasks",
@@ -67,15 +192,37 @@
     }
   ],
   "values": {
-    "ATL": 43.333333333333336,
+    "ATL": 43.3333333333,
     "BRA": 0.0,
+    "BackwardRetention": 0.0,
+    "BoundaryClassificationRate": 0.0,
+    "CER": 0.0,
     "CRR": 0.0,
+    "CSR": 1.0,
+    "CascadeTraceCoverage": 0.0,
+    "ControlRecoveryRatio": 0.0,
+    "CounterfactualOutcomeDeviation": 0.0,
+    "ExpectedEffectSuccessRate": 0.0,
+    "FPR": 0.0,
+    "FalseSuccessDetectionRate": 0.0,
+    "FalseSuccessRate": 0.0,
+    "HeldOutGain": 0.0,
+    "ImprovementEfficiency": 0.0,
     "MTL": 140.0,
+    "MeanTimeToRecovery": 0.0,
+    "OSR": 0.0,
     "PCR": 0.0,
     "PCS": 0.0,
+    "PathAttributionCoverage": 0.0,
+    "PolicyProposalRate": 0.0,
+    "RE": 1.0,
     "RTA": 1.0,
-    "RUR": 0.5,
     "RecoverySuccessRate": 1.0,
+    "RecoveryTriggerRate": 0.5,
+    "RerouteTransitionRate": 0.0,
+    "RetryTransitionRate": 0.0,
+    "RollbackTransitionRate": 0.0,
+    "SafetyNonRegression": 0.0,
     "TSR": 1.0,
     "UAR": 0.0,
     "VGA": 0.0,

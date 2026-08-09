@@ -1,16 +1,13 @@
-"""Member A cognitive map construction.
+"""Planner-facing Semantic Scene Graph view over the runtime CognitiveMap.
 
-This module builds a Semantic Scene Graph from the typed Observation contract
-and optional Affordance objects produced perception modules. It is
-deliberately deterministic: System 1 should only act on structured state, not
-on raw HTML or raw TD blobs.
+The runtime map is the only mutable state store.  This module derives a
+read-only graph for planner prompts and compatibility APIs; it never maintains
+an independent copy of episode state.
 """
 
 from __future__ import annotations
 
-import re
-from dataclasses import asdict
-from typing import Any, Iterable
+from typing import Iterable
 
 from src.contracts.types import (
     Affordance,
@@ -19,10 +16,29 @@ from src.contracts.types import (
     SemanticSceneGraphEdge,
     SemanticSceneGraphNode,
 )
+from src.runtime.cognitive_map import (
+    CognitiveMap,
+    RuntimeAffordance,
+    StateAssertion,
+    canonical_state_name,
+)
 
 
-class CognitiveMapBuilder:
-    """Fuse DOM, visual, and WoT observations into a Semantic Scene Graph."""
+class SemanticSceneGraphViewBuilder:
+    """Build planner views from the canonical runtime CognitiveMap."""
+
+    def build_runtime_map(
+        self,
+        observation: Observation,
+        affordances: Iterable[Affordance] = (),
+        task_id: str = "task",
+    ) -> CognitiveMap:
+        cognitive_map = CognitiveMap(task_id=task_id)
+        materialized = list(affordances)
+        if materialized:
+            cognitive_map.update_affordances(materialized)
+        cognitive_map.update_from_observation(observation)
+        return cognitive_map
 
     def build(
         self,
@@ -30,36 +46,14 @@ class CognitiveMapBuilder:
         affordances: Iterable[Affordance] = (),
         task_id: str = "task",
     ) -> SemanticSceneGraph:
-        graph = SemanticSceneGraph(task_id=task_id)
+        return self.build_from_map(self.build_runtime_map(observation, affordances, task_id))
+
+    def build_from_map(self, cognitive_map: CognitiveMap) -> SemanticSceneGraph:
+        graph = SemanticSceneGraph(task_id=cognitive_map.task_id)
         node_index: dict[str, SemanticSceneGraphNode] = {}
 
-        self._add_observed_state(graph, node_index, "WOT", observation.device_states)
-
-        tree = observation.accessibility_tree or {}
-        self._add_observed_state(graph, node_index, "DOM", tree.get("page_state", {}))
-        self._add_observed_state(graph, node_index, "VISUAL", tree.get("visual_state", {}))
-
-        for affordance in affordances:
-            self._add_affordance(graph, node_index, affordance)
-
-        return graph
-
-    def snapshot(self, graph: SemanticSceneGraph) -> dict[str, Any]:
-        return {
-            "task_id": graph.task_id,
-            "nodes": [asdict(node) for node in graph.nodes],
-            "edges": [asdict(edge) for edge in graph.edges],
-        }
-
-    def _add_observed_state(
-        self,
-        graph: SemanticSceneGraph,
-        node_index: dict[str, SemanticSceneGraphNode],
-        source: str,
-        state: dict[str, Any],
-    ) -> None:
-        for path, value in _walk_leaves(state):
-            state_key = _canonical_state_key(path)
+        for assertion in _latest_source_assertions(cognitive_map.state_assertions):
+            state_key = _state_key(assertion.entity_id, assertion.attribute)
             node_id = f"state:{state_key}"
             node = node_index.get(node_id)
             if node is None:
@@ -70,33 +64,49 @@ class CognitiveMapBuilder:
                     sources=[],
                     attributes={"state_key": state_key},
                     source_values={},
-                    confidence=1.0,
+                    confidence=assertion.confidence,
                 )
                 node_index[node_id] = node
                 graph.nodes.append(node)
+            source = assertion.source.upper()
             if source not in node.sources:
                 node.sources.append(source)
-            node.source_values[source] = value
+            node.source_values[source] = assertion.value
+            node.confidence = min(node.confidence, assertion.confidence)
+
+        for affordance in cognitive_map.runtime_affordances.values():
+            self._add_affordance(graph, node_index, affordance)
+        return graph
+
+    def snapshot(self, graph: SemanticSceneGraph) -> dict[str, object]:
+        from dataclasses import asdict
+
+        return {
+            "task_id": graph.task_id,
+            "nodes": [asdict(node) for node in graph.nodes],
+            "edges": [asdict(edge) for edge in graph.edges],
+        }
 
     def _add_affordance(
         self,
         graph: SemanticSceneGraph,
         node_index: dict[str, SemanticSceneGraphNode],
-        affordance: Affordance,
+        affordance: RuntimeAffordance,
     ) -> None:
         node_id = f"affordance:{affordance.id}"
         if node_id in node_index:
             return
+        label = str(affordance.grounding.get("label") or affordance.action_name)
         node = SemanticSceneGraphNode(
             node_id=node_id,
-            kind=affordance.type,
-            label=affordance.label,
-            sources=[affordance.source],
+            kind=affordance.action_type,
+            label=label,
+            sources=[affordance.source.upper()],
             attributes={
-                "action": affordance.action,
-                "locator": affordance.locator,
-                "state": affordance.state,
-                "safety_level": affordance.safety_level,
+                "action": affordance.action_name,
+                "grounding": dict(affordance.grounding),
+                "entity_id": affordance.entity_id,
+                "safety_level": affordance.grounding.get("safety_level", "low"),
             },
             source_values={"confidence": affordance.confidence},
             confidence=affordance.confidence,
@@ -104,47 +114,43 @@ class CognitiveMapBuilder:
         node_index[node_id] = node
         graph.nodes.append(node)
 
-        target_key = _infer_state_target(affordance)
-        if target_key:
-            graph.edges.append(
-                SemanticSceneGraphEdge(
-                    source_id=node_id,
-                    relation="grounds",
-                    target_id=f"state:{target_key}",
-                    confidence=affordance.confidence,
+        for target in _declared_state_targets(affordance):
+            target_id = f"state:{target}"
+            if target_id in node_index:
+                graph.edges.append(
+                    SemanticSceneGraphEdge(
+                        source_id=node_id,
+                        relation="grounds",
+                        target_id=target_id,
+                        confidence=affordance.confidence,
+                    )
                 )
-            )
 
 
-def _walk_leaves(data: dict[str, Any], prefix: str = "") -> Iterable[tuple[str, Any]]:
-    for key, value in data.items():
-        path = f"{prefix}.{key}" if prefix else str(key)
-        if isinstance(value, dict):
-            yield from _walk_leaves(value, path)
-        else:
-            yield path, value
+# Backward-compatible import name.  This is a view builder, not another map.
+CognitiveMapBuilder = SemanticSceneGraphViewBuilder
 
 
-def _canonical_state_key(path: str) -> str:
-    parts = [_camel_to_snake(part).replace("-", "_").lower() for part in path.split(".")]
-    return ".".join(parts)
+def _state_key(entity_id: str, attribute: str) -> str:
+    return f"{canonical_state_name(entity_id)}.{canonical_state_name(attribute)}"
 
 
-def _camel_to_snake(value: str) -> str:
-    value = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", value)
-    value = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value)
-    return value
+def _latest_source_assertions(assertions: list[StateAssertion]) -> list[StateAssertion]:
+    latest: dict[tuple[str, str, str], StateAssertion] = {}
+    for assertion in assertions:
+        key = (assertion.entity_id, canonical_state_name(assertion.attribute), assertion.source)
+        current = latest.get(key)
+        if current is None or assertion.timestamp_ms >= current.timestamp_ms:
+            latest[key] = assertion
+    return list(latest.values())
 
 
-def _infer_state_target(affordance: Affordance) -> str | None:
-    label = _canonical_state_key(affordance.label)
-    thing_id = str(affordance.locator.get("thing_id", "")).lower()
-    if "temperature" in label or "thermostat" in thing_id:
-        return "thermostat.target_temperature"
-    if "brightness" in label or "light" in thing_id:
-        return "lighting.brightness"
-    if "power" in label or "projector" in thing_id:
-        return "projector.power"
-    if "booking" in label or "book" in label:
-        return "booking.status"
-    return None
+def _declared_state_targets(affordance: RuntimeAffordance) -> list[str]:
+    values: list[str] = []
+    for key in ("observes", "effects", "achieves"):
+        value = affordance.grounding.get(key)
+        if isinstance(value, str):
+            values.append(value)
+        elif isinstance(value, list):
+            values.extend(item for item in value if isinstance(item, str))
+    return [".".join(canonical_state_name(part) for part in target.split(".")) for target in values]

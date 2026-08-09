@@ -17,6 +17,12 @@ from src.perception.page_affordance_model import PageAffordanceModel
 _INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea", "label", "form", "option"])
 _STRIP_TAGS = frozenset(["script", "style", "meta", "link", "noscript", "head", "svg"])
 _VOID_STRIP_TAGS = frozenset(["meta", "link"])
+# Demo overlays (cursor, highlight ring, task badge) tag *live* page elements with
+# __cua_* ids/classes while a run is being shown. Those are our own artifacts, so
+# perception must ignore them: otherwise the transducer emits fabricated locators
+# such as "#__cua_target" (confidence 1.0) that only exist mid-demo and change on
+# every step, which is exactly the overlay-contamination / unstable-locator issue.
+_OVERLAY_ATTR_PREFIX = "__cua_"
 _ARIA_ACTION_MAP = {
     "button": "click",
     "link": "click",
@@ -49,6 +55,22 @@ _AFFORDANCE_TYPE = {"click": "button", "type": "input", "select": "input"}
 _SELECTOR_CONFIDENCE = {"id": 1.0, "testid": 0.97, "name": 0.85, "class": 0.7, "positional": 0.55}
 
 
+def _strip_overlay_attrs(attr: dict[str, str]) -> dict[str, str]:
+    """Drop demo-overlay ids/classes so derived locators stay page-stable.
+
+    The element itself is kept (it is a real page element that merely carries our
+    marker); only the injected id/class are removed, so selector derivation falls
+    through to the next genuine strategy instead of locking onto our own marker.
+    """
+    if attr.get("id", "").startswith(_OVERLAY_ATTR_PREFIX):
+        attr = {k: v for k, v in attr.items() if k != "id"}
+    classes = attr.get("class", "")
+    if _OVERLAY_ATTR_PREFIX in classes:
+        kept = " ".join(c for c in classes.split() if not c.startswith(_OVERLAY_ATTR_PREFIX))
+        attr = {**attr, "class": kept} if kept else {k: v for k, v in attr.items() if k != "class"}
+    return attr
+
+
 class _InteractiveParser(HTMLParser):
     """Single-pass collector for interactable DOM nodes."""
 
@@ -75,7 +97,7 @@ class _InteractiveParser(HTMLParser):
                 self._depth = max(0, self._depth - 1)
             return
 
-        attr = {k: (v or "") for k, v in attrs}
+        attr = _strip_overlay_attrs({k: (v or "") for k, v in attrs})
         role = attr.get("role", "")
         if "hidden" in attr or attr.get("aria-hidden") == "true":
             return
@@ -121,6 +143,31 @@ def _selector_for(node: dict[str, Any]) -> tuple[str, float]:
     if attr.get("class"):
         return f"{tag}.{attr['class'].split()[0]}", _SELECTOR_CONFIDENCE["class"]
     return f"{tag}:nth-of-type({node['nth']})", _SELECTOR_CONFIDENCE["positional"]
+
+
+# Attributes that tell otherwise-identical controls apart, most stable first.
+# data-* hooks come before these because they exist to identify an element.
+_DISAMBIGUATING_ATTRS = ("aria-label", "title", "value", "placeholder", "type", "href", "alt")
+
+
+def _disambiguate(node: dict[str, Any], base: str, twins: list[dict[str, Any]]) -> str:
+    """Narrow a selector that matches several elements down to one.
+
+    A class name is shared by design, so "button.add-cart-btn" names every
+    product on the page at once. Anything that then queries it - a probe asking
+    whether the target is disabled, say - silently measures the first match
+    instead of the intended element, and reports a healthy control while the
+    real one is dead. The attributes tried here are the ones that actually
+    distinguish the elements, and only a value unique among the twins is used.
+    """
+    attr = node["attr"]
+    keys = [k for k in attr if k.startswith("data-") and k != "data-bbox"]
+    keys += [k for k in _DISAMBIGUATING_ATTRS if attr.get(k)]
+    for key in keys:
+        value = attr.get(key, "").strip()
+        if value and sum(1 for twin in twins if twin["attr"].get(key, "").strip() == value) == 1:
+            return f"{base}[{key}='{_escape_attr(value)}']"
+    return base
 
 
 def _label_for(node: dict[str, Any]) -> str:
@@ -172,11 +219,24 @@ class DomTransducer:
         parser.feed(html or "")
         parser.close()
 
+        # A selector shared by four buttons is not a locator. Group the derived
+        # selectors first, refine the collisions, and drop the confidence of any
+        # that stays ambiguous so the rest of the system can tell.
+        derived = [_selector_for(node) for node in parser.nodes]
+        by_selector: dict[str, list[dict[str, Any]]] = {}
+        for node, (selector, _) in zip(parser.nodes, derived):
+            by_selector.setdefault(selector, []).append(node)
+
         affordances: list[Affordance] = []
-        for node in parser.nodes:
+        for node, (selector, confidence) in zip(parser.nodes, derived):
             attr = node["attr"]
             action = _action_for(node)
-            selector, confidence = _selector_for(node)
+            twins = by_selector[selector]
+            if len(twins) > 1:
+                refined = _disambiguate(node, selector, twins)
+                if refined == selector:
+                    confidence = _SELECTOR_CONFIDENCE["positional"]  # still ambiguous, and says so
+                selector = refined
             disabled = "disabled" in attr or attr.get("aria-disabled") == "true"
             locator: dict[str, Any] = {"selector": selector, "strategy": "css"}
             bbox = _bbox_from_attrs(attr)

@@ -1,0 +1,2339 @@
+{
+  "bayesian": {
+    "feature_likelihoods": [
+      "conflict_score",
+      "source_reliability.dom",
+      "source_reliability.wot",
+      "staleness_ms",
+      "missing_source_probability"
+    ],
+    "metrics": {
+      "balanced_accuracy": 1.0,
+      "false_halt_rate": 0.0,
+      "false_negative": 0,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.30624833333333334,
+      "miss_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative": 30,
+      "true_positive": 90
+    },
+    "posterior_threshold": 0.5,
+    "trials": [
+      {
+        "conflict_score": 0.7422,
+        "detection_latency_ms": 0.2625,
+        "episode_id": "noisy_weak_stale_signal_rep_000_seed_3000",
+        "expected_blocking": true,
+        "missing_source_probability": 0.217,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.83238,
+        "repetition": 0,
+        "scenario": "weak_stale_signal",
+        "seed": 3000,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.528,
+          "wot": 0.865
+        },
+        "staleness_ms": 1142.527
+      },
+      {
+        "conflict_score": 0.6866,
+        "detection_latency_ms": 0.2888,
+        "episode_id": "noisy_weak_stale_signal_rep_001_seed_3001",
+        "expected_blocking": true,
+        "missing_source_probability": 0.218,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.82807,
+        "repetition": 1,
+        "scenario": "weak_stale_signal",
+        "seed": 3001,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.535,
+          "wot": 0.824
+        },
+        "staleness_ms": 1165.276
+      },
+      {
+        "conflict_score": 0.6714,
+        "detection_latency_ms": 0.3267,
+        "episode_id": "noisy_weak_stale_signal_rep_002_seed_3002",
+        "expected_blocking": true,
+        "missing_source_probability": 0.208,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.828188,
+        "repetition": 2,
+        "scenario": "weak_stale_signal",
+        "seed": 3002,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.54,
+          "wot": 0.806
+        },
+        "staleness_ms": 1181.764
+      },
+      {
+        "conflict_score": 0.7289,
+        "detection_latency_ms": 0.3458,
+        "episode_id": "noisy_weak_stale_signal_rep_003_seed_3003",
+        "expected_blocking": true,
+        "missing_source_probability": 0.241,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.85889,
+        "repetition": 3,
+        "scenario": "weak_stale_signal",
+        "seed": 3003,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.567,
+          "wot": 0.857
+        },
+        "staleness_ms": 1262.484
+      },
+      {
+        "conflict_score": 0.7191,
+        "detection_latency_ms": 0.2413,
+        "episode_id": "noisy_weak_stale_signal_rep_004_seed_3004",
+        "expected_blocking": true,
+        "missing_source_probability": 0.222,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.827525,
+        "repetition": 4,
+        "scenario": "weak_stale_signal",
+        "seed": 3004,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.508,
+          "wot": 0.894
+        },
+        "staleness_ms": 1225.92
+      },
+      {
+        "conflict_score": 0.7566,
+        "detection_latency_ms": 0.3627,
+        "episode_id": "noisy_weak_stale_signal_rep_005_seed_3005",
+        "expected_blocking": true,
+        "missing_source_probability": 0.223,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.853937,
+        "repetition": 5,
+        "scenario": "weak_stale_signal",
+        "seed": 3005,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.533,
+          "wot": 0.822
+        },
+        "staleness_ms": 1152.78
+      },
+      {
+        "conflict_score": 0.7534,
+        "detection_latency_ms": 0.3411,
+        "episode_id": "noisy_weak_stale_signal_rep_006_seed_3006",
+        "expected_blocking": true,
+        "missing_source_probability": 0.201,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.84041,
+        "repetition": 6,
+        "scenario": "weak_stale_signal",
+        "seed": 3006,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.58,
+          "wot": 0.894
+        },
+        "staleness_ms": 1210.467
+      },
+      {
+        "conflict_score": 0.747,
+        "detection_latency_ms": 0.2756,
+        "episode_id": "noisy_weak_stale_signal_rep_007_seed_3007",
+        "expected_blocking": true,
+        "missing_source_probability": 0.186,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.856729,
+        "repetition": 7,
+        "scenario": "weak_stale_signal",
+        "seed": 3007,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.598,
+          "wot": 0.843
+        },
+        "staleness_ms": 1250.822
+      },
+      {
+        "conflict_score": 0.6819,
+        "detection_latency_ms": 0.2047,
+        "episode_id": "noisy_weak_stale_signal_rep_008_seed_3008",
+        "expected_blocking": true,
+        "missing_source_probability": 0.158,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.827669,
+        "repetition": 8,
+        "scenario": "weak_stale_signal",
+        "seed": 3008,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.542,
+          "wot": 0.807
+        },
+        "staleness_ms": 1238.062
+      },
+      {
+        "conflict_score": 0.7139,
+        "detection_latency_ms": 0.2682,
+        "episode_id": "noisy_weak_stale_signal_rep_009_seed_3009",
+        "expected_blocking": true,
+        "missing_source_probability": 0.235,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.836397,
+        "repetition": 9,
+        "scenario": "weak_stale_signal",
+        "seed": 3009,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.565,
+          "wot": 0.9
+        },
+        "staleness_ms": 1242.285
+      },
+      {
+        "conflict_score": 0.7434,
+        "detection_latency_ms": 0.3114,
+        "episode_id": "noisy_weak_stale_signal_rep_010_seed_3010",
+        "expected_blocking": true,
+        "missing_source_probability": 0.155,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.839201,
+        "repetition": 10,
+        "scenario": "weak_stale_signal",
+        "seed": 3010,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.571,
+          "wot": 0.837
+        },
+        "staleness_ms": 1204.478
+      },
+      {
+        "conflict_score": 0.6799,
+        "detection_latency_ms": 0.3256,
+        "episode_id": "noisy_weak_stale_signal_rep_011_seed_3011",
+        "expected_blocking": true,
+        "missing_source_probability": 0.211,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.82399,
+        "repetition": 11,
+        "scenario": "weak_stale_signal",
+        "seed": 3011,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.552,
+          "wot": 0.889
+        },
+        "staleness_ms": 1276.748
+      },
+      {
+        "conflict_score": 0.6825,
+        "detection_latency_ms": 0.3589,
+        "episode_id": "noisy_weak_stale_signal_rep_012_seed_3012",
+        "expected_blocking": true,
+        "missing_source_probability": 0.233,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.809497,
+        "repetition": 12,
+        "scenario": "weak_stale_signal",
+        "seed": 3012,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.52,
+          "wot": 0.869
+        },
+        "staleness_ms": 1137.956
+      },
+      {
+        "conflict_score": 0.7494,
+        "detection_latency_ms": 0.3641,
+        "episode_id": "noisy_weak_stale_signal_rep_013_seed_3013",
+        "expected_blocking": true,
+        "missing_source_probability": 0.163,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.812457,
+        "repetition": 13,
+        "scenario": "weak_stale_signal",
+        "seed": 3013,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.571,
+          "wot": 0.895
+        },
+        "staleness_ms": 1128.28
+      },
+      {
+        "conflict_score": 0.6577,
+        "detection_latency_ms": 0.3121,
+        "episode_id": "noisy_weak_stale_signal_rep_014_seed_3014",
+        "expected_blocking": true,
+        "missing_source_probability": 0.19,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.835905,
+        "repetition": 14,
+        "scenario": "weak_stale_signal",
+        "seed": 3014,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.573,
+          "wot": 0.812
+        },
+        "staleness_ms": 1278.759
+      },
+      {
+        "conflict_score": 0.7559,
+        "detection_latency_ms": 0.3415,
+        "episode_id": "noisy_weak_stale_signal_rep_015_seed_3015",
+        "expected_blocking": true,
+        "missing_source_probability": 0.247,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.869101,
+        "repetition": 15,
+        "scenario": "weak_stale_signal",
+        "seed": 3015,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.53,
+          "wot": 0.806
+        },
+        "staleness_ms": 1193.092
+      },
+      {
+        "conflict_score": 0.7509,
+        "detection_latency_ms": 0.2597,
+        "episode_id": "noisy_weak_stale_signal_rep_016_seed_3016",
+        "expected_blocking": true,
+        "missing_source_probability": 0.211,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.867075,
+        "repetition": 16,
+        "scenario": "weak_stale_signal",
+        "seed": 3016,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.503,
+          "wot": 0.808
+        },
+        "staleness_ms": 1271.682
+      },
+      {
+        "conflict_score": 0.746,
+        "detection_latency_ms": 0.21,
+        "episode_id": "noisy_weak_stale_signal_rep_017_seed_3017",
+        "expected_blocking": true,
+        "missing_source_probability": 0.204,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.856783,
+        "repetition": 17,
+        "scenario": "weak_stale_signal",
+        "seed": 3017,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.596,
+          "wot": 0.871
+        },
+        "staleness_ms": 1276.186
+      },
+      {
+        "conflict_score": 0.7084,
+        "detection_latency_ms": 0.2557,
+        "episode_id": "noisy_weak_stale_signal_rep_018_seed_3018",
+        "expected_blocking": true,
+        "missing_source_probability": 0.153,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.822746,
+        "repetition": 18,
+        "scenario": "weak_stale_signal",
+        "seed": 3018,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.577,
+          "wot": 0.813
+        },
+        "staleness_ms": 1143.788
+      },
+      {
+        "conflict_score": 0.6962,
+        "detection_latency_ms": 0.3566,
+        "episode_id": "noisy_weak_stale_signal_rep_019_seed_3019",
+        "expected_blocking": true,
+        "missing_source_probability": 0.195,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.818668,
+        "repetition": 19,
+        "scenario": "weak_stale_signal",
+        "seed": 3019,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.563,
+          "wot": 0.893
+        },
+        "staleness_ms": 1235.157
+      },
+      {
+        "conflict_score": 0.7097,
+        "detection_latency_ms": 0.2917,
+        "episode_id": "noisy_weak_stale_signal_rep_020_seed_3020",
+        "expected_blocking": true,
+        "missing_source_probability": 0.198,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.807591,
+        "repetition": 20,
+        "scenario": "weak_stale_signal",
+        "seed": 3020,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.521,
+          "wot": 0.889
+        },
+        "staleness_ms": 1158.558
+      },
+      {
+        "conflict_score": 0.7372,
+        "detection_latency_ms": 0.3803,
+        "episode_id": "noisy_weak_stale_signal_rep_021_seed_3021",
+        "expected_blocking": true,
+        "missing_source_probability": 0.249,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.833294,
+        "repetition": 21,
+        "scenario": "weak_stale_signal",
+        "seed": 3021,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.5,
+          "wot": 0.865
+        },
+        "staleness_ms": 1124.994
+      },
+      {
+        "conflict_score": 0.712,
+        "detection_latency_ms": 0.363,
+        "episode_id": "noisy_weak_stale_signal_rep_022_seed_3022",
+        "expected_blocking": true,
+        "missing_source_probability": 0.191,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.82834,
+        "repetition": 22,
+        "scenario": "weak_stale_signal",
+        "seed": 3022,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.541,
+          "wot": 0.829
+        },
+        "staleness_ms": 1157.757
+      },
+      {
+        "conflict_score": 0.7325,
+        "detection_latency_ms": 0.2836,
+        "episode_id": "noisy_weak_stale_signal_rep_023_seed_3023",
+        "expected_blocking": true,
+        "missing_source_probability": 0.237,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.851405,
+        "repetition": 23,
+        "scenario": "weak_stale_signal",
+        "seed": 3023,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.574,
+          "wot": 0.847
+        },
+        "staleness_ms": 1187.386
+      },
+      {
+        "conflict_score": 0.663,
+        "detection_latency_ms": 0.2217,
+        "episode_id": "noisy_weak_stale_signal_rep_024_seed_3024",
+        "expected_blocking": true,
+        "missing_source_probability": 0.197,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.820428,
+        "repetition": 24,
+        "scenario": "weak_stale_signal",
+        "seed": 3024,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.548,
+          "wot": 0.821
+        },
+        "staleness_ms": 1197.21
+      },
+      {
+        "conflict_score": 0.6484,
+        "detection_latency_ms": 0.3737,
+        "episode_id": "noisy_weak_stale_signal_rep_025_seed_3025",
+        "expected_blocking": true,
+        "missing_source_probability": 0.188,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.815288,
+        "repetition": 25,
+        "scenario": "weak_stale_signal",
+        "seed": 3025,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.577,
+          "wot": 0.82
+        },
+        "staleness_ms": 1196.355
+      },
+      {
+        "conflict_score": 0.7261,
+        "detection_latency_ms": 0.3793,
+        "episode_id": "noisy_weak_stale_signal_rep_026_seed_3026",
+        "expected_blocking": true,
+        "missing_source_probability": 0.239,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.836709,
+        "repetition": 26,
+        "scenario": "weak_stale_signal",
+        "seed": 3026,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.58,
+          "wot": 0.891
+        },
+        "staleness_ms": 1182.554
+      },
+      {
+        "conflict_score": 0.6696,
+        "detection_latency_ms": 0.3617,
+        "episode_id": "noisy_weak_stale_signal_rep_027_seed_3027",
+        "expected_blocking": true,
+        "missing_source_probability": 0.194,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.82386,
+        "repetition": 27,
+        "scenario": "weak_stale_signal",
+        "seed": 3027,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.587,
+          "wot": 0.804
+        },
+        "staleness_ms": 1149.2
+      },
+      {
+        "conflict_score": 0.7464,
+        "detection_latency_ms": 0.3299,
+        "episode_id": "noisy_weak_stale_signal_rep_028_seed_3028",
+        "expected_blocking": true,
+        "missing_source_probability": 0.182,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.836863,
+        "repetition": 28,
+        "scenario": "weak_stale_signal",
+        "seed": 3028,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.52,
+          "wot": 0.838
+        },
+        "staleness_ms": 1173.961
+      },
+      {
+        "conflict_score": 0.7211,
+        "detection_latency_ms": 0.3568,
+        "episode_id": "noisy_weak_stale_signal_rep_029_seed_3029",
+        "expected_blocking": true,
+        "missing_source_probability": 0.197,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.824042,
+        "repetition": 29,
+        "scenario": "weak_stale_signal",
+        "seed": 3029,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.526,
+          "wot": 0.878
+        },
+        "staleness_ms": 1201.415
+      },
+      {
+        "conflict_score": 0.6064,
+        "detection_latency_ms": 0.3508,
+        "episode_id": "noisy_delayed_wot_recovery_rep_000_seed_3030",
+        "expected_blocking": true,
+        "missing_source_probability": 0.131,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.69948,
+        "repetition": 0,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3030,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.61,
+          "wot": 0.853
+        },
+        "staleness_ms": 894.585
+      },
+      {
+        "conflict_score": 0.6709,
+        "detection_latency_ms": 0.2855,
+        "episode_id": "noisy_delayed_wot_recovery_rep_001_seed_3031",
+        "expected_blocking": true,
+        "missing_source_probability": 0.133,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.726874,
+        "repetition": 1,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3031,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.646,
+          "wot": 0.872
+        },
+        "staleness_ms": 863.249
+      },
+      {
+        "conflict_score": 0.5997,
+        "detection_latency_ms": 0.2693,
+        "episode_id": "noisy_delayed_wot_recovery_rep_002_seed_3032",
+        "expected_blocking": true,
+        "missing_source_probability": 0.08,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.617373,
+        "repetition": 2,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3032,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.557,
+          "wot": 0.923
+        },
+        "staleness_ms": 853.543
+      },
+      {
+        "conflict_score": 0.6985,
+        "detection_latency_ms": 0.3169,
+        "episode_id": "noisy_delayed_wot_recovery_rep_003_seed_3033",
+        "expected_blocking": true,
+        "missing_source_probability": 0.057,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.664812,
+        "repetition": 3,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3033,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.617,
+          "wot": 0.948
+        },
+        "staleness_ms": 839.178
+      },
+      {
+        "conflict_score": 0.6639,
+        "detection_latency_ms": 0.387,
+        "episode_id": "noisy_delayed_wot_recovery_rep_004_seed_3034",
+        "expected_blocking": true,
+        "missing_source_probability": 0.127,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.701465,
+        "repetition": 4,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3034,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.62,
+          "wot": 0.884
+        },
+        "staleness_ms": 825.136
+      },
+      {
+        "conflict_score": 0.6546,
+        "detection_latency_ms": 0.2592,
+        "episode_id": "noisy_delayed_wot_recovery_rep_005_seed_3035",
+        "expected_blocking": true,
+        "missing_source_probability": 0.097,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.722214,
+        "repetition": 5,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3035,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.594,
+          "wot": 0.851
+        },
+        "staleness_ms": 937.991
+      },
+      {
+        "conflict_score": 0.6707,
+        "detection_latency_ms": 0.3804,
+        "episode_id": "noisy_delayed_wot_recovery_rep_006_seed_3036",
+        "expected_blocking": true,
+        "missing_source_probability": 0.13,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.695022,
+        "repetition": 6,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3036,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.56,
+          "wot": 0.9
+        },
+        "staleness_ms": 848.119
+      },
+      {
+        "conflict_score": 0.6706,
+        "detection_latency_ms": 0.2174,
+        "episode_id": "noisy_delayed_wot_recovery_rep_007_seed_3037",
+        "expected_blocking": true,
+        "missing_source_probability": 0.14,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.711872,
+        "repetition": 7,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3037,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.57,
+          "wot": 0.878
+        },
+        "staleness_ms": 852.012
+      },
+      {
+        "conflict_score": 0.5926,
+        "detection_latency_ms": 0.3024,
+        "episode_id": "noisy_delayed_wot_recovery_rep_008_seed_3038",
+        "expected_blocking": true,
+        "missing_source_probability": 0.144,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.670108,
+        "repetition": 8,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3038,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.643,
+          "wot": 0.905
+        },
+        "staleness_ms": 864.993
+      },
+      {
+        "conflict_score": 0.5772,
+        "detection_latency_ms": 0.3877,
+        "episode_id": "noisy_delayed_wot_recovery_rep_009_seed_3039",
+        "expected_blocking": true,
+        "missing_source_probability": 0.074,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.625612,
+        "repetition": 9,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3039,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.584,
+          "wot": 0.904
+        },
+        "staleness_ms": 892.397
+      },
+      {
+        "conflict_score": 0.7236,
+        "detection_latency_ms": 0.3881,
+        "episode_id": "noisy_delayed_wot_recovery_rep_010_seed_3040",
+        "expected_blocking": true,
+        "missing_source_probability": 0.141,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.754493,
+        "repetition": 10,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3040,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.572,
+          "wot": 0.854
+        },
+        "staleness_ms": 863.2
+      },
+      {
+        "conflict_score": 0.5766,
+        "detection_latency_ms": 0.2065,
+        "episode_id": "noisy_delayed_wot_recovery_rep_011_seed_3041",
+        "expected_blocking": true,
+        "missing_source_probability": 0.126,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.648937,
+        "repetition": 11,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3041,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.618,
+          "wot": 0.933
+        },
+        "staleness_ms": 921.74
+      },
+      {
+        "conflict_score": 0.6451,
+        "detection_latency_ms": 0.2931,
+        "episode_id": "noisy_delayed_wot_recovery_rep_012_seed_3042",
+        "expected_blocking": true,
+        "missing_source_probability": 0.105,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.684925,
+        "repetition": 12,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3042,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.585,
+          "wot": 0.9
+        },
+        "staleness_ms": 893.514
+      },
+      {
+        "conflict_score": 0.6589,
+        "detection_latency_ms": 0.3843,
+        "episode_id": "noisy_delayed_wot_recovery_rep_013_seed_3043",
+        "expected_blocking": true,
+        "missing_source_probability": 0.088,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.705798,
+        "repetition": 13,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3043,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.611,
+          "wot": 0.913
+        },
+        "staleness_ms": 978.284
+      },
+      {
+        "conflict_score": 0.6397,
+        "detection_latency_ms": 0.3361,
+        "episode_id": "noisy_delayed_wot_recovery_rep_014_seed_3044",
+        "expected_blocking": true,
+        "missing_source_probability": 0.07,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.654456,
+        "repetition": 14,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3044,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.572,
+          "wot": 0.889
+        },
+        "staleness_ms": 838.104
+      },
+      {
+        "conflict_score": 0.6116,
+        "detection_latency_ms": 0.235,
+        "episode_id": "noisy_delayed_wot_recovery_rep_015_seed_3045",
+        "expected_blocking": true,
+        "missing_source_probability": 0.115,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.69724,
+        "repetition": 15,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3045,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.872
+        },
+        "staleness_ms": 941.758
+      },
+      {
+        "conflict_score": 0.5731,
+        "detection_latency_ms": 0.3787,
+        "episode_id": "noisy_delayed_wot_recovery_rep_016_seed_3046",
+        "expected_blocking": true,
+        "missing_source_probability": 0.104,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.647374,
+        "repetition": 16,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3046,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.62,
+          "wot": 0.944
+        },
+        "staleness_ms": 979.697
+      },
+      {
+        "conflict_score": 0.6261,
+        "detection_latency_ms": 0.3642,
+        "episode_id": "noisy_delayed_wot_recovery_rep_017_seed_3047",
+        "expected_blocking": true,
+        "missing_source_probability": 0.107,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.669616,
+        "repetition": 17,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3047,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.624,
+          "wot": 0.909
+        },
+        "staleness_ms": 866.641
+      },
+      {
+        "conflict_score": 0.5972,
+        "detection_latency_ms": 0.2468,
+        "episode_id": "noisy_delayed_wot_recovery_rep_018_seed_3048",
+        "expected_blocking": true,
+        "missing_source_probability": 0.116,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.662163,
+        "repetition": 18,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3048,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.636,
+          "wot": 0.941
+        },
+        "staleness_ms": 941.825
+      },
+      {
+        "conflict_score": 0.6426,
+        "detection_latency_ms": 0.3283,
+        "episode_id": "noisy_delayed_wot_recovery_rep_019_seed_3049",
+        "expected_blocking": true,
+        "missing_source_probability": 0.085,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.680093,
+        "repetition": 19,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3049,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.629,
+          "wot": 0.884
+        },
+        "staleness_ms": 855.434
+      },
+      {
+        "conflict_score": 0.6503,
+        "detection_latency_ms": 0.2623,
+        "episode_id": "noisy_delayed_wot_recovery_rep_020_seed_3050",
+        "expected_blocking": true,
+        "missing_source_probability": 0.058,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.642915,
+        "repetition": 20,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3050,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.61,
+          "wot": 0.94
+        },
+        "staleness_ms": 859.332
+      },
+      {
+        "conflict_score": 0.7015,
+        "detection_latency_ms": 0.3566,
+        "episode_id": "noisy_delayed_wot_recovery_rep_021_seed_3051",
+        "expected_blocking": true,
+        "missing_source_probability": 0.142,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.751073,
+        "repetition": 21,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3051,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.56,
+          "wot": 0.851
+        },
+        "staleness_ms": 900.286
+      },
+      {
+        "conflict_score": 0.5828,
+        "detection_latency_ms": 0.2464,
+        "episode_id": "noisy_delayed_wot_recovery_rep_022_seed_3052",
+        "expected_blocking": true,
+        "missing_source_probability": 0.122,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.666467,
+        "repetition": 22,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3052,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.588,
+          "wot": 0.887
+        },
+        "staleness_ms": 914.506
+      },
+      {
+        "conflict_score": 0.6449,
+        "detection_latency_ms": 0.2966,
+        "episode_id": "noisy_delayed_wot_recovery_rep_023_seed_3053",
+        "expected_blocking": true,
+        "missing_source_probability": 0.089,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.715523,
+        "repetition": 23,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3053,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.64,
+          "wot": 0.852
+        },
+        "staleness_ms": 917.533
+      },
+      {
+        "conflict_score": 0.59,
+        "detection_latency_ms": 0.3358,
+        "episode_id": "noisy_delayed_wot_recovery_rep_024_seed_3054",
+        "expected_blocking": true,
+        "missing_source_probability": 0.092,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.606543,
+        "repetition": 24,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3054,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.584,
+          "wot": 0.936
+        },
+        "staleness_ms": 824.002
+      },
+      {
+        "conflict_score": 0.6636,
+        "detection_latency_ms": 0.3549,
+        "episode_id": "noisy_delayed_wot_recovery_rep_025_seed_3055",
+        "expected_blocking": true,
+        "missing_source_probability": 0.051,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.685722,
+        "repetition": 25,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3055,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.571,
+          "wot": 0.853
+        },
+        "staleness_ms": 866.596
+      },
+      {
+        "conflict_score": 0.6244,
+        "detection_latency_ms": 0.2156,
+        "episode_id": "noisy_delayed_wot_recovery_rep_026_seed_3056",
+        "expected_blocking": true,
+        "missing_source_probability": 0.1,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.705767,
+        "repetition": 26,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3056,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.606,
+          "wot": 0.879
+        },
+        "staleness_ms": 979.66
+      },
+      {
+        "conflict_score": 0.6668,
+        "detection_latency_ms": 0.2927,
+        "episode_id": "noisy_delayed_wot_recovery_rep_027_seed_3057",
+        "expected_blocking": true,
+        "missing_source_probability": 0.077,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.697892,
+        "repetition": 27,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3057,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.623,
+          "wot": 0.93
+        },
+        "staleness_ms": 969.865
+      },
+      {
+        "conflict_score": 0.6563,
+        "detection_latency_ms": 0.3364,
+        "episode_id": "noisy_delayed_wot_recovery_rep_028_seed_3058",
+        "expected_blocking": true,
+        "missing_source_probability": 0.113,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.695871,
+        "repetition": 28,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3058,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.576,
+          "wot": 0.863
+        },
+        "staleness_ms": 834.893
+      },
+      {
+        "conflict_score": 0.5777,
+        "detection_latency_ms": 0.3258,
+        "episode_id": "noisy_delayed_wot_recovery_rep_029_seed_3059",
+        "expected_blocking": true,
+        "missing_source_probability": 0.114,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.636774,
+        "repetition": 29,
+        "scenario": "delayed_wot_recovery",
+        "seed": 3059,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.579,
+          "wot": 0.936
+        },
+        "staleness_ms": 926.526
+      },
+      {
+        "conflict_score": 0.5012,
+        "detection_latency_ms": 0.3052,
+        "episode_id": "noisy_low_reliability_dom_rep_000_seed_3060",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.238571,
+        "repetition": 0,
+        "scenario": "low_reliability_dom",
+        "seed": 3060,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.26,
+          "wot": 0.989
+        },
+        "staleness_ms": 169.923
+      },
+      {
+        "conflict_score": 0.5021,
+        "detection_latency_ms": 0.3108,
+        "episode_id": "noisy_low_reliability_dom_rep_001_seed_3061",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.227408,
+        "repetition": 1,
+        "scenario": "low_reliability_dom",
+        "seed": 3061,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.261,
+          "wot": 0.977
+        },
+        "staleness_ms": 93.096
+      },
+      {
+        "conflict_score": 0.5911,
+        "detection_latency_ms": 0.3705,
+        "episode_id": "noisy_low_reliability_dom_rep_002_seed_3062",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.28577,
+        "repetition": 2,
+        "scenario": "low_reliability_dom",
+        "seed": 3062,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.267,
+          "wot": 0.925
+        },
+        "staleness_ms": 41.919
+      },
+      {
+        "conflict_score": 0.514,
+        "detection_latency_ms": 0.3624,
+        "episode_id": "noisy_low_reliability_dom_rep_003_seed_3063",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.277433,
+        "repetition": 3,
+        "scenario": "low_reliability_dom",
+        "seed": 3063,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.279,
+          "wot": 0.925
+        },
+        "staleness_ms": 179.476
+      },
+      {
+        "conflict_score": 0.5637,
+        "detection_latency_ms": 0.2464,
+        "episode_id": "noisy_low_reliability_dom_rep_004_seed_3064",
+        "expected_blocking": false,
+        "missing_source_probability": 0.026,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.269658,
+        "repetition": 4,
+        "scenario": "low_reliability_dom",
+        "seed": 3064,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.216,
+          "wot": 0.954
+        },
+        "staleness_ms": 82.733
+      },
+      {
+        "conflict_score": 0.5677,
+        "detection_latency_ms": 0.373,
+        "episode_id": "noisy_low_reliability_dom_rep_005_seed_3065",
+        "expected_blocking": false,
+        "missing_source_probability": 0.022,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.273389,
+        "repetition": 5,
+        "scenario": "low_reliability_dom",
+        "seed": 3065,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.216,
+          "wot": 0.963
+        },
+        "staleness_ms": 112.288
+      },
+      {
+        "conflict_score": 0.5062,
+        "detection_latency_ms": 0.2116,
+        "episode_id": "noisy_low_reliability_dom_rep_006_seed_3066",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.237881,
+        "repetition": 6,
+        "scenario": "low_reliability_dom",
+        "seed": 3066,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.249,
+          "wot": 0.941
+        },
+        "staleness_ms": 74.425
+      },
+      {
+        "conflict_score": 0.4929,
+        "detection_latency_ms": 0.3406,
+        "episode_id": "noisy_low_reliability_dom_rep_007_seed_3067",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.221221,
+        "repetition": 7,
+        "scenario": "low_reliability_dom",
+        "seed": 3067,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.234,
+          "wot": 0.981
+        },
+        "staleness_ms": 110.263
+      },
+      {
+        "conflict_score": 0.5259,
+        "detection_latency_ms": 0.2806,
+        "episode_id": "noisy_low_reliability_dom_rep_008_seed_3068",
+        "expected_blocking": false,
+        "missing_source_probability": 0.037,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.270555,
+        "repetition": 8,
+        "scenario": "low_reliability_dom",
+        "seed": 3068,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.249,
+          "wot": 0.982
+        },
+        "staleness_ms": 185.726
+      },
+      {
+        "conflict_score": 0.4995,
+        "detection_latency_ms": 0.2776,
+        "episode_id": "noisy_low_reliability_dom_rep_009_seed_3069",
+        "expected_blocking": false,
+        "missing_source_probability": 0.044,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.243044,
+        "repetition": 9,
+        "scenario": "low_reliability_dom",
+        "seed": 3069,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.202,
+          "wot": 0.988
+        },
+        "staleness_ms": 157.78
+      },
+      {
+        "conflict_score": 0.5677,
+        "detection_latency_ms": 0.3629,
+        "episode_id": "noisy_low_reliability_dom_rep_010_seed_3070",
+        "expected_blocking": false,
+        "missing_source_probability": 0.034,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.312844,
+        "repetition": 10,
+        "scenario": "low_reliability_dom",
+        "seed": 3070,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.291,
+          "wot": 0.909
+        },
+        "staleness_ms": 102.152
+      },
+      {
+        "conflict_score": 0.4719,
+        "detection_latency_ms": 0.3152,
+        "episode_id": "noisy_low_reliability_dom_rep_011_seed_3071",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.230834,
+        "repetition": 11,
+        "scenario": "low_reliability_dom",
+        "seed": 3071,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.223,
+          "wot": 0.973
+        },
+        "staleness_ms": 197.725
+      },
+      {
+        "conflict_score": 0.4929,
+        "detection_latency_ms": 0.3619,
+        "episode_id": "noisy_low_reliability_dom_rep_012_seed_3072",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.235021,
+        "repetition": 12,
+        "scenario": "low_reliability_dom",
+        "seed": 3072,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.298,
+          "wot": 0.968
+        },
+        "staleness_ms": 109.089
+      },
+      {
+        "conflict_score": 0.4981,
+        "detection_latency_ms": 0.318,
+        "episode_id": "noisy_low_reliability_dom_rep_013_seed_3073",
+        "expected_blocking": false,
+        "missing_source_probability": 0.01,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.249235,
+        "repetition": 13,
+        "scenario": "low_reliability_dom",
+        "seed": 3073,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.215,
+          "wot": 0.956
+        },
+        "staleness_ms": 178.186
+      },
+      {
+        "conflict_score": 0.5175,
+        "detection_latency_ms": 0.2153,
+        "episode_id": "noisy_low_reliability_dom_rep_014_seed_3074",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.268454,
+        "repetition": 14,
+        "scenario": "low_reliability_dom",
+        "seed": 3074,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.263,
+          "wot": 0.903
+        },
+        "staleness_ms": 103.935
+      },
+      {
+        "conflict_score": 0.5668,
+        "detection_latency_ms": 0.3445,
+        "episode_id": "noisy_low_reliability_dom_rep_015_seed_3075",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.264564,
+        "repetition": 15,
+        "scenario": "low_reliability_dom",
+        "seed": 3075,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.252,
+          "wot": 0.937
+        },
+        "staleness_ms": 41.985
+      },
+      {
+        "conflict_score": 0.5633,
+        "detection_latency_ms": 0.3232,
+        "episode_id": "noisy_low_reliability_dom_rep_016_seed_3076",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.260701,
+        "repetition": 16,
+        "scenario": "low_reliability_dom",
+        "seed": 3076,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.259,
+          "wot": 0.972
+        },
+        "staleness_ms": 93.026
+      },
+      {
+        "conflict_score": 0.5223,
+        "detection_latency_ms": 0.2755,
+        "episode_id": "noisy_low_reliability_dom_rep_017_seed_3077",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.2489,
+        "repetition": 17,
+        "scenario": "low_reliability_dom",
+        "seed": 3077,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.214,
+          "wot": 0.94
+        },
+        "staleness_ms": 108.226
+      },
+      {
+        "conflict_score": 0.4864,
+        "detection_latency_ms": 0.2803,
+        "episode_id": "noisy_low_reliability_dom_rep_018_seed_3078",
+        "expected_blocking": false,
+        "missing_source_probability": 0.025,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.24773,
+        "repetition": 18,
+        "scenario": "low_reliability_dom",
+        "seed": 3078,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.226,
+          "wot": 0.904
+        },
+        "staleness_ms": 71.105
+      },
+      {
+        "conflict_score": 0.5515,
+        "detection_latency_ms": 0.2534,
+        "episode_id": "noisy_low_reliability_dom_rep_019_seed_3079",
+        "expected_blocking": false,
+        "missing_source_probability": 0.01,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.295499,
+        "repetition": 19,
+        "scenario": "low_reliability_dom",
+        "seed": 3079,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.2,
+          "wot": 0.905
+        },
+        "staleness_ms": 164.981
+      },
+      {
+        "conflict_score": 0.5487,
+        "detection_latency_ms": 0.2197,
+        "episode_id": "noisy_low_reliability_dom_rep_020_seed_3080",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.242157,
+        "repetition": 20,
+        "scenario": "low_reliability_dom",
+        "seed": 3080,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.262,
+          "wot": 0.995
+        },
+        "staleness_ms": 85.127
+      },
+      {
+        "conflict_score": 0.4772,
+        "detection_latency_ms": 0.3761,
+        "episode_id": "noisy_low_reliability_dom_rep_021_seed_3081",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.208766,
+        "repetition": 21,
+        "scenario": "low_reliability_dom",
+        "seed": 3081,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.237,
+          "wot": 0.993
+        },
+        "staleness_ms": 105.385
+      },
+      {
+        "conflict_score": 0.5975,
+        "detection_latency_ms": 0.3714,
+        "episode_id": "noisy_low_reliability_dom_rep_022_seed_3082",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.289373,
+        "repetition": 22,
+        "scenario": "low_reliability_dom",
+        "seed": 3082,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.2,
+          "wot": 0.901
+        },
+        "staleness_ms": 42.308
+      },
+      {
+        "conflict_score": 0.5905,
+        "detection_latency_ms": 0.3048,
+        "episode_id": "noisy_low_reliability_dom_rep_023_seed_3083",
+        "expected_blocking": false,
+        "missing_source_probability": 0.009,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.269136,
+        "repetition": 23,
+        "scenario": "low_reliability_dom",
+        "seed": 3083,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.226,
+          "wot": 0.965
+        },
+        "staleness_ms": 59.823
+      },
+      {
+        "conflict_score": 0.6172,
+        "detection_latency_ms": 0.3558,
+        "episode_id": "noisy_low_reliability_dom_rep_024_seed_3084",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.314762,
+        "repetition": 24,
+        "scenario": "low_reliability_dom",
+        "seed": 3084,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.291,
+          "wot": 0.914
+        },
+        "staleness_ms": 59.909
+      },
+      {
+        "conflict_score": 0.471,
+        "detection_latency_ms": 0.2256,
+        "episode_id": "noisy_low_reliability_dom_rep_025_seed_3085",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.221403,
+        "repetition": 25,
+        "scenario": "low_reliability_dom",
+        "seed": 3085,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.21,
+          "wot": 0.992
+        },
+        "staleness_ms": 198.407
+      },
+      {
+        "conflict_score": 0.6153,
+        "detection_latency_ms": 0.2215,
+        "episode_id": "noisy_low_reliability_dom_rep_026_seed_3086",
+        "expected_blocking": false,
+        "missing_source_probability": 0.011,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.278849,
+        "repetition": 26,
+        "scenario": "low_reliability_dom",
+        "seed": 3086,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.254,
+          "wot": 0.991
+        },
+        "staleness_ms": 68.317
+      },
+      {
+        "conflict_score": 0.6248,
+        "detection_latency_ms": 0.209,
+        "episode_id": "noisy_low_reliability_dom_rep_027_seed_3087",
+        "expected_blocking": false,
+        "missing_source_probability": 0.045,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.357165,
+        "repetition": 27,
+        "scenario": "low_reliability_dom",
+        "seed": 3087,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.287,
+          "wot": 0.938
+        },
+        "staleness_ms": 172.39
+      },
+      {
+        "conflict_score": 0.5495,
+        "detection_latency_ms": 0.3632,
+        "episode_id": "noisy_low_reliability_dom_rep_028_seed_3088",
+        "expected_blocking": false,
+        "missing_source_probability": 0.028,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.267698,
+        "repetition": 28,
+        "scenario": "low_reliability_dom",
+        "seed": 3088,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.266,
+          "wot": 0.972
+        },
+        "staleness_ms": 103.89
+      },
+      {
+        "conflict_score": 0.4956,
+        "detection_latency_ms": 0.2333,
+        "episode_id": "noisy_low_reliability_dom_rep_029_seed_3089",
+        "expected_blocking": false,
+        "missing_source_probability": 0.005,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.243637,
+        "repetition": 29,
+        "scenario": "low_reliability_dom",
+        "seed": 3089,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.212,
+          "wot": 0.925
+        },
+        "staleness_ms": 112.397
+      },
+      {
+        "conflict_score": 0.7858,
+        "detection_latency_ms": 0.3708,
+        "episode_id": "noisy_partial_missing_wot_rep_000_seed_3090",
+        "expected_blocking": true,
+        "missing_source_probability": 0.723,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.946979,
+        "repetition": 0,
+        "scenario": "partial_missing_wot",
+        "seed": 3090,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.726,
+          "wot": 0.353
+        },
+        "staleness_ms": 442.12
+      },
+      {
+        "conflict_score": 0.7418,
+        "detection_latency_ms": 0.3675,
+        "episode_id": "noisy_partial_missing_wot_rep_001_seed_3091",
+        "expected_blocking": true,
+        "missing_source_probability": 0.73,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.945868,
+        "repetition": 1,
+        "scenario": "partial_missing_wot",
+        "seed": 3091,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.651,
+          "wot": 0.365
+        },
+        "staleness_ms": 528.861
+      },
+      {
+        "conflict_score": 0.7278,
+        "detection_latency_ms": 0.2313,
+        "episode_id": "noisy_partial_missing_wot_rep_002_seed_3092",
+        "expected_blocking": true,
+        "missing_source_probability": 0.653,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.938046,
+        "repetition": 2,
+        "scenario": "partial_missing_wot",
+        "seed": 3092,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.735,
+          "wot": 0.348
+        },
+        "staleness_ms": 550.645
+      },
+      {
+        "conflict_score": 0.8149,
+        "detection_latency_ms": 0.3458,
+        "episode_id": "noisy_partial_missing_wot_rep_003_seed_3093",
+        "expected_blocking": true,
+        "missing_source_probability": 0.673,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.94876,
+        "repetition": 3,
+        "scenario": "partial_missing_wot",
+        "seed": 3093,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.731,
+          "wot": 0.376
+        },
+        "staleness_ms": 514.435
+      },
+      {
+        "conflict_score": 0.8121,
+        "detection_latency_ms": 0.2782,
+        "episode_id": "noisy_partial_missing_wot_rep_004_seed_3094",
+        "expected_blocking": true,
+        "missing_source_probability": 0.705,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.947908,
+        "repetition": 4,
+        "scenario": "partial_missing_wot",
+        "seed": 3094,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.739,
+          "wot": 0.353
+        },
+        "staleness_ms": 426.305
+      },
+      {
+        "conflict_score": 0.7624,
+        "detection_latency_ms": 0.32,
+        "episode_id": "noisy_partial_missing_wot_rep_005_seed_3095",
+        "expected_blocking": true,
+        "missing_source_probability": 0.714,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.943224,
+        "repetition": 5,
+        "scenario": "partial_missing_wot",
+        "seed": 3095,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.676,
+          "wot": 0.338
+        },
+        "staleness_ms": 433.888
+      },
+      {
+        "conflict_score": 0.8417,
+        "detection_latency_ms": 0.2871,
+        "episode_id": "noisy_partial_missing_wot_rep_006_seed_3096",
+        "expected_blocking": true,
+        "missing_source_probability": 0.69,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.955847,
+        "repetition": 6,
+        "scenario": "partial_missing_wot",
+        "seed": 3096,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.674,
+          "wot": 0.353
+        },
+        "staleness_ms": 526.99
+      },
+      {
+        "conflict_score": 0.8316,
+        "detection_latency_ms": 0.3894,
+        "episode_id": "noisy_partial_missing_wot_rep_007_seed_3097",
+        "expected_blocking": true,
+        "missing_source_probability": 0.701,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.953813,
+        "repetition": 7,
+        "scenario": "partial_missing_wot",
+        "seed": 3097,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.717,
+          "wot": 0.379
+        },
+        "staleness_ms": 523.25
+      },
+      {
+        "conflict_score": 0.8026,
+        "detection_latency_ms": 0.3988,
+        "episode_id": "noisy_partial_missing_wot_rep_008_seed_3098",
+        "expected_blocking": true,
+        "missing_source_probability": 0.653,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.946988,
+        "repetition": 8,
+        "scenario": "partial_missing_wot",
+        "seed": 3098,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.71,
+          "wot": 0.382
+        },
+        "staleness_ms": 553.579
+      },
+      {
+        "conflict_score": 0.7371,
+        "detection_latency_ms": 0.2998,
+        "episode_id": "noisy_partial_missing_wot_rep_009_seed_3099",
+        "expected_blocking": true,
+        "missing_source_probability": 0.736,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.947556,
+        "repetition": 9,
+        "scenario": "partial_missing_wot",
+        "seed": 3099,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.661,
+          "wot": 0.332
+        },
+        "staleness_ms": 519.222
+      },
+      {
+        "conflict_score": 0.7983,
+        "detection_latency_ms": 0.3639,
+        "episode_id": "noisy_partial_missing_wot_rep_010_seed_3100",
+        "expected_blocking": true,
+        "missing_source_probability": 0.714,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.95492,
+        "repetition": 10,
+        "scenario": "partial_missing_wot",
+        "seed": 3100,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.667,
+          "wot": 0.35
+        },
+        "staleness_ms": 566.627
+      },
+      {
+        "conflict_score": 0.8454,
+        "detection_latency_ms": 0.2843,
+        "episode_id": "noisy_partial_missing_wot_rep_011_seed_3101",
+        "expected_blocking": true,
+        "missing_source_probability": 0.687,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.951793,
+        "repetition": 11,
+        "scenario": "partial_missing_wot",
+        "seed": 3101,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.738,
+          "wot": 0.351
+        },
+        "staleness_ms": 444.27
+      },
+      {
+        "conflict_score": 0.7918,
+        "detection_latency_ms": 0.3141,
+        "episode_id": "noisy_partial_missing_wot_rep_012_seed_3102",
+        "expected_blocking": true,
+        "missing_source_probability": 0.721,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.951468,
+        "repetition": 12,
+        "scenario": "partial_missing_wot",
+        "seed": 3102,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.668,
+          "wot": 0.379
+        },
+        "staleness_ms": 539.451
+      },
+      {
+        "conflict_score": 0.7884,
+        "detection_latency_ms": 0.4,
+        "episode_id": "noisy_partial_missing_wot_rep_013_seed_3103",
+        "expected_blocking": true,
+        "missing_source_probability": 0.743,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.956378,
+        "repetition": 13,
+        "scenario": "partial_missing_wot",
+        "seed": 3103,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.704,
+          "wot": 0.307
+        },
+        "staleness_ms": 519.897
+      },
+      {
+        "conflict_score": 0.7379,
+        "detection_latency_ms": 0.2986,
+        "episode_id": "noisy_partial_missing_wot_rep_014_seed_3104",
+        "expected_blocking": true,
+        "missing_source_probability": 0.711,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.943374,
+        "repetition": 14,
+        "scenario": "partial_missing_wot",
+        "seed": 3104,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.687,
+          "wot": 0.311
+        },
+        "staleness_ms": 466.893
+      },
+      {
+        "conflict_score": 0.7965,
+        "detection_latency_ms": 0.2328,
+        "episode_id": "noisy_partial_missing_wot_rep_015_seed_3105",
+        "expected_blocking": true,
+        "missing_source_probability": 0.716,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.957846,
+        "repetition": 15,
+        "scenario": "partial_missing_wot",
+        "seed": 3105,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.736,
+          "wot": 0.305
+        },
+        "staleness_ms": 573.474
+      },
+      {
+        "conflict_score": 0.8762,
+        "detection_latency_ms": 0.2103,
+        "episode_id": "noisy_partial_missing_wot_rep_016_seed_3106",
+        "expected_blocking": true,
+        "missing_source_probability": 0.654,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.951383,
+        "repetition": 16,
+        "scenario": "partial_missing_wot",
+        "seed": 3106,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.743,
+          "wot": 0.377
+        },
+        "staleness_ms": 450.32
+      },
+      {
+        "conflict_score": 0.7529,
+        "detection_latency_ms": 0.2885,
+        "episode_id": "noisy_partial_missing_wot_rep_017_seed_3107",
+        "expected_blocking": true,
+        "missing_source_probability": 0.726,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.946958,
+        "repetition": 17,
+        "scenario": "partial_missing_wot",
+        "seed": 3107,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.675,
+          "wot": 0.368
+        },
+        "staleness_ms": 531.041
+      },
+      {
+        "conflict_score": 0.7804,
+        "detection_latency_ms": 0.2924,
+        "episode_id": "noisy_partial_missing_wot_rep_018_seed_3108",
+        "expected_blocking": true,
+        "missing_source_probability": 0.707,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.949982,
+        "repetition": 18,
+        "scenario": "partial_missing_wot",
+        "seed": 3108,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.674,
+          "wot": 0.39
+        },
+        "staleness_ms": 575.78
+      },
+      {
+        "conflict_score": 0.85,
+        "detection_latency_ms": 0.3578,
+        "episode_id": "noisy_partial_missing_wot_rep_019_seed_3109",
+        "expected_blocking": true,
+        "missing_source_probability": 0.688,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.955659,
+        "repetition": 19,
+        "scenario": "partial_missing_wot",
+        "seed": 3109,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.693,
+          "wot": 0.357
+        },
+        "staleness_ms": 511.906
+      },
+      {
+        "conflict_score": 0.8508,
+        "detection_latency_ms": 0.2181,
+        "episode_id": "noisy_partial_missing_wot_rep_020_seed_3110",
+        "expected_blocking": true,
+        "missing_source_probability": 0.731,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.96019,
+        "repetition": 20,
+        "scenario": "partial_missing_wot",
+        "seed": 3110,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.67,
+          "wot": 0.326
+        },
+        "staleness_ms": 495.975
+      },
+      {
+        "conflict_score": 0.8044,
+        "detection_latency_ms": 0.2052,
+        "episode_id": "noisy_partial_missing_wot_rep_021_seed_3111",
+        "expected_blocking": true,
+        "missing_source_probability": 0.749,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.954143,
+        "repetition": 21,
+        "scenario": "partial_missing_wot",
+        "seed": 3111,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.656,
+          "wot": 0.394
+        },
+        "staleness_ms": 530.476
+      },
+      {
+        "conflict_score": 0.7256,
+        "detection_latency_ms": 0.2922,
+        "episode_id": "noisy_partial_missing_wot_rep_022_seed_3112",
+        "expected_blocking": true,
+        "missing_source_probability": 0.673,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.933098,
+        "repetition": 22,
+        "scenario": "partial_missing_wot",
+        "seed": 3112,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.691,
+          "wot": 0.386
+        },
+        "staleness_ms": 498.337
+      },
+      {
+        "conflict_score": 0.7259,
+        "detection_latency_ms": 0.2515,
+        "episode_id": "noisy_partial_missing_wot_rep_023_seed_3113",
+        "expected_blocking": true,
+        "missing_source_probability": 0.696,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.932558,
+        "repetition": 23,
+        "scenario": "partial_missing_wot",
+        "seed": 3113,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.698,
+          "wot": 0.391
+        },
+        "staleness_ms": 457.953
+      },
+      {
+        "conflict_score": 0.7583,
+        "detection_latency_ms": 0.3108,
+        "episode_id": "noisy_partial_missing_wot_rep_024_seed_3114",
+        "expected_blocking": true,
+        "missing_source_probability": 0.684,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.945506,
+        "repetition": 24,
+        "scenario": "partial_missing_wot",
+        "seed": 3114,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.728,
+          "wot": 0.364
+        },
+        "staleness_ms": 559.995
+      },
+      {
+        "conflict_score": 0.8553,
+        "detection_latency_ms": 0.3479,
+        "episode_id": "noisy_partial_missing_wot_rep_025_seed_3115",
+        "expected_blocking": true,
+        "missing_source_probability": 0.658,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.956531,
+        "repetition": 25,
+        "scenario": "partial_missing_wot",
+        "seed": 3115,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.691,
+          "wot": 0.309
+        },
+        "staleness_ms": 510.863
+      },
+      {
+        "conflict_score": 0.7904,
+        "detection_latency_ms": 0.2632,
+        "episode_id": "noisy_partial_missing_wot_rep_026_seed_3116",
+        "expected_blocking": true,
+        "missing_source_probability": 0.693,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.947809,
+        "repetition": 26,
+        "scenario": "partial_missing_wot",
+        "seed": 3116,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.743,
+          "wot": 0.39
+        },
+        "staleness_ms": 538.444
+      },
+      {
+        "conflict_score": 0.7921,
+        "detection_latency_ms": 0.219,
+        "episode_id": "noisy_partial_missing_wot_rep_027_seed_3117",
+        "expected_blocking": true,
+        "missing_source_probability": 0.707,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.947171,
+        "repetition": 27,
+        "scenario": "partial_missing_wot",
+        "seed": 3117,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.7,
+          "wot": 0.369
+        },
+        "staleness_ms": 475.956
+      },
+      {
+        "conflict_score": 0.8796,
+        "detection_latency_ms": 0.3859,
+        "episode_id": "noisy_partial_missing_wot_rep_028_seed_3118",
+        "expected_blocking": true,
+        "missing_source_probability": 0.714,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.965124,
+        "repetition": 28,
+        "scenario": "partial_missing_wot",
+        "seed": 3118,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.675,
+          "wot": 0.314
+        },
+        "staleness_ms": 557.648
+      },
+      {
+        "conflict_score": 0.8709,
+        "detection_latency_ms": 0.2198,
+        "episode_id": "noisy_partial_missing_wot_rep_029_seed_3119",
+        "expected_blocking": true,
+        "missing_source_probability": 0.724,
+        "noise_profile": "ambiguous_source_reliability_and_staleness",
+        "oracle_source": "synthetic-noisy-source-oracle",
+        "posterior_blocking_probability": 0.960427,
+        "repetition": 29,
+        "scenario": "partial_missing_wot",
+        "seed": 3119,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.686,
+          "wot": 0.335
+        },
+        "staleness_ms": 476.42
+      }
+    ]
+  },
+  "comparison": {
+    "balanced_accuracy_delta": 0.5,
+    "bayesian_outperforms_rule_first": true,
+    "recommendation": "evaluate_on_live_ambiguous_cases_before_gate_integration"
+  },
+  "data_source": "synthetic_noisy_fusion_stress",
+  "protocol": {
+    "condition_counts": {
+      "delayed_wot_recovery": 30,
+      "low_reliability_dom": 30,
+      "partial_missing_wot": 30,
+      "weak_stale_signal": 30
+    },
+    "oracle_source": "synthetic-noisy-source-oracle",
+    "purpose": "stress Bayesian comparator on ambiguous/noisy source features before any runtime gate integration",
+    "synthetic_not_live": true,
+    "trial_count": 120
+  },
+  "rule_first": {
+    "locked_threshold": 1.0,
+    "metrics": {
+      "balanced_accuracy": 0.5,
+      "false_halt_rate": 0.0,
+      "false_negative": 90,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.30624833333333334,
+      "miss_rate": 1.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "true_negative": 30,
+      "true_positive": 0
+    }
+  }
+}

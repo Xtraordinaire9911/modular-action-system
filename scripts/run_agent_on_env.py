@@ -20,6 +20,7 @@ reserved-port errors (WinError 10013) by letting the OS pick a free port.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 import time
 from datetime import datetime
@@ -30,8 +31,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.benchmarks.reflex_policy import select_next  # noqa: E402
+from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
+from src.benchmarks.rule_web_planner import RuleBasedAffordancePlanner, WebPlannerHistory  # noqa: E402
 from src.benchmarks.task_spec import BenchmarkTask  # noqa: E402
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter  # noqa: E402
+from src.benchmarks.web_task_planner import RuleBasedWebTaskPlanner, subgoal_satisfied  # noqa: E402
+from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec  # noqa: E402
 
 
 def _parse_values(pairs: list[str]) -> dict[str, str]:
@@ -42,6 +47,16 @@ def _parse_values(pairs: list[str]) -> dict[str, str]:
         label, text = pair.split("=", 1)
         values[label.strip()] = text
     return values
+
+
+def _parse_mapping(pairs: list[str], flag: str) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise SystemExit(f"{flag} expects left=right, got: {pair!r}")
+        left, right = pair.split("=", 1)
+        mapping[left.strip()] = right.strip()
+    return mapping
 
 
 def _start_static_server(directory: str):
@@ -69,8 +84,30 @@ def main() -> None:
         "--serve", help="Serve this local dir on an auto-picked free port (avoids reserved-port errors)."
     )
     parser.add_argument("--path", default="", help="Page path under --serve, e.g. miniwob/click-button.html.")
-    parser.add_argument("--goal", default="", help="Free-text goal used to pick goal-relevant buttons.")
-    parser.add_argument("--value", action="append", default=[], help="Input fill as label=text (repeatable).")
+    parser.add_argument("--goal", default="", help="Human-readable goal label for traces.")
+    parser.add_argument("--value", action="append", default=[], help="Parameter value as name=text (repeatable).")
+    parser.add_argument(
+        "--bind",
+        action="append",
+        default=[],
+        help="Declare parameter binding as parameter=affordance_id_or_selector.",
+    )
+    parser.add_argument(
+        "--complete",
+        action="append",
+        default=[],
+        help="Declare a completion affordance id or selector; repeatable.",
+    )
+    parser.add_argument("--goal-state", default="", help="Structured expected effect used by the runtime planner.")
+    parser.add_argument(
+        "--planner",
+        choices=["reflex", "rule", "runtime", "llm"],
+        default="reflex",
+        help=(
+            "Action planner. rule uses the web demo planner; runtime uses the "
+            "schema-driven environment-agnostic planner; llm is reserved."
+        ),
+    )
     parser.add_argument(
         "--success-text", action="append", default=[], help="Success if all fragments appear (repeatable)."
     )
@@ -104,13 +141,67 @@ def main() -> None:
     shots = Path(args.screenshot_dir or f"eval_outputs/external_runs/{datetime.now():%Y%m%d_%H%M%S}")
     shots.mkdir(parents=True, exist_ok=True)
     values = _parse_values(args.value)
+    bindings = _parse_mapping(args.bind, "--bind")
+    completions = {target.strip() for target in args.complete if target.strip()}
+    goal_state = args.goal_state or args.goal or args.task_id
     task = BenchmarkTask(args.env, args.task_id, url, args.goal, success_text=args.success_text)
+    if args.planner == "llm":
+        raise NotImplementedError(
+            "LLM planner mode is reserved; use --planner rule, --planner runtime, or --planner reflex"
+        )
 
     print(f"launching {'headed' if args.headed else 'headless'} browser on {url}")
     session = BrowserSession.launch(url, headless=not args.headed)
     adapter = WebBenchmarkAdapter(session)
     used: list[str] = []
+    history = WebPlannerHistory()
+    task_plan = None
+    active_subgoal = 0
+    rule_planner = RuleBasedAffordancePlanner()
+    if args.planner == "rule":
+        task_plan = RuleBasedWebTaskPlanner().plan(args.goal, values=values)
+        print("task plan:")
+        for idx, subgoal in enumerate(task_plan.subgoals, start=1):
+            print(f"  {idx}. {subgoal.id}: {subgoal.description}")
+    if args.planner == "runtime":
+        print("runtime planner: schema-driven, environment-agnostic")
+        print(f"declared bindings: {bindings}")
+        print(f"declared completions: {sorted(completions)}")
     try:
+        if args.planner == "runtime":
+            session.screenshot(str(shots / "step_00.png"))
+            runtime_adapter = RuntimeWebEnvironmentAdapter(
+                adapter,
+                task,
+                bindings=bindings,
+                completions=completions,
+                goal_id=args.task_id,
+                goal_state=goal_state,
+            )
+            outcome = asyncio.run(
+                RuntimeEpisodeRunner().run_goal_episode(
+                    runtime_adapter,
+                    RuntimeEpisodeSpec(
+                        task_id=f"{args.env}:{args.task_id}",
+                        goal_id=args.task_id,
+                        goal_state=goal_state,
+                        parameters=values,
+                        data_source="external_web_runtime",
+                    ),
+                )
+            )
+            session.screenshot(str(shots / "final.png"))
+            print(f"runtime entrypoint: RuntimeEpisodeRunner.run_goal_episode")
+            print(f"runtime state: {outcome.result.state.value}")
+            print(f"verified: {outcome.result.final_outcome_verified}")
+            print(f"episode: {outcome.result.episode_id}")
+            print(f"transitions: {len(outcome.transition_ledger.records)}")
+            print(f"metrics: {outcome.metrics.values}")
+            print(f"\nresult: {'SOLVED' if adapter.is_solved(task) else 'not solved'} | screenshots={shots}")
+            if args.pause_at_end:
+                input("press Enter to close the browser...")
+            return
+
         for step in range(args.max_steps):
             pam = adapter.observe(task)
             session.screenshot(str(shots / f"step_{step:02d}.png"))
@@ -118,11 +209,35 @@ def main() -> None:
                 f"[{step:02d}] perceived {len(pam.affordances)} affordances "
                 f"(compression {pam.compression_ratio:.0%})"
             )
-            choice = select_next(pam, args.goal, values=values, used_ids=tuple(used))
-            if choice is None:
-                print("     no further affordance to act on; stopping")
-                break
-            affordance, value = choice
+            if args.planner == "rule":
+                assert task_plan is not None
+                page_text = adapter.page_text()
+                while active_subgoal < len(task_plan.subgoals) and subgoal_satisfied(
+                    pam,
+                    page_text,
+                    task_plan.subgoals[active_subgoal],
+                    success_text=args.success_text,
+                ):
+                    print(f"     subgoal done: {task_plan.subgoals[active_subgoal].id}")
+                    active_subgoal += 1
+                subgoal = task_plan.current(active_subgoal)
+                if subgoal is None:
+                    print("     all planned subgoals completed")
+                    break
+                print(f"     active subgoal: {subgoal.id}")
+                decision = rule_planner.next_action(pam, subgoal, values=values, history=history)
+                if decision.done or decision.affordance is None:
+                    print(f"     no further rule action; stopping ({decision.reason})")
+                    break
+                affordance, value = decision.affordance, decision.value
+                print(f"     rule reason: {decision.reason}")
+                history = history.append(decision)
+            else:
+                choice = select_next(pam, args.goal, values=values, used_ids=tuple(used))
+                if choice is None:
+                    print("     no further affordance to act on; stopping")
+                    break
+                affordance, value = choice
             verb = "type" if value is not None else "click"
             print(f"     -> {verb} '{affordance.label}'  via {affordance.locator.get('selector')}")
             result = adapter.act(affordance, value=value)

@@ -1,0 +1,5607 @@
+{
+  "bayesian": {
+    "feature_likelihoods": [
+      "conflict_score",
+      "source_reliability.dom",
+      "source_reliability.wot",
+      "staleness_ms",
+      "missing_source_probability"
+    ],
+    "metrics": {
+      "balanced_accuracy": 1.0,
+      "false_halt_rate": 0.0,
+      "false_negative": 0,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.18413250024120012,
+      "miss_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative": 30,
+      "true_positive": 90
+    },
+    "posterior_threshold": 0.5,
+    "trials": [
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.30468590557575226,
+        "episode_id": "ambiguous_weak_stale_signal_rep_000_seed_7300",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 0,
+        "scenario": "weak_stale_signal",
+        "seed": 7300,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2950206398963928,
+        "episode_id": "ambiguous_weak_stale_signal_rep_001_seed_7301",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 1,
+        "scenario": "weak_stale_signal",
+        "seed": 7301,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2529323101043701,
+        "episode_id": "ambiguous_weak_stale_signal_rep_002_seed_7302",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 2,
+        "scenario": "weak_stale_signal",
+        "seed": 7302,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2583041787147522,
+        "episode_id": "ambiguous_weak_stale_signal_rep_003_seed_7303",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 3,
+        "scenario": "weak_stale_signal",
+        "seed": 7303,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2544168382883072,
+        "episode_id": "ambiguous_weak_stale_signal_rep_004_seed_7304",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 4,
+        "scenario": "weak_stale_signal",
+        "seed": 7304,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2514217048883438,
+        "episode_id": "ambiguous_weak_stale_signal_rep_005_seed_7305",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 5,
+        "scenario": "weak_stale_signal",
+        "seed": 7305,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.25262124836444855,
+        "episode_id": "ambiguous_weak_stale_signal_rep_006_seed_7306",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 6,
+        "scenario": "weak_stale_signal",
+        "seed": 7306,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.1583639532327652,
+        "episode_id": "ambiguous_weak_stale_signal_rep_007_seed_7307",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 7,
+        "scenario": "weak_stale_signal",
+        "seed": 7307,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.18554739654064178,
+        "episode_id": "ambiguous_weak_stale_signal_rep_008_seed_7308",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 8,
+        "scenario": "weak_stale_signal",
+        "seed": 7308,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2564135938882828,
+        "episode_id": "ambiguous_weak_stale_signal_rep_009_seed_7309",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 9,
+        "scenario": "weak_stale_signal",
+        "seed": 7309,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.25278516113758087,
+        "episode_id": "ambiguous_weak_stale_signal_rep_010_seed_7310",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 10,
+        "scenario": "weak_stale_signal",
+        "seed": 7310,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.27558766305446625,
+        "episode_id": "ambiguous_weak_stale_signal_rep_011_seed_7311",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 11,
+        "scenario": "weak_stale_signal",
+        "seed": 7311,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2608262002468109,
+        "episode_id": "ambiguous_weak_stale_signal_rep_012_seed_7312",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 12,
+        "scenario": "weak_stale_signal",
+        "seed": 7312,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.269569456577301,
+        "episode_id": "ambiguous_weak_stale_signal_rep_013_seed_7313",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 13,
+        "scenario": "weak_stale_signal",
+        "seed": 7313,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2580564469099045,
+        "episode_id": "ambiguous_weak_stale_signal_rep_014_seed_7314",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 14,
+        "scenario": "weak_stale_signal",
+        "seed": 7314,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2663172781467438,
+        "episode_id": "ambiguous_weak_stale_signal_rep_015_seed_7315",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 15,
+        "scenario": "weak_stale_signal",
+        "seed": 7315,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.24987198412418365,
+        "episode_id": "ambiguous_weak_stale_signal_rep_016_seed_7316",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 16,
+        "scenario": "weak_stale_signal",
+        "seed": 7316,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.24852342903614044,
+        "episode_id": "ambiguous_weak_stale_signal_rep_017_seed_7317",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 17,
+        "scenario": "weak_stale_signal",
+        "seed": 7317,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2526305615901947,
+        "episode_id": "ambiguous_weak_stale_signal_rep_018_seed_7318",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 18,
+        "scenario": "weak_stale_signal",
+        "seed": 7318,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2446155995130539,
+        "episode_id": "ambiguous_weak_stale_signal_rep_019_seed_7319",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 19,
+        "scenario": "weak_stale_signal",
+        "seed": 7319,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.25107525289058685,
+        "episode_id": "ambiguous_weak_stale_signal_rep_020_seed_7320",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 20,
+        "scenario": "weak_stale_signal",
+        "seed": 7320,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.25627948343753815,
+        "episode_id": "ambiguous_weak_stale_signal_rep_021_seed_7321",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 21,
+        "scenario": "weak_stale_signal",
+        "seed": 7321,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.26325881481170654,
+        "episode_id": "ambiguous_weak_stale_signal_rep_022_seed_7322",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 22,
+        "scenario": "weak_stale_signal",
+        "seed": 7322,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2899169921875,
+        "episode_id": "ambiguous_weak_stale_signal_rep_023_seed_7323",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 23,
+        "scenario": "weak_stale_signal",
+        "seed": 7323,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.27611665427684784,
+        "episode_id": "ambiguous_weak_stale_signal_rep_024_seed_7324",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 24,
+        "scenario": "weak_stale_signal",
+        "seed": 7324,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2555549144744873,
+        "episode_id": "ambiguous_weak_stale_signal_rep_025_seed_7325",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 25,
+        "scenario": "weak_stale_signal",
+        "seed": 7325,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.2590734511613846,
+        "episode_id": "ambiguous_weak_stale_signal_rep_026_seed_7326",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 26,
+        "scenario": "weak_stale_signal",
+        "seed": 7326,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.15870295464992523,
+        "episode_id": "ambiguous_weak_stale_signal_rep_027_seed_7327",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 27,
+        "scenario": "weak_stale_signal",
+        "seed": 7327,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.1659877598285675,
+        "episode_id": "ambiguous_weak_stale_signal_rep_028_seed_7328",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 28,
+        "scenario": "weak_stale_signal",
+        "seed": 7328,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 0.605625,
+        "detection_latency_ms": 0.16117282211780548,
+        "episode_id": "ambiguous_weak_stale_signal_rep_029_seed_7329",
+        "expected_blocking": true,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.71213,
+        "repetition": 29,
+        "scenario": "weak_stale_signal",
+        "seed": 7329,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "staleness_ms": 1200.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.17927028238773346,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_000_seed_7330",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 0,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7330,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22440403699874878,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_001_seed_7331",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 1,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7331,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.21555088460445404,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_002_seed_7332",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 2,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7332,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14041736721992493,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_003_seed_7333",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 3,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7333,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13950467109680176,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_004_seed_7334",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 4,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7334,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.168556347489357,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_005_seed_7335",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 5,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7335,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.15242956578731537,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_006_seed_7336",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 6,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7336,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22503919899463654,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_007_seed_7337",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 7,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7337,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.18444843590259552,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_008_seed_7338",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 8,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7338,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.21690502762794495,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_009_seed_7339",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 9,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7339,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22133812308311462,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_010_seed_7340",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 10,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7340,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.18312782049179077,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_011_seed_7341",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 11,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7341,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.21874718368053436,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_012_seed_7342",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 12,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7342,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.24423375725746155,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_013_seed_7343",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 13,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7343,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14656409621238708,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_014_seed_7344",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 14,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7344,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22611767053604126,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_015_seed_7345",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 15,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7345,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.23469887673854828,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_016_seed_7346",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 16,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7346,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.1794416457414627,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_017_seed_7347",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 17,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7347,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2265479415655136,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_018_seed_7348",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 18,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7348,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.1508668065071106,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_019_seed_7349",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 19,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7349,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2157222479581833,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_020_seed_7350",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 20,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7350,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14511309564113617,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_021_seed_7351",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 21,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7351,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.24024397134780884,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_022_seed_7352",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 22,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7352,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14391914010047913,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_023_seed_7353",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 23,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7353,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2266969531774521,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_024_seed_7354",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 24,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7354,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22881850600242615,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_025_seed_7355",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 25,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7355,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22787973284721375,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_026_seed_7356",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 26,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7356,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.22990629076957703,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_027_seed_7357",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 27,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7357,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14039315283298492,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_028_seed_7358",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 28,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7358,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2113301306962967,
+        "episode_id": "ambiguous_delayed_wot_recovery_rep_029_seed_7359",
+        "expected_blocking": true,
+        "missing_source_probability": 0.15,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.867611,
+        "repetition": 29,
+        "scenario": "delayed_wot_recovery",
+        "seed": 7359,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "staleness_ms": 900.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.19203312695026398,
+        "episode_id": "ambiguous_low_reliability_dom_rep_000_seed_7360",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 0,
+        "scenario": "low_reliability_dom",
+        "seed": 7360,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12954510748386383,
+        "episode_id": "ambiguous_low_reliability_dom_rep_001_seed_7361",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 1,
+        "scenario": "low_reliability_dom",
+        "seed": 7361,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.13263337314128876,
+        "episode_id": "ambiguous_low_reliability_dom_rep_002_seed_7362",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 2,
+        "scenario": "low_reliability_dom",
+        "seed": 7362,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12584589421749115,
+        "episode_id": "ambiguous_low_reliability_dom_rep_003_seed_7363",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 3,
+        "scenario": "low_reliability_dom",
+        "seed": 7363,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11802837252616882,
+        "episode_id": "ambiguous_low_reliability_dom_rep_004_seed_7364",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 4,
+        "scenario": "low_reliability_dom",
+        "seed": 7364,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12925826013088226,
+        "episode_id": "ambiguous_low_reliability_dom_rep_005_seed_7365",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 5,
+        "scenario": "low_reliability_dom",
+        "seed": 7365,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.1252293586730957,
+        "episode_id": "ambiguous_low_reliability_dom_rep_006_seed_7366",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 6,
+        "scenario": "low_reliability_dom",
+        "seed": 7366,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12393295764923096,
+        "episode_id": "ambiguous_low_reliability_dom_rep_007_seed_7367",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 7,
+        "scenario": "low_reliability_dom",
+        "seed": 7367,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.13441778719425201,
+        "episode_id": "ambiguous_low_reliability_dom_rep_008_seed_7368",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 8,
+        "scenario": "low_reliability_dom",
+        "seed": 7368,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.20189210772514343,
+        "episode_id": "ambiguous_low_reliability_dom_rep_009_seed_7369",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 9,
+        "scenario": "low_reliability_dom",
+        "seed": 7369,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.1250132918357849,
+        "episode_id": "ambiguous_low_reliability_dom_rep_010_seed_7370",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 10,
+        "scenario": "low_reliability_dom",
+        "seed": 7370,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.19870325922966003,
+        "episode_id": "ambiguous_low_reliability_dom_rep_011_seed_7371",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 11,
+        "scenario": "low_reliability_dom",
+        "seed": 7371,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.200662761926651,
+        "episode_id": "ambiguous_low_reliability_dom_rep_012_seed_7372",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 12,
+        "scenario": "low_reliability_dom",
+        "seed": 7372,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.18035434186458588,
+        "episode_id": "ambiguous_low_reliability_dom_rep_013_seed_7373",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 13,
+        "scenario": "low_reliability_dom",
+        "seed": 7373,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12479722499847412,
+        "episode_id": "ambiguous_low_reliability_dom_rep_014_seed_7374",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 14,
+        "scenario": "low_reliability_dom",
+        "seed": 7374,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12361444532871246,
+        "episode_id": "ambiguous_low_reliability_dom_rep_015_seed_7375",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 15,
+        "scenario": "low_reliability_dom",
+        "seed": 7375,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11725164949893951,
+        "episode_id": "ambiguous_low_reliability_dom_rep_016_seed_7376",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 16,
+        "scenario": "low_reliability_dom",
+        "seed": 7376,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.1260470598936081,
+        "episode_id": "ambiguous_low_reliability_dom_rep_017_seed_7377",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 17,
+        "scenario": "low_reliability_dom",
+        "seed": 7377,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.1320764422416687,
+        "episode_id": "ambiguous_low_reliability_dom_rep_018_seed_7378",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 18,
+        "scenario": "low_reliability_dom",
+        "seed": 7378,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11212192475795746,
+        "episode_id": "ambiguous_low_reliability_dom_rep_019_seed_7379",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 19,
+        "scenario": "low_reliability_dom",
+        "seed": 7379,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11955015361309052,
+        "episode_id": "ambiguous_low_reliability_dom_rep_020_seed_7380",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 20,
+        "scenario": "low_reliability_dom",
+        "seed": 7380,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.20332448184490204,
+        "episode_id": "ambiguous_low_reliability_dom_rep_021_seed_7381",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 21,
+        "scenario": "low_reliability_dom",
+        "seed": 7381,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12059323489665985,
+        "episode_id": "ambiguous_low_reliability_dom_rep_022_seed_7382",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 22,
+        "scenario": "low_reliability_dom",
+        "seed": 7382,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.17053261399269104,
+        "episode_id": "ambiguous_low_reliability_dom_rep_023_seed_7383",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 23,
+        "scenario": "low_reliability_dom",
+        "seed": 7383,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.16768649220466614,
+        "episode_id": "ambiguous_low_reliability_dom_rep_024_seed_7384",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 24,
+        "scenario": "low_reliability_dom",
+        "seed": 7384,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11889450252056122,
+        "episode_id": "ambiguous_low_reliability_dom_rep_025_seed_7385",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 25,
+        "scenario": "low_reliability_dom",
+        "seed": 7385,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.12079998850822449,
+        "episode_id": "ambiguous_low_reliability_dom_rep_026_seed_7386",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 26,
+        "scenario": "low_reliability_dom",
+        "seed": 7386,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11979229748249054,
+        "episode_id": "ambiguous_low_reliability_dom_rep_027_seed_7387",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 27,
+        "scenario": "low_reliability_dom",
+        "seed": 7387,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.11544488370418549,
+        "episode_id": "ambiguous_low_reliability_dom_rep_028_seed_7388",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 28,
+        "scenario": "low_reliability_dom",
+        "seed": 7388,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 0.0,
+        "detection_latency_ms": 0.13641826808452606,
+        "episode_id": "ambiguous_low_reliability_dom_rep_029_seed_7389",
+        "expected_blocking": false,
+        "missing_source_probability": 0.0,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.073782,
+        "repetition": 29,
+        "scenario": "low_reliability_dom",
+        "seed": 7389,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13907626271247864,
+        "episode_id": "ambiguous_partial_missing_wot_rep_000_seed_7390",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 0,
+        "scenario": "partial_missing_wot",
+        "seed": 7390,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13891048729419708,
+        "episode_id": "ambiguous_partial_missing_wot_rep_001_seed_7391",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 1,
+        "scenario": "partial_missing_wot",
+        "seed": 7391,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12836605310440063,
+        "episode_id": "ambiguous_partial_missing_wot_rep_002_seed_7392",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 2,
+        "scenario": "partial_missing_wot",
+        "seed": 7392,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14171935617923737,
+        "episode_id": "ambiguous_partial_missing_wot_rep_003_seed_7393",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 3,
+        "scenario": "partial_missing_wot",
+        "seed": 7393,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13496354222297668,
+        "episode_id": "ambiguous_partial_missing_wot_rep_004_seed_7394",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 4,
+        "scenario": "partial_missing_wot",
+        "seed": 7394,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.1375880092382431,
+        "episode_id": "ambiguous_partial_missing_wot_rep_005_seed_7395",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 5,
+        "scenario": "partial_missing_wot",
+        "seed": 7395,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12634508311748505,
+        "episode_id": "ambiguous_partial_missing_wot_rep_006_seed_7396",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 6,
+        "scenario": "partial_missing_wot",
+        "seed": 7396,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.20600669085979462,
+        "episode_id": "ambiguous_partial_missing_wot_rep_007_seed_7397",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 7,
+        "scenario": "partial_missing_wot",
+        "seed": 7397,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12476369738578796,
+        "episode_id": "ambiguous_partial_missing_wot_rep_008_seed_7398",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 8,
+        "scenario": "partial_missing_wot",
+        "seed": 7398,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13373419642448425,
+        "episode_id": "ambiguous_partial_missing_wot_rep_009_seed_7399",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 9,
+        "scenario": "partial_missing_wot",
+        "seed": 7399,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13488903641700745,
+        "episode_id": "ambiguous_partial_missing_wot_rep_010_seed_7400",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 10,
+        "scenario": "partial_missing_wot",
+        "seed": 7400,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.20766444504261017,
+        "episode_id": "ambiguous_partial_missing_wot_rep_011_seed_7401",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 11,
+        "scenario": "partial_missing_wot",
+        "seed": 7401,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.20952150225639343,
+        "episode_id": "ambiguous_partial_missing_wot_rep_012_seed_7402",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 12,
+        "scenario": "partial_missing_wot",
+        "seed": 7402,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2216193825006485,
+        "episode_id": "ambiguous_partial_missing_wot_rep_013_seed_7403",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 13,
+        "scenario": "partial_missing_wot",
+        "seed": 7403,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2061855047941208,
+        "episode_id": "ambiguous_partial_missing_wot_rep_014_seed_7404",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 14,
+        "scenario": "partial_missing_wot",
+        "seed": 7404,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.1329854130744934,
+        "episode_id": "ambiguous_partial_missing_wot_rep_015_seed_7405",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 15,
+        "scenario": "partial_missing_wot",
+        "seed": 7405,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.15411339700222015,
+        "episode_id": "ambiguous_partial_missing_wot_rep_016_seed_7406",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 16,
+        "scenario": "partial_missing_wot",
+        "seed": 7406,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12809410691261292,
+        "episode_id": "ambiguous_partial_missing_wot_rep_017_seed_7407",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 17,
+        "scenario": "partial_missing_wot",
+        "seed": 7407,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13646483421325684,
+        "episode_id": "ambiguous_partial_missing_wot_rep_018_seed_7408",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 18,
+        "scenario": "partial_missing_wot",
+        "seed": 7408,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.14168955385684967,
+        "episode_id": "ambiguous_partial_missing_wot_rep_019_seed_7409",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 19,
+        "scenario": "partial_missing_wot",
+        "seed": 7409,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.128159299492836,
+        "episode_id": "ambiguous_partial_missing_wot_rep_020_seed_7410",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 20,
+        "scenario": "partial_missing_wot",
+        "seed": 7410,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12984871864318848,
+        "episode_id": "ambiguous_partial_missing_wot_rep_021_seed_7411",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 21,
+        "scenario": "partial_missing_wot",
+        "seed": 7411,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13199448585510254,
+        "episode_id": "ambiguous_partial_missing_wot_rep_022_seed_7412",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 22,
+        "scenario": "partial_missing_wot",
+        "seed": 7412,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12773089110851288,
+        "episode_id": "ambiguous_partial_missing_wot_rep_023_seed_7413",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 23,
+        "scenario": "partial_missing_wot",
+        "seed": 7413,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13512372970581055,
+        "episode_id": "ambiguous_partial_missing_wot_rep_024_seed_7414",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 24,
+        "scenario": "partial_missing_wot",
+        "seed": 7414,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13127177953720093,
+        "episode_id": "ambiguous_partial_missing_wot_rep_025_seed_7415",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 25,
+        "scenario": "partial_missing_wot",
+        "seed": 7415,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.13229437172412872,
+        "episode_id": "ambiguous_partial_missing_wot_rep_026_seed_7416",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 26,
+        "scenario": "partial_missing_wot",
+        "seed": 7416,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.239616259932518,
+        "episode_id": "ambiguous_partial_missing_wot_rep_027_seed_7417",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 27,
+        "scenario": "partial_missing_wot",
+        "seed": 7417,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.12868456542491913,
+        "episode_id": "ambiguous_partial_missing_wot_rep_028_seed_7418",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 28,
+        "scenario": "partial_missing_wot",
+        "seed": 7418,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      },
+      {
+        "conflict_score": 1.0,
+        "detection_latency_ms": 0.2060960978269577,
+        "episode_id": "ambiguous_partial_missing_wot_rep_029_seed_7419",
+        "expected_blocking": true,
+        "missing_source_probability": 0.7,
+        "oracle_source": "ambiguous-fault-profile-label",
+        "posterior_blocking_probability": 0.953911,
+        "repetition": 29,
+        "scenario": "partial_missing_wot",
+        "seed": 7419,
+        "source_pair": "DOM+WOT",
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "staleness_ms": 100.0
+      }
+    ]
+  },
+  "comparison": {
+    "balanced_accuracy_delta": 0.166667,
+    "bayesian_outperforms_rule_first": true,
+    "production_gate_changed": true,
+    "recommendation": "gate_enabled_evaluation_passed"
+  },
+  "data_source": "live_ambiguous_fusion_campaign",
+  "gate": {
+    "metrics": {
+      "balanced_accuracy": 1.0,
+      "false_halt_rate": 0.0,
+      "false_negative": 0,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.18413250024120012,
+      "miss_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative": 30,
+      "true_positive": 90
+    },
+    "strategy": "bayesian_gate"
+  },
+  "protocol": {
+    "fine_grained_fault_api": true,
+    "fusion_strategy": "bayesian_gate",
+    "oracle_source": "ambiguous-fault-profile-label",
+    "production_gate_changed": true,
+    "profile_counts": {
+      "delayed_wot_recovery": 30,
+      "low_reliability_dom": 30,
+      "partial_missing_wot": 30,
+      "weak_stale_signal": 30
+    },
+    "reset_evidence_complete": true,
+    "trial_count": 120,
+    "unique_episode_ids": true,
+    "unique_seeds": true
+  },
+  "replay_config": {
+    "control_url": "http://127.0.0.1:18081",
+    "dashboard_url": "http://127.0.0.1:13000",
+    "thing_directory_url": "http://127.0.0.1:18082/things",
+    "wot_public_base_url": "http://127.0.0.1:18080"
+  },
+  "rule_first": {
+    "locked_threshold": 1.0,
+    "metrics": {
+      "balanced_accuracy": 0.8333333333333333,
+      "false_halt_rate": 0.0,
+      "false_negative": 30,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.18413250024120012,
+      "miss_rate": 0.3333333333333333,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "true_negative": 30,
+      "true_positive": 60
+    }
+  },
+  "trials": [
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.30468590557575226,
+      "episode_id": "ambiguous_weak_stale_signal_rep_000_seed_7300",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 0,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_000_seed_7300:reset:0",
+      "seed": 7300,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2950206398963928,
+      "episode_id": "ambiguous_weak_stale_signal_rep_001_seed_7301",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 1,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_001_seed_7301:reset:1",
+      "seed": 7301,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2529323101043701,
+      "episode_id": "ambiguous_weak_stale_signal_rep_002_seed_7302",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 2,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_002_seed_7302:reset:2",
+      "seed": 7302,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2583041787147522,
+      "episode_id": "ambiguous_weak_stale_signal_rep_003_seed_7303",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 3,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_003_seed_7303:reset:3",
+      "seed": 7303,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2544168382883072,
+      "episode_id": "ambiguous_weak_stale_signal_rep_004_seed_7304",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 4,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_004_seed_7304:reset:4",
+      "seed": 7304,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2514217048883438,
+      "episode_id": "ambiguous_weak_stale_signal_rep_005_seed_7305",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 5,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_005_seed_7305:reset:5",
+      "seed": 7305,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.25262124836444855,
+      "episode_id": "ambiguous_weak_stale_signal_rep_006_seed_7306",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 6,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_006_seed_7306:reset:6",
+      "seed": 7306,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.1583639532327652,
+      "episode_id": "ambiguous_weak_stale_signal_rep_007_seed_7307",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 7,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_007_seed_7307:reset:7",
+      "seed": 7307,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.18554739654064178,
+      "episode_id": "ambiguous_weak_stale_signal_rep_008_seed_7308",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 8,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_008_seed_7308:reset:8",
+      "seed": 7308,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2564135938882828,
+      "episode_id": "ambiguous_weak_stale_signal_rep_009_seed_7309",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 9,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_009_seed_7309:reset:9",
+      "seed": 7309,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.25278516113758087,
+      "episode_id": "ambiguous_weak_stale_signal_rep_010_seed_7310",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 10,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_010_seed_7310:reset:10",
+      "seed": 7310,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.27558766305446625,
+      "episode_id": "ambiguous_weak_stale_signal_rep_011_seed_7311",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 11,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_011_seed_7311:reset:11",
+      "seed": 7311,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2608262002468109,
+      "episode_id": "ambiguous_weak_stale_signal_rep_012_seed_7312",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 12,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_012_seed_7312:reset:12",
+      "seed": 7312,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.269569456577301,
+      "episode_id": "ambiguous_weak_stale_signal_rep_013_seed_7313",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 13,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_013_seed_7313:reset:13",
+      "seed": 7313,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2580564469099045,
+      "episode_id": "ambiguous_weak_stale_signal_rep_014_seed_7314",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 14,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_014_seed_7314:reset:14",
+      "seed": 7314,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2663172781467438,
+      "episode_id": "ambiguous_weak_stale_signal_rep_015_seed_7315",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 15,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_015_seed_7315:reset:15",
+      "seed": 7315,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.24987198412418365,
+      "episode_id": "ambiguous_weak_stale_signal_rep_016_seed_7316",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 16,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_016_seed_7316:reset:16",
+      "seed": 7316,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.24852342903614044,
+      "episode_id": "ambiguous_weak_stale_signal_rep_017_seed_7317",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 17,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_017_seed_7317:reset:17",
+      "seed": 7317,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2526305615901947,
+      "episode_id": "ambiguous_weak_stale_signal_rep_018_seed_7318",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 18,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_018_seed_7318:reset:18",
+      "seed": 7318,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2446155995130539,
+      "episode_id": "ambiguous_weak_stale_signal_rep_019_seed_7319",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 19,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_019_seed_7319:reset:19",
+      "seed": 7319,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.25107525289058685,
+      "episode_id": "ambiguous_weak_stale_signal_rep_020_seed_7320",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 20,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_020_seed_7320:reset:20",
+      "seed": 7320,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.25627948343753815,
+      "episode_id": "ambiguous_weak_stale_signal_rep_021_seed_7321",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 21,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_021_seed_7321:reset:21",
+      "seed": 7321,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.26325881481170654,
+      "episode_id": "ambiguous_weak_stale_signal_rep_022_seed_7322",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 22,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_022_seed_7322:reset:22",
+      "seed": 7322,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2899169921875,
+      "episode_id": "ambiguous_weak_stale_signal_rep_023_seed_7323",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 23,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_023_seed_7323:reset:23",
+      "seed": 7323,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.27611665427684784,
+      "episode_id": "ambiguous_weak_stale_signal_rep_024_seed_7324",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 24,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_024_seed_7324:reset:24",
+      "seed": 7324,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2555549144744873,
+      "episode_id": "ambiguous_weak_stale_signal_rep_025_seed_7325",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 25,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_025_seed_7325:reset:25",
+      "seed": 7325,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2590734511613846,
+      "episode_id": "ambiguous_weak_stale_signal_rep_026_seed_7326",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 26,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_026_seed_7326:reset:26",
+      "seed": 7326,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.15870295464992523,
+      "episode_id": "ambiguous_weak_stale_signal_rep_027_seed_7327",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 27,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_027_seed_7327:reset:27",
+      "seed": 7327,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.1659877598285675,
+      "episode_id": "ambiguous_weak_stale_signal_rep_028_seed_7328",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 28,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_028_seed_7328:reset:28",
+      "seed": 7328,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.605625,
+      "conflict_type": "target_temperature_mismatch",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.16117282211780548,
+      "episode_id": "ambiguous_weak_stale_signal_rep_029_seed_7329",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "stale_temperature",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Weak dashboard stale offset with source reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.55,
+          "wot": 0.85
+        },
+        "stale_offset": -1.5,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "weak_stale_signal",
+      "repetition": 29,
+      "reset_evidence_id": "ambiguous_weak_stale_signal_rep_029_seed_7329:reset:29",
+      "seed": 7329,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.17927028238773346,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_000_seed_7330",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 0,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_000_seed_7330:reset:0",
+      "seed": 7330,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22440403699874878,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_001_seed_7331",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 1,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_001_seed_7331:reset:1",
+      "seed": 7331,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.21555088460445404,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_002_seed_7332",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 2,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_002_seed_7332:reset:2",
+      "seed": 7332,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14041736721992493,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_003_seed_7333",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 3,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_003_seed_7333:reset:3",
+      "seed": 7333,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13950467109680176,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_004_seed_7334",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 4,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_004_seed_7334:reset:4",
+      "seed": 7334,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.168556347489357,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_005_seed_7335",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 5,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_005_seed_7335:reset:5",
+      "seed": 7335,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.15242956578731537,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_006_seed_7336",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 6,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_006_seed_7336:reset:6",
+      "seed": 7336,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22503919899463654,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_007_seed_7337",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 7,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_007_seed_7337:reset:7",
+      "seed": 7337,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.18444843590259552,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_008_seed_7338",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 8,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_008_seed_7338:reset:8",
+      "seed": 7338,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.21690502762794495,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_009_seed_7339",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 9,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_009_seed_7339:reset:9",
+      "seed": 7339,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22133812308311462,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_010_seed_7340",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 10,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_010_seed_7340:reset:10",
+      "seed": 7340,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.18312782049179077,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_011_seed_7341",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 11,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_011_seed_7341:reset:11",
+      "seed": 7341,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.21874718368053436,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_012_seed_7342",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 12,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_012_seed_7342:reset:12",
+      "seed": 7342,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.24423375725746155,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_013_seed_7343",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 13,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_013_seed_7343:reset:13",
+      "seed": 7343,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14656409621238708,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_014_seed_7344",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 14,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_014_seed_7344:reset:14",
+      "seed": 7344,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22611767053604126,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_015_seed_7345",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 15,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_015_seed_7345:reset:15",
+      "seed": 7345,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.23469887673854828,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_016_seed_7346",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 16,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_016_seed_7346:reset:16",
+      "seed": 7346,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.1794416457414627,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_017_seed_7347",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 17,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_017_seed_7347:reset:17",
+      "seed": 7347,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2265479415655136,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_018_seed_7348",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 18,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_018_seed_7348:reset:18",
+      "seed": 7348,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.1508668065071106,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_019_seed_7349",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 19,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_019_seed_7349:reset:19",
+      "seed": 7349,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2157222479581833,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_020_seed_7350",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 20,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_020_seed_7350:reset:20",
+      "seed": 7350,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14511309564113617,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_021_seed_7351",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 21,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_021_seed_7351:reset:21",
+      "seed": 7351,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.24024397134780884,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_022_seed_7352",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 22,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_022_seed_7352:reset:22",
+      "seed": 7352,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14391914010047913,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_023_seed_7353",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 23,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_023_seed_7353:reset:23",
+      "seed": 7353,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2266969531774521,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_024_seed_7354",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 24,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_024_seed_7354:reset:24",
+      "seed": 7354,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22881850600242615,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_025_seed_7355",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 25,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_025_seed_7355:reset:25",
+      "seed": 7355,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22787973284721375,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_026_seed_7356",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 26,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_026_seed_7356:reset:26",
+      "seed": 7356,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.22990629076957703,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_027_seed_7357",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 27,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_027_seed_7357:reset:27",
+      "seed": 7357,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14039315283298492,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_028_seed_7358",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 28,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_028_seed_7358:reset:28",
+      "seed": 7358,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2113301306962967,
+      "episode_id": "ambiguous_delayed_wot_recovery_rep_029_seed_7359",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": null,
+        "fault_delay_ms": 450,
+        "notes": "Read delay creates an ambiguous delayed-recovery window.",
+        "read_delay_ms": 450,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.6,
+          "wot": 0.9
+        },
+        "stale_offset": null,
+        "wot_fault": "timeout"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "delayed_wot_recovery",
+      "repetition": 29,
+      "reset_evidence_id": "ambiguous_delayed_wot_recovery_rep_029_seed_7359:reset:29",
+      "seed": 7359,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.19203312695026398,
+      "episode_id": "ambiguous_low_reliability_dom_rep_000_seed_7360",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 0,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_000_seed_7360:reset:0",
+      "seed": 7360,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12954510748386383,
+      "episode_id": "ambiguous_low_reliability_dom_rep_001_seed_7361",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 1,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_001_seed_7361:reset:1",
+      "seed": 7361,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.13263337314128876,
+      "episode_id": "ambiguous_low_reliability_dom_rep_002_seed_7362",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 2,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_002_seed_7362:reset:2",
+      "seed": 7362,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12584589421749115,
+      "episode_id": "ambiguous_low_reliability_dom_rep_003_seed_7363",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 3,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_003_seed_7363:reset:3",
+      "seed": 7363,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11802837252616882,
+      "episode_id": "ambiguous_low_reliability_dom_rep_004_seed_7364",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 4,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_004_seed_7364:reset:4",
+      "seed": 7364,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12925826013088226,
+      "episode_id": "ambiguous_low_reliability_dom_rep_005_seed_7365",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 5,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_005_seed_7365:reset:5",
+      "seed": 7365,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.1252293586730957,
+      "episode_id": "ambiguous_low_reliability_dom_rep_006_seed_7366",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 6,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_006_seed_7366:reset:6",
+      "seed": 7366,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12393295764923096,
+      "episode_id": "ambiguous_low_reliability_dom_rep_007_seed_7367",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 7,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_007_seed_7367:reset:7",
+      "seed": 7367,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.13441778719425201,
+      "episode_id": "ambiguous_low_reliability_dom_rep_008_seed_7368",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 8,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_008_seed_7368:reset:8",
+      "seed": 7368,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.20189210772514343,
+      "episode_id": "ambiguous_low_reliability_dom_rep_009_seed_7369",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 9,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_009_seed_7369:reset:9",
+      "seed": 7369,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.1250132918357849,
+      "episode_id": "ambiguous_low_reliability_dom_rep_010_seed_7370",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 10,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_010_seed_7370:reset:10",
+      "seed": 7370,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.19870325922966003,
+      "episode_id": "ambiguous_low_reliability_dom_rep_011_seed_7371",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 11,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_011_seed_7371:reset:11",
+      "seed": 7371,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.200662761926651,
+      "episode_id": "ambiguous_low_reliability_dom_rep_012_seed_7372",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 12,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_012_seed_7372:reset:12",
+      "seed": 7372,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.18035434186458588,
+      "episode_id": "ambiguous_low_reliability_dom_rep_013_seed_7373",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 13,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_013_seed_7373:reset:13",
+      "seed": 7373,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12479722499847412,
+      "episode_id": "ambiguous_low_reliability_dom_rep_014_seed_7374",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 14,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_014_seed_7374:reset:14",
+      "seed": 7374,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12361444532871246,
+      "episode_id": "ambiguous_low_reliability_dom_rep_015_seed_7375",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 15,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_015_seed_7375:reset:15",
+      "seed": 7375,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11725164949893951,
+      "episode_id": "ambiguous_low_reliability_dom_rep_016_seed_7376",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 16,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_016_seed_7376:reset:16",
+      "seed": 7376,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.1260470598936081,
+      "episode_id": "ambiguous_low_reliability_dom_rep_017_seed_7377",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 17,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_017_seed_7377:reset:17",
+      "seed": 7377,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.1320764422416687,
+      "episode_id": "ambiguous_low_reliability_dom_rep_018_seed_7378",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 18,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_018_seed_7378:reset:18",
+      "seed": 7378,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11212192475795746,
+      "episode_id": "ambiguous_low_reliability_dom_rep_019_seed_7379",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 19,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_019_seed_7379:reset:19",
+      "seed": 7379,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11955015361309052,
+      "episode_id": "ambiguous_low_reliability_dom_rep_020_seed_7380",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 20,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_020_seed_7380:reset:20",
+      "seed": 7380,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.20332448184490204,
+      "episode_id": "ambiguous_low_reliability_dom_rep_021_seed_7381",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 21,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_021_seed_7381:reset:21",
+      "seed": 7381,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12059323489665985,
+      "episode_id": "ambiguous_low_reliability_dom_rep_022_seed_7382",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 22,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_022_seed_7382:reset:22",
+      "seed": 7382,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.17053261399269104,
+      "episode_id": "ambiguous_low_reliability_dom_rep_023_seed_7383",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 23,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_023_seed_7383:reset:23",
+      "seed": 7383,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.16768649220466614,
+      "episode_id": "ambiguous_low_reliability_dom_rep_024_seed_7384",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 24,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_024_seed_7384:reset:24",
+      "seed": 7384,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11889450252056122,
+      "episode_id": "ambiguous_low_reliability_dom_rep_025_seed_7385",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 25,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_025_seed_7385:reset:25",
+      "seed": 7385,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.12079998850822449,
+      "episode_id": "ambiguous_low_reliability_dom_rep_026_seed_7386",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 26,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_026_seed_7386:reset:26",
+      "seed": 7386,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11979229748249054,
+      "episode_id": "ambiguous_low_reliability_dom_rep_027_seed_7387",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 27,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_027_seed_7387:reset:27",
+      "seed": 7387,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.11544488370418549,
+      "episode_id": "ambiguous_low_reliability_dom_rep_028_seed_7388",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 28,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_028_seed_7388:reset:28",
+      "seed": 7388,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 0.0,
+      "conflict_type": "",
+      "detected_blocking": false,
+      "detection_latency_ms": 0.13641826808452606,
+      "episode_id": "ambiguous_low_reliability_dom_rep_029_seed_7389",
+      "expected_blocking": false,
+      "live_fault_mapping": {
+        "dom_fault": "layout_shift",
+        "drop_probability": null,
+        "fault_delay_ms": 0,
+        "notes": "Non-semantic DOM layout noise with low DOM reliability metadata.",
+        "read_delay_ms": null,
+        "request_timeout_s": null,
+        "source_reliability": {
+          "dom": 0.3,
+          "wot": 0.95
+        },
+        "stale_offset": null,
+        "wot_fault": ""
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "low_reliability_dom",
+      "repetition": 29,
+      "reset_evidence_id": "ambiguous_low_reliability_dom_rep_029_seed_7389:reset:29",
+      "seed": 7389,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13907626271247864,
+      "episode_id": "ambiguous_partial_missing_wot_rep_000_seed_7390",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 0,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_000_seed_7390:reset:0",
+      "seed": 7390,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13891048729419708,
+      "episode_id": "ambiguous_partial_missing_wot_rep_001_seed_7391",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 1,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_001_seed_7391:reset:1",
+      "seed": 7391,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12836605310440063,
+      "episode_id": "ambiguous_partial_missing_wot_rep_002_seed_7392",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 2,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_002_seed_7392:reset:2",
+      "seed": 7392,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14171935617923737,
+      "episode_id": "ambiguous_partial_missing_wot_rep_003_seed_7393",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 3,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_003_seed_7393:reset:3",
+      "seed": 7393,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13496354222297668,
+      "episode_id": "ambiguous_partial_missing_wot_rep_004_seed_7394",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 4,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_004_seed_7394:reset:4",
+      "seed": 7394,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.1375880092382431,
+      "episode_id": "ambiguous_partial_missing_wot_rep_005_seed_7395",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 5,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_005_seed_7395:reset:5",
+      "seed": 7395,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12634508311748505,
+      "episode_id": "ambiguous_partial_missing_wot_rep_006_seed_7396",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 6,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_006_seed_7396:reset:6",
+      "seed": 7396,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.20600669085979462,
+      "episode_id": "ambiguous_partial_missing_wot_rep_007_seed_7397",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 7,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_007_seed_7397:reset:7",
+      "seed": 7397,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12476369738578796,
+      "episode_id": "ambiguous_partial_missing_wot_rep_008_seed_7398",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 8,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_008_seed_7398:reset:8",
+      "seed": 7398,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13373419642448425,
+      "episode_id": "ambiguous_partial_missing_wot_rep_009_seed_7399",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 9,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_009_seed_7399:reset:9",
+      "seed": 7399,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13488903641700745,
+      "episode_id": "ambiguous_partial_missing_wot_rep_010_seed_7400",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 10,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_010_seed_7400:reset:10",
+      "seed": 7400,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.20766444504261017,
+      "episode_id": "ambiguous_partial_missing_wot_rep_011_seed_7401",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 11,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_011_seed_7401:reset:11",
+      "seed": 7401,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.20952150225639343,
+      "episode_id": "ambiguous_partial_missing_wot_rep_012_seed_7402",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 12,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_012_seed_7402:reset:12",
+      "seed": 7402,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2216193825006485,
+      "episode_id": "ambiguous_partial_missing_wot_rep_013_seed_7403",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 13,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_013_seed_7403:reset:13",
+      "seed": 7403,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2061855047941208,
+      "episode_id": "ambiguous_partial_missing_wot_rep_014_seed_7404",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 14,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_014_seed_7404:reset:14",
+      "seed": 7404,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.1329854130744934,
+      "episode_id": "ambiguous_partial_missing_wot_rep_015_seed_7405",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 15,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_015_seed_7405:reset:15",
+      "seed": 7405,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.15411339700222015,
+      "episode_id": "ambiguous_partial_missing_wot_rep_016_seed_7406",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 16,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_016_seed_7406:reset:16",
+      "seed": 7406,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12809410691261292,
+      "episode_id": "ambiguous_partial_missing_wot_rep_017_seed_7407",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 17,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_017_seed_7407:reset:17",
+      "seed": 7407,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13646483421325684,
+      "episode_id": "ambiguous_partial_missing_wot_rep_018_seed_7408",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 18,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_018_seed_7408:reset:18",
+      "seed": 7408,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.14168955385684967,
+      "episode_id": "ambiguous_partial_missing_wot_rep_019_seed_7409",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 19,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_019_seed_7409:reset:19",
+      "seed": 7409,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.128159299492836,
+      "episode_id": "ambiguous_partial_missing_wot_rep_020_seed_7410",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 20,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_020_seed_7410:reset:20",
+      "seed": 7410,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12984871864318848,
+      "episode_id": "ambiguous_partial_missing_wot_rep_021_seed_7411",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 21,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_021_seed_7411:reset:21",
+      "seed": 7411,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13199448585510254,
+      "episode_id": "ambiguous_partial_missing_wot_rep_022_seed_7412",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 22,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_022_seed_7412:reset:22",
+      "seed": 7412,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12773089110851288,
+      "episode_id": "ambiguous_partial_missing_wot_rep_023_seed_7413",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 23,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_023_seed_7413:reset:23",
+      "seed": 7413,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13512372970581055,
+      "episode_id": "ambiguous_partial_missing_wot_rep_024_seed_7414",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 24,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_024_seed_7414:reset:24",
+      "seed": 7414,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13127177953720093,
+      "episode_id": "ambiguous_partial_missing_wot_rep_025_seed_7415",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 25,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_025_seed_7415:reset:25",
+      "seed": 7415,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.13229437172412872,
+      "episode_id": "ambiguous_partial_missing_wot_rep_026_seed_7416",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 26,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_026_seed_7416:reset:26",
+      "seed": 7416,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.239616259932518,
+      "episode_id": "ambiguous_partial_missing_wot_rep_027_seed_7417",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 27,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_027_seed_7417:reset:27",
+      "seed": 7417,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.12868456542491913,
+      "episode_id": "ambiguous_partial_missing_wot_rep_028_seed_7418",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 28,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_028_seed_7418:reset:28",
+      "seed": 7418,
+      "source_pair": "DOM+WOT"
+    },
+    {
+      "conflict_score": 1.0,
+      "conflict_type": "required_source_missing_or_stale",
+      "detected_blocking": true,
+      "detection_latency_ms": 0.2060960978269577,
+      "episode_id": "ambiguous_partial_missing_wot_rep_029_seed_7419",
+      "expected_blocking": true,
+      "live_fault_mapping": {
+        "dom_fault": "",
+        "drop_probability": 0.7,
+        "fault_delay_ms": 0,
+        "notes": "Partial missing WoT reads through drop probability.",
+        "read_delay_ms": null,
+        "request_timeout_s": 0.25,
+        "source_reliability": {
+          "dom": 0.65,
+          "wot": 0.35
+        },
+        "stale_offset": null,
+        "wot_fault": "offline"
+      },
+      "oracle_source": "ambiguous-fault-profile-label",
+      "profile": "partial_missing_wot",
+      "repetition": 29,
+      "reset_evidence_id": "ambiguous_partial_missing_wot_rep_029_seed_7419:reset:29",
+      "seed": 7419,
+      "source_pair": "DOM+WOT"
+    }
+  ]
+}

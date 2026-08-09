@@ -1,0 +1,147 @@
+{
+  "cases": [
+    {
+      "case_id": "openweb-overlay-obstruction",
+      "coverage_level": "controlled_mock_evidence",
+      "environment_surface": "local_mock_web_fixture",
+      "episode_id": "openweb-mock-00-8000",
+      "expected_effect": "primary_action_completed == true",
+      "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+      "failure_class": "overlay_modal_obstruction",
+      "goal": "Accept the primary action while a cookie modal blocks the target button.",
+      "html_fixture": "failure_overlay_obstruction.html",
+      "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+      "oracle_state": {
+        "overlay_present": true,
+        "primary_action_completed": false
+      },
+      "real_open_web": false,
+      "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+      "seed": 8000
+    },
+    {
+      "case_id": "openweb-session-expiry",
+      "coverage_level": "controlled_mock_evidence",
+      "environment_surface": "local_mock_web_fixture",
+      "episode_id": "openweb-mock-01-8001",
+      "expected_effect": "profile_update_persisted == true",
+      "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+      "failure_class": "session_auth_expiry",
+      "goal": "Submit a protected profile update after the session has expired.",
+      "html_fixture": "failure_session_expiry.html",
+      "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+      "oracle_state": {
+        "profile_update_persisted": false,
+        "session_valid": false
+      },
+      "real_open_web": false,
+      "runtime_mechanism": "fresh verification against independent oracle state",
+      "seed": 8001
+    },
+    {
+      "case_id": "openweb-autocomplete-validation",
+      "coverage_level": "controlled_mock_evidence",
+      "environment_surface": "local_mock_web_fixture",
+      "episode_id": "openweb-mock-02-8002",
+      "expected_effect": "submitted_city == requested_city",
+      "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+      "failure_class": "autocomplete_async_validation_mutation",
+      "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+      "html_fixture": "failure_autocomplete_validation.html",
+      "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+      "oracle_state": {
+        "requested_city": "New York",
+        "submitted_city": "New York, NY"
+      },
+      "real_open_web": false,
+      "runtime_mechanism": "expected-effect verification after fresh observation",
+      "seed": 8002
+    },
+    {
+      "case_id": "openweb-optimistic-rollback",
+      "coverage_level": "controlled_mock_evidence",
+      "environment_surface": "local_mock_web_fixture",
+      "episode_id": "openweb-mock-03-8003",
+      "expected_effect": "backend_order_confirmed == true",
+      "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+      "failure_class": "optimistic_ui_backend_mismatch",
+      "goal": "Place an order only if the backend confirms it.",
+      "html_fixture": "failure_optimistic_rollback.html",
+      "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+      "oracle_state": {
+        "backend_order_confirmed": false,
+        "ui_order_submitted": true
+      },
+      "real_open_web": false,
+      "runtime_mechanism": "executor-success/postcondition-success separation",
+      "seed": 8003
+    },
+    {
+      "case_id": "openweb-dom-visual-disagreement",
+      "coverage_level": "controlled_mock_evidence",
+      "environment_surface": "local_mock_web_fixture",
+      "episode_id": "openweb-mock-04-8004",
+      "expected_effect": "selected_plan == visual_highlighted_plan",
+      "expected_runtime_response": "block fast path and require active perception or human escalation",
+      "failure_class": "dom_vs_visual_disagreement",
+      "goal": "Choose the visually highlighted active plan.",
+      "html_fixture": "failure_dom_visual_disagreement.html",
+      "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+      "oracle_state": {
+        "dom_selected_plan": "premium",
+        "visual_highlighted_plan": "basic"
+      },
+      "real_open_web": false,
+      "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+      "seed": 8004
+    },
+    {
+      "case_id": "openweb-visible-ineffective-affordance",
+      "coverage_level": "controlled_mock_evidence",
+      "environment_surface": "local_mock_web_fixture",
+      "episode_id": "openweb-mock-05-8005",
+      "expected_effect": "notifications_enabled == true",
+      "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+      "failure_class": "visible_but_ineffective_affordance",
+      "goal": "Enable notification settings with the visible toggle.",
+      "html_fixture": "failure_visible_ineffective_affordance.html",
+      "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+      "oracle_state": {
+        "notifications_enabled": false,
+        "toggle_clicked": true
+      },
+      "real_open_web": false,
+      "runtime_mechanism": "postcondition failure and recovery ledger",
+      "seed": 8005
+    }
+  ],
+  "data_source": "open_web_mock_failure_suite",
+  "protocol": {
+    "case_count": 6,
+    "claim_boundary": "controlled mock evidence only; not real open-web evidence",
+    "controlled_mock_evidence": true,
+    "environment_surface": "local_mock_web_fixture",
+    "fixture_root": "env/mock_envs",
+    "oracle_source": "fixture_oracle_state",
+    "real_open_web_evidence": false,
+    "runtime_path_target": "RuntimeEpisodeRunner envelope",
+    "seed_start": 8000
+  },
+  "recommendation": "connect_mock_cases_to_runtime_episode_runner_then_run_real_open_web_probe",
+  "summary": {
+    "case_count": 6,
+    "controlled_mock_evidence_count": 6,
+    "failure_class_count": 6,
+    "failure_classes": [
+      "autocomplete_async_validation_mutation",
+      "dom_vs_visual_disagreement",
+      "optimistic_ui_backend_mismatch",
+      "overlay_modal_obstruction",
+      "session_auth_expiry",
+      "visible_but_ineffective_affordance"
+    ],
+    "real_open_web_evidence_count": 0,
+    "unique_episode_ids": true,
+    "unique_seeds": true
+  }
+}

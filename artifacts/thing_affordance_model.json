@@ -1,16 +1,16 @@
 [
   {
-    "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+    "thing_id": "urn:uuid:c6768199-d634-4872-9d0d-03576eda129c",
     "title": "thermostat",
     "affordances": [
       {
-        "id": "wot_urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4_targetTemperature",
+        "id": "wot_urn:uuid:c6768199-d634-4872-9d0d-03576eda129c_targetTemperature",
         "source": "WOT",
         "type": "property",
         "label": "targetTemperature",
         "action": "write_property",
         "locator": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:c6768199-d634-4872-9d0d-03576eda129c",
           "href": "http://localhost:8080/thermostat/properties/targetTemperature",
           "method": "PUT"
         },
@@ -36,13 +36,13 @@
         "safety_level": "low"
       },
       {
-        "id": "wot_urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4_setTargetTemperature",
+        "id": "wot_urn:uuid:c6768199-d634-4872-9d0d-03576eda129c_setTargetTemperature",
         "source": "WOT",
         "type": "action",
         "label": "setTargetTemperature",
         "action": "invoke",
         "locator": {
-          "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+          "thing_id": "urn:uuid:c6768199-d634-4872-9d0d-03576eda129c",
           "href": "http://localhost:8080/thermostat/actions/setTargetTemperature",
           "method": "POST"
         },
@@ -66,14 +66,14 @@
     ],
     "state_sources": [
       {
-        "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+        "thing_id": "urn:uuid:c6768199-d634-4872-9d0d-03576eda129c",
         "property": "targetTemperature",
         "href": "http://localhost:8080/thermostat/properties/targetTemperature",
         "method": "GET",
         "read_only": false
       },
       {
-        "thing_id": "urn:uuid:ed98438e-9a78-4fe2-9a32-4d9594fda0c4",
+        "thing_id": "urn:uuid:c6768199-d634-4872-9d0d-03576eda129c",
         "property": "currentTemperature",
         "href": "http://localhost:8080/thermostat/properties/currentTemperature",
         "method": "GET",
@@ -91,17 +91,17 @@
     "events": []
   },
   {
-    "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+    "thing_id": "urn:uuid:631b18a5-beb6-48b8-ad83-ee95d5795802",
     "title": "lights",
     "affordances": [
       {
-        "id": "wot_urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760_brightness",
+        "id": "wot_urn:uuid:631b18a5-beb6-48b8-ad83-ee95d5795802_brightness",
         "source": "WOT",
         "type": "property",
         "label": "brightness",
         "action": "write_property",
         "locator": {
-          "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+          "thing_id": "urn:uuid:631b18a5-beb6-48b8-ad83-ee95d5795802",
           "href": "http://localhost:8080/lights/properties/brightness",
           "method": "PUT"
         },
@@ -127,13 +127,13 @@
         "safety_level": "low"
       },
       {
-        "id": "wot_urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760_setBrightness",
+        "id": "wot_urn:uuid:631b18a5-beb6-48b8-ad83-ee95d5795802_setBrightness",
         "source": "WOT",
         "type": "action",
         "label": "setBrightness",
         "action": "invoke",
         "locator": {
-          "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+          "thing_id": "urn:uuid:631b18a5-beb6-48b8-ad83-ee95d5795802",
           "href": "http://localhost:8080/lights/actions/setBrightness",
           "method": "POST"
         },
@@ -157,7 +157,7 @@
     ],
     "state_sources": [
       {
-        "thing_id": "urn:uuid:e469423b-c4e0-41f9-80f7-7128266ce760",
+        "thing_id": "urn:uuid:631b18a5-beb6-48b8-ad83-ee95d5795802",
         "property": "brightness",
         "href": "http://localhost:8080/lights/properties/brightness",
         "method": "GET",
@@ -175,17 +175,17 @@
     "events": []
   },
   {
-    "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+    "thing_id": "urn:uuid:0a1251b6-ec81-4356-8409-59aeaefba9a9",
     "title": "projector",
     "affordances": [
       {
-        "id": "wot_urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b_power",
+        "id": "wot_urn:uuid:0a1251b6-ec81-4356-8409-59aeaefba9a9_power",
         "source": "WOT",
         "type": "property",
         "label": "power",
         "action": "write_property",
         "locator": {
-          "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+          "thing_id": "urn:uuid:0a1251b6-ec81-4356-8409-59aeaefba9a9",
           "href": "http://localhost:8080/projector/properties/power",
           "method": "PUT"
         },
@@ -213,13 +213,13 @@
         "safety_level": "low"
       },
       {
-        "id": "wot_urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b_setPower",
+        "id": "wot_urn:uuid:0a1251b6-ec81-4356-8409-59aeaefba9a9_setPower",
         "source": "WOT",
         "type": "action",
         "label": "setPower",
         "action": "invoke",
         "locator": {
-          "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+          "thing_id": "urn:uuid:0a1251b6-ec81-4356-8409-59aeaefba9a9",
           "href": "http://localhost:8080/projector/actions/setPower",
           "method": "POST"
         },
@@ -245,7 +245,7 @@
     ],
     "state_sources": [
       {
-        "thing_id": "urn:uuid:1281ef08-7954-4575-8a60-3f1ed220c71b",
+        "thing_id": "urn:uuid:0a1251b6-ec81-4356-8409-59aeaefba9a9",
         "property": "power",
         "href": "http://localhost:8080/projector/properties/power",
         "method": "GET",

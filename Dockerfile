@@ -3,14 +3,11 @@ FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
-COPY src/ ./src/
-COPY evaluation/ ./evaluation/
-COPY scripts/ ./scripts/
-COPY tests/ ./tests/
-COPY config/ ./config/
-COPY artifacts/ ./artifacts/
-COPY run_demo.py ./
+# Copy the whole context and let .dockerignore do the filtering. An explicit
+# per-directory allowlist silently goes stale: any newly added top-level
+# directory is missing inside the image, so this stage fails for a reason that
+# never reproduces in the lint-test job (which sees the full checkout).
+COPY . .
 
 RUN pip install --upgrade pip && \
     pip install -e ".[dev]"
@@ -26,12 +23,7 @@ FROM python:3.11-slim AS runner
 
 WORKDIR /app
 
-COPY pyproject.toml README.md ./
-COPY src/ ./src/
-COPY evaluation/ ./evaluation/
-COPY config/ ./config/
-COPY artifacts/ ./artifacts/
-COPY run_demo.py ./
+COPY . .
 
 RUN pip install --upgrade pip && \
     pip install -e "."

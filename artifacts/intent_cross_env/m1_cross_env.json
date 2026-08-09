@@ -1,0 +1,254 @@
+{
+  "summary": {
+    "per_env_M1": [
+      {
+        "env": "forum.html",
+        "tasks": 2,
+        "solved": 2,
+        "success_rate": 1.0,
+        "mean_latency_ms": 449.512
+      },
+      {
+        "env": "shopping.html",
+        "tasks": 4,
+        "solved": 4,
+        "success_rate": 1.0,
+        "mean_latency_ms": 965.781
+      }
+    ],
+    "overall_success_rate": 1.0,
+    "n_tasks": 6,
+    "n_envs": 2,
+    "declined": {
+      "refused_intent": 1,
+      "unsupported_goal": 0
+    },
+    "model_derived_episodes": 0
+  },
+  "episodes": [
+    {
+      "utterance": "add the wireless headphones to my cart",
+      "outcome": "reached",
+      "env": "shopping.html",
+      "goal_state": "item_in_cart",
+      "runtime_goal_state": "cart.holds_item == true",
+      "parameters": {
+        "item": "wireless headphones"
+      },
+      "layer1_source": "rule_fallback",
+      "model_derived": false,
+      "completion": "button.add-cart-btn[data-id='headphones']",
+      "runtime_state": "completed",
+      "verified": true,
+      "reason": "goal completed",
+      "episode_id": "episode-a4667c922336",
+      "transitions": [
+        {
+          "step": 1,
+          "skill_id": "intent_31831141",
+          "backend": "dom",
+          "affordance_key": "dom:semantic::Add Wireless Headphones to cart",
+          "success": true,
+          "postcondition_passed": true,
+          "failure_reason": ""
+        }
+      ],
+      "goal_state_trail": [
+        {
+          "value": false,
+          "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "dom"
+        }
+      ],
+      "latency_ms": 878.7
+    },
+    {
+      "utterance": "put the pro laptop in my cart",
+      "outcome": "reached",
+      "env": "shopping.html",
+      "goal_state": "item_in_cart",
+      "runtime_goal_state": "cart.holds_item == true",
+      "parameters": {
+        "item": "pro laptop"
+      },
+      "layer1_source": "rule_fallback",
+      "model_derived": false,
+      "completion": "button.add-cart-btn[data-id='laptop']",
+      "runtime_state": "completed",
+      "verified": true,
+      "reason": "goal completed",
+      "episode_id": "episode-a82289021589",
+      "transitions": [
+        {
+          "step": 1,
+          "skill_id": "intent_47269448",
+          "backend": "dom",
+          "affordance_key": "dom:semantic::Add Pro Laptop to cart",
+          "success": true,
+          "postcondition_passed": true,
+          "failure_reason": ""
+        }
+      ],
+      "goal_state_trail": [
+        {
+          "value": false,
+          "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "dom"
+        }
+      ],
+      "latency_ms": 993.4
+    },
+    {
+      "utterance": "add the mechanical keyboard to my cart please",
+      "outcome": "reached",
+      "env": "shopping.html",
+      "goal_state": "item_in_cart",
+      "runtime_goal_state": "cart.holds_item == true",
+      "parameters": {
+        "item": "mechanical keyboard"
+      },
+      "layer1_source": "rule_fallback",
+      "model_derived": false,
+      "completion": "button.add-cart-btn[data-id='keyboard']",
+      "runtime_state": "completed",
+      "verified": true,
+      "reason": "goal completed",
+      "episode_id": "episode-40c40d152154",
+      "transitions": [
+        {
+          "step": 1,
+          "skill_id": "intent_62926506",
+          "backend": "dom",
+          "affordance_key": "dom:semantic::Add Mechanical Keyboard to cart",
+          "success": true,
+          "postcondition_passed": true,
+          "failure_reason": ""
+        }
+      ],
+      "goal_state_trail": [
+        {
+          "value": false,
+          "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "dom"
+        }
+      ],
+      "latency_ms": 991.9
+    },
+    {
+      "utterance": "add the 4k monitor to my cart",
+      "outcome": "reached",
+      "env": "shopping.html",
+      "goal_state": "item_in_cart",
+      "runtime_goal_state": "cart.holds_item == true",
+      "parameters": {
+        "item": "4k monitor"
+      },
+      "layer1_source": "rule_fallback",
+      "model_derived": false,
+      "completion": "button.add-cart-btn[data-id='monitor']",
+      "runtime_state": "completed",
+      "verified": true,
+      "reason": "goal completed",
+      "episode_id": "episode-e02f47def832",
+      "transitions": [
+        {
+          "step": 1,
+          "skill_id": "intent_22111345",
+          "backend": "dom",
+          "affordance_key": "dom:semantic::Add 4K Monitor to cart",
+          "success": true,
+          "postcondition_passed": true,
+          "failure_reason": ""
+        }
+      ],
+      "goal_state_trail": [
+        {
+          "value": false,
+          "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "dom"
+        }
+      ],
+      "latency_ms": 999.1
+    },
+    {
+      "utterance": "upvote the top post",
+      "outcome": "reached",
+      "env": "forum.html",
+      "goal_state": "post_upvoted",
+      "runtime_goal_state": "post.upvoted == true",
+      "parameters": {
+        "subject": "top"
+      },
+      "layer1_source": "rule_fallback",
+      "model_derived": false,
+      "completion": "button.upvote-btn[data-post='1']",
+      "runtime_state": "completed",
+      "verified": true,
+      "reason": "goal completed",
+      "episode_id": "episode-5c27609caa51",
+      "transitions": [],
+      "goal_state_trail": [
+        {
+          "value": true,
+          "source": "dom"
+        }
+      ],
+      "latency_ms": 490.0
+    },
+    {
+      "utterance": "upvote the browser automation post",
+      "outcome": "reached",
+      "env": "forum.html",
+      "goal_state": "post_upvoted",
+      "runtime_goal_state": "post.upvoted == true",
+      "parameters": {
+        "subject": "browser automation"
+      },
+      "layer1_source": "rule_fallback",
+      "model_derived": false,
+      "completion": "button.upvote-btn[data-post='2']",
+      "runtime_state": "completed",
+      "verified": true,
+      "reason": "goal completed",
+      "episode_id": "episode-1659aebe6355",
+      "transitions": [],
+      "goal_state_trail": [
+        {
+          "value": true,
+          "source": "dom"
+        }
+      ],
+      "latency_ms": 409.0
+    },
+    {
+      "utterance": "make me a sandwich",
+      "outcome": "refused_intent",
+      "env": "",
+      "goal_state": "",
+      "runtime_goal_state": "",
+      "parameters": {},
+      "layer1_source": "unsupported",
+      "model_derived": false,
+      "completion": "",
+      "runtime_state": "",
+      "verified": false,
+      "reason": "",
+      "episode_id": "",
+      "transitions": [],
+      "goal_state_trail": [],
+      "latency_ms": 0.0
+    }
+  ]
+}

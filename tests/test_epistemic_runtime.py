@@ -1,13 +1,133 @@
 """Tests for structured CognitiveMap, epistemic arbitration, and demo traces."""
 
+import asyncio
 import json
 
 import pytest
 
 from evaluation.integration_eval import write_demo_artifacts
+from src.adaptation.llm_judge import LLMJudge
+from src.contracts.types import (
+    Affordance,
+    Condition,
+    ExecutionResult,
+    Observation,
+    RollbackSpec,
+    SkillCall,
+    SkillTuple,
+)
+from src.perception.page_affordance_model import PageAffordanceModel
 from src.recovery.system2_escalation import System2EscalationPolicy, suggest_system2_decision
 from src.runtime.cognitive_map import CognitiveMap, Entity, RuntimeAffordance, StateAssertion
+from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.runtime.goal_spec import GoalSpec
+from src.runtime.live_observation import observation_from_live_sources
+from src.runtime.state_machine import RuntimeState
+from src.verification.active_perception import ActivePerceptionResolver, ActivePerceptionResult
 from src.verification.conflict_detector import EpistemicArbiter, SemanticConsistencyRule, SensoryConflictError
+
+
+class _RecordingExecutor:
+    def __init__(
+        self,
+        backend: str,
+        result: ExecutionResult | None = None,
+        exception: Exception | None = None,
+    ) -> None:
+        self.backend = backend
+        self.calls: list[SkillCall] = []
+        self.result = result
+        self.exception = exception
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        self.calls.append(skill_call)
+        if self.exception is not None:
+            raise self.exception
+        return self.result or ExecutionResult(
+            skill_id=skill_call.skill_id,
+            backend_used=self.backend,
+            success=True,
+            latency_ms=1.0,
+            confidence=1.0,
+            raw_observation_delta={},
+        )
+
+
+class _GoalExecutor:
+    def __init__(self) -> None:
+        self.calls: list[SkillCall] = []
+
+    async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+        self.calls.append(skill_call)
+        delta = {}
+        if skill_call.params.get("primitive_action") == "click":
+            delta = {"booking": {"confirmed": True}}
+        if skill_call.params.get("primitive_action") == "type":
+            affordance_id = str(skill_call.params.get("affordance_id", ""))
+            value = skill_call.params.get("value")
+            if "room" in affordance_id:
+                delta = {"booking_form": {"room": value}}
+            if "time" in affordance_id:
+                delta = {"booking_form": {"time": value}}
+        return ExecutionResult(
+            skill_id=skill_call.skill_id,
+            backend_used="dom",
+            success=True,
+            latency_ms=1.0,
+            confidence=1.0,
+            raw_observation_delta=delta,
+        )
+
+
+class _FakeJudgeClient:
+    def complete_json(self, prompt: str):
+        assert "ambiguous_false_success" in prompt
+        return {
+            "boundary": "skill_spec_insufficient",
+            "failure_type": "weak_postcondition",
+            "confidence": 0.76,
+            "evidence": ["reported success is not supported by state evidence"],
+            "immediate_action": "use_recovery_cascade",
+            "long_term_action": "strengthen_postcondition",
+            "safe_to_auto_apply": False,
+            "needs_human_review": True,
+        }
+
+
+class _ResolvingProbe:
+    async def observe(self, conflicts, cognitive_map, original_observation):
+        return Observation(
+            device_states={"thermostat_A": {"temperature": 22}},
+            accessibility_tree={"page_state": {"thermostat_A": {"temperature": 22}}},
+        )
+
+
+class _UnresolvedProbe:
+    async def observe(self, conflicts, cognitive_map, original_observation):
+        return None
+
+
+def _skill_tuple(
+    skill_id: str = "set_temperature",
+    allowed_backends: list[str] | None = None,
+    preferred_backends: list[str] | None = None,
+    postconditions: list[Condition] | None = None,
+    rollback: RollbackSpec | None = None,
+) -> SkillTuple:
+    return SkillTuple(
+        skill_id=skill_id,
+        description=skill_id,
+        parameters_schema={},
+        preconditions=[],
+        postconditions=postconditions or [],
+        allowed_backends=allowed_backends or ["wot", "dom", "visual"],
+        preferred_backends=preferred_backends or ["wot"],
+        rollback=rollback,
+        failure_modes={},
+        timeout_ms=3000,
+        safety_level="low",
+        irreversible=False,
+    )
 
 
 def test_cognitive_map_stores_state_history_and_affordance_queries():
@@ -31,6 +151,14 @@ def test_cognitive_map_stores_state_history_and_affordance_queries():
     assert cmap.get_latest_state("thermostat_A", "temperature", source="wot").value == 24
     assert cmap.get_latest_state("thermostat_A", "temperature", source="dom").value == 20
     assert cmap.get_affordances_for_skill("set_temperature")[0].id == "wot_set_temperature"
+
+
+def test_cognitive_map_normalizes_attribute_names_on_write_and_read():
+    cmap = CognitiveMap(task_id="canonical-state-name")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 22, "wot"))
+
+    assert cmap.get_latest_state("thermostat_A", "targetTemperature").value == 22
+    assert cmap.get_latest_state("thermostat_A", "target_temperature").value == 22
 
 
 def test_epistemic_arbiter_computes_numeric_conflict_mass_and_halts():
@@ -235,6 +363,29 @@ def test_epistemic_arbiter_detects_semantic_consistency_conflict():
     assert arbiter.should_halt_system1(conflicts)
 
 
+def test_semantic_rule_accepts_source_spelling_for_canonicalized_attribute():
+    cmap = CognitiveMap(task_id="semantic-source-spelling")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "targetTemperature", 30, "wot"))
+    cmap.add_state_assertion(StateAssertion("safety", "limitExceeded", True, "system"))
+    arbiter = EpistemicArbiter(
+        semantic_rules=[
+            SemanticConsistencyRule(
+                conflict_type="unsafe_temperature_target",
+                entity_id="thermostat_A",
+                attribute="targetTemperature",
+                value=30,
+                depends_on_entity_id="safety",
+                depends_on_attribute="limitExceeded",
+                depends_on_value=True,
+            )
+        ]
+    )
+
+    conflicts = arbiter.check(cmap)
+
+    assert [conflict.conflict_type for conflict in conflicts] == ["unsafe_temperature_target"]
+
+
 def test_cognitive_map_rejects_malformed_structured_inputs_and_clamps_confidence():
     cmap = CognitiveMap(task_id="task_bad_inputs")
 
@@ -274,6 +425,92 @@ def test_epistemic_arbiter_repeated_checks_update_conflict_instead_of_duplicatin
     assert cmap.unresolved_conflicts()[0].id == "door_A.lock"
 
 
+def test_epistemic_arbiter_resolves_conflict_after_clean_reobservation():
+    cmap = CognitiveMap(task_id="task_conflict_freshness")
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "dom", timestamp_ms=10))
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "unlocked", "wot", timestamp_ms=11))
+    arbiter = EpistemicArbiter()
+
+    assert [conflict.id for conflict in arbiter.check(cmap)] == ["door_A.lock"]
+
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "dom", timestamp_ms=20))
+    cmap.add_state_assertion(StateAssertion("door_A", "lock", "locked", "wot", timestamp_ms=21))
+    assert arbiter.check(cmap) == []
+    assert cmap.unresolved_conflicts() == []
+    assert cmap.conflicts[0].resolved is True
+    assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
+
+
+def test_epistemic_arbiter_clears_missing_source_conflict_when_source_recovers():
+    cmap = CognitiveMap(task_id="task_missing_source_freshness")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "wot", timestamp_ms=10))
+    arbiter = EpistemicArbiter(required_sources_by_attribute={"temperature": {"wot", "dom"}})
+
+    assert [conflict.id for conflict in arbiter.check(cmap)] == ["thermostat_A.temperature.missing_source"]
+
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=11))
+    assert arbiter.check(cmap) == []
+    assert cmap.unresolved_conflicts() == []
+    assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
+
+
+def test_epistemic_arbiter_treats_old_required_source_as_stale_by_relative_freshness():
+    cmap = CognitiveMap(task_id="task_required_relative_freshness")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=1))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "wot", timestamp_ms=10_001))
+    arbiter = EpistemicArbiter(
+        required_sources_by_attribute={"temperature": {"dom", "wot"}},
+        max_freshness_delta_ms=5000,
+    )
+
+    conflicts = arbiter.check(cmap)
+
+    assert [conflict.id for conflict in conflicts] == ["thermostat_A.temperature.missing_source"]
+    assert conflicts[0].values["missing_sources"] == ["dom"]
+
+
+def test_epistemic_arbiter_requires_absolute_freshness_when_configured():
+    cmap = CognitiveMap(task_id="task_absolute_freshness")
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "dom", timestamp_ms=10))
+    cmap.add_state_assertion(StateAssertion("thermostat_A", "temperature", 22, "wot", timestamp_ms=11))
+    arbiter = EpistemicArbiter(
+        required_sources_by_attribute={"temperature": {"dom", "wot"}},
+        max_assertion_age_ms=1,
+    )
+
+    conflicts = arbiter.check(cmap)
+
+    assert [conflict.id for conflict in conflicts] == ["thermostat_A.temperature.missing_source"]
+    assert conflicts[0].values["missing_sources"] == ["dom", "wot"]
+
+
+def test_epistemic_arbiter_resolves_semantic_conflict_after_rule_becomes_consistent():
+    cmap = CognitiveMap(task_id="task_semantic_conflict_resolution")
+    cmap.add_state_assertion(StateAssertion("readiness", "ready", True, "system", timestamp_ms=1))
+    cmap.add_state_assertion(StateAssertion("projector_A", "power", "off", "wot", timestamp_ms=2))
+    arbiter = EpistemicArbiter(
+        semantic_rules=[
+            SemanticConsistencyRule(
+                conflict_type="readiness_projector_inconsistent",
+                entity_id="readiness",
+                attribute="ready",
+                value=True,
+                depends_on_entity_id="projector_A",
+                depends_on_attribute="power",
+                depends_on_value="off",
+                severity="high",
+            )
+        ]
+    )
+
+    assert [conflict.id for conflict in arbiter.check(cmap)] == ["semantic.readiness_projector_inconsistent"]
+
+    cmap.add_state_assertion(StateAssertion("projector_A", "power", "on", "wot", timestamp_ms=3))
+    assert arbiter.check(cmap) == []
+    assert cmap.unresolved_conflicts() == []
+    assert cmap.conflicts[0].decision == "fresh_evidence_resolved"
+
+
 def test_epistemic_arbiter_ignores_low_confidence_visual_noise():
     cmap = CognitiveMap(task_id="task_noise")
     cmap.add_state_assertion(StateAssertion("screen_A", "mode", "presenting", "wot", confidence=1.0, timestamp_ms=10))
@@ -284,6 +521,79 @@ def test_epistemic_arbiter_ignores_low_confidence_visual_noise():
 
     assert conflicts == []
     assert cmap.unresolved_conflicts() == []
+
+
+def test_rule_first_gate_keeps_ambiguous_below_threshold_conflict_non_blocking():
+    cmap = CognitiveMap(task_id="task_rule_first_ambiguous")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 20.5, "dom", confidence=1.0, timestamp_ms=1000)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22.0, "wot", confidence=1.0, timestamp_ms=2200)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 2.0},
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        halt_threshold=1.0,
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert decision.conflicts == []
+
+
+def test_bayesian_gate_blocks_ambiguous_stale_conflict_without_replacing_fused_state_logic():
+    cmap = CognitiveMap(task_id="task_bayesian_gate_ambiguous")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 20.5, "dom", confidence=1.0, timestamp_ms=1000)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22.0, "wot", confidence=1.0, timestamp_ms=2200)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 2.0},
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        halt_threshold=1.0,
+        fusion_strategy="bayesian_gate",
+        bayesian_posterior_threshold=0.5,
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is False
+    assert decision.active_perception_required is True
+    assert decision.conflicts[0].conflict_type == "target_temperature_mismatch"
+    assert "bayesian_gate posterior" in decision.reason
+    fused = next(state for state in decision.fused_states if state.attribute == "target_temperature")
+    assert fused.value == 22.0
+
+
+def test_bayesian_gate_uses_assertion_staleness_metadata_for_live_fault_profiles():
+    cmap = CognitiveMap(task_id="task_bayesian_gate_metadata")
+    cmap.add_state_assertion(
+        StateAssertion(
+            "thermostat",
+            "target_temperature",
+            20.5,
+            "dom",
+            confidence=1.0,
+            timestamp_ms=1000,
+            metadata={"staleness_ms": 1200.0},
+        )
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22.0, "wot", confidence=1.0, timestamp_ms=1000)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 2.0},
+        source_reliability={"dom": 0.55, "wot": 0.85},
+        halt_threshold=1.0,
+        fusion_strategy="bayesian_gate",
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is False
+    assert "bayesian_gate posterior" in decision.reason
 
 
 def test_epistemic_arbiter_halts_on_high_confidence_categorical_conflict():
@@ -429,3 +739,666 @@ def test_system2_policy_triggers_on_low_confidence_and_unsafe_action():
     assert unsafe.should_trigger
     assert unsafe.reason == "unsafe_action_requires_confirmation"
     assert not healthy.should_trigger
+
+
+def test_cognitive_map_adapts_contract_affordances_for_runtime_routing():
+    cmap = CognitiveMap(task_id="task_contract_affordance")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_book_room",
+                source="DOM",
+                type="button",
+                label="Book Room",
+                action="click",
+                locator={"selector": "#book", "entity_id": "booking_button", "skill_id": "confirm_booking"},
+                confidence=0.92,
+            )
+        ]
+    )
+
+    affordance = cmap.get_affordances_for_skill("confirm_booking")[0]
+
+    assert affordance.source == "dom"
+    assert affordance.entity_id == "booking_button"
+    assert affordance.action_name == "confirm_booking"
+    assert affordance.grounding["selector"] == "#book"
+
+
+def test_cognitive_map_rejects_invalid_contract_affordance_without_partial_update():
+    cmap = CognitiveMap(task_id="task_contract_affordance_bad_case")
+    existing = Affordance(
+        id="dom_existing",
+        source="DOM",
+        type="button",
+        label="Book Room",
+        action="click",
+        locator={"selector": "#book", "entity_id": "booking_button", "skill_id": "confirm_booking"},
+        confidence=0.92,
+    )
+    cmap.update_affordances([existing])
+
+    with pytest.raises(ValueError):
+        cmap.update_affordances(
+            [
+                existing,
+                Affordance(
+                    id="",
+                    source="DOM",
+                    type="button",
+                    label="Broken",
+                    action="click",
+                    locator={"selector": "#broken"},
+                    confidence=0.5,
+                ),
+            ]
+        )
+
+    assert list(cmap.runtime_affordances) == ["dom_existing"]
+    assert cmap.affordances == [existing]
+
+
+def test_continuous_interaction_manager_blocks_system1_on_sensory_conflict():
+    wot_executor = _RecordingExecutor("wot")
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill_tuple()},
+        {"wot": wot_executor},
+        CognitiveMap(task_id="task_conflict_gate"),
+    )
+
+    result = asyncio.run(
+        manager.run_skill(
+            SkillCall("set_temperature", {"target": 22}),
+            Observation(
+                device_states={"thermostat_A": {"temperature": 24}},
+                accessibility_tree={"page_state": {"thermostat_A": {"temperature": 20}}},
+            ),
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.recovery_tier == 4
+    assert "sensory conflict detected" in result.reason
+    assert result.conflict_ids == ["thermostat_A.temperature"]
+    assert result.failure_boundary == "recoverable_execution_failure"
+    assert result.failure_type == "sensory_conflict"
+    assert result.fusion_decision["allow_system1"] is False
+    assert result.fusion_decision["active_perception_required"] is True
+    assert result.fusion_decision["fused_states"][0]["entity_id"] == "thermostat_A"
+    assert wot_executor.calls == []
+
+
+def test_continuous_interaction_manager_uses_active_perception_to_resolve_conflict_before_execution():
+    wot_executor = _RecordingExecutor("wot")
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill_tuple()},
+        {"wot": wot_executor},
+        CognitiveMap(task_id="task_conflict_resolved"),
+        active_perception_resolver=ActivePerceptionResolver(_ResolvingProbe()),
+    )
+
+    result = asyncio.run(
+        manager.run_skill(
+            SkillCall("set_temperature", {"target": 22}),
+            Observation(
+                device_states={"thermostat_A": {"temperature": 24}},
+                accessibility_tree={"page_state": {"thermostat_A": {"temperature": 20}}},
+            ),
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.active_perception_trace[0]["action"] == "active_perception_probe"
+    assert result.active_perception_trace[0]["resolved"] is True
+    assert wot_executor.calls
+    assert manager.cognitive_map.unresolved_conflicts() == []
+
+
+def test_epistemic_arbiter_fuses_live_style_dom_wot_visual_majority():
+    cmap = CognitiveMap(task_id="task_live_fusion")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22, "wot", confidence=1.0, timestamp_ms=10)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22, "dom", confidence=0.85, timestamp_ms=11)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 23, "visual", confidence=0.35, timestamp_ms=12)
+    )
+
+    decision = EpistemicArbiter(numeric_tolerances={"target_temperature": 2.0}).fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert decision.conflicts == []
+    fused = next(
+        state
+        for state in decision.fused_states
+        if state.entity_id == "thermostat" and state.attribute == "target_temperature"
+    )
+    assert fused.value == 22
+    assert set(fused.sources) == {"wot", "dom"}
+    assert fused.confidence > 0.8
+
+
+def test_epistemic_arbiter_allows_missing_visual_when_primary_sources_agree():
+    cmap = CognitiveMap(task_id="task_missing_visual")
+    cmap.add_state_assertion(StateAssertion("projector", "power", "on", "wot", confidence=1.0, timestamp_ms=10))
+    cmap.add_state_assertion(StateAssertion("projector", "power", "on", "dom", confidence=0.8, timestamp_ms=11))
+
+    decision = EpistemicArbiter().fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.conflicts == []
+    assert decision.fused_states[0].value == "on"
+
+
+def test_epistemic_arbiter_downweights_stale_live_dashboard_state():
+    cmap = CognitiveMap(task_id="task_stale_dashboard")
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 24, "dom", confidence=1.0, timestamp_ms=1)
+    )
+    cmap.add_state_assertion(
+        StateAssertion("thermostat", "target_temperature", 22, "wot", confidence=1.0, timestamp_ms=10_001)
+    )
+
+    decision = EpistemicArbiter(
+        numeric_tolerances={"target_temperature": 1.0},
+        max_freshness_delta_ms=1000,
+    ).fuse(cmap)
+
+    assert decision.allow_system1 is True
+    assert decision.conflicts == []
+    fused = next(state for state in decision.fused_states if state.attribute == "target_temperature")
+    assert fused.value == 22
+    assert fused.sources == ["wot"]
+
+
+def test_active_perception_result_records_unresolved_conflict():
+    result = ActivePerceptionResult(
+        resolved=False,
+        trace=[{"action": "active_perception_probe", "resolved": False}],
+    )
+
+    assert result.resolved is False
+    assert result.trace[0]["resolved"] is False
+
+
+def test_continuous_interaction_manager_uses_runtime_backend_router_when_affordance_matches():
+    dom_executor = _RecordingExecutor("dom")
+    wot_executor = _RecordingExecutor("wot")
+    cmap = CognitiveMap(task_id="task_runtime_router")
+    cmap.add_affordance(
+        RuntimeAffordance(
+            id="dom_confirm_booking",
+            source="dom",
+            entity_id="booking_button",
+            action_name="confirm_booking",
+            action_type="button",
+            confidence=0.95,
+            grounding={"selector": "#book"},
+            skill_names=["confirm_booking"],
+        )
+    )
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom", "wot"],
+                preferred_backends=["wot"],
+            )
+        },
+        {"dom": dom_executor, "wot": wot_executor},
+        cmap,
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {"room": "A"}), Observation()))
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.selected_backend == "dom"
+    assert result.routing_reason == "selected dom for confirm_booking"
+    assert len(dom_executor.calls) == 1
+    assert wot_executor.calls == []
+
+
+def test_continuous_interaction_manager_uses_verified_system1_routing_cache_on_repeat():
+    dom_executor = _RecordingExecutor("dom")
+    cmap = CognitiveMap(task_id="task_runtime_reflex")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={"entity_id": "booking", "skill_id": "confirm_booking"},
+                confidence=0.98,
+            )
+        ]
+    )
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom"],
+                preferred_backends=["dom"],
+            )
+        },
+        {"dom": dom_executor},
+        cmap,
+    )
+
+    first = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+    second = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+
+    assert first.state == RuntimeState.COMPLETED
+    assert first.system1_cache_hit is False
+    assert second.state == RuntimeState.COMPLETED
+    assert second.system1_cache_hit and second.system1_fast_path
+    assert second.routing_reason == "system1 cached grounding dom_confirm_booking"
+    assert second.system1_routing_latency_ms >= 0
+
+
+def test_continuous_interaction_manager_falls_back_to_preferred_backend_without_runtime_affordance():
+    dom_executor = _RecordingExecutor("dom")
+    wot_executor = _RecordingExecutor("wot")
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom", "wot"],
+                preferred_backends=["wot"],
+            )
+        },
+        {"dom": dom_executor, "wot": wot_executor},
+        CognitiveMap(task_id="task_router_fallback"),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {"room": "A"}), Observation()))
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.selected_backend == "wot"
+    assert result.routing_reason == "fallback preferred backend wot"
+    assert len(wot_executor.calls) == 1
+    assert dom_executor.calls == []
+
+
+def test_continuous_interaction_manager_handles_unknown_skill_without_crashing():
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill_tuple()},
+        {"wot": _RecordingExecutor("wot")},
+        CognitiveMap(task_id="task_unknown_skill"),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("missing_skill", {}), Observation()))
+
+    assert result.state == RuntimeState.FAILED
+    assert result.execution_result is None
+    assert result.reason == "unknown skill: missing_skill"
+    assert result.failure_boundary == "skill_spec_insufficient"
+    assert result.failure_type == "unknown_skill"
+
+
+def test_continuous_interaction_manager_converts_executor_exception_to_recovery_decision():
+    dom_executor = _RecordingExecutor("dom", exception=TimeoutError("playwright timed out"))
+    visual_executor = _RecordingExecutor("visual")
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom", "visual"],
+                preferred_backends=["dom"],
+            )
+        },
+        {
+            "dom": dom_executor,
+            "visual": visual_executor,
+        },
+        CognitiveMap(task_id="task_executor_exception"),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.recovery_tier == 2
+    assert result.selected_backend == "visual"
+    assert result.execution_result is not None
+    assert result.execution_result.success is True
+    assert result.failure_boundary == "immediate_runtime_error"
+    assert result.failure_type == "timeout"
+    assert [step["policy"] for step in result.recovery_trace[:2]] == ["retry", "reroute"]
+    assert result.recovery_trace[1]["selected"] is True
+    assert result.recovery_attempted and result.recovery_succeeded
+    assert result.final_outcome_verified
+    assert len(dom_executor.calls) == 1
+    assert len(visual_executor.calls) == 1
+
+
+def test_continuous_interaction_manager_uses_recovery_cascade_for_failures_and_postconditions():
+    failed_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="confirm_booking",
+            backend_used="dom",
+            success=False,
+            latency_ms=1.0,
+            confidence=0.0,
+            failure_reason="selector_not_found",
+        ),
+    )
+    visual_executor = _RecordingExecutor("visual")
+    failure_manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom", "visual"],
+                preferred_backends=["dom"],
+            )
+        },
+        {"dom": failed_executor, "visual": visual_executor},
+        CognitiveMap(task_id="task_failure_recovery"),
+    )
+
+    failure = asyncio.run(failure_manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+
+    assert failure.state == RuntimeState.COMPLETED
+    assert failure.recovery_tier == 2
+    assert failure.selected_backend == "visual"
+    assert failure.recovery_trace[1]["policy"] == "reroute"
+    assert failure.recovery_succeeded and failure.final_outcome_verified
+    assert len(visual_executor.calls) == 1
+
+    postcondition_manager = ContinuousInteractionManager(
+        {
+            "set_temperature": _skill_tuple(
+                postconditions=[Condition("thermostat_A.targetTemperature == 22")],
+                rollback=RollbackSpec("set_temperature", {"target": 20}),
+            )
+        },
+        {"wot": _RecordingExecutor("wot")},
+        CognitiveMap(task_id="task_postcondition_recovery"),
+    )
+
+    postcondition = asyncio.run(
+        postcondition_manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation())
+    )
+
+    assert postcondition.state == RuntimeState.ESCALATED
+    assert postcondition.recovery_attempted
+    assert not postcondition.recovery_succeeded
+    assert postcondition.reason == "rollback execution failed"
+
+
+def test_continuous_interaction_manager_can_attach_optional_llm_failure_judgment():
+    failed_executor = _RecordingExecutor(
+        "dom",
+        ExecutionResult(
+            skill_id="confirm_booking",
+            backend_used="dom",
+            success=False,
+            latency_ms=1.0,
+            confidence=0.0,
+            failure_reason="ambiguous_false_success",
+        ),
+    )
+    manager = ContinuousInteractionManager(
+        {
+            "confirm_booking": _skill_tuple(
+                skill_id="confirm_booking",
+                allowed_backends=["dom", "visual"],
+                preferred_backends=["dom"],
+            )
+        },
+        {"dom": failed_executor, "visual": _RecordingExecutor("visual")},
+        CognitiveMap(task_id="task_llm_judge"),
+        llm_judge=LLMJudge(client=_FakeJudgeClient()),
+        use_llm_judge=True,
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("confirm_booking", {}), Observation()))
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.failure_boundary == "recoverable_execution_failure"
+    assert result.llm_failure_boundary == "skill_spec_insufficient"
+    assert result.llm_failure_type == "weak_postcondition"
+    assert result.llm_judge_evidence[-1] == "schema_validated_llm_judge"
+    assert result.recovery_succeeded and result.final_outcome_verified
+
+
+def test_continuous_interaction_manager_runs_structured_goal_without_durable_skill():
+    dom_executor = _GoalExecutor()
+    cmap = CognitiveMap(task_id="task_goal_path")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form", "parameter": "room"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_time_input",
+                source="DOM",
+                type="input",
+                label="Time",
+                action="type",
+                locator={"entity_id": "booking_form", "parameter": "time"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={
+                    "entity_id": "booking_button",
+                    "completion_for": "reserve_room_goal",
+                    "achieves": "booking.confirmed == true",
+                },
+                confidence=0.95,
+            ),
+        ]
+    )
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_id="reserve_room_goal",
+            goal_state="booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+            observation=Observation(),
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.reason == "goal completed"
+    assert result.selected_backend == "dom"
+    assert [step["action"] for step in result.primitive_plan] == ["type", "type", "click"]
+    assert [call.params["affordance_id"] for call in dom_executor.calls] == [
+        "dom_room_input",
+        "dom_time_input",
+        "dom_confirm_booking",
+    ]
+
+
+def test_continuous_interaction_manager_observes_live_page_before_zero_shot_goal():
+    dom_executor = _GoalExecutor()
+    page = PageAffordanceModel(
+        page_id="booking_page",
+        url="https://example.test/booking",
+        affordances=[
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form", "parameter": "room"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_time_input",
+                source="DOM",
+                type="input",
+                label="Time",
+                action="type",
+                locator={"entity_id": "booking_form", "parameter": "time"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={
+                    "entity_id": "booking",
+                    "completion_for": "reserve_room_goal",
+                    "achieves": "booking.confirmed == true",
+                },
+                confidence=0.95,
+            ),
+        ],
+        raw_node_count=100,
+        kept_node_count=3,
+    )
+    live_observation = observation_from_live_sources(
+        page=page,
+        page_state={"booking": {"confirmed": False}},
+    )
+    cmap = CognitiveMap(task_id="task_observe_first_goal")
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            live_observation,
+            goal_id="reserve_room_goal",
+            goal_state="booking.confirmed == true",
+            parameters={"room": "A", "time": "14:00"},
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert result.reason == "goal completed"
+    assert "dom_room_input" in cmap.runtime_affordances
+    assert cmap.page_state["page"]["url"] == "https://example.test/booking"
+    assert [step["action"] for step in result.primitive_plan] == ["type", "type", "click"]
+    assert result.fusion_decision["allow_system1"] is True
+
+
+def test_live_observation_fusion_reports_multisource_support_without_halting():
+    page = PageAffordanceModel(
+        page_id="dashboard",
+        url="https://example.test",
+        affordances=[],
+    )
+    live_observation = observation_from_live_sources(
+        page=page,
+        device_states={"booking": {"confirmed": True}},
+        page_state={"booking": {"confirmed": True}},
+        visual_state={"booking": {"confirmed": True}},
+    )
+    cmap = CognitiveMap(task_id="task_live_multisource_fusion")
+    live_observation.apply_to(cmap)
+
+    decision = EpistemicArbiter().fuse(cmap)
+    booking = next(
+        state for state in decision.fused_states if state.entity_id == "booking" and state.attribute == "confirmed"
+    )
+
+    assert decision.allow_system1 is True
+    assert decision.active_perception_required is False
+    assert set(booking.sources) == {"wot", "dom", "visual"}
+    assert booking.confidence == 1.0
+
+
+def test_continuous_interaction_manager_accepts_goal_spec_boundary():
+    dom_executor = _GoalExecutor()
+    cmap = CognitiveMap(task_id="task_goal_spec")
+    cmap.update_affordances(
+        [
+            Affordance(
+                id="dom_room_input",
+                source="DOM",
+                type="input",
+                label="Room",
+                action="type",
+                locator={"entity_id": "booking_form", "parameter": "room"},
+                confidence=0.95,
+            ),
+            Affordance(
+                id="dom_confirm_booking",
+                source="DOM",
+                type="button",
+                label="Confirm booking",
+                action="click",
+                locator={
+                    "entity_id": "booking_button",
+                    "completion_for": "reserve_room_goal",
+                    "achieves": "booking.confirmed == true",
+                },
+                confidence=0.95,
+            ),
+        ]
+    )
+    manager = ContinuousInteractionManager({}, {"dom": dom_executor}, cmap)
+
+    result = asyncio.run(
+        manager.run_goal(
+            observation=Observation(),
+            goal_spec=GoalSpec(
+                goal_id="reserve_room_goal",
+                goal_state="booking.confirmed == true",
+                parameters={"room": "A"},
+                source="user_intent_parser",
+                safety_constraints=["only use declared affordances"],
+            ),
+        )
+    )
+
+    assert result.state == RuntimeState.COMPLETED
+    assert dom_executor.calls[0].skill_id == "reserve_room_goal"
+    assert result.primitive_plan[-1]["action"] == "click"
+
+
+def test_continuous_interaction_manager_rejects_invalid_goal_spec():
+    manager = ContinuousInteractionManager(
+        {}, {"dom": _RecordingExecutor("dom")}, CognitiveMap(task_id="bad_goal_spec")
+    )
+
+    result = asyncio.run(
+        manager.run_goal(
+            observation=Observation(),
+            goal_spec=GoalSpec(goal_id="", goal_state="", parameters={}),
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_type == "invalid_goal_spec"
+    assert "goal_id must be non-empty" in result.plan_validation_errors
+
+
+def test_continuous_interaction_manager_rejects_goal_plan_with_missing_affordance():
+    manager = ContinuousInteractionManager(
+        {}, {"dom": _RecordingExecutor("dom")}, CognitiveMap(task_id="task_bad_goal")
+    )
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_id="reserve_room_goal",
+            goal_state="device_states.booking.confirmed == true",
+            parameters={"room": "A"},
+            observation=Observation(),
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.failure_boundary == "skill_spec_insufficient"
+    assert result.failure_type == "insufficient_affordance_plan"
+    assert "room" in result.reason
+    assert result.primitive_plan[0]["action"] == "ask_user"
