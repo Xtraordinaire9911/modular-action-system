@@ -1,6 +1,7 @@
 """An utterance drives the production runtime, end to end.
 
     python scripts/run_intent_episode.py --utterance "add the wireless headphones to my cart"
+    python scripts/run_intent_episode.py --suite          # every utterance, both environments
 
 The review's standing criticism of this repository is that it has components
 rather than an integrated system, and the clearest instance was the intent
@@ -21,12 +22,16 @@ This closes that gap and nothing else. The chain is:
            -> ContinuousInteractionManager, on a live Playwright browser
 
 Every step after the first is code that already existed and is unchanged. What
-is new is that the first step is now wired to it, and that a run writes down
-which parts were model-derived so the claim can be checked rather than believed.
+is new is that the first step is wired to it, and that a run writes down which
+parts were model-derived so the claim can be checked rather than believed.
 
 Nothing here decides what to click. The binding table names a *family* of
 controls; which member applies comes from the parameter the intent layer
 extracted, and the runtime picks the affordance from its own observation.
+
+``--suite`` runs the whole utterance set across both environments and writes the
+cross-environment generalisation report (M1). That report had been definable
+since the project began and had never been produced from a real run.
 """
 
 from __future__ import annotations
@@ -35,16 +40,18 @@ import argparse
 import asyncio
 import json
 import sys
-from dataclasses import replace
+import time
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from evaluation.cross_env_eval import aggregate as aggregate_m1  # noqa: E402
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
 from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
-from src.benchmarks.task_spec import BenchmarkTask  # noqa: E402
+from src.benchmarks.task_spec import BenchmarkRunResult, BenchmarkTask  # noqa: E402
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter  # noqa: E402
 from src.planner.environment_binding import binding_for  # noqa: E402
 from src.planner.goal_state_adapter import GoalStateReportingAdapter  # noqa: E402
@@ -53,70 +60,114 @@ from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec 
 
 _LINE = "=" * 78
 
+# Phrased the way someone would actually ask, across both surfaces, including
+# one request nothing here can satisfy. A suite where every item succeeds tests
+# the happy path only.
+SUITE: tuple[str, ...] = (
+    "add the wireless headphones to my cart",
+    "put the pro laptop in my cart",
+    "add the mechanical keyboard to my cart please",
+    "add the 4k monitor to my cart",
+    "upvote the top post",
+    "upvote the browser automation post",
+    "make me a sandwich",
+)
+
+
+@dataclass
+class Episode:
+    """One utterance, and everything that happened to it."""
+
+    utterance: str
+    outcome: str  # reached | not_reached | refused_intent | unsupported_goal
+    env: str = ""
+    goal_state: str = ""
+    runtime_goal_state: str = ""
+    parameters: dict[str, Any] = field(default_factory=dict)
+    source: str = ""
+    model_derived: bool = False
+    completion: str = ""
+    runtime_state: str = ""
+    verified: bool = False
+    reason: str = ""
+    episode_id: str = ""
+    transitions: list[dict[str, Any]] = field(default_factory=list)
+    goal_state_trail: list[dict[str, Any]] = field(default_factory=list)
+    latency_ms: float = 0.0
+
+    @property
+    def reached(self) -> bool:
+        return self.outcome == "reached"
+
+    @property
+    def attempted(self) -> bool:
+        """Whether a browser episode was run at all."""
+        return self.outcome in {"reached", "not_reached"}
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "utterance": self.utterance,
+            "outcome": self.outcome,
+            "env": self.env,
+            "goal_state": self.goal_state,
+            "runtime_goal_state": self.runtime_goal_state,
+            "parameters": self.parameters,
+            "layer1_source": self.source,
+            "model_derived": self.model_derived,
+            "completion": self.completion,
+            "runtime_state": self.runtime_state,
+            "verified": self.verified,
+            "reason": self.reason,
+            "episode_id": self.episode_id,
+            "transitions": self.transitions,
+            "goal_state_trail": self.goal_state_trail,
+            "latency_ms": round(self.latency_ms, 1),
+        }
+
 
 def interpret(utterance: str) -> Any:
     """Layer 1: the sentence becomes a GoalSpec, with its provenance attached."""
     return IntentPlanner(client=available_client()).plan(utterance)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument(
-        "--utterance",
-        default="add the wireless headphones to my cart",
-        help="What a person said. This is the only task input.",
-    )
-    parser.add_argument("--headed", dest="headed", action="store_true", default=False)
-    parser.add_argument("--headless", dest="headed", action="store_false")
-    parser.add_argument("--max-steps", type=int, default=8)
-    args = parser.parse_args()
+def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = True) -> Episode:
+    """Take one utterance all the way through the runtime and report what happened."""
+    say = print if verbose else (lambda *a, **k: None)
 
-    for stream in (sys.stdout, sys.stderr):
-        try:
-            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
-        except Exception:
-            pass
-
-    repo = Path(__file__).resolve().parents[1]
-    out = repo / "eval_outputs" / "intent_episode" / datetime.now().strftime("%Y%m%d_%H%M%S")
-    out.mkdir(parents=True, exist_ok=True)
-
-    print(f"\n{_LINE}\n  INTENT -> RUNTIME - one utterance through the real episode runner\n{_LINE}")
-    print(f'  said: "{args.utterance}"\n')
-
-    plan = interpret(args.utterance)
-    print(f"  layer 1   : {plan.source} (confidence {plan.confidence:.2f})")
+    plan = interpret(utterance)
+    say(f"  layer 1   : {plan.source} (confidence {plan.confidence:.2f})")
     if not plan.ok:
-        print(f"  refused   : {plan.error or 'the utterance was not understood'}")
-        print("\n  Nothing is attempted on an ungrounded goal. This is the correct outcome,")
-        print("  not a failure: acting on a guess would be worse than declining.\n")
-        return 2
+        say(f"  refused   : {plan.error or 'the utterance was not understood'}")
+        say("  Nothing is attempted on an ungrounded goal: acting on a guess would be worse.")
+        return Episode(utterance=utterance, outcome="refused_intent", source=plan.source)
+
     goal = plan.goal
-    print(f"  goal_state: {goal.goal_state}")
-    print(f"  parameters: {json.dumps(goal.parameters)}")
-    print(f"  provenance: GoalSpec.source={goal.source!r}, model_derived={plan.is_model_derived}")
+    say(f"  goal_state: {goal.goal_state}   parameters: {json.dumps(goal.parameters)}")
+    say(f"  provenance: GoalSpec.source={goal.source!r}, model_derived={plan.is_model_derived}")
 
     binding = binding_for(goal.goal_state)
     if binding is None:
-        print(f"\n  No environment in this repository can satisfy {goal.goal_state!r}.")
-        print("  Reported rather than approximated with the nearest thing that exists.\n")
-        return 3
+        say(f"  unsupported: no environment here can satisfy {goal.goal_state!r}")
+        return Episode(utterance=utterance, outcome="unsupported_goal", goal_state=goal.goal_state, source=plan.source)
 
     completion = binding.completion_for(goal.parameters)
     if not completion:
-        print(f"\n  The goal named no {binding.subject_parameter!r} that this environment offers.")
-        print(f"  parameters were: {json.dumps(goal.parameters)}\n")
-        return 3
+        say(f"  unsupported: the goal named no {binding.subject_parameter!r} this environment offers")
+        return Episode(
+            utterance=utterance,
+            outcome="unsupported_goal",
+            env=binding.page,
+            goal_state=goal.goal_state,
+            parameters=dict(goal.parameters),
+            source=plan.source,
+        )
 
     runtime_parameters = binding.runtime_parameters(goal.parameters)
     runtime_goal_state = binding.runtime_goal_state()
     proof_text = binding.success_for(goal.parameters)
     proof_region = binding.success_region(goal.parameters)
-    print(f"  environment: {binding.page}")
-    print(f"  completes when the agent uses: {completion}")
-    print(f"  proven by  : {proof_text!r} appearing in {proof_region}")
-    print(f"  runtime plans to bind: {json.dumps(binding.bindings_for(goal.parameters))}")
-    print(f"  checkable as: {runtime_goal_state}")
+    say(f"  environment: {binding.page}   completes on: {completion}")
+    say(f"  checkable as: {runtime_goal_state}   proven by {proof_text!r} in {proof_region}")
 
     from src.perception.browser_session import BrowserSession  # lazy: needs Playwright
     from src.perception.session_thread import SessionThread, ThreadedSession
@@ -126,15 +177,16 @@ def main() -> int:
     # The browser gets its own thread. Playwright's sync API owns the event loop
     # of whatever thread uses it, so the async runtime cannot be started on that
     # thread - the reason run_agent_on_env.py --planner runtime has never run.
-    worker = SessionThread(lambda: BrowserSession.launch(url, headless=not args.headed))
+    worker = SessionThread(lambda: BrowserSession.launch(url, headless=not headed))
     session = ThreadedSession(worker)
+    started = time.monotonic()
     try:
         adapter = WebBenchmarkAdapter(session)
 
         # Checked against the region the goal names, never the whole page. The
         # product title is printed in the listing before anything is added, so a
         # body-text proxy reports the goal as met before the agent has acted.
-        def goal_reached(_adapter: Any) -> bool:
+        def goal_reached(_adapter: Any = None) -> bool:
             observed = (session.text_content(proof_region) or "").lower()
             return bool(observed) and proof_text.lower() in observed
 
@@ -152,12 +204,7 @@ def main() -> int:
         # misses and a goal that was reached is recorded as a postcondition
         # failure - a false negative, and the mirror of the false success this
         # project exists to prevent.
-        observed_adapter = GoalStateReportingAdapter(
-            runtime_adapter,
-            fact=binding.observed_fact,
-            holds=lambda: goal_reached(adapter),
-        )
-        print("\n  runtime   : RuntimeEpisodeRunner.run_goal_episode -> ContinuousInteractionManager")
+        observed_adapter = GoalStateReportingAdapter(runtime_adapter, fact=binding.observed_fact, holds=goal_reached)
         outcome = asyncio.run(
             RuntimeEpisodeRunner().run_goal_episode(
                 observed_adapter,
@@ -173,86 +220,150 @@ def main() -> int:
                 ),
             )
         )
-        session.screenshot(str(out / "final.png"))
-        solved = adapter.is_solved(task)
+        solved = goal_reached()
     finally:
         session.close()
         httpd.shutdown()
 
-    print(f"  state     : {outcome.result.state.value}")
-    print(f"  verified  : {outcome.result.final_outcome_verified}")
-    if outcome.result.reason:
-        print(f"  reason    : {outcome.result.reason}")
-    if outcome.result.plan_validation_errors:
-        print(f"  plan errors: {outcome.result.plan_validation_errors}")
-    if outcome.result.primitive_plan:
-        print(f"  primitives : {len(outcome.result.primitive_plan)}")
-    print(f"  episode   : {outcome.result.episode_id}")
-    # The goal predicate as the runtime saw it change, which is the evidence
-    # that verification re-observed rather than trusted the executor.
-    trail = [a.value for a in outcome.cognitive_map.state_assertions if a.entity_id == binding.state_entity]
-    if trail:
-        print(f"  {runtime_goal_state.split(' ')[0]} observed: {' -> '.join(str(v) for v in trail)}")
-    print(f"  transitions: {len(outcome.transition_ledger.records)}")
-    for record in outcome.transition_ledger.records:
-        mark = "ok " if record.success else "FAIL"
-        detail = f" - {record.failure_reason}" if record.failure_reason else ""
-        print(
-            f"    [{mark}] step {record.step} {record.skill_id} via {record.backend} on {record.affordance_key}{detail}"
-        )
-    print(f"\n  result    : {'GOAL REACHED' if solved else 'not reached'}")
-
-    record = {
-        "utterance": args.utterance,
-        "layer1": plan.to_dict(),
-        "goal_spec": {
-            "goal_id": goal.goal_id,
-            "goal_state": goal.goal_state,
-            "runtime_goal_state": runtime_goal_state,
-            "parameters": dict(goal.parameters),
-            "runtime_parameters": runtime_parameters,
-            "source": goal.source,
-        },
-        "environment": {
-            "page": binding.page,
-            "completion": completion,
-            "proof_region": proof_region,
-            "proof_text": proof_text,
-        },
-        "runtime": {
-            "entrypoint": "RuntimeEpisodeRunner.run_goal_episode",
-            "state": outcome.result.state.value,
-            "reason": outcome.result.reason,
-            "plan_validation_errors": list(outcome.result.plan_validation_errors),
-            "primitive_plan": len(outcome.result.primitive_plan),
-            "verified": outcome.result.final_outcome_verified,
-            "episode_id": outcome.result.episode_id,
-            "transitions": [
-                {
-                    "step": r.step,
-                    "skill_id": r.skill_id,
-                    "backend": r.backend,
-                    "affordance_key": r.affordance_key,
-                    "success": r.success,
-                    "postcondition_passed": r.postcondition_passed,
-                    "failure_reason": r.failure_reason,
-                    "recovery_action": r.recovery_action,
-                    "recovery_tier": r.recovery_tier,
-                }
-                for r in outcome.transition_ledger.records
-            ],
-            "metrics": dict(outcome.metrics.values),
-        },
-        "goal_state_trail": [
+    episode = Episode(
+        utterance=utterance,
+        outcome="reached" if solved else "not_reached",
+        env=binding.page,
+        goal_state=goal.goal_state,
+        runtime_goal_state=runtime_goal_state,
+        parameters=dict(goal.parameters),
+        source=plan.source,
+        model_derived=plan.is_model_derived,
+        completion=completion,
+        runtime_state=outcome.result.state.value,
+        verified=outcome.result.final_outcome_verified,
+        reason=outcome.result.reason,
+        episode_id=outcome.result.episode_id,
+        transitions=[
+            {
+                "step": r.step,
+                "skill_id": r.skill_id,
+                "backend": r.backend,
+                "affordance_key": r.affordance_key,
+                "success": r.success,
+                "postcondition_passed": r.postcondition_passed,
+                "failure_reason": r.failure_reason,
+            }
+            for r in outcome.transition_ledger.records
+        ],
+        # The goal predicate as the runtime saw it change: evidence that
+        # verification re-observed rather than trusted the executor.
+        goal_state_trail=[
             {"value": a.value, "source": a.source}
             for a in outcome.cognitive_map.state_assertions
             if a.entity_id == binding.state_entity
         ],
-        "goal_reached": solved,
+        latency_ms=(time.monotonic() - started) * 1000.0,
+    )
+    say(f"  runtime   : state={episode.runtime_state} verified={episode.verified} ({episode.reason})")
+    for record in episode.transitions:
+        mark = "ok " if record["success"] else "FAIL"
+        detail = f" - {record['failure_reason']}" if record["failure_reason"] else ""
+        say(f"    [{mark}] step {record['step']} on {record['affordance_key']}{detail}")
+    trail = " -> ".join(str(step["value"]) for step in episode.goal_state_trail)
+    if trail:
+        say(f"  {runtime_goal_state.split(' ')[0]} observed: {trail}")
+    say(f"  result    : {'GOAL REACHED' if solved else 'not reached'}")
+    return episode
+
+
+def _m1_report(episodes: list[Episode]) -> dict[str, Any]:
+    """Cross-environment generalisation, over the episodes that were attempted.
+
+    Utterances the intent layer refused, and goals no environment here can
+    satisfy, are excluded from M1 and counted separately: they measure the
+    vocabulary, not whether one action system works across environments.
+    """
+    attempted = [episode for episode in episodes if episode.attempted]
+    results = [
+        BenchmarkRunResult(
+            env=episode.env,
+            task_id=episode.goal_state,
+            success=episode.reached,
+            steps=len(episode.transitions),
+            latency_ms=round(episode.latency_ms, 3),
+        )
+        for episode in attempted
+    ]
+    summary = aggregate_m1(results)
+    summary["declined"] = {
+        "refused_intent": sum(1 for e in episodes if e.outcome == "refused_intent"),
+        "unsupported_goal": sum(1 for e in episodes if e.outcome == "unsupported_goal"),
     }
-    (out / "intent_episode.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
-    print(f"\n  artifacts : {out.relative_to(repo)}\n{_LINE}\n")
-    return 0 if solved else 1
+    summary["model_derived_episodes"] = sum(1 for e in attempted if e.model_derived)
+    return summary
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(
+        "--utterance",
+        default="add the wireless headphones to my cart",
+        help="What a person said. This is the only task input.",
+    )
+    parser.add_argument(
+        "--suite",
+        action="store_true",
+        help="Run every utterance across both environments and write the M1 report.",
+    )
+    parser.add_argument("--headed", dest="headed", action="store_true", default=False)
+    parser.add_argument("--headless", dest="headed", action="store_false")
+    args = parser.parse_args()
+
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+        except Exception:
+            pass
+
+    repo = Path(__file__).resolve().parents[1]
+    out = repo / "eval_outputs" / "intent_episode" / datetime.now().strftime("%Y%m%d_%H%M%S")
+    out.mkdir(parents=True, exist_ok=True)
+
+    if not args.suite:
+        print(f"\n{_LINE}\n  INTENT -> RUNTIME - one utterance through the real episode runner\n{_LINE}")
+        print(f'  said: "{args.utterance}"\n')
+        episode = run_episode(args.utterance, repo=repo, headed=args.headed)
+        (out / "intent_episode.json").write_text(json.dumps(episode.to_dict(), indent=2), encoding="utf-8")
+        print(f"\n  artifacts : {out.relative_to(repo)}\n{_LINE}\n")
+        return 0 if episode.reached else 1
+
+    print(f"\n{_LINE}\n  INTENT -> RUNTIME suite - {len(SUITE)} utterances, both environments\n{_LINE}")
+    episodes: list[Episode] = []
+    for index, utterance in enumerate(SUITE, start=1):
+        print(f'\n  --- {index}/{len(SUITE)}: "{utterance}"')
+        episodes.append(run_episode(utterance, repo=repo, headed=args.headed))
+
+    summary = _m1_report(episodes)
+    print(f"\n{_LINE}\n  M1 - cross-environment generalisation\n{_LINE}")
+    print(f"  {'environment':<18} {'tasks':>6} {'solved':>7} {'success':>9} {'mean latency':>14}")
+    print(f"  {'-' * 58}")
+    for row in summary["per_env_M1"]:
+        print(
+            f"  {row['env']:<18} {row['tasks']:>6} {row['solved']:>7} "
+            f"{row['success_rate']:>8.1%} {row['mean_latency_ms']:>12.0f}ms"
+        )
+    print(f"\n  overall            {summary['n_tasks']:>6} {'':>7} {summary['overall_success_rate']:>8.1%}")
+    print(f"  environments       {summary['n_envs']:>6}")
+    print(
+        f"  declined           {summary['declined']['refused_intent']} utterance(s) not understood, "
+        f"{summary['declined']['unsupported_goal']} goal(s) no environment here can satisfy"
+    )
+    print("\n  Declined utterances are excluded from M1 on purpose: they measure the")
+    print("  intent vocabulary, not whether one action system works across environments.")
+
+    report = {"summary": summary, "episodes": [e.to_dict() for e in episodes]}
+    (out / "m1_cross_env.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    stable = repo / "artifacts" / "intent_cross_env"
+    stable.mkdir(parents=True, exist_ok=True)
+    (stable / "m1_cross_env.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(f"\n  artifacts : {out.relative_to(repo)}  and  {stable.relative_to(repo)}\n{_LINE}\n")
+    return 0 if summary["overall_success_rate"] == 1.0 else 1
 
 
 if __name__ == "__main__":
