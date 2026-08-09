@@ -40,7 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
 from src.demos.ledger import MetricLedger  # noqa: E402
-from src.demos.pip_console import AgentConsole  # noqa: E402
+from src.demos.narration_console import AgentConsole  # noqa: E402
 from src.demos.probes import text_snapshot  # noqa: E402
 from src.demos.realistic_faults import FAULTS  # noqa: E402
 from src.perception.dom_transducer import DomTransducer  # noqa: E402

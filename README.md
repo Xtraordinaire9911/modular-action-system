@@ -37,11 +37,39 @@ matching its code.
 | Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is honest about what it runs, but it is a second loop, not the integrated one. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
-| Picture-in-Picture supervised interface | **Not implemented here** | Browser-context isolation is implemented and is a weaker property; the PiP interface is separate work owned by another team member. |
+| Picture-in-Picture supervised interface | **Not implemented** | See Terminology below. What exists is browser-context isolation plus a tier-4 handover that pauses and records a human decision. Both are weaker than a supervised PiP interface and neither is a substitute for it. |
 
 Every runtime decision records whether it came from a model or a deterministic
 fallback, and both paths are written to a JSONL ledger under `artifacts/`, so
 the distinction can be audited rather than taken on trust.
+
+## Terminology: what Picture-in-Picture means here
+
+The review corrected this team on the term, and the correction is recorded here
+rather than only in a commit message, because the misreading had propagated into
+a module name, a docstring and a claims row.
+
+**Picture-in-Picture, in the referenced work, is a supervised interface.** The
+agent operates in a visibly separate session that a person can watch while it
+runs and take over from at any point. It is a human-oversight mechanism. It is
+not a window style, and it is not the same thing as giving each episode its own
+sandbox.
+
+Two properties in this repository were being described with that word and are
+not it:
+
+| what it is | what it gives you | what it is not |
+|---|---|---|
+| **Browser-context isolation** (`src/perception/browser_session.py`) | one episode cannot observe or disturb another: separate cookies, storage, cache | no human can watch or intervene; there is nothing to take over |
+| **Narration panel** (`src/demos/narration_console.py`) | a viewer can read what the agent is doing and why, while it happens | read-only; it displays, it does not hand control to anyone |
+
+The closest thing the project actually has to human oversight is the tier-4
+handover in `src/recovery/supervised_takeover.py`, which pauses the episode,
+records what the supervisor decided, and reports a correction rate. That is a
+real oversight mechanism and it is still not a PiP interface.
+
+The module formerly called `pip_console` is now `narration_console`, for the
+same reason.
 
 ## Current Release State
 
@@ -528,7 +556,7 @@ rather than raising, so the registry stays valid while a feature is in review.
 | WoT environment in Docker | `env/docker-compose.yml`, `env/node_wot_server/server.js`, `config/wot_td/*.td.json`. |
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
 | External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
-| PiP/session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. |
+| Session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. This is browser-context isolation, **not** Picture-in-Picture — see Terminology below. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
 | WoT TD parsing | `src/perception/td_affordance_parser.py`, including HATEOAS forms, methods, security, rate limits, state sources. |
