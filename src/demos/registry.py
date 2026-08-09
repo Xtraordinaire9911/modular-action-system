@@ -138,6 +138,16 @@ DEMOS: list[Demo] = [
         duration_hint="~5min",
     ),
     Demo(
+        name="intent-runtime",
+        title="An utterance drives the production runtime",
+        summary="A sentence becomes a GoalSpec and is executed by RuntimeEpisodeRunner and the "
+        "ContinuousInteractionManager on a live page, with the goal verified by re-observation.",
+        command=("scripts/run_intent_episode.py",),
+        requires=("browser",),
+        headed_args=("--headed",),
+        duration_hint="~20s",
+    ),
+    Demo(
         name="offline",
         title="Deterministic offline trace",
         summary="Runtime trace, postcondition checks and recovery metrics. No browser, no Docker.",
