@@ -6,14 +6,14 @@
         "tasks": 2,
         "solved": 2,
         "success_rate": 1.0,
-        "mean_latency_ms": 449.512
+        "mean_latency_ms": 494.278
       },
       {
         "env": "shopping.html",
         "tasks": 4,
         "solved": 4,
         "success_rate": 1.0,
-        "mean_latency_ms": 965.781
+        "mean_latency_ms": 493.747
       }
     ],
     "overall_success_rate": 1.0,
@@ -41,11 +41,11 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-a4667c922336",
+      "episode_id": "episode-f5aba5f2d74e",
       "transitions": [
         {
           "step": 1,
-          "skill_id": "intent_31831141",
+          "skill_id": "intent_22992050",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Wireless Headphones to cart",
           "success": true,
@@ -63,7 +63,7 @@
           "source": "dom"
         }
       ],
-      "latency_ms": 878.7
+      "latency_ms": 491.9
     },
     {
       "utterance": "put the pro laptop in my cart",
@@ -80,11 +80,11 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-a82289021589",
+      "episode_id": "episode-8014998c58ea",
       "transitions": [
         {
           "step": 1,
-          "skill_id": "intent_47269448",
+          "skill_id": "intent_25391657",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Pro Laptop to cart",
           "success": true,
@@ -102,7 +102,7 @@
           "source": "dom"
         }
       ],
-      "latency_ms": 993.4
+      "latency_ms": 494.6
     },
     {
       "utterance": "add the mechanical keyboard to my cart please",
@@ -119,11 +119,11 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-40c40d152154",
+      "episode_id": "episode-9b6a81e9168b",
       "transitions": [
         {
           "step": 1,
-          "skill_id": "intent_62926506",
+          "skill_id": "intent_69869047",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Mechanical Keyboard to cart",
           "success": true,
@@ -141,7 +141,7 @@
           "source": "dom"
         }
       ],
-      "latency_ms": 991.9
+      "latency_ms": 493.7
     },
     {
       "utterance": "add the 4k monitor to my cart",
@@ -158,11 +158,11 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-e02f47def832",
+      "episode_id": "episode-ba5c571b0bd1",
       "transitions": [
         {
           "step": 1,
-          "skill_id": "intent_22111345",
+          "skill_id": "intent_21284335",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add 4K Monitor to cart",
           "success": true,
@@ -180,7 +180,7 @@
           "source": "dom"
         }
       ],
-      "latency_ms": 999.1
+      "latency_ms": 494.7
     },
     {
       "utterance": "upvote the top post",
@@ -197,15 +197,29 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-5c27609caa51",
-      "transitions": [],
+      "episode_id": "episode-894f26289cf2",
+      "transitions": [
+        {
+          "step": 1,
+          "skill_id": "intent_7346626",
+          "backend": "dom",
+          "affordance_key": "dom:semantic::Upvote post: AI agents are changing everything",
+          "success": true,
+          "postcondition_passed": true,
+          "failure_reason": ""
+        }
+      ],
       "goal_state_trail": [
+        {
+          "value": false,
+          "source": "dom"
+        },
         {
           "value": true,
           "source": "dom"
         }
       ],
-      "latency_ms": 490.0
+      "latency_ms": 494.0
     },
     {
       "utterance": "upvote the browser automation post",
@@ -222,15 +236,29 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-1659aebe6355",
-      "transitions": [],
+      "episode_id": "episode-9008d66afd3b",
+      "transitions": [
+        {
+          "step": 1,
+          "skill_id": "intent_17336168",
+          "backend": "dom",
+          "affordance_key": "dom:semantic::Upvote post: Best practices for browser automation",
+          "success": true,
+          "postcondition_passed": true,
+          "failure_reason": ""
+        }
+      ],
       "goal_state_trail": [
+        {
+          "value": false,
+          "source": "dom"
+        },
         {
           "value": true,
           "source": "dom"
         }
       ],
-      "latency_ms": 409.0
+      "latency_ms": 494.5
     },
     {
       "utterance": "make me a sandwich",

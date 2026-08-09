@@ -27,7 +27,6 @@ from src.runtime.live_environment import (
 )
 from src.verification.conflict_detector import EpistemicArbiter
 
-
 ORACLE_SOURCE = "fault-injection-label"
 
 
@@ -105,9 +104,7 @@ def summarize_repeated_fusion_campaign(
             "trial_count": len(materialized),
             "required_conditions": scenario_names,
             "minimum_repetitions": minimum_repetitions,
-            "minimum_repetitions_met": all(
-                count >= minimum_repetitions for count in condition_counts.values()
-            ),
+            "minimum_repetitions_met": all(count >= minimum_repetitions for count in condition_counts.values()),
             "unique_episode_ids": len(episode_ids) == len(set(episode_ids)),
             "unique_seeds": len(seeds) == len(set(seeds)),
             "reset_evidence_complete": all(bool(trial.reset_evidence_id) for trial in materialized),
@@ -174,7 +171,9 @@ def run_live_repeated_fusion_campaign(
         control_url=control_url,
         output_dir=target,
     )
-    return asyncio.run(_run_live_campaign(config, plan, summary_path=target / "fusion_campaign_summary.json", headless=headless))
+    return asyncio.run(
+        _run_live_campaign(config, plan, summary_path=target / "fusion_campaign_summary.json", headless=headless)
+    )
 
 
 async def _run_live_campaign(

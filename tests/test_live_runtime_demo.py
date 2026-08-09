@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 
-from evaluation import live_runtime_demo
 import run_demo
+from evaluation import live_runtime_demo
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
 from src.effectors.wot_executor import WotExecutor
 from src.runtime.continuous_interaction_manager import RuntimeStepResult

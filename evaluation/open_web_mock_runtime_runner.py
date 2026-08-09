@@ -12,6 +12,7 @@ from evaluation.metrics_aggregator import aggregate_metrics, dataset_from_runtim
 from evaluation.open_web_mock_failure_suite import OpenWebMockFailureCase, build_open_web_mock_failure_suite
 from src.adaptation.trace_ledger import TraceLedger
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
+from src.runtime.continuous_interaction_manager import Executor
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec
 
@@ -84,7 +85,7 @@ class _OpenWebMockRuntimeAdapter:
             },
         )
 
-    def executors(self) -> dict[str, _MockExecutor]:
+    def executors(self) -> dict[str, Executor]:
         return {"dom": self.executor}
 
 
@@ -169,9 +170,7 @@ async def _run_open_web_mock_runtime_suite_async(
                     "reason": result.reason,
                     "transition_ids": result.transition_ids,
                     "observation_requests": [request.reason for request in adapter.requests],
-                    "postcondition_passed": [
-                        record.postcondition_passed for record in case_transitions
-                    ],
+                    "postcondition_passed": [record.postcondition_passed for record in case_transitions],
                 },
             }
         )
@@ -200,14 +199,11 @@ async def _run_open_web_mock_runtime_suite_async(
         "summary": {
             "case_count": len(cases),
             "runtime_episode_count": len(results),
-            "executor_success_count": sum(
-                1 for row in rows if row["runtime"]["executor_success"]
-            ),
+            "executor_success_count": sum(1 for row in rows if row["runtime"]["executor_success"]),
             "postcondition_failures_detected": sum(
                 1
                 for row in rows
-                if row["runtime"]["postcondition_passed"]
-                and row["runtime"]["postcondition_passed"][0] is False
+                if row["runtime"]["postcondition_passed"] and row["runtime"]["postcondition_passed"][0] is False
             ),
             "final_success_count": sum(1 for row in rows if row["runtime"]["final_outcome_verified"]),
             "recovery_attempted_count": sum(1 for row in rows if row["runtime"]["recovery_attempted"]),

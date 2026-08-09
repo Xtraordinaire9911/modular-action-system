@@ -8,18 +8,17 @@ side-effect free and operate on recorded trial rows.
 from __future__ import annotations
 
 import math
-from dataclasses import asdict, dataclass
-from typing import Any, Iterable, Protocol
+from dataclasses import asdict, dataclass, is_dataclass
+from typing import Any, Iterable, Protocol, cast
 
 
 class FusionStrategy(Protocol):
-    name: str
+    @property
+    def name(self) -> str: ...
 
-    def score(self, trial: dict[str, Any]) -> float:
-        ...
+    def score(self, trial: dict[str, Any]) -> float: ...
 
-    def detects_blocking(self, trial: dict[str, Any]) -> bool:
-        ...
+    def detects_blocking(self, trial: dict[str, Any]) -> bool: ...
 
 
 @dataclass(frozen=True)
@@ -68,7 +67,9 @@ def compare_fusion_strategies(
     strategy_reports = {
         strategy.name: {
             "strategy": _strategy_payload(strategy),
-            "metrics": score_predictions(expected=expected, predicted=strategy_predictions[strategy.name], latencies=latencies),
+            "metrics": score_predictions(
+                expected=expected, predicted=strategy_predictions[strategy.name], latencies=latencies
+            ),
         }
         for strategy in strategies
     }
@@ -81,7 +82,7 @@ def compare_fusion_strategies(
         for strategy in strategies
         if strategy.name != production_strategy.name
     }
-    best_shadow = max(shadow_deltas, key=shadow_deltas.get, default="")
+    best_shadow = max(shadow_deltas, key=lambda name: shadow_deltas[name], default="")
     best_delta = shadow_deltas.get(best_shadow, 0.0)
     rows = []
     for index, trial in enumerate(materialized):
@@ -176,7 +177,7 @@ def score_predictions(
 
 
 def _strategy_payload(strategy: FusionStrategy) -> dict[str, Any]:
-    payload = asdict(strategy) if hasattr(strategy, "__dataclass_fields__") else {"name": strategy.name}
+    payload = asdict(cast(Any, strategy)) if is_dataclass(strategy) else {"name": strategy.name}
     payload["name"] = strategy.name
     return payload
 

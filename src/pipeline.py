@@ -273,7 +273,9 @@ def run_live_ambiguous_fusion_holdout_pipeline(
 
 
 def run_fusion_ablation_report_pipeline(
-    holdout_report_path: str | Path = "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+    holdout_report_path: (
+        str | Path
+    ) = "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
     output_dir: str | Path = "artifacts/bayesian_vs_rule_first_ablation",
 ) -> dict[str, str]:
     from evaluation.fusion_ablation_report import write_fusion_ablation_report
@@ -324,6 +326,29 @@ def run_open_web_playwright_fixture_suite_pipeline(
     return run_open_web_playwright_fixture_suite(
         output_dir,
         seed_start=seed_start,
+        headless=headless,
+        action_timeout_ms=action_timeout_ms,
+        capture_screenshots=capture_screenshots,
+        session_factory=session_factory,
+    )
+
+
+def run_open_web_randomized_holdout_pipeline(
+    output_dir: str | Path = "artifacts/open_web_randomized_holdout",
+    *,
+    dev_repetitions: int = 3,
+    holdout_repetitions: int = 3,
+    headless: bool = True,
+    action_timeout_ms: int = 750,
+    capture_screenshots: bool = True,
+    session_factory=None,
+) -> dict[str, str]:
+    from evaluation.open_web_randomized_holdout import run_open_web_randomized_holdout_suite
+
+    return run_open_web_randomized_holdout_suite(
+        output_dir,
+        dev_repetitions=dev_repetitions,
+        holdout_repetitions=holdout_repetitions,
         headless=headless,
         action_timeout_ms=action_timeout_ms,
         capture_screenshots=capture_screenshots,
@@ -392,6 +417,13 @@ def main() -> None:
         help="Run local open-web mock fixtures through Playwright and RuntimeEpisodeRunner.",
     )
     parser.add_argument(
+        "--open-web-randomized-holdout",
+        action="store_true",
+        help="Run seeded six-family dev/locked-holdout variants through Playwright.",
+    )
+    parser.add_argument("--open-web-dev-repetitions", type=int, default=3)
+    parser.add_argument("--open-web-holdout-repetitions", type=int, default=3)
+    parser.add_argument(
         "--campaign-summary",
         default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
         help="Input campaign summary for --fusion-holdout.",
@@ -445,7 +477,14 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.open_web_playwright_fixture_suite:
+    if args.open_web_randomized_holdout:
+        summary = run_open_web_randomized_holdout_pipeline(
+            args.output_dir or "artifacts/open_web_randomized_holdout",
+            dev_repetitions=args.open_web_dev_repetitions,
+            holdout_repetitions=args.open_web_holdout_repetitions,
+            headless=not args.headed,
+        )
+    elif args.open_web_playwright_fixture_suite:
         summary = run_open_web_playwright_fixture_suite_pipeline(
             args.output_dir or "artifacts/open_web_playwright_fixture_suite",
             seed_start=args.seed_start,

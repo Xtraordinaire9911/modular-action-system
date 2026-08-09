@@ -42,7 +42,5 @@ def test_ablation_writer_reads_holdout_report_and_writes_artifact(tmp_path):
     paths = write_fusion_ablation_report(source, tmp_path / "out")
     report = json.loads((tmp_path / "out" / "bayesian_vs_rule_first_ablation_report.json").read_text())
 
-    assert paths["bayesian_vs_rule_first_ablation_report"].endswith(
-        "bayesian_vs_rule_first_ablation_report.json"
-    )
+    assert paths["bayesian_vs_rule_first_ablation_report"].endswith("bayesian_vs_rule_first_ablation_report.json")
     assert report["source_holdout_report"] == str(source)

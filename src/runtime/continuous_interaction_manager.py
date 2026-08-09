@@ -1640,16 +1640,18 @@ def _equivalent_recovery_affordance(
     if not _compatible_recovery_policy_flags(original_affordance, candidate):
         return False
 
-    candidate_semantics = {
-        (key, str(candidate.grounding[key])) for key in semantic_keys if key in candidate.grounding
-    }
+    candidate_semantics = {(key, str(candidate.grounding[key])) for key in semantic_keys if key in candidate.grounding}
     if original_semantics:
         return bool(original_semantics.intersection(candidate_semantics))
-    return candidate.entity_id == original_affordance.entity_id or candidate.action_name == original_affordance.action_name
+    return (
+        candidate.entity_id == original_affordance.entity_id or candidate.action_name == original_affordance.action_name
+    )
 
 
 def _compatible_declared_effects(original_affordance: RuntimeAffordance, candidate: RuntimeAffordance) -> bool:
-    original = _string_values(original_affordance.grounding.get("achieves"), original_affordance.grounding.get("effects"))
+    original = _string_values(
+        original_affordance.grounding.get("achieves"), original_affordance.grounding.get("effects")
+    )
     proposed = _string_values(candidate.grounding.get("achieves"), candidate.grounding.get("effects"))
     return not original or not proposed or original == proposed
 

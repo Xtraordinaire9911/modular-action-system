@@ -65,6 +65,14 @@ def test_success_is_checked_in_the_region_the_goal_names():
     assert binding.success_for({"item": "wireless headphones"}) == "headphones"
 
 
+def test_upvote_success_requires_the_post_action_voted_state():
+    binding = binding_for("post_upvoted")
+
+    assert binding.success_region({"subject": "top"}) == "button.upvote-btn[data-post='1'].voted"
+    assert binding.success_for({"subject": "top"}) == "▲"
+    assert binding.success_for({"subject": "top"}), "an empty expected string matches every initial page state"
+
+
 def test_every_binding_is_complete_enough_to_run():
     for goal_state, binding in BINDINGS.items():
         assert binding.goal_state == goal_state

@@ -320,6 +320,17 @@ the runtime verifies the fresh oracle state:
 uv run python -m src.pipeline --open-web-playwright-fixture-suite
 ```
 
+Run seeded behavioral variants for all six families with a locked holdout.
+The plan is written before execution, dev/holdout parameter signatures are
+checked for leakage, and both splits are verified from fresh page oracle state:
+
+```bash
+uv run python -m src.pipeline --open-web-randomized-holdout \
+  --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
+```
+
+This remains controlled local-browser evidence, not real open-web evidence.
+
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:
 

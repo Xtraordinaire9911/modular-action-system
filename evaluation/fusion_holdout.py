@@ -46,9 +46,9 @@ def build_locked_holdout_report(
         "protocol": {
             "locked_after_calibration": True,
             "calibration_repetitions_per_condition": calibration_repetitions,
-            "holdout_repetitions_per_condition": holdout_repetitions
-            if holdout_repetitions is not None
-            else _min_count_by_scenario(holdout),
+            "holdout_repetitions_per_condition": (
+                holdout_repetitions if holdout_repetitions is not None else _min_count_by_scenario(holdout)
+            ),
             "holdout_uses_calibration_threshold": True,
             "condition_count": len(by_scenario),
             "conditions": sorted(by_scenario),

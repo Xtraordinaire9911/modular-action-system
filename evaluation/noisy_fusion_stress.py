@@ -14,7 +14,6 @@ import random
 from pathlib import Path
 from typing import Any, Iterable
 
-
 ORACLE_SOURCE = "synthetic-noisy-source-oracle"
 
 
@@ -108,9 +107,7 @@ def build_noisy_fusion_stress_report(
             "balanced_accuracy_delta": round(delta, 6),
             "bayesian_outperforms_rule_first": delta > 0,
             "recommendation": (
-                "evaluate_on_live_ambiguous_cases_before_gate_integration"
-                if delta > 0
-                else "keep_rule_first_default"
+                "evaluate_on_live_ambiguous_cases_before_gate_integration" if delta > 0 else "keep_rule_first_default"
             ),
         },
     }

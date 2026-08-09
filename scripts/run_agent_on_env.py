@@ -25,17 +25,19 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Callable
 
 # Make `src...` importable when run as a file (script dir, not repo root, is on
 # sys.path[0]); pytest already adds the root via pythonpath, plain runs do not.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.benchmarks.reflex_policy import select_next  # noqa: E402
-from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
 from src.benchmarks.rule_web_planner import RuleBasedAffordancePlanner, WebPlannerHistory  # noqa: E402
+from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter  # noqa: E402
 from src.benchmarks.task_spec import BenchmarkTask  # noqa: E402
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter  # noqa: E402
 from src.benchmarks.web_task_planner import RuleBasedWebTaskPlanner, subgoal_satisfied  # noqa: E402
+from src.perception.session_thread import SessionThread, ThreadedSession  # noqa: E402
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec  # noqa: E402
 
 
@@ -77,6 +79,34 @@ def _start_static_server(directory: str):
     return httpd, httpd.server_address[1]
 
 
+def _launch_threaded_session(
+    url: str,
+    *,
+    headless: bool,
+    session_factory: Callable[..., Any] | None = None,
+) -> ThreadedSession:
+    """Create and keep the synchronous Playwright session on its own thread."""
+
+    if session_factory is None:
+        from src.perception.browser_session import BrowserSession  # lazy: needs Playwright
+
+        session_factory = BrowserSession.launch
+    worker = SessionThread(lambda: session_factory(url, headless=headless))
+    return ThreadedSession(worker)
+
+
+def _selector_success_check(selector: str, fragments: list[str]) -> Callable[[WebBenchmarkAdapter], bool]:
+    """Build a state-specific success oracle scoped to one DOM region."""
+
+    expected = [fragment.strip().lower() for fragment in fragments if fragment.strip()]
+
+    def check(adapter: WebBenchmarkAdapter) -> bool:
+        observed = adapter.text_content(selector).lower()
+        return bool(expected) and all(fragment in observed for fragment in expected)
+
+    return check
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the action system visibly on a web environment.")
     parser.add_argument("--url", help="Full page URL to drive (omit when using --serve).")
@@ -109,7 +139,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--success-text", action="append", default=[], help="Success if all fragments appear (repeatable)."
+        "--success-text",
+        action="append",
+        default=[],
+        help="Success if all fragments appear inside --success-selector (repeatable).",
+    )
+    parser.add_argument(
+        "--success-selector",
+        default="",
+        help="CSS selector for the state-bearing region checked by --success-text.",
     )
     parser.add_argument("--env", default="external", help="Environment label for the trace.")
     parser.add_argument("--task-id", default="adhoc", help="Task id for the trace.")
@@ -124,8 +162,8 @@ def main() -> None:
     )
     parser.add_argument("--pause-at-end", action="store_true", help="Keep the browser open until you press Enter.")
     args = parser.parse_args()
-
-    from src.perception.browser_session import BrowserSession  # lazy: needs Playwright
+    if bool(args.success_text) != bool(args.success_selector):
+        parser.error("--success-text and --success-selector must be supplied together")
 
     # Resolve the target URL, optionally spinning up our own free-port server.
     httpd = None
@@ -144,14 +182,15 @@ def main() -> None:
     bindings = _parse_mapping(args.bind, "--bind")
     completions = {target.strip() for target in args.complete if target.strip()}
     goal_state = args.goal_state or args.goal or args.task_id
-    task = BenchmarkTask(args.env, args.task_id, url, args.goal, success_text=args.success_text)
+    success_check = _selector_success_check(args.success_selector, args.success_text) if args.success_text else None
+    task = BenchmarkTask(args.env, args.task_id, url, args.goal, success_check=success_check)
     if args.planner == "llm":
         raise NotImplementedError(
             "LLM planner mode is reserved; use --planner rule, --planner runtime, or --planner reflex"
         )
 
     print(f"launching {'headed' if args.headed else 'headless'} browser on {url}")
-    session = BrowserSession.launch(url, headless=not args.headed)
+    session = _launch_threaded_session(url, headless=not args.headed)
     adapter = WebBenchmarkAdapter(session)
     used: list[str] = []
     history = WebPlannerHistory()
@@ -191,7 +230,7 @@ def main() -> None:
                 )
             )
             session.screenshot(str(shots / "final.png"))
-            print(f"runtime entrypoint: RuntimeEpisodeRunner.run_goal_episode")
+            print("runtime entrypoint: RuntimeEpisodeRunner.run_goal_episode")
             print(f"runtime state: {outcome.result.state.value}")
             print(f"verified: {outcome.result.final_outcome_verified}")
             print(f"episode: {outcome.result.episode_id}")
@@ -209,6 +248,9 @@ def main() -> None:
                 f"[{step:02d}] perceived {len(pam.affordances)} affordances "
                 f"(compression {pam.compression_ratio:.0%})"
             )
+            if adapter.is_solved(task):
+                print("     success criterion met")
+                break
             if args.planner == "rule":
                 assert task_plan is not None
                 page_text = adapter.page_text()
@@ -216,7 +258,9 @@ def main() -> None:
                     pam,
                     page_text,
                     task_plan.subgoals[active_subgoal],
-                    success_text=args.success_text,
+                    # Final success is checked against the declared selector,
+                    # never against unrelated text elsewhere on the page.
+                    success_text=[],
                 ):
                     print(f"     subgoal done: {task_plan.subgoals[active_subgoal].id}")
                     active_subgoal += 1

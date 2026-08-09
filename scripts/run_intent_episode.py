@@ -187,7 +187,10 @@ def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = Tru
         # product title is printed in the listing before anything is added, so a
         # body-text proxy reports the goal as met before the agent has acted.
         def goal_reached(_adapter: Any = None) -> bool:
-            observed = (session.text_content(proof_region) or "").lower()
+            # WebBenchmarkAdapter uses an immediate querySelector probe when
+            # available.  A post-action-only selector such as ``.voted`` must
+            # return false before the click, not wait for Playwright's timeout.
+            observed = adapter.text_content(proof_region).lower()
             return bool(observed) and proof_text.lower() in observed
 
         task = BenchmarkTask("mock_envs", goal.goal_id, url, goal.description, success_check=goal_reached)

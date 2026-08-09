@@ -36,7 +36,7 @@ class OpenWebMockFailureCase:
 def build_open_web_mock_failure_suite(seed_start: int = 8000) -> list[OpenWebMockFailureCase]:
     """Return oracle-labeled mock cases for open-web-style failures."""
 
-    specs = [
+    specs: list[dict[str, Any]] = [
         {
             "case_id": "openweb-overlay-obstruction",
             "failure_class": "overlay_modal_obstruction",

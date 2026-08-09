@@ -137,8 +137,12 @@ BINDINGS: dict[str, EnvironmentBinding] = {
         page="forum.html",
         completion_template="button.upvote-btn[data-post='{subject}']",
         subject_parameter="subject",
-        success_selector="#votes-{subject}",
-        success_template="",
+        # A vote count is already non-empty before the action.  Scope the oracle
+        # to the state-bearing class the page adds only after a successful vote;
+        # otherwise an empty success string matches the initial count and the
+        # episode is falsely reported as solved without a transition.
+        success_selector="button.upvote-btn[data-post='{subject}'].voted",
+        success_template="▲",
         state_entity="post",
         state_attribute="upvoted",
         subject_aliases={

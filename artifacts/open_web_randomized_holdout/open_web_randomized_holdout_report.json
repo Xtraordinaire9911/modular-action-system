@@ -1,0 +1,279 @@
+{
+  "artifacts": {
+    "dev_report": "artifacts/open_web_randomized_holdout/dev/open_web_playwright_fixture_report.json",
+    "holdout_report": "artifacts/open_web_randomized_holdout/holdout/open_web_playwright_fixture_report.json",
+    "locked_plan": "artifacts/open_web_randomized_holdout/open_web_randomized_holdout_plan.json"
+  },
+  "data_source": "open_web_randomized_locked_holdout",
+  "leakage_checks": {
+    "dev_unique_signatures": true,
+    "holdout_unique_signatures": true,
+    "seeds_disjoint": true,
+    "variant_signatures_disjoint": true
+  },
+  "protocol": {
+    "browser_execution": true,
+    "claim_boundary": "controlled randomized local-browser evidence; not real open-web evidence",
+    "dev_repetitions_per_family": 3,
+    "dev_seed_start": 12000,
+    "failure_family_count": 6,
+    "holdout_repetitions_per_family": 3,
+    "holdout_seed_start": 22000,
+    "holdout_used_for_tuning": false,
+    "locked_before_execution": true,
+    "oracle_source": "fresh fixture data-oracle-state after seeded parameter injection",
+    "real_open_web_evidence": false,
+    "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode"
+  },
+  "splits": {
+    "dev": {
+      "metrics": {
+        "metadata": {
+          "data_source": "open_web_playwright_fixture_suite",
+          "episode_ids": [
+            "episode-00fcf6843083",
+            "episode-04024c40a025",
+            "episode-2075a2e473fa",
+            "episode-4bd60417967d",
+            "episode-4fef3a131582",
+            "episode-6815f3912548",
+            "episode-76af3fe8f06b",
+            "episode-79f4912e1732",
+            "episode-8cbc11576b3f",
+            "episode-991f0179a690",
+            "episode-a0c33b601a8b",
+            "episode-afbb3c30b4e6",
+            "episode-b5d40f9c1181",
+            "episode-bac307b4f72f",
+            "episode-bfcd06328108",
+            "episode-dc8f9e542bbb",
+            "episode-f9438cb9da48",
+            "episode-fd60d01f2544"
+          ],
+          "measurement_counts": {
+            "adaptation_cases": 18,
+            "conflict_cases": 0,
+            "oracle_cases": 0,
+            "primitive_actions": 18,
+            "recovery_cases": 18,
+            "routing_cases": 0,
+            "tasks": 18,
+            "verification_cases": 18,
+            "visual_grounding_cases": 0
+          }
+        },
+        "values": {
+          "ATL": 155.1099444444,
+          "BRA": 0.0,
+          "BackwardRetention": 0.0,
+          "BoundaryClassificationRate": 1.0,
+          "CER": 0.0,
+          "CRR": 0.0,
+          "CSR": 0.0,
+          "CascadeTraceCoverage": 1.0,
+          "ControlRecoveryRatio": 0.0,
+          "CounterfactualOutcomeDeviation": 0.0,
+          "ExpectedEffectSuccessRate": 0.0,
+          "FPR": 0.0,
+          "FalseSuccessDetectionRate": 0.0,
+          "FalseSuccessRate": 1.0,
+          "HeldOutGain": 0.0,
+          "ImprovementEfficiency": 0.0,
+          "MTL": 155.1099444444,
+          "MeanTimeToRecovery": 0.0,
+          "OSR": 0.0,
+          "PCR": 1.0,
+          "PCS": 0.0,
+          "PathAttributionCoverage": 1.0,
+          "PolicyProposalRate": 0.0,
+          "RE": 0.0,
+          "RecoverySuccessRate": 0.0,
+          "RecoveryTriggerRate": 1.0,
+          "RerouteTransitionRate": 0.0,
+          "RetryTransitionRate": 0.0,
+          "RollbackTransitionRate": 0.0,
+          "SafetyNonRegression": 1.0,
+          "TSR": 0.0,
+          "UAR": 0.0,
+          "VGA": 0.0,
+          "WDSR": 0.0
+        }
+      },
+      "per_family": {
+        "autocomplete_async_validation_mutation": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "dom_vs_visual_disagreement": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "optimistic_ui_backend_mismatch": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "overlay_modal_obstruction": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "session_auth_expiry": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "visible_but_ineffective_affordance": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        }
+      },
+      "report": "artifacts/open_web_randomized_holdout/dev/open_web_playwright_fixture_report.json",
+      "summary": {
+        "case_count": 18,
+        "executor_failure_count": 3,
+        "executor_success_count": 15,
+        "failure_record_count": 18,
+        "final_success_count": 0,
+        "postcondition_failures_detected": 18,
+        "recovery_attempted_count": 18,
+        "runtime_episode_count": 18,
+        "transition_record_count": 18,
+        "unique_episode_ids": true
+      }
+    },
+    "holdout": {
+      "metrics": {
+        "metadata": {
+          "data_source": "open_web_playwright_fixture_suite",
+          "episode_ids": [
+            "episode-08a668f951cd",
+            "episode-450ab6b3bb67",
+            "episode-795763341b65",
+            "episode-7b36210949e2",
+            "episode-807ce36a4c0d",
+            "episode-82d2bcf9dd34",
+            "episode-859d3882d3a8",
+            "episode-8efdf44a4fed",
+            "episode-983cbb00b5ca",
+            "episode-ad0e29804a49",
+            "episode-ad4dfb26232a",
+            "episode-af6ea950b698",
+            "episode-b69999b8b324",
+            "episode-c18457013eae",
+            "episode-c48015b889dc",
+            "episode-d468ce6f002c",
+            "episode-df151fac3c7e",
+            "episode-ee9ae89bd3a4"
+          ],
+          "measurement_counts": {
+            "adaptation_cases": 18,
+            "conflict_cases": 0,
+            "oracle_cases": 0,
+            "primitive_actions": 18,
+            "recovery_cases": 18,
+            "routing_cases": 0,
+            "tasks": 18,
+            "verification_cases": 18,
+            "visual_grounding_cases": 0
+          }
+        },
+        "values": {
+          "ATL": 151.3113888889,
+          "BRA": 0.0,
+          "BackwardRetention": 0.0,
+          "BoundaryClassificationRate": 1.0,
+          "CER": 0.0,
+          "CRR": 0.0,
+          "CSR": 0.0,
+          "CascadeTraceCoverage": 1.0,
+          "ControlRecoveryRatio": 0.0,
+          "CounterfactualOutcomeDeviation": 0.0,
+          "ExpectedEffectSuccessRate": 0.0,
+          "FPR": 0.0,
+          "FalseSuccessDetectionRate": 0.0,
+          "FalseSuccessRate": 1.0,
+          "HeldOutGain": 0.0,
+          "ImprovementEfficiency": 0.0,
+          "MTL": 151.3113888889,
+          "MeanTimeToRecovery": 0.0,
+          "OSR": 0.0,
+          "PCR": 1.0,
+          "PCS": 0.0,
+          "PathAttributionCoverage": 1.0,
+          "PolicyProposalRate": 0.0,
+          "RE": 0.0,
+          "RecoverySuccessRate": 0.0,
+          "RecoveryTriggerRate": 1.0,
+          "RerouteTransitionRate": 0.0,
+          "RetryTransitionRate": 0.0,
+          "RollbackTransitionRate": 0.0,
+          "SafetyNonRegression": 1.0,
+          "TSR": 0.0,
+          "UAR": 0.0,
+          "VGA": 0.0,
+          "WDSR": 0.0
+        }
+      },
+      "per_family": {
+        "autocomplete_async_validation_mutation": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "dom_vs_visual_disagreement": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "optimistic_ui_backend_mismatch": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "overlay_modal_obstruction": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "session_auth_expiry": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        },
+        "visible_but_ineffective_affordance": {
+          "failure_detection_rate": 1.0,
+          "failures_detected": 3,
+          "variant_count": 3
+        }
+      },
+      "report": "artifacts/open_web_randomized_holdout/holdout/open_web_playwright_fixture_report.json",
+      "summary": {
+        "case_count": 18,
+        "executor_failure_count": 3,
+        "executor_success_count": 15,
+        "failure_record_count": 18,
+        "final_success_count": 0,
+        "postcondition_failures_detected": 18,
+        "recovery_attempted_count": 18,
+        "runtime_episode_count": 18,
+        "transition_record_count": 18,
+        "unique_episode_ids": true
+      }
+    }
+  },
+  "summary": {
+    "dev_failure_detection_rate": 1.0,
+    "dev_final_success_count": 0,
+    "dev_variant_count": 18,
+    "holdout_failure_detection_rate": 1.0,
+    "holdout_failure_families_passed": 6,
+    "holdout_final_success_count": 0,
+    "holdout_passed": true,
+    "holdout_variant_count": 18,
+    "variant_count": 36
+  }
+}

@@ -1,7 +1,7 @@
 import json
 
-from evaluation.live_fusion_campaign import RepeatedFusionTrial
 from evaluation.fusion_holdout import build_locked_holdout_report
+from evaluation.live_fusion_campaign import RepeatedFusionTrial
 from src.pipeline import run_fusion_holdout_pipeline
 
 

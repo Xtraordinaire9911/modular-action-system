@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import inspect
+import json
 from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, Sequence
 
 from evaluation.metrics_aggregator import aggregate_metrics, dataset_from_runtime_results
 from evaluation.open_web_mock_failure_suite import OpenWebMockFailureCase, build_open_web_mock_failure_suite
 from src.adaptation.trace_ledger import TraceLedger
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
+from src.runtime.continuous_interaction_manager import Executor
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec
+
+if TYPE_CHECKING:
+    from evaluation.open_web_randomized_holdout import OpenWebFailureVariant
 
 
 class BrowserSessionLike(Protocol):
@@ -23,7 +27,7 @@ class BrowserSessionLike(Protocol):
     def click(self, selector: str) -> Any: ...
     def fill(self, selector: str, value: str) -> Any: ...
     def evaluate(self, expression: str, arg: Any | None = None) -> Any: ...
-    def screenshot(self, path: str | None = None) -> bytes: ...
+    def screenshot(self, path: str | None = None) -> Any: ...
     def close(self) -> Any: ...
 
 
@@ -44,9 +48,15 @@ _CASE_ACTIONS: dict[str, list[dict[str, str]]] = {
 
 
 class _PlaywrightFixtureExecutor:
-    def __init__(self, session: BrowserSessionLike, case: OpenWebMockFailureCase) -> None:
+    def __init__(
+        self,
+        session: BrowserSessionLike,
+        case: OpenWebMockFailureCase,
+        variant_parameters: dict[str, Any] | None = None,
+    ) -> None:
         self.session = session
         self.case = case
+        self.variant_parameters = dict(variant_parameters or {})
         self.calls: list[SkillCall] = []
         self.action_log: list[dict[str, Any]] = []
 
@@ -55,7 +65,7 @@ class _PlaywrightFixtureExecutor:
         self.calls.append(skill_call)
         started = asyncio.get_running_loop().time()
         try:
-            for step in _CASE_ACTIONS[self.case.case_id]:
+            for step in _actions_for_case(self.case, self.variant_parameters):
                 action = step["action"]
                 selector = step["selector"]
                 if action == "fill":
@@ -103,27 +113,46 @@ class _PlaywrightFixtureRuntimeAdapter:
         url: str,
         screenshot_dir: Path,
         capture_screenshots: bool,
+        variant_id: str = "",
+        variant_split: str = "",
+        variant_signature: str = "",
+        variant_parameters: dict[str, Any] | None = None,
     ) -> None:
         self.session = session
         self.case = case
         self.url = url
-        self.executor = _PlaywrightFixtureExecutor(session, case)
+        self.variant_id = variant_id
+        self.variant_split = variant_split
+        self.variant_signature = variant_signature
+        self.variant_parameters = dict(variant_parameters or {})
+        self.executor = _PlaywrightFixtureExecutor(session, case, self.variant_parameters)
         self.screenshot_dir = screenshot_dir
         self.capture_screenshots = capture_screenshots
         self.requests: list[ObservationRequest] = []
         self.reset_specs: list[RuntimeEpisodeSpec] = []
         self.screenshots: list[str] = []
+        self.observed_oracles: list[dict[str, Any]] = []
 
     async def reset(self, spec: RuntimeEpisodeSpec) -> None:
         self.reset_specs.append(spec)
         await _maybe_await(self.session.open(self.url))
+        if self.variant_parameters:
+            await _apply_fixture_variant(
+                self.session,
+                self.case,
+                variant_id=self.variant_id,
+                split=self.variant_split,
+                parameters=self.variant_parameters,
+            )
 
     async def observe(self, request: ObservationRequest) -> Observation:
         self.requests.append(request)
         oracle = await _read_fixture_oracle(self.session)
+        self.observed_oracles.append(dict(oracle))
         if self.capture_screenshots:
             self.screenshot_dir.mkdir(parents=True, exist_ok=True)
-            screenshot_path = self.screenshot_dir / f"{self.case.case_id}-{request.reason}.png"
+            evidence_id = self.variant_id or self.case.case_id
+            screenshot_path = self.screenshot_dir / f"{evidence_id}-{request.reason}.png"
             try:
                 await _maybe_await(self.session.screenshot(str(screenshot_path)))
                 self.screenshots.append(str(screenshot_path))
@@ -133,10 +162,14 @@ class _PlaywrightFixtureRuntimeAdapter:
         return Observation(
             device_states={
                 "oracle": {
-                    "expected_effect_satisfied": False,
+                    "expected_effect_satisfied": _expected_effect_satisfied(self.case, oracle),
                     "case_id": self.case.case_id,
                     "failure_class": self.case.failure_class,
                     "state": oracle,
+                    "variant_id": self.variant_id,
+                    "variant_split": self.variant_split,
+                    "variant_signature": self.variant_signature,
+                    "variant_parameters": self.variant_parameters,
                 }
             },
             accessibility_tree={
@@ -150,21 +183,162 @@ class _PlaywrightFixtureRuntimeAdapter:
             },
         )
 
-    def executors(self) -> dict[str, _PlaywrightFixtureExecutor]:
+    def executors(self) -> dict[str, Executor]:
         return {"dom": self.executor}
 
 
 async def _read_fixture_oracle(session: BrowserSessionLike) -> dict[str, Any]:
-    value = await _maybe_await(
-        session.evaluate(
-        """() => {
+    value = await _maybe_await(session.evaluate("""() => {
             const raw = document.body && document.body.getAttribute('data-oracle-state');
             if (!raw) return {};
             try { return JSON.parse(raw); } catch (error) { return {parse_error: String(error), raw}; }
-        }"""
+        }"""))
+    return value if isinstance(value, dict) else {}
+
+
+def _expected_effect_satisfied(case: OpenWebMockFailureCase, oracle: dict[str, Any]) -> bool:
+    if case.case_id == "openweb-overlay-obstruction":
+        return bool(oracle.get("primary_action_completed"))
+    if case.case_id == "openweb-session-expiry":
+        return bool(oracle.get("profile_update_persisted"))
+    if case.case_id == "openweb-autocomplete-validation":
+        return (
+            "submitted_city" in oracle
+            and "requested_city" in oracle
+            and oracle.get("submitted_city") == oracle.get("requested_city")
+        )
+    if case.case_id == "openweb-optimistic-rollback":
+        return bool(oracle.get("backend_order_confirmed"))
+    if case.case_id == "openweb-dom-visual-disagreement":
+        return (
+            "dom_selected_plan" in oracle
+            and "visual_highlighted_plan" in oracle
+            and oracle.get("dom_selected_plan") == oracle.get("visual_highlighted_plan")
+        )
+    if case.case_id == "openweb-visible-ineffective-affordance":
+        return bool(oracle.get("notifications_enabled"))
+    return False
+
+
+def _actions_for_case(case: OpenWebMockFailureCase, parameters: dict[str, Any]) -> list[dict[str, str]]:
+    actions = [dict(step) for step in _CASE_ACTIONS[case.case_id]]
+    if case.case_id == "openweb-autocomplete-validation":
+        actions[0]["value"] = str(parameters.get("requested_city", "New York"))
+    elif case.case_id == "openweb-dom-visual-disagreement":
+        dom_plan = str(parameters.get("dom_selected_plan", "premium"))
+        actions = [{"action": "click", "selector": f"#choose-{dom_plan}"}]
+    return actions
+
+
+async def _apply_fixture_variant(
+    session: BrowserSessionLike,
+    case: OpenWebMockFailureCase,
+    *,
+    variant_id: str,
+    split: str,
+    parameters: dict[str, Any],
+) -> None:
+    payload = {
+        "caseId": case.case_id,
+        "variantId": variant_id,
+        "split": split,
+        "parameters": parameters,
+        "oracle": _variant_oracle_state(case, parameters),
+    }
+    await _maybe_await(
+        session.evaluate(
+            """(payload) => {
+                const body = document.body;
+                const p = payload.parameters;
+                body.setAttribute('data-variant-id', payload.variantId);
+                body.setAttribute('data-variant-split', payload.split);
+                body.setAttribute('data-variant-parameters', JSON.stringify(p));
+                body.setAttribute('data-oracle-state', JSON.stringify(payload.oracle));
+
+                if (payload.caseId === 'openweb-overlay-obstruction') {
+                    const overlay = document.querySelector('#cookie-wall');
+                    const modal = document.querySelector('#cookie-wall .modal');
+                    overlay.style.background = `rgba(0,0,0,${p.overlay_opacity})`;
+                    overlay.style.zIndex = String(p.z_index);
+                    modal.style.transform = `translateX(${p.modal_offset_px}px)`;
+                } else if (payload.caseId === 'openweb-session-expiry') {
+                    document.querySelector('#session-banner').textContent =
+                        `Session expired ${p.session_age_s}s ago (HTTP ${p.auth_code}).`;
+                    document.querySelector('#save-profile').onclick = () => {
+                        document.querySelector('#status').textContent =
+                            `HTTP ${p.auth_code}: redirected to login; update not persisted.`;
+                    };
+                } else if (payload.caseId === 'openweb-autocomplete-validation') {
+                    document.querySelector('#submit-city').onclick = () => {
+                        document.querySelector('#city').value = p.submitted_city;
+                        document.querySelector('#status').textContent =
+                            `Validator ${p.validator_revision}: submitted ${p.submitted_city}`;
+                    };
+                } else if (payload.caseId === 'openweb-optimistic-rollback') {
+                    document.querySelector('#place-order').onclick = () => {
+                        document.querySelector('#ui-status').textContent = 'Order submitted';
+                        document.querySelector('#api-status').textContent =
+                            `Backend ${p.backend_status_code}; rollback in ${p.rollback_delay_ms}ms`;
+                    };
+                } else if (payload.caseId === 'openweb-dom-visual-disagreement') {
+                    document.querySelectorAll('[data-plan]').forEach((node) => {
+                        const name = node.getAttribute('data-plan');
+                        node.classList.toggle('visual-highlight', name === p.visual_highlighted_plan);
+                        node.setAttribute('aria-selected', String(name === p.dom_selected_plan));
+                    });
+                    const highlighted = document.querySelector('.visual-highlight');
+                    highlighted.style.outlineWidth = `${p.highlight_width_px}px`;
+                    highlighted.style.outlineColor = `hsl(${p.highlight_hue} 75% 50%)`;
+                    document.querySelector('#status').textContent =
+                        `DOM selected: ${p.dom_selected_plan}. Visual highlight: ${p.visual_highlighted_plan}.`;
+                } else if (payload.caseId === 'openweb-visible-ineffective-affordance') {
+                    document.querySelector('#notification-toggle').setAttribute(
+                        'data-control-revision', p.control_revision
+                    );
+                    document.querySelector('#notification-toggle').onclick = () => {
+                        document.querySelector('#status').textContent =
+                            `${p.ack_code}: ${p.reported_clicks} click(s) accepted; notifications remain disabled.`;
+                    };
+                }
+            }""",
+            payload,
         )
     )
-    return value if isinstance(value, dict) else {}
+
+
+def _variant_oracle_state(case: OpenWebMockFailureCase, parameters: dict[str, Any]) -> dict[str, Any]:
+    state = dict(case.oracle_state)
+    if case.case_id == "openweb-session-expiry":
+        state.update(session_age_s=parameters["session_age_s"], auth_code=parameters["auth_code"])
+    elif case.case_id == "openweb-autocomplete-validation":
+        state.update(
+            requested_city=parameters["requested_city"],
+            submitted_city=parameters["submitted_city"],
+            validator_revision=parameters["validator_revision"],
+        )
+    elif case.case_id == "openweb-optimistic-rollback":
+        state.update(
+            backend_status_code=parameters["backend_status_code"],
+            rollback_delay_ms=parameters["rollback_delay_ms"],
+        )
+    elif case.case_id == "openweb-dom-visual-disagreement":
+        state.update(
+            dom_selected_plan=parameters["dom_selected_plan"],
+            visual_highlighted_plan=parameters["visual_highlighted_plan"],
+        )
+    elif case.case_id == "openweb-visible-ineffective-affordance":
+        state.update(
+            ack_code=parameters["ack_code"],
+            reported_clicks=parameters["reported_clicks"],
+            control_revision=parameters["control_revision"],
+        )
+    else:
+        state.update(
+            overlay_opacity=parameters["overlay_opacity"],
+            modal_offset_px=parameters["modal_offset_px"],
+            z_index=parameters["z_index"],
+        )
+    return state
 
 
 def _skill_for_case(case: OpenWebMockFailureCase) -> SkillTuple:
@@ -193,6 +367,7 @@ async def _run_open_web_playwright_fixture_suite_async(
     action_timeout_ms: int = 1000,
     capture_screenshots: bool = True,
     session_factory: SessionFactory | None = None,
+    variants: Sequence["OpenWebFailureVariant"] | None = None,
 ) -> dict[str, str]:
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
@@ -203,7 +378,8 @@ async def _run_open_web_playwright_fixture_suite_async(
             path.unlink()
     screenshot_dir = target / "screenshots"
 
-    cases = build_open_web_mock_failure_suite(seed_start=seed_start)
+    selected_variants = list(variants or [])
+    cases = [variant.case for variant in selected_variants] or build_open_web_mock_failure_suite(seed_start=seed_start)
     skill_library = {_skill_for_case(case).skill_id: _skill_for_case(case) for case in cases}
     transition_ledger = TransitionLedger(transition_path)
     failure_ledger = TraceLedger()
@@ -217,7 +393,8 @@ async def _run_open_web_playwright_fixture_suite_async(
 
     rows: list[dict[str, Any]] = []
     results = []
-    for case in cases:
+    for index, case in enumerate(cases):
+        variant = selected_variants[index] if selected_variants else None
         fixture_path = (Path("env/mock_envs") / case.html_fixture).resolve()
         url = fixture_path.as_uri()
         session = await _maybe_await(factory(url, headless=headless, action_timeout_ms=action_timeout_ms))
@@ -227,6 +404,10 @@ async def _run_open_web_playwright_fixture_suite_async(
             url=url,
             screenshot_dir=screenshot_dir,
             capture_screenshots=capture_screenshots,
+            variant_id=variant.variant_id if variant else "",
+            variant_split=variant.split if variant else "",
+            variant_signature=variant.signature if variant else "",
+            variant_parameters=variant.parameters if variant else {},
         )
         try:
             skill_id = f"open_web_browser_fixture::{case.case_id}"
@@ -255,10 +436,23 @@ async def _run_open_web_playwright_fixture_suite_async(
                     "browser": {
                         "url": url,
                         "fixture_path": str(fixture_path),
-                        "actions": _CASE_ACTIONS[case.case_id],
+                        "actions": _actions_for_case(case, adapter.variant_parameters),
                         "executed_actions": list(adapter.executor.action_log),
                         "screenshots": list(adapter.screenshots),
+                        "observed_oracles": list(adapter.observed_oracles),
                     },
+                    "variant": (
+                        {
+                            "variant_id": variant.variant_id,
+                            "split": variant.split,
+                            "repetition": variant.repetition,
+                            "seed": variant.seed,
+                            "signature": variant.signature,
+                            "parameters": variant.parameters,
+                        }
+                        if variant
+                        else None
+                    ),
                     "runtime": {
                         "episode_id": result.episode_id,
                         "state": result.state.value,
@@ -300,6 +494,7 @@ async def _run_open_web_playwright_fixture_suite_async(
             "browser_execution": True,
             "browser_surface": "Playwright Chromium isolated context over file:// local fixtures",
             "controlled_browser_fixture_evidence": True,
+            "randomized_variant_evidence": bool(selected_variants),
             "real_open_web_evidence": False,
             "oracle_source": "fixture data-oracle-state read after action",
             "claim_boundary": "real browser execution of local fixtures; not MiniWoB/WebArena/real open-web evidence",
@@ -406,6 +601,7 @@ def run_open_web_playwright_fixture_suite(
     action_timeout_ms: int = 1000,
     capture_screenshots: bool = True,
     session_factory: SessionFactory | None = None,
+    variants: Sequence["OpenWebFailureVariant"] | None = None,
 ) -> dict[str, str]:
     return asyncio.run(
         _run_open_web_playwright_fixture_suite_async(
@@ -415,5 +611,6 @@ def run_open_web_playwright_fixture_suite(
             action_timeout_ms=action_timeout_ms,
             capture_screenshots=capture_screenshots,
             session_factory=session_factory,
+            variants=variants,
         )
     )

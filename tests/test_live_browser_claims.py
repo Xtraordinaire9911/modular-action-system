@@ -164,3 +164,28 @@ def test_probes_report_when_they_cannot_run(session):
 
     assert interactability(session, missing).exists is False
     assert occlusion(session, missing).missing is True
+
+
+def test_randomized_open_web_holdout_changes_real_page_state_and_detects_all_failures(tmp_path):
+    """Claim: seeded holdout parameters reach Chromium and fresh-oracle verification."""
+    import json
+
+    from evaluation.open_web_randomized_holdout import run_open_web_randomized_holdout_suite
+
+    run_open_web_randomized_holdout_suite(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        action_timeout_ms=300,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "open_web_randomized_holdout_report.json").read_text())
+    holdout = json.loads((tmp_path / "holdout" / "open_web_playwright_fixture_report.json").read_text())
+
+    assert report["summary"]["holdout_passed"] is True
+    assert report["summary"]["holdout_failure_families_passed"] == 6
+    for row in holdout["cases"]:
+        assert row["browser"]["observed_oracles"]
+        observed = row["browser"]["observed_oracles"][-1]
+        expected = row["variant"]["parameters"]
+        assert any(value in observed.values() for value in expected.values())

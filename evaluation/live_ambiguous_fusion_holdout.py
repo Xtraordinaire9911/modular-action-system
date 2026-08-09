@@ -22,7 +22,9 @@ def build_live_ambiguous_locked_holdout_report(
     posterior_threshold: float = 0.5,
     source_live_ambiguous_summary: str = "",
 ) -> dict[str, Any]:
-    materialized = sorted(list(trials), key=lambda trial: (str(trial["profile"]), int(trial["repetition"]), int(trial["seed"])))
+    materialized = sorted(
+        list(trials), key=lambda trial: (str(trial["profile"]), int(trial["repetition"]), int(trial["seed"]))
+    )
     if calibration_repetitions <= 0:
         raise ValueError("calibration_repetitions must be positive")
     by_profile: dict[str, list[dict[str, Any]]] = {}
@@ -54,9 +56,9 @@ def build_live_ambiguous_locked_holdout_report(
             "locked_after_calibration": True,
             "production_gate_changed": False,
             "calibration_repetitions_per_profile": calibration_repetitions,
-            "holdout_repetitions_per_profile": holdout_repetitions
-            if holdout_repetitions is not None
-            else _min_count_by_profile(holdout),
+            "holdout_repetitions_per_profile": (
+                holdout_repetitions if holdout_repetitions is not None else _min_count_by_profile(holdout)
+            ),
             "profile_count": len(by_profile),
             "profiles": sorted(by_profile),
             "calibration_episode_ids": [str(trial["episode_id"]) for trial in calibration],

@@ -262,7 +262,9 @@ class EpistemicArbiter:
         if blocking:
             reason = "blocking sensory conflict requires active perception or escalation"
             if self.fusion_strategy == "bayesian_gate":
-                strongest = max(blocking, key=lambda conflict: self._bayesian_blocking_probability(cognitive_map, conflict))
+                strongest = max(
+                    blocking, key=lambda conflict: self._bayesian_blocking_probability(cognitive_map, conflict)
+                )
                 reason = (
                     "bayesian_gate posterior "
                     f"{self._bayesian_blocking_probability(cognitive_map, strongest):.3f} "

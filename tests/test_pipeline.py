@@ -4,8 +4,8 @@ import asyncio
 import json
 
 from src.pipeline import (
-    run_bayesian_shadow_stability_pipeline,
     run_bayesian_fusion_comparator_pipeline,
+    run_bayesian_shadow_stability_pipeline,
     run_fusion_ablation_report_pipeline,
     run_fusion_campaign_pipeline,
     run_live_ambiguous_fusion_holdout_pipeline,
@@ -14,6 +14,7 @@ from src.pipeline import (
     run_open_web_mock_failure_suite_pipeline,
     run_open_web_mock_runtime_suite_pipeline,
     run_open_web_playwright_fixture_suite_pipeline,
+    run_open_web_randomized_holdout_pipeline,
     run_runtime_demo_pipeline,
     run_smoke_pipeline,
 )
@@ -169,9 +170,7 @@ def test_fusion_ablation_report_pipeline_writes_report(tmp_path):
 
     paths = run_fusion_ablation_report_pipeline(source, tmp_path / "ablation")
 
-    assert paths["bayesian_vs_rule_first_ablation_report"].endswith(
-        "bayesian_vs_rule_first_ablation_report.json"
-    )
+    assert paths["bayesian_vs_rule_first_ablation_report"].endswith("bayesian_vs_rule_first_ablation_report.json")
 
 
 def test_bayesian_shadow_stability_pipeline_writes_report(tmp_path):
@@ -229,3 +228,21 @@ def test_open_web_playwright_fixture_suite_pipeline_writes_browser_report_with_f
     assert paths["open_web_playwright_fixture_report"].endswith("open_web_playwright_fixture_report.json")
     assert report["protocol"]["browser_execution"] is True
     assert report["summary"]["postcondition_failures_detected"] == report["summary"]["case_count"]
+
+
+def test_open_web_randomized_holdout_pipeline_writes_locked_split_reports(tmp_path):
+    from tests.test_open_web_playwright_fixture_runner import _fake_session_factory
+
+    paths = run_open_web_randomized_holdout_pipeline(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        session_factory=_fake_session_factory,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "open_web_randomized_holdout_report.json").read_text())
+
+    assert paths["open_web_randomized_holdout_report"].endswith("open_web_randomized_holdout_report.json")
+    assert report["leakage_checks"]["variant_signatures_disjoint"] is True
+    assert report["summary"]["dev_variant_count"] == 6
+    assert report["summary"]["holdout_variant_count"] == 6

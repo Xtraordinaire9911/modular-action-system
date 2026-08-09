@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 from evaluation.metrics_aggregator import MetricReport, aggregate_metrics, dataset_from_runtime_results
+from src.adaptation.llm_judge import LLMJudge
 from src.adaptation.trace_ledger import TraceLedger
 from src.contracts.types import Observation, SkillCall, SkillTuple
 from src.recovery.recovery_cascade import RecoveryCascade
@@ -23,7 +24,6 @@ from src.runtime.plan_validator import PlanValidator
 from src.runtime.system2_planner import System2Planner
 from src.verification.active_perception import ActivePerceptionResolver
 from src.verification.conflict_detector import EpistemicArbiter
-from src.adaptation.llm_judge import LLMJudge
 
 
 @dataclass(frozen=True)

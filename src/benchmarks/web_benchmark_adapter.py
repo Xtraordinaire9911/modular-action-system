@@ -31,6 +31,7 @@ class SessionLike(Protocol):
     def click(self, selector: str) -> Any: ...
     def fill(self, selector: str, value: str) -> Any: ...
     def text_content(self, selector: str) -> str | None: ...
+    def evaluate(self, expression: str, arg: Any | None = None) -> Any: ...
 
 
 class WebBenchmarkAdapter:
@@ -54,8 +55,24 @@ class WebBenchmarkAdapter:
 
     def page_text(self) -> str:
         """Visible body text — a benchmark-agnostic signal for the success proxy."""
+        return self.text_content("body")
+
+    def text_content(self, selector: str) -> str:
+        """Visible text scoped to a caller-declared state-bearing region."""
         try:
-            return self._session.text_content("body") or ""
+            evaluator = getattr(self._session, "evaluate", None)
+            if evaluator is not None:
+                value = evaluator(
+                    "(selector) => document.querySelector(selector)?.textContent || ''",
+                    selector,
+                )
+                # BrowserSession returns None when its injected/offline page
+                # has no evaluate method; preserve the lightweight test/page
+                # fallback in that case. A real browser returns "" for a
+                # missing selector, which is an immediate negative oracle.
+                if value is not None:
+                    return str(value or "")
+            return self._session.text_content(selector) or ""
         except Exception:
             return ""
 

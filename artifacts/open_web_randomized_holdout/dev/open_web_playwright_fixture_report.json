@@ -1,0 +1,1735 @@
+{
+  "artifacts": {
+    "failure_ledger": "artifacts/open_web_randomized_holdout/dev/failure_ledger.jsonl",
+    "screenshots_dir": "artifacts/open_web_randomized_holdout/dev/screenshots",
+    "transition_ledger": "artifacts/open_web_randomized_holdout/dev/transition_ledger.jsonl"
+  },
+  "cases": [
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#primary-action"
+          }
+        ],
+        "executed_actions": [],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_overlay_obstruction.html",
+        "observed_oracles": [
+          {
+            "modal_offset_px": -18,
+            "overlay_opacity": 0.42,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1000
+          },
+          {
+            "modal_offset_px": -18,
+            "overlay_opacity": 0.42,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1000
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_overlay_obstruction.html"
+      },
+      "case": {
+        "case_id": "openweb-overlay-obstruction",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+        "expected_effect": "primary_action_completed == true",
+        "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+        "failure_class": "overlay_modal_obstruction",
+        "goal": "Accept the primary action while a cookie modal blocks the target button.",
+        "html_fixture": "failure_overlay_obstruction.html",
+        "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+        "oracle_state": {
+          "overlay_present": true,
+          "primary_action_completed": false
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+        "seed": 12000
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-76af3fe8f06b",
+        "executor_failure_reason": "TimeoutError: Page.click: Timeout 750ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+        "executor_success": false,
+        "failure_boundary": "immediate_runtime_error",
+        "failure_type": "timeout",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-76af3fe8f06b:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "modal_offset_px": -18,
+          "overlay_opacity": 0.42,
+          "z_index": 1000
+        },
+        "repetition": 0,
+        "seed": 12000,
+        "signature": "f1a1e5d5b3f5bbb6e64b",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-00-seed-12000"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#primary-action"
+          }
+        ],
+        "executed_actions": [],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_overlay_obstruction.html",
+        "observed_oracles": [
+          {
+            "modal_offset_px": -10,
+            "overlay_opacity": 0.52,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1001
+          },
+          {
+            "modal_offset_px": -10,
+            "overlay_opacity": 0.52,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1001
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-overlay-obstruction-01-seed-12001-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-overlay-obstruction-01-seed-12001-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_overlay_obstruction.html"
+      },
+      "case": {
+        "case_id": "openweb-overlay-obstruction",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-overlay-obstruction-01-seed-12001",
+        "expected_effect": "primary_action_completed == true",
+        "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+        "failure_class": "overlay_modal_obstruction",
+        "goal": "Accept the primary action while a cookie modal blocks the target button.",
+        "html_fixture": "failure_overlay_obstruction.html",
+        "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+        "oracle_state": {
+          "overlay_present": true,
+          "primary_action_completed": false
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+        "seed": 12001
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-bfcd06328108",
+        "executor_failure_reason": "TimeoutError: Page.click: Timeout 750ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+        "executor_success": false,
+        "failure_boundary": "immediate_runtime_error",
+        "failure_type": "timeout",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-bfcd06328108:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "modal_offset_px": -10,
+          "overlay_opacity": 0.52,
+          "z_index": 1001
+        },
+        "repetition": 1,
+        "seed": 12001,
+        "signature": "bf621af534cd21fb65aa",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-01-seed-12001"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#primary-action"
+          }
+        ],
+        "executed_actions": [],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_overlay_obstruction.html",
+        "observed_oracles": [
+          {
+            "modal_offset_px": -2,
+            "overlay_opacity": 0.62,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1002
+          },
+          {
+            "modal_offset_px": -2,
+            "overlay_opacity": 0.62,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1002
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-overlay-obstruction-02-seed-12002-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-overlay-obstruction-02-seed-12002-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_overlay_obstruction.html"
+      },
+      "case": {
+        "case_id": "openweb-overlay-obstruction",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-overlay-obstruction-02-seed-12002",
+        "expected_effect": "primary_action_completed == true",
+        "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+        "failure_class": "overlay_modal_obstruction",
+        "goal": "Accept the primary action while a cookie modal blocks the target button.",
+        "html_fixture": "failure_overlay_obstruction.html",
+        "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+        "oracle_state": {
+          "overlay_present": true,
+          "primary_action_completed": false
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+        "seed": 12002
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-f9438cb9da48",
+        "executor_failure_reason": "TimeoutError: Page.click: Timeout 750ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+        "executor_success": false,
+        "failure_boundary": "immediate_runtime_error",
+        "failure_type": "timeout",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-f9438cb9da48:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "modal_offset_px": -2,
+          "overlay_opacity": 0.62,
+          "z_index": 1002
+        },
+        "repetition": 2,
+        "seed": 12002,
+        "signature": "24c6f54204ae02f9d51e",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-02-seed-12002"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#save-profile"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#save-profile"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_session_expiry.html",
+        "observed_oracles": [
+          {
+            "auth_code": 401,
+            "profile_update_persisted": false,
+            "session_age_s": 13,
+            "session_valid": false
+          },
+          {
+            "auth_code": 401,
+            "profile_update_persisted": false,
+            "session_age_s": 13,
+            "session_valid": false
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-session-expiry-00-seed-12003-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-session-expiry-00-seed-12003-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_session_expiry.html"
+      },
+      "case": {
+        "case_id": "openweb-session-expiry",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-session-expiry-00-seed-12003",
+        "expected_effect": "profile_update_persisted == true",
+        "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+        "failure_class": "session_auth_expiry",
+        "goal": "Submit a protected profile update after the session has expired.",
+        "html_fixture": "failure_session_expiry.html",
+        "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+        "oracle_state": {
+          "profile_update_persisted": false,
+          "session_valid": false
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "fresh verification against independent oracle state",
+        "seed": 12003
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-afbb3c30b4e6",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-afbb3c30b4e6:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "auth_code": 401,
+          "session_age_s": 13
+        },
+        "repetition": 0,
+        "seed": 12003,
+        "signature": "9bb7b007bbb0be34a0c5",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-00-seed-12003"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#save-profile"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#save-profile"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_session_expiry.html",
+        "observed_oracles": [
+          {
+            "auth_code": 419,
+            "profile_update_persisted": false,
+            "session_age_s": 29,
+            "session_valid": false
+          },
+          {
+            "auth_code": 419,
+            "profile_update_persisted": false,
+            "session_age_s": 29,
+            "session_valid": false
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-session-expiry-01-seed-12004-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-session-expiry-01-seed-12004-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_session_expiry.html"
+      },
+      "case": {
+        "case_id": "openweb-session-expiry",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-session-expiry-01-seed-12004",
+        "expected_effect": "profile_update_persisted == true",
+        "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+        "failure_class": "session_auth_expiry",
+        "goal": "Submit a protected profile update after the session has expired.",
+        "html_fixture": "failure_session_expiry.html",
+        "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+        "oracle_state": {
+          "profile_update_persisted": false,
+          "session_valid": false
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "fresh verification against independent oracle state",
+        "seed": 12004
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-8cbc11576b3f",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-8cbc11576b3f:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "auth_code": 419,
+          "session_age_s": 29
+        },
+        "repetition": 1,
+        "seed": 12004,
+        "signature": "2a8907c20d11182c12dd",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-01-seed-12004"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#save-profile"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#save-profile"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_session_expiry.html",
+        "observed_oracles": [
+          {
+            "auth_code": 440,
+            "profile_update_persisted": false,
+            "session_age_s": 44,
+            "session_valid": false
+          },
+          {
+            "auth_code": 440,
+            "profile_update_persisted": false,
+            "session_age_s": 44,
+            "session_valid": false
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-session-expiry-02-seed-12005-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-session-expiry-02-seed-12005-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_session_expiry.html"
+      },
+      "case": {
+        "case_id": "openweb-session-expiry",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-session-expiry-02-seed-12005",
+        "expected_effect": "profile_update_persisted == true",
+        "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+        "failure_class": "session_auth_expiry",
+        "goal": "Submit a protected profile update after the session has expired.",
+        "html_fixture": "failure_session_expiry.html",
+        "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+        "oracle_state": {
+          "profile_update_persisted": false,
+          "session_valid": false
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "fresh verification against independent oracle state",
+        "seed": 12005
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-79f4912e1732",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-79f4912e1732:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "auth_code": 440,
+          "session_age_s": 44
+        },
+        "repetition": 2,
+        "seed": 12005,
+        "signature": "ff12cf4c49c580069cd3",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-02-seed-12005"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "fill",
+            "selector": "#city",
+            "value": "New York"
+          },
+          {
+            "action": "click",
+            "selector": "#submit-city"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "fill",
+            "selector": "#city",
+            "value": "New York"
+          },
+          {
+            "action": "click",
+            "selector": "#submit-city"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_autocomplete_validation.html",
+        "observed_oracles": [
+          {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY",
+            "validator_revision": "dev-v1-91"
+          },
+          {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY",
+            "validator_revision": "dev-v1-91"
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-autocomplete-validation-00-seed-12006-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-autocomplete-validation-00-seed-12006-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_autocomplete_validation.html"
+      },
+      "case": {
+        "case_id": "openweb-autocomplete-validation",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-autocomplete-validation-00-seed-12006",
+        "expected_effect": "submitted_city == requested_city",
+        "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+        "failure_class": "autocomplete_async_validation_mutation",
+        "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+        "html_fixture": "failure_autocomplete_validation.html",
+        "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+        "oracle_state": {
+          "requested_city": "New York",
+          "submitted_city": "New York, NY"
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "expected-effect verification after fresh observation",
+        "seed": 12006
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-fd60d01f2544",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-fd60d01f2544:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "New York, NY",
+          "validator_revision": "dev-v1-91"
+        },
+        "repetition": 0,
+        "seed": 12006,
+        "signature": "4f3180755a98945ca0e5",
+        "split": "dev",
+        "variant_id": "dev-openweb-autocomplete-validation-00-seed-12006"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "fill",
+            "selector": "#city",
+            "value": "New York"
+          },
+          {
+            "action": "click",
+            "selector": "#submit-city"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "fill",
+            "selector": "#city",
+            "value": "New York"
+          },
+          {
+            "action": "click",
+            "selector": "#submit-city"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_autocomplete_validation.html",
+        "observed_oracles": [
+          {
+            "requested_city": "New York",
+            "submitted_city": "NEW YORK",
+            "validator_revision": "dev-v2-57"
+          },
+          {
+            "requested_city": "New York",
+            "submitted_city": "NEW YORK",
+            "validator_revision": "dev-v2-57"
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-autocomplete-validation-01-seed-12007-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-autocomplete-validation-01-seed-12007-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_autocomplete_validation.html"
+      },
+      "case": {
+        "case_id": "openweb-autocomplete-validation",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-autocomplete-validation-01-seed-12007",
+        "expected_effect": "submitted_city == requested_city",
+        "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+        "failure_class": "autocomplete_async_validation_mutation",
+        "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+        "html_fixture": "failure_autocomplete_validation.html",
+        "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+        "oracle_state": {
+          "requested_city": "New York",
+          "submitted_city": "New York, NY"
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "expected-effect verification after fresh observation",
+        "seed": 12007
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-00fcf6843083",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-00fcf6843083:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "NEW YORK",
+          "validator_revision": "dev-v2-57"
+        },
+        "repetition": 1,
+        "seed": 12007,
+        "signature": "ca61340b94daa724ed50",
+        "split": "dev",
+        "variant_id": "dev-openweb-autocomplete-validation-01-seed-12007"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "fill",
+            "selector": "#city",
+            "value": "New York"
+          },
+          {
+            "action": "click",
+            "selector": "#submit-city"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "fill",
+            "selector": "#city",
+            "value": "New York"
+          },
+          {
+            "action": "click",
+            "selector": "#submit-city"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_autocomplete_validation.html",
+        "observed_oracles": [
+          {
+            "requested_city": "New York",
+            "submitted_city": "New York City",
+            "validator_revision": "dev-v3-25"
+          },
+          {
+            "requested_city": "New York",
+            "submitted_city": "New York City",
+            "validator_revision": "dev-v3-25"
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-autocomplete-validation-02-seed-12008-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-autocomplete-validation-02-seed-12008-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_autocomplete_validation.html"
+      },
+      "case": {
+        "case_id": "openweb-autocomplete-validation",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-autocomplete-validation-02-seed-12008",
+        "expected_effect": "submitted_city == requested_city",
+        "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+        "failure_class": "autocomplete_async_validation_mutation",
+        "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+        "html_fixture": "failure_autocomplete_validation.html",
+        "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+        "oracle_state": {
+          "requested_city": "New York",
+          "submitted_city": "New York, NY"
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "expected-effect verification after fresh observation",
+        "seed": 12008
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-dc8f9e542bbb",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-dc8f9e542bbb:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "New York City",
+          "validator_revision": "dev-v3-25"
+        },
+        "repetition": 2,
+        "seed": 12008,
+        "signature": "8c07e1a1e262bbcc48c6",
+        "split": "dev",
+        "variant_id": "dev-openweb-autocomplete-validation-02-seed-12008"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#place-order"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#place-order"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_optimistic_rollback.html",
+        "observed_oracles": [
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 500,
+            "rollback_delay_ms": 25,
+            "ui_order_submitted": true
+          },
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 500,
+            "rollback_delay_ms": 25,
+            "ui_order_submitted": true
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-optimistic-rollback-00-seed-12009-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-optimistic-rollback-00-seed-12009-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_optimistic_rollback.html"
+      },
+      "case": {
+        "case_id": "openweb-optimistic-rollback",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-optimistic-rollback-00-seed-12009",
+        "expected_effect": "backend_order_confirmed == true",
+        "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+        "failure_class": "optimistic_ui_backend_mismatch",
+        "goal": "Place an order only if the backend confirms it.",
+        "html_fixture": "failure_optimistic_rollback.html",
+        "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+        "oracle_state": {
+          "backend_order_confirmed": false,
+          "ui_order_submitted": true
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "executor-success/postcondition-success separation",
+        "seed": 12009
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-4fef3a131582",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-4fef3a131582:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "backend_status_code": 500,
+          "rollback_delay_ms": 25
+        },
+        "repetition": 0,
+        "seed": 12009,
+        "signature": "ae7858295023a2631fe7",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-00-seed-12009"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#place-order"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#place-order"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_optimistic_rollback.html",
+        "observed_oracles": [
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 502,
+            "rollback_delay_ms": 50,
+            "ui_order_submitted": true
+          },
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 502,
+            "rollback_delay_ms": 50,
+            "ui_order_submitted": true
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-optimistic-rollback-01-seed-12010-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-optimistic-rollback-01-seed-12010-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_optimistic_rollback.html"
+      },
+      "case": {
+        "case_id": "openweb-optimistic-rollback",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-optimistic-rollback-01-seed-12010",
+        "expected_effect": "backend_order_confirmed == true",
+        "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+        "failure_class": "optimistic_ui_backend_mismatch",
+        "goal": "Place an order only if the backend confirms it.",
+        "html_fixture": "failure_optimistic_rollback.html",
+        "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+        "oracle_state": {
+          "backend_order_confirmed": false,
+          "ui_order_submitted": true
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "executor-success/postcondition-success separation",
+        "seed": 12010
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-04024c40a025",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-04024c40a025:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "backend_status_code": 502,
+          "rollback_delay_ms": 50
+        },
+        "repetition": 1,
+        "seed": 12010,
+        "signature": "5be43d16902959d91053",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-01-seed-12010"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#place-order"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#place-order"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_optimistic_rollback.html",
+        "observed_oracles": [
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 503,
+            "rollback_delay_ms": 74,
+            "ui_order_submitted": true
+          },
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 503,
+            "rollback_delay_ms": 74,
+            "ui_order_submitted": true
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-optimistic-rollback-02-seed-12011-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-optimistic-rollback-02-seed-12011-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_optimistic_rollback.html"
+      },
+      "case": {
+        "case_id": "openweb-optimistic-rollback",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-optimistic-rollback-02-seed-12011",
+        "expected_effect": "backend_order_confirmed == true",
+        "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+        "failure_class": "optimistic_ui_backend_mismatch",
+        "goal": "Place an order only if the backend confirms it.",
+        "html_fixture": "failure_optimistic_rollback.html",
+        "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+        "oracle_state": {
+          "backend_order_confirmed": false,
+          "ui_order_submitted": true
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "executor-success/postcondition-success separation",
+        "seed": 12011
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-a0c33b601a8b",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-a0c33b601a8b:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "backend_status_code": 503,
+          "rollback_delay_ms": 74
+        },
+        "repetition": 2,
+        "seed": 12011,
+        "signature": "49097ae91b0285c8b607",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-02-seed-12011"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#choose-premium"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#choose-premium"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_dom_visual_disagreement.html",
+        "observed_oracles": [
+          {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12012-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12012-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_dom_visual_disagreement.html"
+      },
+      "case": {
+        "case_id": "openweb-dom-visual-disagreement",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-dom-visual-disagreement-00-seed-12012",
+        "expected_effect": "selected_plan == visual_highlighted_plan",
+        "expected_runtime_response": "block fast path and require active perception or human escalation",
+        "failure_class": "dom_vs_visual_disagreement",
+        "goal": "Choose the visually highlighted active plan.",
+        "html_fixture": "failure_dom_visual_disagreement.html",
+        "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+        "oracle_state": {
+          "dom_selected_plan": "premium",
+          "visual_highlighted_plan": "basic"
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+        "seed": 12012
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-4bd60417967d",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-4bd60417967d:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 265,
+          "highlight_width_px": 3,
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 0,
+        "seed": 12012,
+        "signature": "9e6b75e4d27e9062b421",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-00-seed-12012"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#choose-premium"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#choose-premium"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_dom_visual_disagreement.html",
+        "observed_oracles": [
+          {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-dom-visual-disagreement-01-seed-12013-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-dom-visual-disagreement-01-seed-12013-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_dom_visual_disagreement.html"
+      },
+      "case": {
+        "case_id": "openweb-dom-visual-disagreement",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-dom-visual-disagreement-01-seed-12013",
+        "expected_effect": "selected_plan == visual_highlighted_plan",
+        "expected_runtime_response": "block fast path and require active perception or human escalation",
+        "failure_class": "dom_vs_visual_disagreement",
+        "goal": "Choose the visually highlighted active plan.",
+        "html_fixture": "failure_dom_visual_disagreement.html",
+        "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+        "oracle_state": {
+          "dom_selected_plan": "premium",
+          "visual_highlighted_plan": "basic"
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+        "seed": 12013
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-b5d40f9c1181",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-b5d40f9c1181:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 272,
+          "highlight_width_px": 5,
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 1,
+        "seed": 12013,
+        "signature": "9d2fb7772a13ee526ad9",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-01-seed-12013"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#choose-premium"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#choose-premium"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_dom_visual_disagreement.html",
+        "observed_oracles": [
+          {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-dom-visual-disagreement-02-seed-12014-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-dom-visual-disagreement-02-seed-12014-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_dom_visual_disagreement.html"
+      },
+      "case": {
+        "case_id": "openweb-dom-visual-disagreement",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-dom-visual-disagreement-02-seed-12014",
+        "expected_effect": "selected_plan == visual_highlighted_plan",
+        "expected_runtime_response": "block fast path and require active perception or human escalation",
+        "failure_class": "dom_vs_visual_disagreement",
+        "goal": "Choose the visually highlighted active plan.",
+        "html_fixture": "failure_dom_visual_disagreement.html",
+        "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+        "oracle_state": {
+          "dom_selected_plan": "premium",
+          "visual_highlighted_plan": "basic"
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+        "seed": 12014
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-991f0179a690",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-991f0179a690:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 272,
+          "highlight_width_px": 7,
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 2,
+        "seed": 12014,
+        "signature": "e08bca170b2296206d7e",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-02-seed-12014"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#notification-toggle"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#notification-toggle"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_visible_ineffective_affordance.html",
+        "observed_oracles": [
+          {
+            "ack_code": "ACK-110-5",
+            "control_revision": "dev-toggle-974",
+            "notifications_enabled": false,
+            "reported_clicks": 1,
+            "toggle_clicked": true
+          },
+          {
+            "ack_code": "ACK-110-5",
+            "control_revision": "dev-toggle-974",
+            "notifications_enabled": false,
+            "reported_clicks": 1,
+            "toggle_clicked": true
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12015-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12015-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_visible_ineffective_affordance.html"
+      },
+      "case": {
+        "case_id": "openweb-visible-ineffective-affordance",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-visible-ineffective-affordance-00-seed-12015",
+        "expected_effect": "notifications_enabled == true",
+        "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+        "failure_class": "visible_but_ineffective_affordance",
+        "goal": "Enable notification settings with the visible toggle.",
+        "html_fixture": "failure_visible_ineffective_affordance.html",
+        "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+        "oracle_state": {
+          "notifications_enabled": false,
+          "toggle_clicked": true
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "postcondition failure and recovery ledger",
+        "seed": 12015
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-2075a2e473fa",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-2075a2e473fa:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "ack_code": "ACK-110-5",
+          "control_revision": "dev-toggle-974",
+          "reported_clicks": 1
+        },
+        "repetition": 0,
+        "seed": 12015,
+        "signature": "eaf356a8088307f912d6",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-00-seed-12015"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#notification-toggle"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#notification-toggle"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_visible_ineffective_affordance.html",
+        "observed_oracles": [
+          {
+            "ack_code": "ACK-111-2",
+            "control_revision": "dev-toggle-985",
+            "notifications_enabled": false,
+            "reported_clicks": 2,
+            "toggle_clicked": true
+          },
+          {
+            "ack_code": "ACK-111-2",
+            "control_revision": "dev-toggle-985",
+            "notifications_enabled": false,
+            "reported_clicks": 2,
+            "toggle_clicked": true
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-visible-ineffective-affordance-01-seed-12016-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-visible-ineffective-affordance-01-seed-12016-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_visible_ineffective_affordance.html"
+      },
+      "case": {
+        "case_id": "openweb-visible-ineffective-affordance",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-visible-ineffective-affordance-01-seed-12016",
+        "expected_effect": "notifications_enabled == true",
+        "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+        "failure_class": "visible_but_ineffective_affordance",
+        "goal": "Enable notification settings with the visible toggle.",
+        "html_fixture": "failure_visible_ineffective_affordance.html",
+        "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+        "oracle_state": {
+          "notifications_enabled": false,
+          "toggle_clicked": true
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "postcondition failure and recovery ledger",
+        "seed": 12016
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-6815f3912548",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-6815f3912548:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "ack_code": "ACK-111-2",
+          "control_revision": "dev-toggle-985",
+          "reported_clicks": 2
+        },
+        "repetition": 1,
+        "seed": 12016,
+        "signature": "55c9f026d1d34c49f886",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-01-seed-12016"
+      }
+    },
+    {
+      "browser": {
+        "actions": [
+          {
+            "action": "click",
+            "selector": "#notification-toggle"
+          }
+        ],
+        "executed_actions": [
+          {
+            "action": "click",
+            "selector": "#notification-toggle"
+          }
+        ],
+        "fixture_path": "/mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_visible_ineffective_affordance.html",
+        "observed_oracles": [
+          {
+            "ack_code": "ACK-112-4",
+            "control_revision": "dev-toggle-846",
+            "notifications_enabled": false,
+            "reported_clicks": 3,
+            "toggle_clicked": true
+          },
+          {
+            "ack_code": "ACK-112-4",
+            "control_revision": "dev-toggle-846",
+            "notifications_enabled": false,
+            "reported_clicks": 3,
+            "toggle_clicked": true
+          }
+        ],
+        "screenshots": [
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-visible-ineffective-affordance-02-seed-12017-initial_observation.png",
+          "artifacts/open_web_randomized_holdout/dev/screenshots/dev-openweb-visible-ineffective-affordance-02-seed-12017-post_action_verification.png"
+        ],
+        "url": "file:///mnt/hdd/A-Modular-Action-System-Architecture/env/mock_envs/failure_visible_ineffective_affordance.html"
+      },
+      "case": {
+        "case_id": "openweb-visible-ineffective-affordance",
+        "coverage_level": "controlled_randomized_dev_evidence",
+        "environment_surface": "local_mock_web_fixture",
+        "episode_id": "dev-openweb-visible-ineffective-affordance-02-seed-12017",
+        "expected_effect": "notifications_enabled == true",
+        "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+        "failure_class": "visible_but_ineffective_affordance",
+        "goal": "Enable notification settings with the visible toggle.",
+        "html_fixture": "failure_visible_ineffective_affordance.html",
+        "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+        "oracle_state": {
+          "notifications_enabled": false,
+          "toggle_clicked": true
+        },
+        "real_open_web": false,
+        "runtime_mechanism": "postcondition failure and recovery ledger",
+        "seed": 12017
+      },
+      "runtime": {
+        "attempts": 1,
+        "episode_id": "episode-bac307b4f72f",
+        "executor_failure_reason": null,
+        "executor_success": true,
+        "failure_boundary": "recoverable_execution_failure",
+        "failure_type": "postcondition_failed",
+        "final_outcome_verified": false,
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification"
+        ],
+        "postcondition_passed": [
+          false
+        ],
+        "reason": "automated recovery exhausted",
+        "recovery_attempted": true,
+        "recovery_succeeded": false,
+        "state": "escalated",
+        "transition_ids": [
+          "episode-bac307b4f72f:transition-0001"
+        ]
+      },
+      "variant": {
+        "parameters": {
+          "ack_code": "ACK-112-4",
+          "control_revision": "dev-toggle-846",
+          "reported_clicks": 3
+        },
+        "repetition": 2,
+        "seed": 12017,
+        "signature": "0e5928c60c587a24beb4",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-02-seed-12017"
+      }
+    }
+  ],
+  "data_source": "open_web_playwright_fixture_suite",
+  "metrics": {
+    "metadata": {
+      "data_source": "open_web_playwright_fixture_suite",
+      "episode_ids": [
+        "episode-00fcf6843083",
+        "episode-04024c40a025",
+        "episode-2075a2e473fa",
+        "episode-4bd60417967d",
+        "episode-4fef3a131582",
+        "episode-6815f3912548",
+        "episode-76af3fe8f06b",
+        "episode-79f4912e1732",
+        "episode-8cbc11576b3f",
+        "episode-991f0179a690",
+        "episode-a0c33b601a8b",
+        "episode-afbb3c30b4e6",
+        "episode-b5d40f9c1181",
+        "episode-bac307b4f72f",
+        "episode-bfcd06328108",
+        "episode-dc8f9e542bbb",
+        "episode-f9438cb9da48",
+        "episode-fd60d01f2544"
+      ],
+      "measurement_counts": {
+        "adaptation_cases": 18,
+        "conflict_cases": 0,
+        "oracle_cases": 0,
+        "primitive_actions": 18,
+        "recovery_cases": 18,
+        "routing_cases": 0,
+        "tasks": 18,
+        "verification_cases": 18,
+        "visual_grounding_cases": 0
+      }
+    },
+    "values": {
+      "ATL": 155.1099444444,
+      "BRA": 0.0,
+      "BackwardRetention": 0.0,
+      "BoundaryClassificationRate": 1.0,
+      "CER": 0.0,
+      "CRR": 0.0,
+      "CSR": 0.0,
+      "CascadeTraceCoverage": 1.0,
+      "ControlRecoveryRatio": 0.0,
+      "CounterfactualOutcomeDeviation": 0.0,
+      "ExpectedEffectSuccessRate": 0.0,
+      "FPR": 0.0,
+      "FalseSuccessDetectionRate": 0.0,
+      "FalseSuccessRate": 1.0,
+      "HeldOutGain": 0.0,
+      "ImprovementEfficiency": 0.0,
+      "MTL": 155.1099444444,
+      "MeanTimeToRecovery": 0.0,
+      "OSR": 0.0,
+      "PCR": 1.0,
+      "PCS": 0.0,
+      "PathAttributionCoverage": 1.0,
+      "PolicyProposalRate": 0.0,
+      "RE": 0.0,
+      "RecoverySuccessRate": 0.0,
+      "RecoveryTriggerRate": 1.0,
+      "RerouteTransitionRate": 0.0,
+      "RetryTransitionRate": 0.0,
+      "RollbackTransitionRate": 0.0,
+      "SafetyNonRegression": 1.0,
+      "TSR": 0.0,
+      "UAR": 0.0,
+      "VGA": 0.0,
+      "WDSR": 0.0
+    }
+  },
+  "protocol": {
+    "browser_execution": true,
+    "browser_surface": "Playwright Chromium isolated context over file:// local fixtures",
+    "claim_boundary": "real browser execution of local fixtures; not MiniWoB/WebArena/real open-web evidence",
+    "controlled_browser_fixture_evidence": true,
+    "episode_policy": {
+      "max_retry_attempts": 0,
+      "max_steps": 1
+    },
+    "oracle_source": "fixture data-oracle-state read after action",
+    "randomized_variant_evidence": true,
+    "real_open_web_evidence": false,
+    "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode"
+  },
+  "recommendation": "port_representative_cases_to_miniwob_webarena_or_real_browser_probe",
+  "summary": {
+    "case_count": 18,
+    "executor_failure_count": 3,
+    "executor_success_count": 15,
+    "failure_record_count": 18,
+    "final_success_count": 0,
+    "postcondition_failures_detected": 18,
+    "recovery_attempted_count": 18,
+    "runtime_episode_count": 18,
+    "transition_record_count": 18,
+    "unique_episode_ids": true
+  }
+}

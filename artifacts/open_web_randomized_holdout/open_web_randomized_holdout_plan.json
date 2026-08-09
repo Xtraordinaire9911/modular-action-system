@@ -1,0 +1,1098 @@
+{
+  "data_source": "open_web_randomized_holdout_plan",
+  "leakage_checks": {
+    "dev_unique_signatures": true,
+    "holdout_unique_signatures": true,
+    "seeds_disjoint": true,
+    "variant_signatures_disjoint": true
+  },
+  "protocol": {
+    "dev_repetitions_per_family": 3,
+    "dev_seed_start": 12000,
+    "failure_family_count": 6,
+    "holdout_repetitions_per_family": 3,
+    "holdout_seed_start": 22000,
+    "holdout_used_for_tuning": false,
+    "locked_before_execution": true
+  },
+  "splits": {
+    "dev": [
+      {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 12000
+        },
+        "parameters": {
+          "modal_offset_px": -18,
+          "overlay_opacity": 0.42,
+          "z_index": 1000
+        },
+        "repetition": 0,
+        "signature": "f1a1e5d5b3f5bbb6e64b",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-00-seed-12000"
+      },
+      {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-overlay-obstruction-01-seed-12001",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 12001
+        },
+        "parameters": {
+          "modal_offset_px": -10,
+          "overlay_opacity": 0.52,
+          "z_index": 1001
+        },
+        "repetition": 1,
+        "signature": "bf621af534cd21fb65aa",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-01-seed-12001"
+      },
+      {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-overlay-obstruction-02-seed-12002",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 12002
+        },
+        "parameters": {
+          "modal_offset_px": -2,
+          "overlay_opacity": 0.62,
+          "z_index": 1002
+        },
+        "repetition": 2,
+        "signature": "24c6f54204ae02f9d51e",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-02-seed-12002"
+      },
+      {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-session-expiry-00-seed-12003",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 12003
+        },
+        "parameters": {
+          "auth_code": 401,
+          "session_age_s": 13
+        },
+        "repetition": 0,
+        "signature": "9bb7b007bbb0be34a0c5",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-00-seed-12003"
+      },
+      {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-session-expiry-01-seed-12004",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 12004
+        },
+        "parameters": {
+          "auth_code": 419,
+          "session_age_s": 29
+        },
+        "repetition": 1,
+        "signature": "2a8907c20d11182c12dd",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-01-seed-12004"
+      },
+      {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-session-expiry-02-seed-12005",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 12005
+        },
+        "parameters": {
+          "auth_code": 440,
+          "session_age_s": 44
+        },
+        "repetition": 2,
+        "signature": "ff12cf4c49c580069cd3",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-02-seed-12005"
+      },
+      {
+        "case": {
+          "case_id": "openweb-autocomplete-validation",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-autocomplete-validation-00-seed-12006",
+          "expected_effect": "submitted_city == requested_city",
+          "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+          "failure_class": "autocomplete_async_validation_mutation",
+          "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+          "html_fixture": "failure_autocomplete_validation.html",
+          "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+          "oracle_state": {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "expected-effect verification after fresh observation",
+          "seed": 12006
+        },
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "New York, NY",
+          "validator_revision": "dev-v1-91"
+        },
+        "repetition": 0,
+        "signature": "4f3180755a98945ca0e5",
+        "split": "dev",
+        "variant_id": "dev-openweb-autocomplete-validation-00-seed-12006"
+      },
+      {
+        "case": {
+          "case_id": "openweb-autocomplete-validation",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-autocomplete-validation-01-seed-12007",
+          "expected_effect": "submitted_city == requested_city",
+          "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+          "failure_class": "autocomplete_async_validation_mutation",
+          "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+          "html_fixture": "failure_autocomplete_validation.html",
+          "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+          "oracle_state": {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "expected-effect verification after fresh observation",
+          "seed": 12007
+        },
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "NEW YORK",
+          "validator_revision": "dev-v2-57"
+        },
+        "repetition": 1,
+        "signature": "ca61340b94daa724ed50",
+        "split": "dev",
+        "variant_id": "dev-openweb-autocomplete-validation-01-seed-12007"
+      },
+      {
+        "case": {
+          "case_id": "openweb-autocomplete-validation",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-autocomplete-validation-02-seed-12008",
+          "expected_effect": "submitted_city == requested_city",
+          "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+          "failure_class": "autocomplete_async_validation_mutation",
+          "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+          "html_fixture": "failure_autocomplete_validation.html",
+          "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+          "oracle_state": {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "expected-effect verification after fresh observation",
+          "seed": 12008
+        },
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "New York City",
+          "validator_revision": "dev-v3-25"
+        },
+        "repetition": 2,
+        "signature": "8c07e1a1e262bbcc48c6",
+        "split": "dev",
+        "variant_id": "dev-openweb-autocomplete-validation-02-seed-12008"
+      },
+      {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-optimistic-rollback-00-seed-12009",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "ui_order_submitted": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 12009
+        },
+        "parameters": {
+          "backend_status_code": 500,
+          "rollback_delay_ms": 25
+        },
+        "repetition": 0,
+        "signature": "ae7858295023a2631fe7",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-00-seed-12009"
+      },
+      {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-optimistic-rollback-01-seed-12010",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "ui_order_submitted": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 12010
+        },
+        "parameters": {
+          "backend_status_code": 502,
+          "rollback_delay_ms": 50
+        },
+        "repetition": 1,
+        "signature": "5be43d16902959d91053",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-01-seed-12010"
+      },
+      {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-optimistic-rollback-02-seed-12011",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "ui_order_submitted": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 12011
+        },
+        "parameters": {
+          "backend_status_code": 503,
+          "rollback_delay_ms": 74
+        },
+        "repetition": 2,
+        "signature": "49097ae91b0285c8b607",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-02-seed-12011"
+      },
+      {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-dom-visual-disagreement-00-seed-12012",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 12012
+        },
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 265,
+          "highlight_width_px": 3,
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 0,
+        "signature": "9e6b75e4d27e9062b421",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-00-seed-12012"
+      },
+      {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-dom-visual-disagreement-01-seed-12013",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 12013
+        },
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 272,
+          "highlight_width_px": 5,
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 1,
+        "signature": "9d2fb7772a13ee526ad9",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-01-seed-12013"
+      },
+      {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-dom-visual-disagreement-02-seed-12014",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 12014
+        },
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 272,
+          "highlight_width_px": 7,
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 2,
+        "signature": "e08bca170b2296206d7e",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-02-seed-12014"
+      },
+      {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-visible-ineffective-affordance-00-seed-12015",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 12015
+        },
+        "parameters": {
+          "ack_code": "ACK-110-5",
+          "control_revision": "dev-toggle-974",
+          "reported_clicks": 1
+        },
+        "repetition": 0,
+        "signature": "eaf356a8088307f912d6",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-00-seed-12015"
+      },
+      {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-visible-ineffective-affordance-01-seed-12016",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 12016
+        },
+        "parameters": {
+          "ack_code": "ACK-111-2",
+          "control_revision": "dev-toggle-985",
+          "reported_clicks": 2
+        },
+        "repetition": 1,
+        "signature": "55c9f026d1d34c49f886",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-01-seed-12016"
+      },
+      {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-visible-ineffective-affordance-02-seed-12017",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 12017
+        },
+        "parameters": {
+          "ack_code": "ACK-112-4",
+          "control_revision": "dev-toggle-846",
+          "reported_clicks": 3
+        },
+        "repetition": 2,
+        "signature": "0e5928c60c587a24beb4",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-02-seed-12017"
+      }
+    ],
+    "holdout": [
+      {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-overlay-obstruction-00-seed-22000",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 22000
+        },
+        "parameters": {
+          "modal_offset_px": 44,
+          "overlay_opacity": 0.74,
+          "z_index": 4000
+        },
+        "repetition": 0,
+        "signature": "5c83845b83fb733c5c56",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-overlay-obstruction-00-seed-22000"
+      },
+      {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-overlay-obstruction-01-seed-22001",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 22001
+        },
+        "parameters": {
+          "modal_offset_px": 49,
+          "overlay_opacity": 0.84,
+          "z_index": 4001
+        },
+        "repetition": 1,
+        "signature": "5fed63035c799d3acb53",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-overlay-obstruction-01-seed-22001"
+      },
+      {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-overlay-obstruction-02-seed-22002",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 22002
+        },
+        "parameters": {
+          "modal_offset_px": 56,
+          "overlay_opacity": 0.94,
+          "z_index": 4002
+        },
+        "repetition": 2,
+        "signature": "fc42db0eee511e14f843",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-overlay-obstruction-02-seed-22002"
+      },
+      {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-session-expiry-00-seed-22003",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 22003
+        },
+        "parameters": {
+          "auth_code": 403,
+          "session_age_s": 181
+        },
+        "repetition": 0,
+        "signature": "cc52acc5631ef2eb6c43",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-session-expiry-00-seed-22003"
+      },
+      {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-session-expiry-01-seed-22004",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 22004
+        },
+        "parameters": {
+          "auth_code": 498,
+          "session_age_s": 272
+        },
+        "repetition": 1,
+        "signature": "60c80c2cd6345996eb6f",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-session-expiry-01-seed-22004"
+      },
+      {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-session-expiry-02-seed-22005",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 22005
+        },
+        "parameters": {
+          "auth_code": 499,
+          "session_age_s": 366
+        },
+        "repetition": 2,
+        "signature": "98c8a693c6baad3e560e",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-session-expiry-02-seed-22005"
+      },
+      {
+        "case": {
+          "case_id": "openweb-autocomplete-validation",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-autocomplete-validation-00-seed-22006",
+          "expected_effect": "submitted_city == requested_city",
+          "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+          "failure_class": "autocomplete_async_validation_mutation",
+          "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+          "html_fixture": "failure_autocomplete_validation.html",
+          "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+          "oracle_state": {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "expected-effect verification after fresh observation",
+          "seed": 22006
+        },
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "New York, USA",
+          "validator_revision": "holdout-v1-62"
+        },
+        "repetition": 0,
+        "signature": "8698f19cab1777dcd83b",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-autocomplete-validation-00-seed-22006"
+      },
+      {
+        "case": {
+          "case_id": "openweb-autocomplete-validation",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-autocomplete-validation-01-seed-22007",
+          "expected_effect": "submitted_city == requested_city",
+          "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+          "failure_class": "autocomplete_async_validation_mutation",
+          "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+          "html_fixture": "failure_autocomplete_validation.html",
+          "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+          "oracle_state": {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "expected-effect verification after fresh observation",
+          "seed": 22007
+        },
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "New York (validated)",
+          "validator_revision": "holdout-v2-22"
+        },
+        "repetition": 1,
+        "signature": "672df8644a7791bc3053",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-autocomplete-validation-01-seed-22007"
+      },
+      {
+        "case": {
+          "case_id": "openweb-autocomplete-validation",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-autocomplete-validation-02-seed-22008",
+          "expected_effect": "submitted_city == requested_city",
+          "expected_runtime_response": "detect final-value mismatch and replan or ask for clarification",
+          "failure_class": "autocomplete_async_validation_mutation",
+          "goal": "Enter a requested shipping city and keep the submitted value unchanged.",
+          "html_fixture": "failure_autocomplete_validation.html",
+          "observable_symptom": "Async validation normalizes the typed value after the agent enters it.",
+          "oracle_state": {
+            "requested_city": "New York",
+            "submitted_city": "New York, NY"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "expected-effect verification after fresh observation",
+          "seed": 22008
+        },
+        "parameters": {
+          "requested_city": "New York",
+          "submitted_city": "NYC \u2014 New York",
+          "validator_revision": "holdout-v3-14"
+        },
+        "repetition": 2,
+        "signature": "d20ee1abe350b8b2bd25",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-autocomplete-validation-02-seed-22008"
+      },
+      {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-optimistic-rollback-00-seed-22009",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "ui_order_submitted": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 22009
+        },
+        "parameters": {
+          "backend_status_code": 409,
+          "rollback_delay_ms": 148
+        },
+        "repetition": 0,
+        "signature": "a695e4eb7323cb38c319",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-optimistic-rollback-00-seed-22009"
+      },
+      {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-optimistic-rollback-01-seed-22010",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "ui_order_submitted": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 22010
+        },
+        "parameters": {
+          "backend_status_code": 429,
+          "rollback_delay_ms": 174
+        },
+        "repetition": 1,
+        "signature": "f6edaa9f1ef4ddd3edc3",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-optimistic-rollback-01-seed-22010"
+      },
+      {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-optimistic-rollback-02-seed-22011",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "ui_order_submitted": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 22011
+        },
+        "parameters": {
+          "backend_status_code": 504,
+          "rollback_delay_ms": 194
+        },
+        "repetition": 2,
+        "signature": "ed0416c45b4d9565810d",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-optimistic-rollback-02-seed-22011"
+      },
+      {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-dom-visual-disagreement-00-seed-22012",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 22012
+        },
+        "parameters": {
+          "dom_selected_plan": "basic",
+          "highlight_hue": 21,
+          "highlight_width_px": 8,
+          "visual_highlighted_plan": "premium"
+        },
+        "repetition": 0,
+        "signature": "2170b1d4f057ab3c2771",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-dom-visual-disagreement-00-seed-22012"
+      },
+      {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-dom-visual-disagreement-01-seed-22013",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 22013
+        },
+        "parameters": {
+          "dom_selected_plan": "basic",
+          "highlight_hue": 21,
+          "highlight_width_px": 10,
+          "visual_highlighted_plan": "premium"
+        },
+        "repetition": 1,
+        "signature": "a52ea364c78eaed27892",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-dom-visual-disagreement-01-seed-22013"
+      },
+      {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-dom-visual-disagreement-02-seed-22014",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 22014
+        },
+        "parameters": {
+          "dom_selected_plan": "basic",
+          "highlight_hue": 17,
+          "highlight_width_px": 12,
+          "visual_highlighted_plan": "premium"
+        },
+        "repetition": 2,
+        "signature": "3a8af11e8a15e677300d",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-dom-visual-disagreement-02-seed-22014"
+      },
+      {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-visible-ineffective-affordance-00-seed-22015",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 22015
+        },
+        "parameters": {
+          "ack_code": "ACK-710-3",
+          "control_revision": "holdout-toggle-938",
+          "reported_clicks": 1
+        },
+        "repetition": 0,
+        "signature": "9e9d9acf3efd5840b3a3",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-visible-ineffective-affordance-00-seed-22015"
+      },
+      {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-visible-ineffective-affordance-01-seed-22016",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 22016
+        },
+        "parameters": {
+          "ack_code": "ACK-711-0",
+          "control_revision": "holdout-toggle-556",
+          "reported_clicks": 2
+        },
+        "repetition": 1,
+        "signature": "35e78219266e3f1be6b8",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-visible-ineffective-affordance-01-seed-22016"
+      },
+      {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-visible-ineffective-affordance-02-seed-22017",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 22017
+        },
+        "parameters": {
+          "ack_code": "ACK-712-6",
+          "control_revision": "holdout-toggle-893",
+          "reported_clicks": 3
+        },
+        "repetition": 2,
+        "signature": "d5c74f054563adfa3915",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-visible-ineffective-affordance-02-seed-22017"
+      }
+    ]
+  }
+}
