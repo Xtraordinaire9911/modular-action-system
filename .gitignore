@@ -22,10 +22,13 @@ logs/
 screenshots/
 # Per-run demo output (screenshots, traces): regenerated on every run.
 eval_outputs/
-# Recorded demo videos. Kept out of history on purpose: a few MB per recording
-# would live in the repository forever. Publish one by dragging it into a GitHub
-# comment box and linking the returned user-attachments URL from the README.
-demo_video/
+# Recorded demo videos. Every run writes one and they are a few MB each, so the
+# per-run recordings stay out of history - but exactly one canonical recording is
+# tracked, so a reader of the repository can watch the loop without installing a
+# browser or waiting two and a half minutes. Replace that file rather than adding
+# dated copies beside it, or the thing this rule prevents comes back.
+demo_video/*
+!demo_video/agent_loop_demo.mp4
 *.webm
 .external_envs/
 
