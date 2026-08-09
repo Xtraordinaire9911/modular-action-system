@@ -22,14 +22,11 @@ logs/
 screenshots/
 # Per-run demo output (screenshots, traces): regenerated on every run.
 eval_outputs/
-# Recorded demo videos. Every run writes one and they are a few MB each, so the
-# per-run recordings stay out of history - but exactly one canonical recording is
-# tracked, so a reader of the repository can watch the loop without installing a
-# browser or waiting two and a half minutes. Replace that file rather than adding
-# dated copies beside it, or the thing this rule prevents comes back.
-demo_video/*
-!demo_video/agent_loop_demo.mp4
-!demo_video/demo_preview.gif
+# Recorded demo videos. Every run writes one and they are a few MB each, so none
+# of them belong in history. The one in the README is hosted by GitHub: drag the
+# file into a comment box and it returns a user-attachments URL that plays inline,
+# which a repository-relative link does not.
+demo_video/
 *.webm
 .external_envs/
 
@@ -37,9 +34,6 @@ demo_video/*
 local_docs/
 docs/
 *.png
-# After *.png on purpose: git takes the last matching rule, so the poster has to
-# be re-included below the blanket screenshot rule rather than above it.
-!demo_video/demo_poster.png
 
 # Local report and presentation drafts. Kept out of the repository: the course
 # requires these to be written by hand, so a draft in history invites the wrong

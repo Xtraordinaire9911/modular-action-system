@@ -15,31 +15,9 @@ Around that contract sits a complete loop — observe, plan, act, verify,
 recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
-## Watch it run
 
-<video src="https://github.com/Garrulus21yyx/A-Modular-Action-System-Architecture/raw/main/demo_video/agent_loop_demo.mp4" controls muted playsinline width="880" poster="demo_video/demo_poster.png">
+https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
 
-[![The agent diagnosing a layout shift and recovering](demo_video/demo_preview.gif)](demo_video/agent_loop_demo.mp4)
-
-</video>
-
-**[demo_video/agent_loop_demo.mp4](demo_video/agent_loop_demo.mp4)** — 2 min 19 s,
-the whole run. The clip above is scene one: an ad finishes loading, the target
-shifts, the click misses, and the agent measures the page before deciding what
-to do about it.
-
-Seven scenes over a shop, a forum and a WoT device. Six inject a different
-real-world fault, and the agent diagnoses each from measurements it takes after
-the failure rather than from anything it was told. The panel on the right
-narrates the step, the highlight is the interpreter's real path through the
-code, and the dim strip along the bottom is the running count every reported
-metric is divided out of.
-
-Or run it yourself:
-
-```bash
-python scripts/run_agent_loop_demo.py
-```
 
 ## What is implemented, and what is not
 
@@ -523,6 +501,9 @@ python scripts/run_agent_loop_demo.py --repeat 30                       # 210 ep
 python scripts/run_agent_loop_demo.py --pace 1.5 --trace-delay 0.3 --record   # the recording settings
 python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
 ```
+
+The recording at the top of this file is one of these runs, so the loop can be
+watched without installing a browser.
 
 The run takes about two and a half minutes. The first scene is narrated at full
 length because it teaches the loop; from the second scene on, the beats
