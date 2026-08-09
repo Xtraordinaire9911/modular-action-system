@@ -23,6 +23,10 @@ dev = [
     "mypy>=1.10",
     "black>=24.0",
     "flask>=3.0",
+    # Ships an ffmpeg binary, so `--record` can hand back an mp4 without
+    # anyone installing ffmpeg system wide. Optional: the demo falls back to
+    # leaving the webm in place.
+    "imageio-ffmpeg>=0.5",
 ]
 
 [tool.ruff]

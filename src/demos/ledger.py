@@ -9,6 +9,11 @@ elements measured, candidates considered, actions taken, verifications passed
 and failed, diagnoses reached, recoveries applied, escalations - so every metric
 can be traced back to the tallies it came from.
 
+The ratios here are named for what they literally count, not TSR/RSR. Those
+names belong to the campaign, which applies the project's scoring rules on top:
+a correct handover is not a goal reached, but it does count as handled. Two
+different quantities sharing one name would read as a contradiction.
+
 Displayed in the demo as one quiet line rather than a feature of the layout:
 these are working numbers, and they should read as smaller than the step being
 narrated, not compete with it.
@@ -104,12 +109,21 @@ class MetricLedger:
         """
         c = self.counters
         rows = [
-            ("TSR", f"goals met {c.goals_met} / episodes {c.episodes}", _rate(c.goals_met, c.episodes)),
-            ("RTR", f"failures detected {c.verify_failed} / episodes {c.episodes}", _rate(c.verify_failed, c.episodes)),
+            ("goal reached", f"goals met {c.goals_met} / episodes {c.episodes}", _rate(c.goals_met, c.episodes)),
             (
-                "RSR",
+                "failure detected",
+                f"failures detected {c.verify_failed} / episodes {c.episodes}",
+                _rate(c.verify_failed, c.episodes),
+            ),
+            (
+                "recovery attempted",
                 f"recoveries applied {c.recoveries} / failures detected {c.verify_failed}",
                 _rate(c.recoveries, c.verify_failed),
+            ),
+            (
+                "handed over",
+                f"escalations {c.escalations} / failures detected {c.verify_failed}",
+                _rate(c.escalations, c.verify_failed),
             ),
             (
                 "verify pass rate",
@@ -128,6 +142,15 @@ class MetricLedger:
         lines = ["intermediate quantities", "", f"  {self.counters.as_strip()}", "", "derived from them:"]
         for name, working, value in self.derivations():
             lines.append(f"  {name:<22} {working:<44} = {value:6.1%}")
+        # Named plainly, and deliberately not TSR/RSR. Those apply the project's
+        # scoring rules on top of these counts - a correct handover is not a
+        # goal reached here, but it does count as handled there - and two
+        # different quantities under one name would read as a contradiction.
+        lines += [
+            "",
+            "  These are the raw counts. The campaign below applies the project's",
+            "  metric definitions to them.",
+        ]
         return "\n".join(lines)
 
     def to_dict(self) -> dict[str, Any]:

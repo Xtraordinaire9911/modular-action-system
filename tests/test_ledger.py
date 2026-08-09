@@ -60,6 +60,15 @@ def test_an_escalated_episode_is_not_counted_as_a_goal_met():
 # --- the arithmetic is stated, not just the answer -------------------------------
 
 
+def test_the_ledger_does_not_reuse_the_campaign_metric_names():
+    """The campaign scores a correct handover as handled; this counts goals reached.
+
+    Publishing both under "TSR" would show two different numbers for one name.
+    """
+    names = {name for name, _, _ in MetricLedger().derivations()}
+    assert not (names & {"TSR", "RTR", "RSR", "RTA", "DA"})
+
+
 def test_every_metric_states_the_division_it_performed():
     ledger = MetricLedger()
     _run_one_episode(ledger, fails=False)
@@ -80,15 +89,16 @@ def test_the_stated_working_matches_the_value():
     rows = {name: value for name, _, value in ledger.derivations()}
     c = ledger.counters
 
-    assert rows["TSR"] == c.goals_met / c.episodes == 2 / 3
-    assert rows["RTR"] == c.verify_failed / c.episodes == 2 / 3
-    assert rows["RSR"] == c.recoveries / c.verify_failed == 1 / 2
+    assert rows["goal reached"] == c.goals_met / c.episodes == 2 / 3
+    assert rows["failure detected"] == c.verify_failed / c.episodes == 2 / 3
+    assert rows["recovery attempted"] == c.recoveries / c.verify_failed == 1 / 2
+    assert rows["handed over"] == c.escalations / c.verify_failed == 1 / 2
 
 
 def test_an_empty_ledger_reports_zero_rather_than_failing():
     ledger = MetricLedger()
     assert all(value == 0.0 for _, _, value in ledger.derivations())
-    assert "TSR" in ledger.report()
+    assert "goal reached" in ledger.report()
 
 
 # --- the compact strip ------------------------------------------------------------
@@ -120,7 +130,7 @@ def test_serialised_ledger_keeps_counters_working_and_notes():
     data = ledger.to_dict()
 
     assert data["counters"]["episodes"] == 1
-    assert any(row["metric"] == "TSR" and "working" in row for row in data["derivations"])
+    assert any(row["metric"] == "goal reached" and "working" in row for row in data["derivations"])
     assert data["notes"] and "target_moved" in data["notes"][0]
 
 

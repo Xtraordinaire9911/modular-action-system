@@ -425,6 +425,51 @@ white-box path.
    http://localhost:3000/?fault=layout_shift,selector_mutation
    ```
 
+## The narrated agent loop
+
+One command, one browser window, roughly five minutes:
+
+```bash
+python scripts/run_agent_loop_demo.py
+```
+
+A side panel narrates every step — which phase of the loop it is, what is
+happening in plain language, why the step exists, and the source that is
+executing, with the highlight following the interpreter's real path through it.
+The running counts the metrics are computed from sit along the bottom.
+
+Seven scenes across a shop, a forum and a WoT device. Six inject a different
+fault taken from things that break real automation, ordered easy to hard, and
+each says on screen why that fault happens in practice:
+
+| scene | fault | what the agent has to work out |
+| --- | --- | --- |
+| shop | layout shift (CLS) | the click missed; look again — tier 1 |
+| forum | consent banner | present and enabled, but something else took the click — tier 2 |
+| shop | unmet precondition | it refuses input; satisfy what it depends on — tier 3 |
+| shop | optimistic rollback | accepted, then undone; retrying is provably useless — tier 4 |
+| forum | session expiry | the page is gone; no route remains — tier 4 |
+| shop | none | a clean run, for contrast |
+| smart room | silent device write | 204 with no state change, caught only by reading back — tier 4 |
+
+Nothing tells the recovery code which fault was injected. It measures the page
+after the failure — what is really at the click point, whether the target
+accepts input, what covers it, whether the region changed — and those
+measurements pick the tier. The expected answers live in the scene definition,
+which the diagnosis never sees.
+
+```bash
+python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check
+python scripts/run_agent_loop_demo.py --repeat 5                        # campaign metrics
+python scripts/run_agent_loop_demo.py --record                          # writes an mp4
+python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
+```
+
+Artifacts land in `eval_outputs/agent_loop/<timestamp>/`: a screenshot per
+scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
+of which states the division performed behind every figure, so a number can be
+checked rather than trusted.
+
 ## Running the demos
 
 Demos live across several scripts and `src.pipeline` flags. One command lists

@@ -9,8 +9,8 @@ from __future__ import annotations
 import asyncio
 
 from evaluation.cross_env_eval import aggregate
-from src.benchmarks.task_spec import BenchmarkRunResult, BenchmarkTask
 from src.benchmarks.runtime_web_adapter import RuntimeWebEnvironmentAdapter
+from src.benchmarks.task_spec import BenchmarkRunResult, BenchmarkTask
 from src.benchmarks.web_benchmark_adapter import WebBenchmarkAdapter
 from src.perception.browser_session import BrowserSession
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec

@@ -311,6 +311,43 @@ def apply_recovery(session: Any, diagnosis: Any, goal: str, observation: Any, at
     return True
 
 
+def to_mp4(out: Path) -> str:
+    """Convert the recorded .webm to .mp4, if a converter can be found.
+
+    Playwright only writes webm, which most players and every slide deck refuse.
+    ffmpeg is used when it is on PATH; otherwise the copy bundled with
+    imageio-ffmpeg is used, so this works without installing anything system
+    wide. If neither is available the webm is left alone and the command to run
+    later is printed - a demo run should not fail over a file format.
+    """
+    import shutil
+    import subprocess
+
+    videos = sorted(out.glob("*.webm"))
+    if not videos:
+        return ""
+
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        try:
+            import imageio_ffmpeg
+
+            ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            print(f"  [note] no ffmpeg; convert later with:  ffmpeg -i {videos[0].name} agent_loop_demo.mp4")
+            return ""
+
+    target = out / "agent_loop_demo.mp4"
+    command = [ffmpeg, "-y", "-i", str(videos[0]), "-c:v", "libx264", "-preset", "medium"]
+    command += ["-crf", "24", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(target)]
+    try:
+        subprocess.run(command, check=True, capture_output=True)
+    except Exception as exc:  # a failed conversion must not fail the run
+        print(f"  [note] mp4 conversion failed ({exc}); the webm is still there")
+        return ""
+    return target.name
+
+
 def escalate(reason: str) -> Any:
     """Tier 4: pause, hand to a supervisor, and record what they did.
 
@@ -1138,6 +1175,12 @@ def main() -> int:
         session.close()
         httpd.shutdown()
 
+    # The tallies first, then the metrics derived from them. In that order a
+    # reader can check a figure against the counts instead of trusting it.
+    print(f"\n{_LINE}\n  INTERMEDIATE QUANTITIES - what the metrics are computed from\n{_LINE}")
+    print(ledger.report())
+    (out / "metric_ledger.json").write_text(json.dumps(ledger.to_dict(), indent=2), encoding="utf-8")
+
     print(f"\n{_LINE}\n  CAMPAIGN - repeated episodes, scored against the fault injected\n{_LINE}")
     print(campaign.report())
     (out / "campaign.json").write_text(json.dumps(campaign.to_dict(), indent=2), encoding="utf-8")
@@ -1173,6 +1216,11 @@ def main() -> int:
     (out / "trajectory.json").write_text(
         json.dumps([{"scene": s.title, **t.to_dict()} for s, t in results], indent=2), encoding="utf-8"
     )
+    if args.record:
+        video = to_mp4(out)
+        if video:
+            print(f"\n  video     : {(out / video).relative_to(repo)}")
+
     print(f"\n  artifacts : {out.relative_to(repo)}\n{_LINE}\n")
     return 0
 
