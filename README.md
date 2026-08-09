@@ -15,6 +15,24 @@ Around that contract sits a complete loop — observe, plan, act, verify,
 recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
+## Watch it run
+
+[![The agent diagnosing a layout shift and recovering](demo_video/demo_poster.png)](demo_video/agent_loop_demo.mp4)
+
+**[demo_video/agent_loop_demo.mp4](demo_video/agent_loop_demo.mp4)** — 2 min 19 s.
+Click the frame above; GitHub plays it in the file view. Seven scenes over a
+shop, a forum and a WoT device; six inject a different real-world fault and the
+agent diagnoses each one from measurements it takes after the failure, then
+picks a recovery tier. The panel on the right is narrating the step, the line
+highlight is the interpreter's real path through the code, and the dim strip
+along the bottom is the running count every reported metric is divided out of.
+
+Or run it yourself:
+
+```bash
+python scripts/run_agent_loop_demo.py
+```
+
 ## What is implemented, and what is not
 
 This table is the one to read before believing anything else in this file. It is
@@ -497,10 +515,6 @@ python scripts/run_agent_loop_demo.py --repeat 30                       # 210 ep
 python scripts/run_agent_loop_demo.py --pace 1.5 --trace-delay 0.3 --record   # the recording settings
 python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
 ```
-
-A recording of the run is committed at
-[`demo_video/agent_loop_demo.mp4`](demo_video/agent_loop_demo.mp4) (2:19), so the
-loop can be watched without installing a browser.
 
 The run takes about two and a half minutes. The first scene is narrated at full
 length because it teaches the loop; from the second scene on, the beats

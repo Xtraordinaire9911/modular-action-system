@@ -36,6 +36,9 @@ demo_video/*
 local_docs/
 docs/
 *.png
+# After *.png on purpose: git takes the last matching rule, so the poster has to
+# be re-included below the blanket screenshot rule rather than above it.
+!demo_video/demo_poster.png
 
 # Local report and presentation drafts. Kept out of the repository: the course
 # requires these to be written by hand, so a draft in history invites the wrong
