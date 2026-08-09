@@ -29,6 +29,7 @@ eval_outputs/
 # dated copies beside it, or the thing this rule prevents comes back.
 demo_video/*
 !demo_video/agent_loop_demo.mp4
+!demo_video/demo_preview.gif
 *.webm
 .external_envs/
 

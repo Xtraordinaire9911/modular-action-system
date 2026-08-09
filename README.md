@@ -17,15 +17,23 @@ and failure-injection evaluation.
 
 ## Watch it run
 
-[![The agent diagnosing a layout shift and recovering](demo_video/demo_poster.png)](demo_video/agent_loop_demo.mp4)
+<video src="https://github.com/Garrulus21yyx/A-Modular-Action-System-Architecture/raw/main/demo_video/agent_loop_demo.mp4" controls muted playsinline width="880" poster="demo_video/demo_poster.png">
 
-**[demo_video/agent_loop_demo.mp4](demo_video/agent_loop_demo.mp4)** — 2 min 19 s.
-Click the frame above; GitHub plays it in the file view. Seven scenes over a
-shop, a forum and a WoT device; six inject a different real-world fault and the
-agent diagnoses each one from measurements it takes after the failure, then
-picks a recovery tier. The panel on the right is narrating the step, the line
-highlight is the interpreter's real path through the code, and the dim strip
-along the bottom is the running count every reported metric is divided out of.
+[![The agent diagnosing a layout shift and recovering](demo_video/demo_preview.gif)](demo_video/agent_loop_demo.mp4)
+
+</video>
+
+**[demo_video/agent_loop_demo.mp4](demo_video/agent_loop_demo.mp4)** — 2 min 19 s,
+the whole run. The clip above is scene one: an ad finishes loading, the target
+shifts, the click misses, and the agent measures the page before deciding what
+to do about it.
+
+Seven scenes over a shop, a forum and a WoT device. Six inject a different
+real-world fault, and the agent diagnoses each from measurements it takes after
+the failure rather than from anything it was told. The panel on the right
+narrates the step, the highlight is the interpreter's real path through the
+code, and the dim strip along the bottom is the running count every reported
+metric is divided out of.
 
 Or run it yourself:
 
