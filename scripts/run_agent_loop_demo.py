@@ -524,8 +524,32 @@ def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -
 
 
 def run_scene(
-    session: Any, console: AgentConsole, scene: Scene, *, pace: float, trace_delay: float, ledger: MetricLedger
+    session: Any,
+    console: AgentConsole,
+    scene: Scene,
+    *,
+    pace: float,
+    trace_delay: float,
+    ledger: MetricLedger,
+    familiar: bool = False,
 ) -> Trajectory:
+    # The loop is the same every scene; the fault, the diagnosis and the
+    # recovery are not. Once a viewer has been walked through observe/measure/
+    # decide/act/verify, repeating those explanations at full length seven times
+    # is the single biggest cost in the run and teaches nothing new - so after
+    # the first scene the familiar beats are shortened and the interesting ones
+    # keep their timing. Nothing is skipped; every step is still narrated.
+    teach = pace * 0.22 if familiar else pace
+    # The fault, diagnosis and recovery beats differ every scene, so they keep
+    # their shape - but a viewer who has watched one recovery reads the next one
+    # faster, so they are tightened rather than left at first-scene length. The
+    # floor is what keeps them readable: these are the beats carrying the new
+    # information, and shrinking them with the pace would defeat the point.
+    beat = max(pace * 0.45, 0.6) if familiar else pace
+    # Same reasoning for the line highlight: watching the interpreter walk
+    # observe() is worth its full speed once. By the sixth scene it is scenery,
+    # and it is the single largest fixed cost in the run.
+    trace = trace_delay * 0.35 if familiar else trace_delay
     traj = Trajectory(goal=scene.goal_text)
     console.open(f"{scene.title}  |  said: “{scene.utterance}”")
 
@@ -539,7 +563,7 @@ def run_scene(
 
     tally()
     console.banner(f"SCENE: {scene.title}", "#4f46e5")
-    time.sleep(pace * 0.8)
+    time.sleep(teach * 0.8)
     console.hide_banner()
 
     # Layer 1. A run starts from an utterance, not from a goal written by hand.
@@ -553,8 +577,8 @@ def run_scene(
         "unverifiable.",
         interpret,
     )
-    time.sleep(pace)
-    goal_plan = console.run_traced(interpret, scene.utterance, line_delay=trace_delay)
+    time.sleep(teach)
+    goal_plan = console.run_traced(interpret, scene.utterance, line_delay=trace)
     traj.intent = goal_plan.to_dict()
     understood = goal_plan.ok
     traj.add(
@@ -584,7 +608,7 @@ def run_scene(
         understood,
         f"understood as {goal_plan.goal.goal_state}" if understood else "did not understand the request",
     )
-    time.sleep(pace * 1.4)
+    time.sleep(teach * 1.4)
 
     console.step(
         "1/5",
@@ -596,7 +620,7 @@ def run_scene(
     )
     # Executed under the tracer, so the highlight follows the interpreter's own
     # path through the function rather than an animation of it.
-    pam = console.run_traced(observe, session, line_delay=trace_delay)
+    pam = console.run_traced(observe, session, line_delay=trace)
     ledger.observed(elements=len(pam.affordances))
     tally()
     traj.add("observe", f"{len(pam.affordances)} affordances perceived")
@@ -606,7 +630,7 @@ def run_scene(
         True,
         f"found {len(pam.affordances)} things it could act on",
     )
-    time.sleep(pace * 0.6)
+    time.sleep(teach * 0.6)
 
     console.step(
         "2/5",
@@ -616,13 +640,13 @@ def run_scene(
         "be measured gets no mark at all, so the agent cannot aim at something imagined.",
         measure,
     )
-    time.sleep(pace)
-    n = console.run_traced(measure, session, pam, line_delay=trace_delay)
+    time.sleep(teach)
+    n = console.run_traced(measure, session, pam, line_delay=trace)
     ledger.measured(boxes=n)
     tally()
     traj.add("measure", f"{n} boxes measured")
     console.result("measure", f"{n} real screen positions", True, f"measured {n} on-screen positions")
-    time.sleep(pace * 0.6)
+    time.sleep(teach * 0.6)
 
     console.step(
         "3/5",
@@ -633,8 +657,8 @@ def run_scene(
         "otherwise deterministic scoring does, and the result says which.",
         choose_target,
     )
-    time.sleep(pace)
-    selection_result = console.run_traced(choose_target, pam, scene.target, line_delay=trace_delay)
+    time.sleep(teach)
+    selection_result = console.run_traced(choose_target, pam, scene.target, line_delay=trace)
     ledger.scored(candidates=selection_result.considered)
     tally()
     traj.decision = selection_result.to_dict()
@@ -651,12 +675,12 @@ def run_scene(
         f"chosen: {selection_result.mark_id}\nconfidence: {selection_result.confidence:.2f}\n\n"
         f"{selection_result.reason}",
     )
-    time.sleep(pace * 1.9)
+    time.sleep(teach * 1.9)
 
     if not selection_result.ok:
         traj.add("decide", f"none of {selection_result.considered} candidates qualified", False)
         console.result("decide", selection_result.reason[:60], False, "could not find a way to do this")
-        time.sleep(pace)
+        time.sleep(teach)
         return traj
 
     selection = selection_result.mark
@@ -668,7 +692,7 @@ def run_scene(
         f"chose {selection_result.mark_id} of {selection_result.considered}",
     )
     point_at(session, console, selection, "#8383ff")
-    time.sleep(pace)
+    time.sleep(teach)
 
     fault = scene.injected
     if fault is not None:
@@ -681,13 +705,13 @@ def run_scene(
             "afterwards, which is the whole point of injecting a different one each time.",
             fault.apply,
         )
-        time.sleep(pace * 0.5)
+        time.sleep(beat * 0.5)
         injected = fault.apply(session, scene.fault_selector)
         traj.fault_kind = fault.key
         traj.add("fault", f"{fault.name} applied to the target" if injected else "injection missed")
         console.result("fault", fault.symptom, False, f"injected: {fault.name}")
         console.banner(f"{fault.name} - a real cause, not a contrived one. Watch what it does.", "#b91c1c")
-        time.sleep(pace * 1.8)
+        time.sleep(beat * 1.8)
         console.hide_banner()
 
     # The region the goal names, as it stands before acting. Comparing this
@@ -702,13 +726,13 @@ def run_scene(
         "this the same code path a vision-driven agent would use.",
         act,
     )
-    time.sleep(pace)
+    time.sleep(teach)
     act(session, selection)
     ledger.acted()
     tally()
     traj.add("act", f"clicked {selection.bbox.center}")
     console.result("act", f"clicked at {selection.bbox.center}", True, "click sent")
-    time.sleep(pace * 0.8)
+    time.sleep(teach * 0.8)
 
     console.step(
         "5/5",
@@ -718,8 +742,8 @@ def run_scene(
         "for the exact outcome the goal named.",
         verify,
     )
-    time.sleep(pace)
-    ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
+    time.sleep(teach)
+    ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace)
     ledger.verified(passed=ok)
     tally()
     traj.add("verify", "goal state confirmed" if ok else "expected effect NOT observed", ok)
@@ -729,11 +753,11 @@ def run_scene(
         ok,
         "goal confirmed" if ok else "the goal was NOT met",
     )
-    time.sleep(pace)
+    time.sleep(teach)
 
     if not ok:
         console.banner("Failure detected by the agent itself. Measuring before deciding.", "#b45309")
-        time.sleep(pace)
+        time.sleep(teach)
         console.hide_banner()
 
         # 6a. Measure first. Everything after this rests on what these four
@@ -749,7 +773,7 @@ def run_scene(
             inspect_failure,
         )
         observation = console.run_traced(
-            inspect_failure, session, selection, scene.check_in, region_before, line_delay=trace_delay
+            inspect_failure, session, selection, scene.check_in, region_before, line_delay=trace
         )
         ledger.probed(len(observation.evidence()))
         tally()
@@ -765,7 +789,7 @@ def run_scene(
             "\n".join(f"- {line}" for line in observation.evidence()),
         )
         console.result("inspect", f"{len(observation.evidence())} measurements taken", True, "measured the failure")
-        time.sleep(pace * 1.6)
+        time.sleep(beat * 1.6)
 
         # 6b. Work out why, from those measurements alone.
         console.step(
@@ -778,7 +802,7 @@ def run_scene(
             diagnose_failure,
         )
         diagnosis = console.run_traced(
-            diagnose_failure, session, selection, scene.target, observation, line_delay=trace_delay
+            diagnose_failure, session, selection, scene.target, observation, line_delay=trace
         )
         ledger.diagnosed(diagnosis.cause, diagnosis.tier)
         tally()
@@ -798,7 +822,7 @@ def run_scene(
             True,
             f"diagnosed: {diagnosis.cause}",
         )
-        time.sleep(pace * 2.2)
+        time.sleep(beat * 2.2)
 
         # 6c. Carry out whatever the diagnosis chose.
         console.step(
@@ -812,9 +836,9 @@ def run_scene(
             apply_recovery,
         )
         acted = console.run_traced(
-            apply_recovery, session, diagnosis, scene.target, observation, selection, line_delay=trace_delay
+            apply_recovery, session, diagnosis, scene.target, observation, selection, line_delay=trace
         )
-        time.sleep(pace * 0.6)
+        time.sleep(beat * 0.6)
 
         if diagnosis.tier >= 4:
             metrics = escalate(f"{diagnosis.cause}: {diagnosis.strategy}")
@@ -824,14 +848,14 @@ def run_scene(
             traj.add("escalate", f"handed to a supervisor; correction rate {metrics['correction_rate']:.2f}")
             console.result("escalate", "paused and handed over", True, "escalated to a human, as designed")
             console.banner("Correctly refused to retry. Escalated to a human.", "#b45309")
-            time.sleep(pace * 1.8)
+            time.sleep(beat * 1.8)
             console.hide_banner()
         else:
             if acted:
                 ledger.recovered()
             tally()
             traj.add("recover", f"tier {diagnosis.tier} applied", acted)
-            ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
+            ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace)
             ledger.verified(passed=ok)
             tally()
             traj.recovered = ok
@@ -846,7 +870,7 @@ def run_scene(
                 "Recovered without human help." if ok else "Recovery failed.",
                 "#15803d" if ok else "#b91c1c",
             )
-            time.sleep(pace * 1.6)
+            time.sleep(beat * 1.6)
             console.hide_banner()
 
     ledger.episode_done(goal_met=ok)
@@ -857,7 +881,14 @@ def run_scene(
 
 
 def run_wot_scene(
-    session: Any, console: AgentConsole, *, pace: float, trace_delay: float, faulty: bool, ledger: MetricLedger
+    session: Any,
+    console: AgentConsole,
+    *,
+    pace: float,
+    trace_delay: float,
+    faulty: bool,
+    ledger: MetricLedger,
+    familiar: bool = False,
 ) -> Trajectory:
     """Drive a device through its Thing Description, on the same loop.
 
@@ -880,6 +911,10 @@ def run_wot_scene(
         write_property,
     )
 
+    # Always the last scene, so the viewer has watched the loop six times by
+    # now: the beats are tightened for the same reason as in run_scene.
+    beat = max(pace * 0.45, 0.6) if familiar else pace
+    trace = trace_delay * 0.35 if familiar else trace_delay
     traj = Trajectory(goal="Set the thermostat to 22 degrees")
     servient = FakeServient({"targetTemperature": 18, "currentTemperature": 18})
     td = load_thermostat_td()
@@ -902,7 +937,7 @@ def run_wot_scene(
     title = "Smart room - the device accepts the write and ignores it" if faulty else "Smart room - clean device write"
     console.open(f"{title}  |  said: “Set the thermostat to 22 degrees.”")
     console.banner(f"SCENE: {title}", "#4f46e5")
-    time.sleep(pace * 0.8)
+    time.sleep(beat * 0.8)
     console.hide_banner()
     show()
 
@@ -914,7 +949,7 @@ def run_wot_scene(
         "and which are sensors. Nothing about this thermostat is written into the agent.",
         perceive_device,
     )
-    sources = console.run_traced(perceive_device, td, line_delay=trace_delay)
+    sources = console.run_traced(perceive_device, td, line_delay=trace)
     writable = next(s for s in sources if not s.read_only)
     # A device property is the same kind of thing as a page affordance here: it
     # is something the agent perceived and could act on, so it counts the same.
@@ -924,7 +959,7 @@ def run_wot_scene(
     console.tally(ledger.counters.as_strip())
     traj.add("perceive", f"{len(sources)} properties from the TD; '{writable.property}' is writable")
     console.result("perceive", f"{len(sources)} properties parsed", True, f"{len(sources)} device properties")
-    time.sleep(pace * 0.7)
+    time.sleep(beat * 0.7)
 
     console.step(
         "2/4",
@@ -934,10 +969,10 @@ def run_wot_scene(
         "compare the result against afterwards.",
         read_property,
     )
-    before = console.run_traced(read_property, servient.send, writable, line_delay=trace_delay)
+    before = console.run_traced(read_property, servient.send, writable, line_delay=trace)
     traj.add("read", f"{writable.property} = {before}")
     console.result("read", f"{writable.property} = {before}", True, f"device reads {before}")
-    time.sleep(pace * 0.7)
+    time.sleep(beat * 0.7)
 
     if faulty:
         servient.silent_failure = True
@@ -952,7 +987,7 @@ def run_wot_scene(
         traj.fault_kind = "silent_write"
         console.result("fault", "device will acknowledge and ignore", False, "fault injected: silent write")
         console.banner("The device will report success and do nothing.", "#b91c1c")
-        time.sleep(pace * 1.4)
+        time.sleep(beat * 1.4)
         console.hide_banner()
 
     console.step(
@@ -962,13 +997,13 @@ def run_wot_scene(
         "Sent over the TD's own write form, honouring the security scheme and rate " "limit the description declares.",
         write_property,
     )
-    console.run_traced(write_property, servient.send, writable, 22, line_delay=trace_delay)
+    console.run_traced(write_property, servient.send, writable, 22, line_delay=trace)
     ledger.acted()
     console.tally(ledger.counters.as_strip())
     show()
     traj.add("write", "device accepted the write (204)")
     console.result("write", "accepted, HTTP 204", True, "the device said yes")
-    time.sleep(pace * 0.8)
+    time.sleep(beat * 0.8)
 
     console.step(
         "4/4",
@@ -978,7 +1013,7 @@ def run_wot_scene(
         "one is to observe the state again.",
         verify_device,
     )
-    ok = console.run_traced(verify_device, servient.send, writable, 22, line_delay=trace_delay)
+    ok = console.run_traced(verify_device, servient.send, writable, 22, line_delay=trace)
     ledger.verified(passed=ok)
     console.tally(ledger.counters.as_strip())
     show()
@@ -989,7 +1024,7 @@ def run_wot_scene(
         ok,
         "device state confirmed" if ok else "the device did not change",
     )
-    time.sleep(pace)
+    time.sleep(beat)
 
     if not ok:
         # Nothing moved and the endpoint is still there, so a second identical
@@ -1012,7 +1047,7 @@ def run_wot_scene(
         traj.add("escalate", f"handed over; correction rate {metrics['correction_rate']:.2f}")
         console.result("escalate", "paused and handed over", True, "escalated, as designed")
         console.banner("Caught a failure the response never revealed.", "#b45309")
-        time.sleep(pace * 1.8)
+        time.sleep(beat * 1.8)
         console.hide_banner()
 
     ledger.episode_done(goal_met=ok)
@@ -1086,15 +1121,20 @@ def compile_experience(traj: Trajectory) -> Any:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Narrated agent loop across several environments.")
-    parser.add_argument("--pace", type=float, default=1.8, help="Seconds per narration beat.")
+    parser.add_argument(
+        "--pace",
+        type=float,
+        default=1.8,
+        help="Seconds per narration beat. Beats explaining a phase already shown are shortened.",
+    )
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--scene", default="", help="Run one scene by page name, e.g. forum.html")
-    parser.add_argument("--hold", type=float, default=12.0, help="Seconds to stay on the final summary.")
+    parser.add_argument("--hold", type=float, default=8.0, help="Seconds to stay on the final summary.")
     parser.add_argument("--record", action="store_true", help="Record the page to a video file.")
     parser.add_argument(
         "--trace-delay",
         type=float,
-        default=0.08,
+        default=0.13,
         help="Seconds per executed source line while the highlight follows the code.",
     )
     parser.add_argument(
@@ -1147,7 +1187,7 @@ def main() -> int:
                     label = f"rep {repetition + 1}/{args.repeat}  {label}"
                 print(f"\n  --- {label}: {scene.title}")
                 session.open(f"{base}/{scene.page}")
-                time.sleep(0.6)
+                time.sleep(0.35)  # let the page settle before observing
                 if scene.page == "smart_room.html":
                     traj = run_wot_scene(
                         session,
@@ -1156,10 +1196,17 @@ def main() -> int:
                         trace_delay=args.trace_delay,
                         faulty=bool(scene.fault),
                         ledger=ledger,
+                        familiar=index > 0,
                     )
                 else:
                     traj = run_scene(
-                        session, console, scene, pace=args.pace, trace_delay=args.trace_delay, ledger=ledger
+                        session,
+                        console,
+                        scene,
+                        pace=args.pace,
+                        trace_delay=args.trace_delay,
+                        ledger=ledger,
+                        familiar=index > 0,
                     )
                 campaign.add(episode_result(scene, traj))
                 if repetition == 0:

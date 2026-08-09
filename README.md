@@ -492,11 +492,17 @@ measurements pick the tier. The expected answers live in the scene definition,
 which the diagnosis never sees.
 
 ```bash
-python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check
-python scripts/run_agent_loop_demo.py --repeat 5                        # campaign metrics
-python scripts/run_agent_loop_demo.py --record                          # writes an mp4
+python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check, ~20s
+python scripts/run_agent_loop_demo.py --repeat 30                       # 210 episodes, the campaign metrics
+python scripts/run_agent_loop_demo.py --pace 1.5 --trace-delay 0.3 --record   # the recording settings
 python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
 ```
+
+The run takes about two and a half minutes. The first scene is narrated at full
+length because it teaches the loop; from the second scene on, the beats
+explaining a phase already shown are shortened and the ones carrying new
+information - which fault, what was measured, which tier and why - keep their
+timing. Nothing is skipped, and `--pace` scales all of it.
 
 Artifacts land in `eval_outputs/agent_loop/<timestamp>/`: a screenshot per
 scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
