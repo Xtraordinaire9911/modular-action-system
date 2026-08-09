@@ -28,7 +28,8 @@ matching its code.
 | Intent (natural language) → GoalSpec | **Implemented, model optional** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. |
 | Set-of-Marks target selection | **Implemented, model optional** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. |
 | Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
-| Recovery | **Partial** | One strategy is exercised end to end (re-observe and retry). The four-tier cascade exists in `src/recovery/` but the loop demo drives only the first tier. |
+| Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
+| Recovery | **Implemented, four tiers** | All four are exercised by the loop demo and are genuinely different actions: retry, clear the obstruction, satisfy the precondition, hand over. Which tier is used is decided at run time from what was measured. Scored against ground truth the diagnosis never sees. |
 | Generalisation evidence | **Limited** | Three local mock environments plus MiniWoB++. Sample sizes are small and the environments are of similar shape; this is not yet a generalisation result. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
