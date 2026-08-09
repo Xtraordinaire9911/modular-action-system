@@ -72,6 +72,12 @@ _PANEL_CSS = """
 #__cua_c .vars{padding:8px 16px;background:#141430;border-top:1px solid #2a2a4a;
   color:#a5b4cf;font-size:10.5px;max-height:96px;overflow:auto}
 #__cua_c .vars b{color:#8383ff;font-weight:700}
+/* The running tallies the metrics are computed from. Deliberately the quietest
+   thing in the panel: they must be checkable at any moment without competing
+   with the step being narrated. */
+#__cua_c .tally{padding:5px 16px;background:#0b0b1c;border-top:1px solid #1e1e3a;
+  color:#4b5573;font-size:9.5px;letter-spacing:.02em;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
 body{margin-right:430px !important}
 """
 
@@ -95,9 +101,12 @@ _OPEN_JS = (
     '<div class="code" id="__s"></div>'
     '<div class="vars" id="__v"></div>'
     '<div class="res run" id="__r">running...</div>'
+    '<div class="tally" id="__t"></div>'
     '<div class="steps" id="__l"></div>\';'
     "return 'inline';}"
 )
+
+_TALLY_JS = "(a)=>{const t=document.getElementById('__t');if(!t)return false;" "t.textContent=a.text;return true;}"
 
 # Renders the source as one div per line, which is what makes a moving
 # highlight possible at all.
@@ -234,6 +243,14 @@ class AgentConsole:
             _RESULT_JS,
             {"ok": ok, "text": headline or ("succeeded" if ok else "FAILED"), "phase": phase, "detail": detail},
         )
+
+    def tally(self, text: str) -> None:
+        """Show the running counts the metrics are derived from.
+
+        Updated on every step, faulted or not, so the figures reported at the
+        end can be traced back to something a viewer watched accumulate.
+        """
+        self._js(_TALLY_JS, {"text": text})
 
     def banner(self, text: str, color: str = "#4f46e5") -> None:
         """A full-width message across the page, for moments that need one."""

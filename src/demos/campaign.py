@@ -88,11 +88,20 @@ class Campaign:
             "scenes": len({e.scene for e in self.episodes}),
             "repetitions": self.repetitions,
             "faulted_episodes": len(faulted),
-            "TSR": _rate(sum(1 for e in self.episodes if e.handled_well), total),
+            # TSR counts goals actually reached, and nothing else. Handing over
+            # correctly is the right behaviour but it is not a solved task, and
+            # folding it in here produced a flattering 100% next to a ledger
+            # saying 4/7 for the same run - two numbers for one quantity, with
+            # the generous one wearing the name of the project's own metric.
+            "TSR": _rate(sum(1 for e in self.episodes if e.goal_met), total),
             "RTR": _rate(len(detected), total),
-            "RSR": _rate(sum(1 for e in detected if e.handled_well), len(detected)),
+            "RSR": _rate(sum(1 for e in detected if e.goal_met), len(detected)),
             "RTA": _rate(sum(1 for e in tiered if e.tier_correct), len(tiered)),
             "DA": _rate(sum(1 for e in diagnosed if e.diagnosis_correct), len(diagnosed)),
+            # Reported separately and named for what it is: the agent either
+            # reached the goal or refused correctly. It is the more useful
+            # number for judging behaviour, and it must not be called TSR.
+            "handled_rate": _rate(sum(1 for e in self.episodes if e.handled_well), total),
             "escalations": sum(1 for e in self.episodes if e.escalated),
         }
 
@@ -108,6 +117,10 @@ class Campaign:
             summary[fault] = {
                 "episodes": len(group),
                 "handled": sum(1 for e in group if e.handled_well),
+                # How many of the group had a cause to get right at all. A clean
+                # run has none, and reporting it as 0% accuracy would read as a
+                # failure rather than as nothing to score.
+                "scored": len(scored),
                 "DA": _rate(sum(1 for e in scored if e.diagnosis_correct), len(scored)),
                 "RTA": _rate(sum(1 for e in scored if e.tier_correct), len(scored)),
                 "tiers_used": sorted({e.chosen_tier for e in group if e.chosen_tier}),
@@ -124,22 +137,23 @@ class Campaign:
             f"({metrics['scenes']} scenes x {metrics['repetitions']} repetitions, "
             f"{metrics['faulted_episodes']} with an injected fault)",
             "",
-            f"  TSR  task success rate            {metrics['TSR']:6.1%}",
+            f"  TSR  task success rate            {metrics['TSR']:6.1%}   (goal reached; a handover is not a success)",
             f"  RTR  recovery trigger rate        {metrics['RTR']:6.1%}",
             f"  RSR  recovery success rate        {metrics['RSR']:6.1%}",
             f"  RTA  recovery tier accuracy       {metrics['RTA']:6.1%}",
             f"  DA   diagnosis accuracy           {metrics['DA']:6.1%}",
+            f"       handled correctly            {metrics['handled_rate']:6.1%}   "
+            "(goal reached, or refused and handed over when that was right)",
             f"       escalations                  {metrics['escalations']}",
             "",
-            f"  {'fault':<12} {'eps':>4} {'handled':>8} {'DA':>7} {'RTA':>7}  tiers",
-            f"  {'-' * 54}",
+            f"  {'fault':<21} {'eps':>4} {'handled':>8} {'DA':>7} {'RTA':>7}  tiers",
+            f"  {'-' * 62}",
         ]
         for fault, row in self.by_fault().items():
             tiers = ",".join(str(t) for t in row["tiers_used"]) or "-"
-            lines.append(
-                f"  {fault:<12} {row['episodes']:>4} {row['handled']:>8} "
-                f"{row['DA']:>6.0%} {row['RTA']:>6.0%}  {tiers}"
-            )
+            da = f"{row['DA']:>6.0%}" if row["scored"] else f"{'-':>6}"
+            rta = f"{row['RTA']:>6.0%}" if row["scored"] else f"{'-':>6}"
+            lines.append(f"  {fault:<21} {row['episodes']:>4} {row['handled']:>8} {da} {rta}  {tiers}")
         return "\n".join(lines)
 
     def to_dict(self) -> dict[str, Any]:

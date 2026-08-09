@@ -25,11 +25,15 @@ matching its code.
 |---|---|---|
 | Observe → plan → act → verify → recover | **Implemented** | Runs end to end in one process; see `scripts/run_agent_loop_demo.py`. |
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
-| Intent (natural language) → GoalSpec | **Implemented, model optional** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. |
-| Set-of-Marks target selection | **Implemented, model optional** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. |
+| Intent (natural language) → GoalSpec | **Implemented, demo path only** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. **Consumed only by `scripts/run_agent_loop_demo.py`** — the production runtime in `src/runtime/` still starts from a hand-written `GoalSpec`, which is what `STATUS.md` means by "future interface only". |
+| Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Same integration gap as the row above. |
+| A model actually running | **Not exercised** | No API key is configured, so every recorded intent and mark decision in this repository is `rule_fallback` / `heuristic`. The model paths have unit tests against fakes and have never run against a real model. **No image is ever sent to a model** — there is no VLM anywhere in the repository. |
 | Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
-| Recovery | **Partial** | One strategy is exercised end to end (re-observe and retry). The four-tier cascade exists in `src/recovery/` but the loop demo drives only the first tier. |
+| Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
+| Recovery | **Implemented, four tiers** | All four are exercised by the loop demo and are genuinely different actions: retry, clear the obstruction, satisfy the precondition, hand over. Which tier is used is decided at run time from what was measured. Scored against ground truth the diagnosis never sees. |
 | Generalisation evidence | **Limited** | Three local mock environments plus MiniWoB++. Sample sizes are small and the environments are of similar shape; this is not yet a generalisation result. |
+| Sample sizes behind the demo metrics | **Far below the bar** | The loop demo defaults to one repetition, so `RTA` and `DA` are each n=1 per fault. The project's own requirement is ≥30 episodes per condition. Use `--repeat` before quoting any of these figures. |
+| Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is honest about what it runs, but it is a second loop, not the integrated one. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
 | Picture-in-Picture supervised interface | **Not implemented here** | Browser-context isolation is implemented and is a weaker property; the PiP interface is separate work owned by another team member. |
@@ -424,6 +428,51 @@ white-box path.
    ```text
    http://localhost:3000/?fault=layout_shift,selector_mutation
    ```
+
+## The narrated agent loop
+
+One command, one browser window, roughly five minutes:
+
+```bash
+python scripts/run_agent_loop_demo.py
+```
+
+A side panel narrates every step — which phase of the loop it is, what is
+happening in plain language, why the step exists, and the source that is
+executing, with the highlight following the interpreter's real path through it.
+The running counts the metrics are computed from sit along the bottom.
+
+Seven scenes across a shop, a forum and a WoT device. Six inject a different
+fault taken from things that break real automation, ordered easy to hard, and
+each says on screen why that fault happens in practice:
+
+| scene | fault | what the agent has to work out |
+| --- | --- | --- |
+| shop | layout shift (CLS) | the click missed; look again — tier 1 |
+| forum | consent banner | present and enabled, but something else took the click — tier 2 |
+| shop | unmet precondition | it refuses input; satisfy what it depends on — tier 3 |
+| shop | optimistic rollback | accepted, then undone; retrying is provably useless — tier 4 |
+| forum | session expiry | the page is gone; no route remains — tier 4 |
+| shop | none | a clean run, for contrast |
+| smart room | silent device write | 204 with no state change, caught only by reading back — tier 4 |
+
+Nothing tells the recovery code which fault was injected. It measures the page
+after the failure — what is really at the click point, whether the target
+accepts input, what covers it, whether the region changed — and those
+measurements pick the tier. The expected answers live in the scene definition,
+which the diagnosis never sees.
+
+```bash
+python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check
+python scripts/run_agent_loop_demo.py --repeat 5                        # campaign metrics
+python scripts/run_agent_loop_demo.py --record                          # writes an mp4
+python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
+```
+
+Artifacts land in `eval_outputs/agent_loop/<timestamp>/`: a screenshot per
+scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
+of which states the division performed behind every figure, so a number can be
+checked rather than trusted.
 
 ## Running the demos
 

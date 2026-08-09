@@ -1,4 +1,4 @@
-﻿"""The agent driving several environments, narrated inside one browser window.
+"""The agent driving several environments, narrated inside one browser window.
 
     python scripts/run_agent_loop_demo.py
 
@@ -8,9 +8,16 @@ language, why the step exists, and the source that is running. The page itself
 shows a cursor moving to the element and a highlight where the agent acts, so
 the narration and the action are visible in the same frame.
 
-Scenes, in order: shopping, email, forum. The shopping scene has a fault
-injected on purpose, so the run shows a failure being detected and recovered
-rather than only describing that it could be.
+Seven scenes across three surfaces - a shop, a forum and a WoT device - six of
+them with a fault injected on purpose. Every fault is a different class taken
+from things that break real automation (layout shift, consent banner, disabled
+control, optimistic rollback, expired session, silent device write), ordered
+easy to hard, so the run shows failures being diagnosed and answered differently
+rather than one rehearsed recovery repeated.
+
+The counts the metrics are computed from run along the bottom of the panel at
+every step, faulted or not, so the final figures can be checked against
+something the viewer watched accumulate.
 
 Deliberately one browser window. An earlier version opened a separate
 Picture-in-Picture window and ran each scene in its own subprocess, so a
@@ -32,7 +39,10 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
+from src.demos.ledger import MetricLedger  # noqa: E402
 from src.demos.pip_console import AgentConsole  # noqa: E402
+from src.demos.probes import text_snapshot  # noqa: E402
+from src.demos.realistic_faults import FAULTS  # noqa: E402
 from src.perception.dom_transducer import DomTransducer  # noqa: E402
 from src.perception.som_parser import marks_from_affordances  # noqa: E402
 
@@ -82,6 +92,7 @@ class Trajectory:
     recovered: bool = False
     intent: dict[str, Any] = field(default_factory=dict)  # layer 1: utterance -> goal
     decision: dict[str, Any] = field(default_factory=dict)  # layer 3: which mark, and why
+    observation: dict[str, Any] = field(default_factory=dict)  # what the probes measured after a failure
     diagnosis: dict[str, Any] = field(default_factory=dict)  # why it failed, and the tier chosen
     fault_kind: str = ""
     escalated: bool = False
@@ -100,6 +111,7 @@ class Trajectory:
             "recovered": self.recovered,
             "intent": self.intent,
             "decision": self.decision,
+            "observation": self.observation,
             "diagnosis": self.diagnosis,
             "fault_kind": self.fault_kind,
             "escalated": self.escalated,
@@ -171,71 +183,189 @@ def verify(session: Any, where: str, expect: str) -> bool:
     Executor success is not task success, and neither is "something changed".
     An earlier version searched the whole page for the word "added", which
     passed when a mistargeted click added the wrong product.
+
+    Two things this has to survive. An optimistic interface confirms before the
+    server agrees, so reading immediately records a state that may not last -
+    hence the settle. And the region can be gone entirely, which is a failure to
+    report rather than an error to raise.
     """
-    return expect.lower() in (session.text_content(where) or "").lower()
+    time.sleep(0.6)  # let an optimistic update be confirmed or reverted
+    try:
+        text = session.evaluate("(s)=>{const e=document.querySelector(s);return e?e.innerText:null;}", where)
+    except Exception:
+        return False
+    return text is not None and expect.lower() in str(text).lower()
 
 
-def app_html(session: Any) -> str:
-    """The page as the application renders it, with our own overlays removed.
+def inspect_failure(session: Any, attempted: Any, region: str, text_before: str) -> Any:
+    """Put four specific questions to the live page about the failed step.
 
-    Change detection has to ignore the narration panel, cursor and rings: they
-    update on every step, so comparing raw HTML would report "the page changed"
-    even when the agent's click did nothing at all - which is exactly the case
-    the diagnosis needs to be able to see.
+    Comparing a label and two coordinates can only tell "it moved" from "it is
+    gone". It cannot see a banner sitting on the button, a control that refuses
+    input, or a click that landed somewhere else - so each of those is measured
+    directly, at the point the agent actually clicked.
     """
-    return str(session.evaluate("""()=>{const c=document.body.cloneNode(true);
-               c.querySelectorAll('[id^="__cua"]').forEach(e=>e.remove());
-               return c.innerHTML;}""") or "")
+    from src.demos.probes import Observation, hit_test, interactability, occlusion, text_snapshot
 
-
-def diagnose_failure(session: Any, attempted: Any, goal: str, page_before: str) -> Any:
-    """Work out *why* the step failed, from what can be seen afterwards.
-
-    Nothing here is told which fault was injected. It re-observes, looks for the
-    element it acted on, compares the page against how it looked before, and
-    lets those answers pick the recovery tier.
-    """
-    from src.demos.diagnosis import diagnose
-
-    fresh_pam = observe(session)
-    measure(session, fresh_pam)
-    fresh_marks = marks_from_affordances(fresh_pam.affordances)
-    changed = app_html(session) != page_before
-
-    def find_alternative(marks: list[Any], want: str) -> Any:
-        result = choose_target(fresh_pam, want)
-        return result.mark if result.ok else None
-
-    return diagnose(
-        attempted=attempted,
-        fresh_marks=fresh_marks,
-        goal=goal,
-        world_changed=changed,
-        alternative_finder=find_alternative,
+    selector = str(attempted.extra.get("selector", ""))
+    x, y = attempted.bbox.center
+    return Observation(
+        hit=hit_test(session, x, y, selector),
+        interact=interactability(session, selector),
+        occlusion=occlusion(session, selector),
+        text_before=text_before,
+        text_after=text_snapshot(session, region),
     )
 
 
-def apply_recovery(session: Any, diagnosis: Any, goal: str) -> bool:
+def diagnose_failure(session: Any, attempted: Any, goal: str, observation: Any) -> Any:
+    """Turn the measurements into a conclusion and a recovery tier.
+
+    Nothing here is told which fault was injected. The probes say what the page
+    is like now; re-observing says whether the element is still there and still
+    where it was; those answers alone pick the tier.
+    """
+    from src.demos.diagnosis import diagnose_with_probes
+
+    fresh_pam = observe(session)
+    measure(session, fresh_pam)
+    same = [m for m in marks_from_affordances(fresh_pam.affordances) if m.label == attempted.label]
+    other = choose_target(fresh_pam, goal) if not same else None
+
+    return diagnose_with_probes(
+        observation,
+        moved=bool(same) and same[0].bbox.center != attempted.bbox.center,
+        still_present=bool(same),
+        alternative_label=other.mark.label if other is not None and other.ok else "",
+    )
+
+
+def clear_obstruction(session: Any, observation: Any, attempted: Any) -> bool:
+    """Tier 2 for an occlusion: act on whatever intercepted the click.
+
+    The obstruction is never named in code. The probe returned the rectangle of
+    the element that received the click, so the agent re-observes and takes the
+    one control inside that rectangle - a banner's own dismiss button, in
+    practice - rather than being handed a selector for it.
+    """
+    left, top, width, height = observation.occlusion.coverer_rect
+    fresh = observe(session)
+    measure(session, fresh)
+    inside = [
+        m
+        for m in marks_from_affordances(fresh.affordances)
+        if m.label != attempted.label
+        and left <= m.bbox.center[0] <= left + width
+        and top <= m.bbox.center[1] <= top + height
+    ]
+    if not inside:
+        return False
+    session.click_xy(*inside[0].bbox.center)
+    return True
+
+
+def satisfy_precondition(session: Any, attempted: Any) -> bool:
+    """Tier 3 for a refused control: meet what it is waiting on, then check.
+
+    A disabled control is not broken, so the answer is to satisfy its
+    precondition rather than to keep clicking. The control declares what it
+    depends on through aria-controls, which is how an accessible form states it
+    - the agent reads that, fills the field, and only then re-measures. If the
+    control still refuses input, it does not act.
+    """
+    from src.demos.probes import interactability
+
+    selector = str(attempted.extra.get("selector", ""))
+    required = session.evaluate(
+        "(s)=>{const e=document.querySelector(s);return e?(e.getAttribute('aria-controls')||''):'';}", selector
+    )
+    if not required:
+        return False
+    session.fill(f"#{required}", "1")
+    return interactability(session, selector).actionable
+
+
+def apply_recovery(session: Any, diagnosis: Any, goal: str, observation: Any, attempted: Any) -> bool:
     """Carry out the tier the diagnosis selected.
 
-    Each branch is a genuinely different response, not the same retry wearing
-    different labels: tier 1 looks again and repeats, tier 2 acts on a different
-    affordance, tier 4 stops and hands over rather than trying anything.
+    Four genuinely different responses, not one retry wearing four labels:
+    tier 1 looks again and repeats, tier 2 deals with the obstruction first,
+    tier 3 satisfies the precondition and refuses to act if it cannot,
+    tier 4 does not act at all.
     """
-    from src.demos.diagnosis import STRATEGY_ESCALATE, STRATEGY_REROUTE, STRATEGY_RETRY
+    from src.demos.diagnosis import STRATEGY_CLEAR, STRATEGY_ESCALATE, STRATEGY_ROLLBACK
 
     if diagnosis.strategy == STRATEGY_ESCALATE:
         return False  # deliberately does not act; the handover is the response
+    if diagnosis.strategy == STRATEGY_CLEAR and not clear_obstruction(session, observation, attempted):
+        return False
+    if diagnosis.strategy == STRATEGY_ROLLBACK and not satisfy_precondition(session, attempted):
+        return False
 
     fresh = observe(session)
     measure(session, fresh)
     result = choose_target(fresh, goal)
     if not result.ok:
         return False
-    if diagnosis.strategy in (STRATEGY_RETRY, STRATEGY_REROUTE):
-        act(session, result.mark)
-        return True
-    return False
+    act(session, result.mark)
+    return True
+
+
+def make_console_safe() -> None:
+    """Stop a page's own text from being able to kill the run.
+
+    The demo reports what it observed on the page, and the pages contain emoji
+    (the shop renders `&#127911;` as a headphones glyph). On a console using a
+    regional code page - GBK on a Chinese Windows install - encoding that
+    character raises UnicodeEncodeError and takes the whole run down partway
+    through, on a machine where nothing is actually wrong.
+
+    The console keeps its own encoding; only the error policy changes, so an
+    unrepresentable glyph becomes "?" instead of an exception. Losing a
+    character from a log line is not worth losing the run.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+        except Exception:
+            pass  # not a reconfigurable stream; nothing to do
+
+
+def to_mp4(out: Path) -> str:
+    """Convert the recorded .webm to .mp4, if a converter can be found.
+
+    Playwright only writes webm, which most players and every slide deck refuse.
+    ffmpeg is used when it is on PATH; otherwise the copy bundled with
+    imageio-ffmpeg is used, so this works without installing anything system
+    wide. If neither is available the webm is left alone and the command to run
+    later is printed - a demo run should not fail over a file format.
+    """
+    import shutil
+    import subprocess
+
+    videos = sorted(out.glob("*.webm"))
+    if not videos:
+        return ""
+
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        try:
+            import imageio_ffmpeg
+
+            ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            print(f"  [note] no ffmpeg; convert later with:  ffmpeg -i {videos[0].name} agent_loop_demo.mp4")
+            return ""
+
+    target = out / "agent_loop_demo.mp4"
+    command = [ffmpeg, "-y", "-i", str(videos[0]), "-c:v", "libx264", "-preset", "medium"]
+    command += ["-crf", "24", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(target)]
+    try:
+        subprocess.run(command, check=True, capture_output=True)
+    except Exception as exc:  # a failed conversion must not fail the run
+        print(f"  [note] mp4 conversion failed ({exc}); the webm is still there")
+        return ""
+    return target.name
 
 
 def escalate(reason: str) -> Any:
@@ -253,105 +383,6 @@ def escalate(reason: str) -> Any:
     return takeover.metrics()
 
 
-def inject_vanish(session: Any, selector: str) -> bool:
-    """Remove the target entirely, leaving a marker where it was.
-
-    The agent's plan now names something that no longer exists, so re-observing
-    and retrying cannot help. It has to notice the absence and find another
-    route, which is a different recovery from a target that merely moved.
-    """
-    return bool(
-        session.evaluate(
-            """(sel)=>{
-                const b = document.querySelector(sel);
-                if (!b) return false;
-                const r = b.getBoundingClientRect();
-                const ghost = document.createElement('div');
-                ghost.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;
-                    width:${Math.max(r.width,120)}px;height:${Math.max(r.height,26)}px;
-                    z-index:2147483643;border:2px dashed #f87171;border-radius:8px;
-                    pointer-events:none;display:flex;align-items:center;
-                    justify-content:center;color:#f87171;font:600 10px system-ui;
-                    background:rgba(248,113,113,.08)`;
-                ghost.textContent = 'this control no longer exists';
-                document.body.appendChild(ghost);
-                b.remove();
-                return true;
-            }""",
-            selector,
-        )
-    )
-
-
-def inject_inert(session: Any, selector: str) -> bool:
-    """Leave the control in place but disconnect it from its effect.
-
-    This is the failure the review singled out: the action is accepted, the
-    control behaves as though it worked, and the state the goal named never
-    changes. Retrying the identical action would produce the identical nothing,
-    so the only correct response is to stop and escalate.
-    """
-    return bool(
-        session.evaluate(
-            """(sel)=>{
-                const b = document.querySelector(sel);
-                if (!b) return false;
-                const clone = b.cloneNode(true);   // drops every listener
-                clone.style.outline = '3px solid #f59e0b';
-                clone.title = 'accepts clicks, does nothing';
-                b.replaceWith(clone);
-                return true;
-            }""",
-            selector,
-        )
-    )
-
-
-def inject_displace(session: Any, selector: str) -> bool:
-    """Move the target after it was perceived, and mark where it used to be.
-
-    This is the DOM-mutation fault the supervisor named: the page changes
-    between observation and action, so the plan is stale through no fault of
-    the planner.
-
-    The button moves *upward inside its own product card*, and a dashed ghost
-    is left at the position the agent planned against. An earlier version slid
-    it 250px down, where it landed on a different product's card and made the
-    page read as though the wrong item had been added - the fault has to be
-    legible, not just present.
-    """
-    return bool(
-        session.evaluate(
-            """(sel)=>{
-                const b = document.querySelector(sel);
-                if (!b) return false;
-                const r = b.getBoundingClientRect();
-
-                const ghost = document.createElement('div');
-                ghost.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;
-                    width:${r.width}px;height:${r.height}px;z-index:2147483643;
-                    border:2px dashed #f87171;border-radius:8px;pointer-events:none;
-                    display:flex;align-items:center;justify-content:center;
-                    color:#f87171;font:600 11px system-ui;background:rgba(248,113,113,.08)`;
-                ghost.textContent = 'agent planned to click here';
-                document.body.appendChild(ghost);
-
-                // Move whichever way has room. A fixed offset pushed elements
-                // near the top of the page off-screen, where nothing could
-                // click them and the fault stopped being recoverable at all.
-                const room_above = r.top - 60;
-                const room_below = window.innerHeight - r.bottom - 60;
-                const shift = Math.min(150, Math.max(room_above, room_below));
-                b.style.position = 'relative';
-                b.style.top = (room_above >= room_below ? -shift : shift) + 'px';
-                b.style.outline = '3px solid #f59e0b';
-                return true;
-            }""",
-            selector,
-        )
-    )
-
-
 # --- scenes -------------------------------------------------------------------
 
 
@@ -364,85 +395,99 @@ class Scene:
     target: str  # label fragment the planner looks for
     check_in: str  # selector whose text proves the effect
     expect: str  # text that must appear there
-    fault: str = ""  # which fault to inject: displace | vanish | inert
+    fault: str = ""  # key into realistic_faults.FAULTS, or a scene-local fault name
     fault_selector: str = ""  # the element the fault acts on
+    # Ground truth for scenes whose fault is not one of the page faults - the
+    # smart room injects a device-level one of its own.
+    scored_as: tuple[str, int] = ("", 0)
+
+    @property
+    def injected(self) -> Any:
+        """The page fault to apply, or None if this scene does not use one."""
+        return FAULTS.get(self.fault)
 
     @property
     def expected_cause(self) -> str:
         """Ground truth for scoring only. Never reaches the diagnosis."""
-        from src.demos.diagnosis import CAUSE_INERT, CAUSE_MOVED, CAUSE_VANISHED
-
-        return {"displace": CAUSE_MOVED, "vanish": CAUSE_VANISHED, "inert": CAUSE_INERT}.get(self.fault, "")
+        return self.scored_as[0] or (self.injected.expected_cause if self.injected else "")
 
     @property
     def expected_tier(self) -> int:
-        """The tier this fault warrants: retry a move, reroute around a removal,
-        and refuse to retry something that provably does nothing."""
-        return {"displace": 1, "vanish": 2, "inert": 4}.get(self.fault, 0)
+        """The tier this fault warrants, held here only so the run can be scored."""
+        return self.scored_as[1] or (self.injected.expected_tier if self.injected else 0)
 
 
-# Four scenes, three of them faulted, and each fault of a different kind so the
-# agent has to diagnose rather than apply one rehearsed answer. Which recovery
-# tier each ends up using is decided at run time from what it observes, and is
-# not written down here.
-# Five scenes, four of them faulted, with three distinct kinds of fault. Each
-# verify checks a precise state change rather than a word that already appears
-# on the page, so a fault cannot pass unnoticed. Which recovery tier each ends
-# up using is decided at run time from what the agent observes; it is not
-# written down here, and the recovery code is never told which fault was used.
+# Seven scenes, six of them faulted, ordered easy to hard. Every fault is a
+# different class drawn from things that break real automation, so the agent
+# cannot answer them all the same way: one is recoverable by looking again, one
+# needs the obstruction dealt with, one needs a precondition satisfied, and two
+# cannot be recovered at all and have to be handed over. Which tier each ends up
+# using is decided at run time from what the agent measures; it is not written
+# down here, and the recovery code is never told which fault was used.
 SCENES = [
     Scene(
         page="shopping.html",
-        title="Online shop - the target moves after being seen",
+        title="Online shop - content loads above the target and shifts it",
         goal_text="Add the Wireless Headphones to the cart",
         utterance="Could you put the wireless headphones in my cart?",
         target="Headphones",
         check_in="#cart-items",
         expect="Wireless Headphones",
-        fault="displace",
+        fault="layout_shift",
         fault_selector="button.add-cart-btn[data-id='headphones']",
     ),
     Scene(
-        page="shopping.html",
-        title="Online shop - the control accepts the click and does nothing",
-        goal_text="Add the Pro Laptop to the cart",
-        utterance="Add the pro laptop to my cart please.",
-        target="Laptop",
-        check_in="#cart-items",
-        expect="Pro Laptop",
-        fault="inert",
-        fault_selector="button.add-cart-btn[data-id='laptop']",
-    ),
-    Scene(
         page="forum.html",
-        title="Discussion forum - the target disappears entirely",
-        goal_text="Upvote a post",
-        utterance="Give a post an upvote.",
-        target="Upvote",
-        check_in="#votes-2",
-        expect="29",
-        fault="vanish",
-        fault_selector="button.upvote-btn[data-post='1']",
-    ),
-    Scene(
-        page="forum.html",
-        title="Discussion forum - the target moves after being seen",
+        title="Discussion forum - a consent banner lands on the target",
         goal_text="Upvote the top-ranked post",
         utterance="Upvote the top post.",
         target="AI agents",
         check_in="#votes-1",
         expect="43",
-        fault="displace",
+        fault="consent_overlay",
         fault_selector="button.upvote-btn[data-post='1']",
     ),
     Scene(
         page="shopping.html",
-        title="Online shop - clean run, nothing injected",
+        title="Online shop - the control refuses input until a field is filled",
+        goal_text="Add the Pro Laptop to the cart",
+        utterance="Add the pro laptop to my cart please.",
+        target="Laptop",
+        check_in="#cart-items",
+        expect="Pro Laptop",
+        fault="disabled_until_valid",
+        fault_selector="button.add-cart-btn[data-id='laptop']",
+    ),
+    Scene(
+        page="shopping.html",
+        title="Online shop - the interface confirms, then the server rejects",
         goal_text="Add the Mechanical Keyboard to the cart",
         utterance="Add the mechanical keyboard to my cart.",
         target="Keyboard",
         check_in="#cart-items",
         expect="Mechanical Keyboard",
+        fault="optimistic_rollback",
+        fault_selector="button.add-cart-btn[data-id='keyboard']",
+    ),
+    Scene(
+        page="forum.html",
+        title="Discussion forum - the session expires between planning and acting",
+        goal_text="Upvote the browser-automation post",
+        utterance="Give the browser automation post an upvote.",
+        target="browser automation",
+        check_in="#votes-2",
+        expect="29",
+        fault="session_expiry",
+        fault_selector="button.upvote-btn[data-post='2']",
+    ),
+    Scene(
+        page="shopping.html",
+        title="Online shop - clean run, nothing injected",
+        goal_text="Add the 4K Monitor to the cart",
+        utterance="Add the 4k monitor to my cart.",
+        target="Monitor",
+        check_in="#cart-items",
+        expect="4K Monitor",
     ),
     # The third surface: a device driven through its Thing Description, not a
     # page. Same loop, same verification rule, different world.
@@ -454,23 +499,11 @@ SCENES = [
         target="targetTemperature",
         check_in="#target",
         expect="22",
-        fault="inert",
+        fault="silent_write",  # device-level, applied by the smart-room scene itself
         fault_selector="",
+        scored_as=("action_had_no_effect", 4),
     ),
 ]
-
-
-FAULTS = {
-    "displace": inject_displace,
-    "vanish": inject_vanish,
-    "inert": inject_inert,
-}
-
-FAULT_BLURB = {
-    "displace": "The target is still on the page, but somewhere else than where the agent saw it.",
-    "vanish": "The target has been removed from the page entirely.",
-    "inert": "The control still accepts clicks and now does nothing at all.",
-}
 
 
 def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -> None:
@@ -490,9 +523,21 @@ def point_at(session: Any, console: AgentConsole, selection: Any, colour: str) -
     )
 
 
-def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float, trace_delay: float) -> Trajectory:
+def run_scene(
+    session: Any, console: AgentConsole, scene: Scene, *, pace: float, trace_delay: float, ledger: MetricLedger
+) -> Trajectory:
     traj = Trajectory(goal=scene.goal_text)
     console.open(f"{scene.title}  |  said: “{scene.utterance}”")
+
+    def tally() -> None:
+        """Refresh the running counts the metrics are computed from.
+
+        Called after every step, faulted or not, so nothing in the final table
+        appears without having been watched accumulate.
+        """
+        console.tally(ledger.counters.as_strip())
+
+    tally()
     console.banner(f"SCENE: {scene.title}", "#4f46e5")
     time.sleep(pace * 0.8)
     console.hide_banner()
@@ -552,6 +597,8 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     # Executed under the tracer, so the highlight follows the interpreter's own
     # path through the function rather than an animation of it.
     pam = console.run_traced(observe, session, line_delay=trace_delay)
+    ledger.observed(elements=len(pam.affordances))
+    tally()
     traj.add("observe", f"{len(pam.affordances)} affordances perceived")
     console.result(
         "observe",
@@ -571,6 +618,8 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     )
     time.sleep(pace)
     n = console.run_traced(measure, session, pam, line_delay=trace_delay)
+    ledger.measured(boxes=n)
+    tally()
     traj.add("measure", f"{n} boxes measured")
     console.result("measure", f"{n} real screen positions", True, f"measured {n} on-screen positions")
     time.sleep(pace * 0.6)
@@ -586,6 +635,8 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     )
     time.sleep(pace)
     selection_result = console.run_traced(choose_target, pam, scene.target, line_delay=trace_delay)
+    ledger.scored(candidates=selection_result.considered)
+    tally()
     traj.decision = selection_result.to_dict()
 
     # Show the deliberation, not only its outcome. Both paths explain themselves
@@ -619,26 +670,29 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     point_at(session, console, selection, "#8383ff")
     time.sleep(pace)
 
-    if scene.fault:
+    fault = scene.injected
+    if fault is not None:
         console.step(
             "!",
-            f"FAULT: {scene.fault}",
-            FAULT_BLURB[scene.fault],
-            "A real site can change under an agent at any moment, and not always in the "
-            "same way. Which fault this is will not be passed to the recovery code: the "
-            "agent has to work it out from what it can observe afterwards.",
-            FAULTS[scene.fault],
+            f"FAULT: {fault.name}  ({fault.difficulty})",
+            fault.blurb(),
+            f"What the agent will see: {fault.symptom}. Which fault this is never reaches "
+            "the recovery code - it has to be worked out from what can be measured "
+            "afterwards, which is the whole point of injecting a different one each time.",
+            fault.apply,
         )
         time.sleep(pace * 0.5)
-        injected = FAULTS[scene.fault](session, scene.fault_selector)
-        traj.fault_kind = scene.fault
-        traj.add("fault", f"{scene.fault} applied to the target" if injected else "injection missed")
-        console.result("fault", FAULT_BLURB[scene.fault], False, f"fault injected: {scene.fault}")
-        console.banner("The page changed after the agent planned. Watch what it does.", "#b91c1c")
-        time.sleep(pace * 1.4)
+        injected = fault.apply(session, scene.fault_selector)
+        traj.fault_kind = fault.key
+        traj.add("fault", f"{fault.name} applied to the target" if injected else "injection missed")
+        console.result("fault", fault.symptom, False, f"injected: {fault.name}")
+        console.banner(f"{fault.name} - a real cause, not a contrived one. Watch what it does.", "#b91c1c")
+        time.sleep(pace * 1.8)
         console.hide_banner()
 
-    page_before_action = app_html(session)
+    # The region the goal names, as it stands before acting. Comparing this
+    # exact region afterwards is what catches a change that undoes itself.
+    region_before = text_snapshot(session, scene.check_in)
 
     console.step(
         "4/5",
@@ -650,6 +704,8 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     )
     time.sleep(pace)
     act(session, selection)
+    ledger.acted()
+    tally()
     traj.add("act", f"clicked {selection.bbox.center}")
     console.result("act", f"clicked at {selection.bbox.center}", True, "click sent")
     time.sleep(pace * 0.8)
@@ -664,6 +720,8 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     )
     time.sleep(pace)
     ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
+    ledger.verified(passed=ok)
+    tally()
     traj.add("verify", "goal state confirmed" if ok else "expected effect NOT observed", ok)
     console.result(
         "verify",
@@ -674,34 +732,64 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
     time.sleep(pace)
 
     if not ok:
-        console.banner("Failure detected by the agent itself. Diagnosing.", "#b45309")
+        console.banner("Failure detected by the agent itself. Measuring before deciding.", "#b45309")
         time.sleep(pace)
         console.hide_banner()
 
-        # 6a. Work out why, before deciding what to do. This is the step that
-        # separates diagnosis from a rehearsed answer.
+        # 6a. Measure first. Everything after this rests on what these four
+        # probes return, and each of them reports "could not run" rather than a
+        # default, so a conclusion can never be built on an absent measurement.
         console.step(
-            "6/7",
+            "6/8",
+            "INSPECT",
+            "Asking the page four specific questions about the failed step.",
+            "A diagnosis that only compares coordinates cannot tell a covered button from "
+            "a disabled one from a dead one. Each is a different failure with a different "
+            "answer, so each is measured directly rather than inferred.",
+            inspect_failure,
+        )
+        observation = console.run_traced(
+            inspect_failure, session, selection, scene.check_in, region_before, line_delay=trace_delay
+        )
+        ledger.probed(len(observation.evidence()))
+        tally()
+        traj.observation = observation.to_dict()
+        for line in observation.evidence():
+            traj.add("inspect", line)
+        console.step(
+            "6/8",
+            "INSPECT - measurements",
+            "What the page reported, before any conclusion was drawn from it.",
+            "These are measurements, not verdicts. The reasoning that combines them is "
+            "the next step, and it is kept separate so it can be read and disagreed with.",
+            "\n".join(f"- {line}" for line in observation.evidence()),
+        )
+        console.result("inspect", f"{len(observation.evidence())} measurements taken", True, "measured the failure")
+        time.sleep(pace * 1.6)
+
+        # 6b. Work out why, from those measurements alone.
+        console.step(
+            "7/8",
             "DIAGNOSE",
-            "Asking why it failed, before deciding what to try.",
-            "Nothing tells this code which fault was injected. It re-observes, looks for "
-            "the element it acted on, and compares the page with how it looked before. "
-            "Those answers pick the recovery tier.",
+            "Turning the measurements into a conclusion and a recovery tier.",
+            "Nothing tells this code which fault was injected. The probes say what the page "
+            "is like now; re-observing says whether the element is still there and still "
+            "where it was. Those answers alone pick the tier.",
             diagnose_failure,
         )
         diagnosis = console.run_traced(
-            diagnose_failure, session, selection, scene.target, page_before_action, line_delay=trace_delay
+            diagnose_failure, session, selection, scene.target, observation, line_delay=trace_delay
         )
+        ledger.diagnosed(diagnosis.cause, diagnosis.tier)
+        tally()
         traj.diagnosis = diagnosis.to_dict()
         traj.add("diagnose", f"{diagnosis.cause} -> tier {diagnosis.tier} ({diagnosis.strategy})")
 
         console.step(
-            "6/7",
+            "7/8",
             f"DIAGNOSE - {diagnosis.cause}",
             f"Concluded: {diagnosis.cause}. Chosen response: tier {diagnosis.tier}.",
-            "The evidence it used is listed here. A different fault produces different "
-            "evidence and a different tier, which is what makes this a decision rather "
-            "than a script.",
+            diagnosis.reasoning,
             diagnosis.explain(),
         )
         console.result(
@@ -710,23 +798,28 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
             True,
             f"diagnosed: {diagnosis.cause}",
         )
-        time.sleep(pace * 1.8)
+        time.sleep(pace * 2.2)
 
-        # 6b. Carry out whatever the diagnosis chose.
+        # 6c. Carry out whatever the diagnosis chose.
         console.step(
-            "7/7",
+            "8/8",
             f"RECOVER - tier {diagnosis.tier}",
             f"Applying: {diagnosis.strategy.replace('_', ' ')}.",
-            "Tier 1 looks again and repeats. Tier 2 acts on a different affordance. "
-            "Tier 4 deliberately does not act: it stops and hands over, because "
-            "repeating an action that provably does nothing would just waste the attempt.",
+            "Tier 1 looks again and repeats. Tier 2 deals with the obstruction first. "
+            "Tier 3 waits for the precondition and refuses to act if it never holds. "
+            "Tier 4 deliberately does not act at all: repeating something that provably "
+            "does nothing would only waste the attempt.",
             apply_recovery,
         )
-        acted = console.run_traced(apply_recovery, session, diagnosis, scene.target, line_delay=trace_delay)
+        acted = console.run_traced(
+            apply_recovery, session, diagnosis, scene.target, observation, selection, line_delay=trace_delay
+        )
         time.sleep(pace * 0.6)
 
         if diagnosis.tier >= 4:
             metrics = escalate(f"{diagnosis.cause}: {diagnosis.strategy}")
+            ledger.escalated()
+            tally()
             traj.escalated = True
             traj.add("escalate", f"handed to a supervisor; correction rate {metrics['correction_rate']:.2f}")
             console.result("escalate", "paused and handed over", True, "escalated to a human, as designed")
@@ -734,8 +827,13 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
             time.sleep(pace * 1.8)
             console.hide_banner()
         else:
+            if acted:
+                ledger.recovered()
+            tally()
             traj.add("recover", f"tier {diagnosis.tier} applied", acted)
             ok = console.run_traced(verify, session, scene.check_in, scene.expect, line_delay=trace_delay)
+            ledger.verified(passed=ok)
+            tally()
             traj.recovered = ok
             traj.add("verify", "confirmed after recovery" if ok else "still failing", ok)
             console.result(
@@ -751,12 +849,16 @@ def run_scene(session: Any, console: AgentConsole, scene: Scene, *, pace: float,
             time.sleep(pace * 1.6)
             console.hide_banner()
 
+    ledger.episode_done(goal_met=ok)
+    tally()
     traj.goal_met = ok
     session.evaluate(_CLEAR_POINT_JS)
     return traj
 
 
-def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_delay: float, faulty: bool) -> Trajectory:
+def run_wot_scene(
+    session: Any, console: AgentConsole, *, pace: float, trace_delay: float, faulty: bool, ledger: MetricLedger
+) -> Trajectory:
     """Drive a device through its Thing Description, on the same loop.
 
     The project claims one action system across DOM, WoT and visual surfaces,
@@ -814,6 +916,12 @@ def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_del
     )
     sources = console.run_traced(perceive_device, td, line_delay=trace_delay)
     writable = next(s for s in sources if not s.read_only)
+    # A device property is the same kind of thing as a page affordance here: it
+    # is something the agent perceived and could act on, so it counts the same.
+    ledger.observed(elements=len(sources))
+    ledger.measured(boxes=len(sources))
+    ledger.scored(candidates=len(sources))
+    console.tally(ledger.counters.as_strip())
     traj.add("perceive", f"{len(sources)} properties from the TD; '{writable.property}' is writable")
     console.result("perceive", f"{len(sources)} properties parsed", True, f"{len(sources)} device properties")
     time.sleep(pace * 0.7)
@@ -855,6 +963,8 @@ def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_del
         write_property,
     )
     console.run_traced(write_property, servient.send, writable, 22, line_delay=trace_delay)
+    ledger.acted()
+    console.tally(ledger.counters.as_strip())
     show()
     traj.add("write", "device accepted the write (204)")
     console.result("write", "accepted, HTTP 204", True, "the device said yes")
@@ -869,6 +979,8 @@ def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_del
         verify_device,
     )
     ok = console.run_traced(verify_device, servient.send, writable, 22, line_delay=trace_delay)
+    ledger.verified(passed=ok)
+    console.tally(ledger.counters.as_strip())
     show()
     traj.add("verify", f"{writable.property} reads {servient.state['targetTemperature']}", ok)
     console.result(
@@ -891,6 +1003,10 @@ def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_del
             escalate,
         )
         metrics = escalate("silent device write: acknowledged but not applied")
+        ledger.probed(1)  # reading the property back is the measurement this rests on
+        ledger.diagnosed("action_had_no_effect", 4)
+        ledger.escalated()
+        console.tally(ledger.counters.as_strip())
         traj.escalated = True
         traj.diagnosis = {"cause": "action_had_no_effect", "strategy": "escalate_to_human", "tier": 4}
         traj.add("escalate", f"handed over; correction rate {metrics['correction_rate']:.2f}")
@@ -899,6 +1015,8 @@ def run_wot_scene(session: Any, console: AgentConsole, *, pace: float, trace_del
         time.sleep(pace * 1.8)
         console.hide_banner()
 
+    ledger.episode_done(goal_met=ok)
+    console.tally(ledger.counters.as_strip())
     traj.goal_met = ok
     return traj
 
@@ -986,6 +1104,7 @@ def main() -> int:
         help="Run the scene list N times and report campaign metrics (TSR, RTR, RSR, RTA, DA).",
     )
     args = parser.parse_args()
+    make_console_safe()  # before anything prints observed page text
 
     from src.demos.campaign import Campaign
     from src.perception.browser_session import BrowserSession
@@ -1015,6 +1134,10 @@ def main() -> int:
     results: list[tuple[Scene, Trajectory]] = []
 
     campaign = Campaign()
+    # One ledger for the whole run. It holds the quantities every reported
+    # metric is divided out of, and the panel shows it as it accumulates so no
+    # figure in the final table appears without having been watched grow.
+    ledger = MetricLedger()
 
     try:
         for repetition in range(args.repeat):
@@ -1032,9 +1155,12 @@ def main() -> int:
                         pace=args.pace,
                         trace_delay=args.trace_delay,
                         faulty=bool(scene.fault),
+                        ledger=ledger,
                     )
                 else:
-                    traj = run_scene(session, console, scene, pace=args.pace, trace_delay=args.trace_delay)
+                    traj = run_scene(
+                        session, console, scene, pace=args.pace, trace_delay=args.trace_delay, ledger=ledger
+                    )
                 campaign.add(episode_result(scene, traj))
                 if repetition == 0:
                     session.screenshot(str(out / f"scene{index + 1}_{scene.page.replace('.html', '')}.png"))
@@ -1060,6 +1186,7 @@ def main() -> int:
         console.result(
             "run", f"{solved}/{len(results)} scenes", solved == len(results), f"{solved} of {len(results)} goals met"
         )
+        console.tally(ledger.counters.as_strip())
         console.banner(f"Run complete - {solved}/{len(results)} goals met, {recovered} via self-recovery", "#15803d")
         session.screenshot(str(out / "summary.png"))
         print(f"\n  holding the summary for {args.hold:.0f}s ...")
@@ -1068,6 +1195,12 @@ def main() -> int:
         console.close()
         session.close()
         httpd.shutdown()
+
+    # The tallies first, then the metrics derived from them. In that order a
+    # reader can check a figure against the counts instead of trusting it.
+    print(f"\n{_LINE}\n  INTERMEDIATE QUANTITIES - what the metrics are computed from\n{_LINE}")
+    print(ledger.report())
+    (out / "metric_ledger.json").write_text(json.dumps(ledger.to_dict(), indent=2), encoding="utf-8")
 
     print(f"\n{_LINE}\n  CAMPAIGN - repeated episodes, scored against the fault injected\n{_LINE}")
     print(campaign.report())
@@ -1104,6 +1237,11 @@ def main() -> int:
     (out / "trajectory.json").write_text(
         json.dumps([{"scene": s.title, **t.to_dict()} for s, t in results], indent=2), encoding="utf-8"
     )
+    if args.record:
+        video = to_mp4(out)
+        if video:
+            print(f"\n  video     : {(out / video).relative_to(repo)}")
+
     print(f"\n  artifacts : {out.relative_to(repo)}\n{_LINE}\n")
     return 0
 

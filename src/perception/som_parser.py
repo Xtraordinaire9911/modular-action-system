@@ -231,6 +231,10 @@ def marks_from_affordances(affordances: list[Any]) -> list[VisualMark]:
                 label=affordance.label,
                 bbox=BoundingBox(x=x, y=y, w=w, h=h),
                 confidence=affordance.confidence,
+                # Keep a way back to the affordance this mark came from, so a
+                # later probe can question the element itself rather than only
+                # the rectangle. Acting still goes through the bbox.
+                extra={"selector": str(affordance.locator.get("selector", ""))},
             )
         )
     return marks

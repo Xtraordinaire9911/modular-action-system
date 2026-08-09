@@ -119,7 +119,6 @@ def prove_wot_isolation() -> tuple[bool, str, list[str]]:
     """Restore a drifted setpoint; never write the read-only sensor."""
     try:
         from src.effectors.wot_episode_isolation import restore_state, snapshot_state
-
         from src.effectors.wot_executor import WotExecutor
     except ImportError as exc:
         return False, f"not in this checkout ({exc.name})", []
@@ -161,9 +160,13 @@ def prove_wot_isolation() -> tuple[bool, str, list[str]]:
     state["targetTemperature"] = 26  # the episode moves it
     report = restore_state(executor, snapshot)
 
-    ok = state["targetTemperature"] == 21 and "currentTemperature" not in writes
+    # The report is part of the claim: a restore that silently failed on one
+    # property would still leave the setpoint looking right if nothing had
+    # moved it, so the proof checks the report as well as the resulting state.
+    ok = report.ok and state["targetTemperature"] == 21 and "currentTemperature" not in writes
     detail = (
         f"setpoint 21 -> 26 -> {state['targetTemperature']} restored; "
+        f"restored={report.restored} failed={report.failed}; "
         f"read-only sensor written {writes.count('currentTemperature')} times; "
         f"coverage complete={snapshot.is_complete}"
     )
