@@ -128,6 +128,16 @@ def capability_report() -> dict[str, tuple[bool, str]]:
 
 DEMOS: list[Demo] = [
     Demo(
+        name="agent-loop",
+        title="The narrated agent loop, with realistic faults",
+        summary="Seven scenes over shop, forum and a WoT device; six inject a different real-world "
+        "fault and the agent diagnoses each from measurements before choosing a recovery tier.",
+        command=("scripts/run_agent_loop_demo.py",),
+        requires=("browser",),
+        headed_args=(),  # headed is the default here; --headless is the opt-out
+        duration_hint="~5min",
+    ),
+    Demo(
         name="offline",
         title="Deterministic offline trace",
         summary="Runtime trace, postcondition checks and recovery metrics. No browser, no Docker.",
