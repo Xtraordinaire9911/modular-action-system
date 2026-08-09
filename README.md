@@ -15,6 +15,10 @@ Around that contract sits a complete loop — observe, plan, act, verify,
 recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
+
+https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
+
+
 ## What is implemented, and what is not
 
 This table is the one to read before believing anything else in this file. It is
