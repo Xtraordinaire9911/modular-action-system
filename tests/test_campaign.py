@@ -91,7 +91,8 @@ def test_metrics_over_a_mixed_campaign():
     metrics = campaign.metrics()
     assert metrics["episodes"] == 9 and metrics["scenes"] == 3 and metrics["repetitions"] == 3
     assert metrics["faulted_episodes"] == 6
-    assert metrics["TSR"] == 1.0, "every episode was either solved or correctly escalated"
+    assert metrics["TSR"] == 6 / 9, "the three escalated episodes did not reach their goal"
+    assert metrics["handled_rate"] == 1.0, "every episode was either solved or correctly escalated"
     assert metrics["RTR"] == 6 / 9
     assert metrics["RTA"] == 1.0 and metrics["DA"] == 1.0
     assert metrics["escalations"] == 3
@@ -157,3 +158,43 @@ def test_serialised_campaign_keeps_every_episode():
     assert data["metrics"]["episodes"] == 1
     assert data["episodes"][0]["expected_cause"] == "target_moved"
     assert "by_fault" in data
+
+
+def test_tsr_does_not_count_a_handover_as_a_success():
+    """The docstring promised this and the code did the opposite.
+
+    Counting a correct escalation as a task success produced TSR 100% next to a
+    ledger reporting 4/7 for the same run - one quantity, two numbers, with the
+    flattering one carrying the project's metric name.
+    """
+    campaign = Campaign()
+    campaign.add(
+        EpisodeResult(
+            scene="reached",
+            fault="layout_shift",
+            expected_cause="target_moved",
+            expected_tier=1,
+            diagnosed_cause="target_moved",
+            chosen_tier=1,
+            failure_detected=True,
+            goal_met=True,
+        )
+    )
+    campaign.add(
+        EpisodeResult(
+            scene="handed over",
+            fault="optimistic_rollback",
+            expected_cause="action_had_no_effect",
+            expected_tier=4,
+            diagnosed_cause="action_had_no_effect",
+            chosen_tier=4,
+            failure_detected=True,
+            goal_met=False,
+            escalated=True,
+        )
+    )
+    metrics = campaign.metrics()
+
+    assert metrics["TSR"] == 0.5, "a correct handover is not a solved task"
+    assert metrics["handled_rate"] == 1.0, "but it is correct behaviour, reported under its own name"
+    assert metrics["RTA"] == 1.0 and metrics["DA"] == 1.0

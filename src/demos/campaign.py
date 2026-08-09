@@ -88,11 +88,20 @@ class Campaign:
             "scenes": len({e.scene for e in self.episodes}),
             "repetitions": self.repetitions,
             "faulted_episodes": len(faulted),
-            "TSR": _rate(sum(1 for e in self.episodes if e.handled_well), total),
+            # TSR counts goals actually reached, and nothing else. Handing over
+            # correctly is the right behaviour but it is not a solved task, and
+            # folding it in here produced a flattering 100% next to a ledger
+            # saying 4/7 for the same run - two numbers for one quantity, with
+            # the generous one wearing the name of the project's own metric.
+            "TSR": _rate(sum(1 for e in self.episodes if e.goal_met), total),
             "RTR": _rate(len(detected), total),
-            "RSR": _rate(sum(1 for e in detected if e.handled_well), len(detected)),
+            "RSR": _rate(sum(1 for e in detected if e.goal_met), len(detected)),
             "RTA": _rate(sum(1 for e in tiered if e.tier_correct), len(tiered)),
             "DA": _rate(sum(1 for e in diagnosed if e.diagnosis_correct), len(diagnosed)),
+            # Reported separately and named for what it is: the agent either
+            # reached the goal or refused correctly. It is the more useful
+            # number for judging behaviour, and it must not be called TSR.
+            "handled_rate": _rate(sum(1 for e in self.episodes if e.handled_well), total),
             "escalations": sum(1 for e in self.episodes if e.escalated),
         }
 
@@ -128,11 +137,13 @@ class Campaign:
             f"({metrics['scenes']} scenes x {metrics['repetitions']} repetitions, "
             f"{metrics['faulted_episodes']} with an injected fault)",
             "",
-            f"  TSR  task success rate            {metrics['TSR']:6.1%}",
+            f"  TSR  task success rate            {metrics['TSR']:6.1%}   (goal reached; a handover is not a success)",
             f"  RTR  recovery trigger rate        {metrics['RTR']:6.1%}",
             f"  RSR  recovery success rate        {metrics['RSR']:6.1%}",
             f"  RTA  recovery tier accuracy       {metrics['RTA']:6.1%}",
             f"  DA   diagnosis accuracy           {metrics['DA']:6.1%}",
+            f"       handled correctly            {metrics['handled_rate']:6.1%}   "
+            "(goal reached, or refused and handed over when that was right)",
             f"       escalations                  {metrics['escalations']}",
             "",
             f"  {'fault':<21} {'eps':>4} {'handled':>8} {'DA':>7} {'RTA':>7}  tiers",

@@ -111,16 +111,22 @@ verifications passed and failed, probes, diagnoses, recoveries, escalations.
 Every reported metric states the division it performed next to its value:
 
 ```text
-  TSR                    goals met 7 / episodes 7                     = 100.0%
-  RTR                    failures detected 6 / episodes 7             =  85.7%
-  RSR                    recoveries applied 3 / failures detected 6   =  50.0%
+  goal reached           goals met 4 / episodes 7                     =  57.1%
+  failure detected       failures detected 6 / episodes 7             =  85.7%
+  recovery attempted     recoveries applied 3 / failures detected 6   =  50.0%
+  handed over            escalations 3 / failures detected 6          =  50.0%
 ```
+
+The rows are named for what they literally count, deliberately **not** TSR/RSR:
+those names belong to the campaign, which applies the project's scoring rules on
+top. Two quantities under one name read as a contradiction, and that is exactly
+what happened before this was separated.
 
 The panel carries the running strip at **every** step, faulted or not, as the
 quietest line in the layout:
 
 ```text
-obs 7 · seen 49 · meas 49 · cand 49 · act 7 · ver 5/11 · probe 20 · diag 5 · rec 3 · esc 3
+obs 7 | seen 46 | meas 46 | cand 46 | act 7 | ver 4/10 | probe 21 | diag 6 | rec 3 | esc 3
 ```
 
 These are working numbers. They should be checkable at any moment without
@@ -169,11 +175,12 @@ Seven scenes across three surfaces (shop, forum, WoT device), six with a
 different fault, ordered easy to hard:
 
 ```text
-  TSR  task success rate            100.0%
+  TSR  task success rate             57.1%   (goal reached; a handover is not a success)
   RTR  recovery trigger rate         85.7%
-  RSR  recovery success rate        100.0%
+  RSR  recovery success rate         50.0%
   RTA  recovery tier accuracy       100.0%
   DA   diagnosis accuracy           100.0%
+       handled correctly            100.0%   (goal reached, or refused correctly)
        escalations                  3
 
   fault                  eps  handled      DA     RTA  tiers
@@ -186,6 +193,17 @@ different fault, ordered easy to hard:
   session_expiry           1        1   100%   100%  4
   silent_write             1        1   100%   100%  4
 ```
+
+TSR counts goals actually reached and nothing else: three of the seven faults
+are unrecoverable by design, and handing those over correctly is right
+behaviour but not a solved task. That is reported separately as "handled
+correctly". An earlier version folded the two together and published 100% as
+TSR, which contradicted both this module's own docstring and the ledger
+printed directly above it.
+
+**These are n=1 per fault.** RTA and DA at 100% mean one correct answer per
+condition, against a project requirement of thirty. Run with `--repeat` before
+quoting them anywhere.
 
 All four tiers are exercised, and which tier each episode used is decided at run
 time from what the agent measured. The expected cause and tier live in the scene
