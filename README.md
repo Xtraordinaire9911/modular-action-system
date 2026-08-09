@@ -502,9 +502,8 @@ python scripts/run_agent_loop_demo.py --pace 1.5 --trace-delay 0.3 --record   # 
 python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
 ```
 
-A recording of the run is committed at
-[`demo_video/agent_loop_demo.mp4`](demo_video/agent_loop_demo.mp4) (2:19), so the
-loop can be watched without installing a browser.
+The recording at the top of this file is one of these runs, so the loop can be
+watched without installing a browser.
 
 The run takes about two and a half minutes. The first scene is narrated at full
 length because it teaches the loop; from the second scene on, the beats
