@@ -25,22 +25,51 @@ matching its code.
 |---|---|---|
 | Observe → plan → act → verify → recover | **Implemented** | Runs end to end in one process; see `scripts/run_agent_loop_demo.py`. |
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
-| Intent (natural language) → GoalSpec | **Implemented, demo path only** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. **Consumed only by `scripts/run_agent_loop_demo.py`** — the production runtime in `src/runtime/` still starts from a hand-written `GoalSpec`, which is what `STATUS.md` means by "future interface only". |
-| Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Same integration gap as the row above. |
+| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. `STATUS.md` still says "future interface only" and is now out of date on this row. |
+| Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Unlike the intent layer above, this one is still consumed only by the narrated demo — the runtime picks affordances through its own action context. |
 | A model actually running | **Not exercised** | No API key is configured, so every recorded intent and mark decision in this repository is `rule_fallback` / `heuristic`. The model paths have unit tests against fakes and have never run against a real model. **No image is ever sent to a model** — there is no VLM anywhere in the repository. |
 | Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
 | Recovery | **Implemented, four tiers** | All four are exercised by the loop demo and are genuinely different actions: retry, clear the obstruction, satisfy the precondition, hand over. Which tier is used is decided at run time from what was measured. Scored against ground truth the diagnosis never sees. |
-| Generalisation evidence | **Limited** | Three local mock environments plus MiniWoB++. Sample sizes are small and the environments are of similar shape; this is not yet a generalisation result. |
-| Sample sizes behind the demo metrics | **Far below the bar** | The loop demo defaults to one repetition, so `RTA` and `DA` are each n=1 per fault. The project's own requirement is ≥30 episodes per condition. Use `--repeat` before quoting any of these figures. |
-| Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is honest about what it runs, but it is a second loop, not the integrated one. |
+| Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
+| Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
+| Live behaviour is tested | **Implemented** | `pytest -m live` opens a real Chromium and asserts the claims in this table against a real page (selector uniqueness, measured geometry, episode isolation, region-scoped verification, the probes). CI runs it as its own job. The fast suite excludes it and cannot corroborate any live claim on its own. |
+| Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is the narration surface and is honest about what it runs, but it is a second loop. `scripts/run_intent_episode.py` is the one that drives the integrated runtime; the demo has not been migrated onto it. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
-| Picture-in-Picture supervised interface | **Not implemented here** | Browser-context isolation is implemented and is a weaker property; the PiP interface is separate work owned by another team member. |
+| Picture-in-Picture supervised interface | **Not implemented** | See Terminology below. What exists is browser-context isolation plus a tier-4 handover that pauses and records a human decision. Both are weaker than a supervised PiP interface and neither is a substitute for it. |
 
 Every runtime decision records whether it came from a model or a deterministic
 fallback, and both paths are written to a JSONL ledger under `artifacts/`, so
 the distinction can be audited rather than taken on trust.
+
+## Terminology: what Picture-in-Picture means here
+
+The review corrected this team on the term, and the correction is recorded here
+rather than only in a commit message, because the misreading had propagated into
+a module name, a docstring and a claims row.
+
+**Picture-in-Picture, in the referenced work, is a supervised interface.** The
+agent operates in a visibly separate session that a person can watch while it
+runs and take over from at any point. It is a human-oversight mechanism. It is
+not a window style, and it is not the same thing as giving each episode its own
+sandbox.
+
+Two properties in this repository were being described with that word and are
+not it:
+
+| what it is | what it gives you | what it is not |
+|---|---|---|
+| **Browser-context isolation** (`src/perception/browser_session.py`) | one episode cannot observe or disturb another: separate cookies, storage, cache | no human can watch or intervene; there is nothing to take over |
+| **Narration panel** (`src/demos/narration_console.py`) | a viewer can read what the agent is doing and why, while it happens | read-only; it displays, it does not hand control to anyone |
+
+The closest thing the project actually has to human oversight is the tier-4
+handover in `src/recovery/supervised_takeover.py`, which pauses the episode,
+records what the supervisor decided, and reports a correction rate. That is a
+real oversight mechanism and it is still not a PiP interface.
+
+The module formerly called `pip_console` is now `narration_console`, for the
+same reason.
 
 ## Current Release State
 
@@ -463,11 +492,17 @@ measurements pick the tier. The expected answers live in the scene definition,
 which the diagnosis never sees.
 
 ```bash
-python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check
-python scripts/run_agent_loop_demo.py --repeat 5                        # campaign metrics
-python scripts/run_agent_loop_demo.py --record                          # writes an mp4
+python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check, ~20s
+python scripts/run_agent_loop_demo.py --repeat 30                       # 210 episodes, the campaign metrics
+python scripts/run_agent_loop_demo.py --pace 1.5 --trace-delay 0.3 --record   # the recording settings
 python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
 ```
+
+The run takes about two and a half minutes. The first scene is narrated at full
+length because it teaches the loop; from the second scene on, the beats
+explaining a phase already shown are shortened and the ones carrying new
+information - which fault, what was measured, which tier and why - keep their
+timing. Nothing is skipped, and `--pace` scales all of it.
 
 Artifacts land in `eval_outputs/agent_loop/<timestamp>/`: a screenshot per
 scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
@@ -527,7 +562,7 @@ rather than raising, so the registry stays valid while a feature is in review.
 | WoT environment in Docker | `env/docker-compose.yml`, `env/node_wot_server/server.js`, `config/wot_td/*.td.json`. |
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
 | External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
-| PiP/session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. |
+| Session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. This is browser-context isolation, **not** Picture-in-Picture — see Terminology below. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
 | WoT TD parsing | `src/perception/td_affordance_parser.py`, including HATEOAS forms, methods, security, rate limits, state sources. |

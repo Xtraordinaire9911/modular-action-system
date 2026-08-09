@@ -8,11 +8,22 @@ first would lose the room.
 The panel is stacked **inside the page**, not in a separate window. An earlier
 version used the Document Picture-in-Picture API, which is a genuine PiP window
 but sits outside the page: a screen recording then has two windows to follow and
-a page screenshot captures none of it. Session isolation via a real PiP
-interface is a separate piece of work owned by another team member; this is a
-narration surface and does not claim to be that.
+a page screenshot captures none of it.
 
-Set ``surface="pip"`` to opt into the detached window anyway.
+**On the name.** This module used to be called ``pip_console``, and that name
+was wrong in the way the review specifically called out. In the referenced work
+Picture-in-Picture means a *supervised interface*: the agent operates in a
+visibly separate session that a person can watch live and take over from. It is
+a human-oversight mechanism, not a window style. Displaying narration in a
+floating panel is not that, and neither is running each episode in its own
+browser context - both are weaker properties, and naming either of them "PiP"
+made the requested capability look delivered when it was not.
+
+What this is: a narration surface. What the project has instead of PiP is
+browser-context isolation (``src/perception/browser_session.py``) plus a
+tier-4 handover that pauses and records a human decision
+(``src/recovery/supervised_takeover.py``). Neither is a supervised
+picture-in-picture interface, and the claims table says so.
 """
 
 from __future__ import annotations

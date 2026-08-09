@@ -202,6 +202,14 @@ _RULES: list[tuple[str, str, str]] = [
     (r"\bbrightness\s*(?:to\s*)?(\d{1,3})\s*%?", "lighting_set", "percent"),
     (r"\bblinds?\b.*?(\d{1,3})\s*%?", "blinds_set", "percent"),
 ]
+# Which thing the request is about. "add something to the cart" is not an
+# actionable goal until the something is named, and the runtime needs that value
+# to bind a parameter to an affordance.
+_SUBJECT_RULES: list[tuple[str, str]] = [
+    (r"\b(?:add|put)\s+(?:the\s+|a\s+|an\s+|my\s+)?(.+?)\s+(?:in|into|to)\b[^.]*\bcart\b", "item"),
+    (r"\bupvote\s+(?:the\s+)?(.+?)(?:\s+post)?\s*[.!]?$", "subject"),
+    (r"\barchive\s+(?:the\s+)?(.+?)(?:\s+(?:message|email))?\s*[.!]?$", "subject"),
+]
 _KEYWORD_GOALS: list[tuple[str, str]] = [
     (r"\bprojector\b.*\b(on|start|turn on)\b", "projector_on"),
     (r"\bprojector\b.*\b(off|stop|turn off)\b", "projector_off"),
@@ -233,6 +241,12 @@ def rule_fallback(intent: str) -> GoalPlan:
     if room:
         parameters["room"] = room.group(1).upper()
 
+    for pattern, key in _SUBJECT_RULES:
+        match = re.search(pattern, text)
+        if match and match.group(1).strip():
+            parameters[key] = match.group(1).strip()
+            break
+
     if not goal_state:
         return GoalPlan(
             goal=None,
@@ -246,6 +260,10 @@ def rule_fallback(intent: str) -> GoalPlan:
             goal_state=goal_state,
             parameters=parameters,
             description=intent.strip(),
+            # GoalSpec.source records who produced this goal, and the runtime
+            # reads it. A goal derived from an utterance must not arrive
+            # labelled "manual" as though a person had written it by hand.
+            source="user_intent_parser",
         ),
         source="rule_fallback",
         confidence=0.4,  # a keyword hit is weak evidence and is scored as such
@@ -307,6 +325,7 @@ class IntentPlanner:
                 description=str(payload.get("description", intent)).strip(),
                 safety_constraints=list(payload.get("safety_constraints") or []),
                 success_evidence=list(payload.get("success_evidence") or []),
+                source="user_intent_parser",
             ),
             source="llm",
             confidence=float(payload.get("confidence", 0.0) or 0.0),
