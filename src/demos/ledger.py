@@ -45,12 +45,17 @@ class Counters:
     episodes: int = 0
 
     def as_strip(self) -> str:
-        """A single compact line, ordered as the loop runs."""
+        """A single compact line, ordered as the loop runs.
+
+        Plain ASCII on purpose. This line is printed to a terminal as well as
+        rendered in the panel, and a console on a regional code page cannot
+        always encode a nicer separator.
+        """
         return (
-            f"obs {self.observations} · seen {self.elements_seen} · meas {self.elements_measured} · "
-            f"cand {self.candidates_scored} · act {self.actions} · "
-            f"ver {self.verify_passed}/{self.verifications} · probe {self.probes} · "
-            f"diag {self.diagnoses} · rec {self.recoveries} · esc {self.escalations}"
+            f"obs {self.observations} | seen {self.elements_seen} | meas {self.elements_measured} | "
+            f"cand {self.candidates_scored} | act {self.actions} | "
+            f"ver {self.verify_passed}/{self.verifications} | probe {self.probes} | "
+            f"diag {self.diagnoses} | rec {self.recoveries} | esc {self.escalations}"
         )
 
 

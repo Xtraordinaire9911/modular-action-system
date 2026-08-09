@@ -136,3 +136,13 @@ def test_serialised_ledger_keeps_counters_working_and_notes():
 
 def test_counters_default_to_zero():
     assert Counters().as_strip().startswith("obs 0")
+
+
+def test_the_strip_is_plain_ascii():
+    """It is printed to a terminal too, and a regional code page may not encode more."""
+    ledger = MetricLedger()
+    _run_one_episode(ledger, fails=True, recovers=True)
+    strip = ledger.counters.as_strip()
+
+    assert strip.isascii(), f"non-ascii in the strip: {[c for c in strip if not c.isascii()]}"
+    assert ledger.report().isascii()

@@ -1,4 +1,4 @@
-﻿"""The agent driving several environments, narrated inside one browser window.
+"""The agent driving several environments, narrated inside one browser window.
 
     python scripts/run_agent_loop_demo.py
 
@@ -309,6 +309,26 @@ def apply_recovery(session: Any, diagnosis: Any, goal: str, observation: Any, at
         return False
     act(session, result.mark)
     return True
+
+
+def make_console_safe() -> None:
+    """Stop a page's own text from being able to kill the run.
+
+    The demo reports what it observed on the page, and the pages contain emoji
+    (the shop renders `&#127911;` as a headphones glyph). On a console using a
+    regional code page - GBK on a Chinese Windows install - encoding that
+    character raises UnicodeEncodeError and takes the whole run down partway
+    through, on a machine where nothing is actually wrong.
+
+    The console keeps its own encoding; only the error policy changes, so an
+    unrepresentable glyph becomes "?" instead of an exception. Losing a
+    character from a log line is not worth losing the run.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")  # type: ignore[union-attr]
+        except Exception:
+            pass  # not a reconfigurable stream; nothing to do
 
 
 def to_mp4(out: Path) -> str:
@@ -1084,6 +1104,7 @@ def main() -> int:
         help="Run the scene list N times and report campaign metrics (TSR, RTR, RSR, RTA, DA).",
     )
     args = parser.parse_args()
+    make_console_safe()  # before anything prints observed page text
 
     from src.demos.campaign import Campaign
     from src.perception.browser_session import BrowserSession
