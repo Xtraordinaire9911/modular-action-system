@@ -93,6 +93,10 @@ class Episode:
     episode_id: str = ""
     transitions: list[dict[str, Any]] = field(default_factory=list)
     goal_state_trail: list[dict[str, Any]] = field(default_factory=list)
+    # What the vision model was asked, what it said, and whether its answer was
+    # used. Kept even when unusable, so a run can show that a model abstained
+    # rather than leaving a reader to assume one was never consulted.
+    visual_evidence: list[dict[str, Any]] = field(default_factory=list)
     latency_ms: float = 0.0
 
     @property
@@ -121,6 +125,7 @@ class Episode:
             "episode_id": self.episode_id,
             "transitions": self.transitions,
             "goal_state_trail": self.goal_state_trail,
+            "visual_evidence": self.visual_evidence,
             "latency_ms": round(self.latency_ms, 1),
         }
 
@@ -130,8 +135,20 @@ def interpret(utterance: str) -> Any:
     return IntentPlanner(client=available_client()).plan(utterance)
 
 
-def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = True) -> Episode:
-    """Take one utterance all the way through the runtime and report what happened."""
+def run_episode(
+    utterance: str,
+    *,
+    repo: Path,
+    headed: bool,
+    verbose: bool = True,
+    vision_client: Any | None = None,
+) -> Episode:
+    """Take one utterance all the way through the runtime and report what happened.
+
+    ``vision_client`` is injectable so CI can exercise the visual path against a
+    fake. The Friday demo passes nothing and gets the configured model, or the
+    labelled abstention if none is configured.
+    """
     say = print if verbose else (lambda *a, **k: None)
 
     plan = interpret(utterance)
@@ -171,6 +188,7 @@ def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = Tru
 
     from src.perception.browser_session import BrowserSession  # lazy: needs Playwright
     from src.perception.session_thread import SessionThread, ThreadedSession
+    from src.perception.vlm_observer import VlmObserver, available_vision_client
 
     httpd, port = _start_static_server(str(repo / "env" / "mock_envs"))
     url = f"http://127.0.0.1:{port}/{binding.page}"
@@ -207,7 +225,30 @@ def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = Tru
         # misses and a goal that was reached is recorded as a postcondition
         # failure - a false negative, and the mirror of the false success this
         # project exists to prevent.
-        observed_adapter = GoalStateReportingAdapter(runtime_adapter, fact=binding.observed_fact, holds=goal_reached)
+        # A real screenshot goes to a real vision model, and its answer enters
+        # the episode as a second source on the same fact. Agreement means the
+        # goal was verified by two independent sources; disagreement means the
+        # arbiter raises a conflict and the runtime re-observes rather than
+        # trusting either one. With no model configured it abstains, and the run
+        # reports that instead of pretending a model looked.
+        observer = VlmObserver(client=vision_client or available_vision_client())
+        judgements: list[Any] = []
+        question = (
+            f"Is {proof_text or 'the effect of the action'} now shown in the "
+            f"{binding.state_entity} area of this page? Answer from the image only."
+        )
+
+        def visual_second_opinion() -> Any:
+            judgement = observer.look(session.screenshot(), question, region=proof_region)
+            judgements.append(judgement)
+            return judgement.as_assertion(binding.state_entity, binding.state_attribute)
+
+        observed_adapter = GoalStateReportingAdapter(
+            runtime_adapter,
+            fact=binding.observed_fact,
+            holds=goal_reached,
+            second_opinion=visual_second_opinion,
+        )
         outcome = asyncio.run(
             RuntimeEpisodeRunner().run_goal_episode(
                 observed_adapter,
@@ -261,6 +302,7 @@ def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = Tru
             for a in outcome.cognitive_map.state_assertions
             if a.entity_id == binding.state_entity
         ],
+        visual_evidence=[j.to_dict() for j in judgements],
         latency_ms=(time.monotonic() - started) * 1000.0,
     )
     say(f"  runtime   : state={episode.runtime_state} verified={episode.verified} ({episode.reason})")
@@ -268,6 +310,17 @@ def run_episode(utterance: str, *, repo: Path, headed: bool, verbose: bool = Tru
         mark = "ok " if record["success"] else "FAIL"
         detail = f" - {record['failure_reason']}" if record["failure_reason"] else ""
         say(f"    [{mark}] step {record['step']} on {record['affordance_key']}{detail}")
+    used = [j for j in episode.visual_evidence if j["is_model_derived"]]
+    if episode.visual_evidence:
+        first = episode.visual_evidence[0]
+        if used:
+            say(
+                f"  vision    : {first['model']} answered {first['answer']} "
+                f"at confidence {first['confidence']:.2f} on screenshot {first['screenshot_sha256']}"
+            )
+            say(f"              {first['evidence']}")
+        else:
+            say(f"  vision    : not used ({first['source']}{': ' + first['error'] if first['error'] else ''})")
     trail = " -> ".join(str(step["value"]) for step in episode.goal_state_trail)
     if trail:
         say(f"  {runtime_goal_state.split(' ')[0]} observed: {trail}")

@@ -40,12 +40,23 @@ class GoalStateReportingAdapter:
     """A runtime adapter that also reports whether the goal state holds."""
 
     def __init__(
-        self, inner: _RuntimeAdapter, *, fact: Callable[[bool], dict[str, Any]], holds: Callable[[], bool]
+        self,
+        inner: _RuntimeAdapter,
+        *,
+        fact: Callable[[bool], dict[str, Any]],
+        holds: Callable[[], bool],
+        second_opinion: Callable[[], Any] | None = None,
     ) -> None:
         self._inner = inner
         self._fact = fact
         self._holds = holds
+        # An independent source for the same fact - in practice a vision model
+        # looking at a screenshot. Supplied as a callable returning an
+        # ObservedAssertion or None, so an unavailable or unsure model
+        # contributes nothing rather than contributing noise.
+        self._second_opinion = second_opinion
         self.observations: list[bool] = []
+        self.second_opinions: list[Any] = []
 
     async def reset(self, spec: Any) -> None:
         await self._inner.reset(spec)
@@ -59,18 +70,30 @@ class GoalStateReportingAdapter:
         self.observations.append(satisfied)
 
         fact = self._fact(satisfied)
+        extra: list[Any] = []
+        if self._second_opinion is not None:
+            assertion = self._second_opinion()
+            if assertion is not None:
+                extra.append(assertion)
+                self.second_opinions.append(assertion)
+
         observation = getattr(live, "observation", None)
         if observation is None:  # a plain Observation, not a live wrapper
-            return _with_fact(live, fact)
-        return replace(live, observation=_with_fact(observation, fact))
+            return _with_fact(live, fact, extra)
+        return replace(live, observation=_with_fact(observation, fact, extra))
 
 
-def _with_fact(observation: Any, fact: dict[str, Any]) -> Any:
-    """Merge the fact into the observed page state, leaving the rest alone.
+def _with_fact(observation: Any, fact: dict[str, Any], extra: list[Any] | None = None) -> Any:
+    """Merge the fact into the observed page state, and append any extra sources.
 
     The runtime reads page state out of the accessibility tree, which is where
     its own ingestion looks; writing it anywhere else would be recorded but
     never consulted.
+
+    Extra assertions go on the explicit assertion list rather than into the
+    tree, because that channel carries a per-assertion confidence and
+    provenance. The tree stamps 1.0 on everything it ingests, which would turn
+    a model's 0.7 into certainty.
     """
     tree = dict(getattr(observation, "accessibility_tree", {}) or {})
     page_state = dict(tree.get("page_state") or {})
@@ -79,7 +102,11 @@ def _with_fact(observation: Any, fact: dict[str, Any]) -> Any:
         merged.update(values)
         page_state[entity] = merged
     tree["page_state"] = page_state
-    return replace(observation, accessibility_tree=tree)
+    updated = replace(observation, accessibility_tree=tree)
+    if not extra:
+        return updated
+    existing = list(getattr(updated, "assertions", []) or [])
+    return replace(updated, assertions=existing + list(extra))
 
 
 __all__ = ["GoalStateReportingAdapter"]
