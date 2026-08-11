@@ -13,17 +13,33 @@ def test_adaptation_demo_writes_white_box_runtime_artifacts(tmp_path):
     scenarios = {scenario["name"]: scenario for scenario in runtime["scenarios"]}
 
     assert scenarios["sensory_conflict_blocks_system1"]["state"] == "escalated"
+    assert (
+        scenarios["sensory_conflict_blocks_system1"]["runtime_entrypoint"] == "RuntimeEpisodeRunner.run_skill_episode"
+    )
     assert scenarios["sensory_conflict_blocks_system1"]["fusion_decision"]["allow_system1"] is False
     assert scenarios["sensory_conflict_resolved_by_active_perception"]["state"] == "completed"
+    assert (
+        scenarios["sensory_conflict_resolved_by_active_perception"]["runtime_entrypoint"]
+        == "RuntimeEpisodeRunner.run_skill_episode"
+    )
     assert scenarios["sensory_conflict_resolved_by_active_perception"]["active_perception_trace"][0]["resolved"] is True
     assert scenarios["bounded_goal_executes_without_durable_skill"]["state"] == "completed"
+    assert (
+        scenarios["bounded_goal_executes_without_durable_skill"]["runtime_entrypoint"]
+        == "RuntimeEpisodeRunner.run_goal_episode"
+    )
     assert [step["action"] for step in scenarios["bounded_goal_executes_without_durable_skill"]["primitive_plan"]] == [
         "type",
         "type",
         "click",
     ]
     assert scenarios["executor_timeout_reroutes_with_trace"]["failure_boundary"] == "immediate_runtime_error"
+    assert (
+        scenarios["executor_timeout_reroutes_with_trace"]["runtime_entrypoint"]
+        == "RuntimeEpisodeRunner.run_skill_episode"
+    )
     assert scenarios["executor_timeout_reroutes_with_trace"]["recovery_trace"][1]["policy"] == "reroute"
+    assert scenarios["optional_llm_advisory_judgment"]["runtime_entrypoint"] == "RuntimeEpisodeRunner.run_skill_episode"
     assert scenarios["optional_llm_advisory_judgment"]["llm_failure_boundary"] == "skill_spec_insufficient"
 
     assert metrics["CascadeTraceCoverage"] > 0

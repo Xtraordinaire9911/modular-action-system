@@ -589,10 +589,26 @@ class SmartRoomControlClient:
             raise TypeError("checkpoint must be a dictionary")
         return await self._post("/restore", copy.deepcopy(checkpoint))
 
-    async def inject(self, thing: str, failure_type: str, *, delay_ms: int = 0) -> dict[str, Any]:
+    async def inject(
+        self,
+        thing: str,
+        failure_type: str,
+        *,
+        delay_ms: int = 0,
+        read_delay_ms: int | None = None,
+        drop_probability: float | None = None,
+        source_reliability: dict[str, float] | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {"thing": thing, "type": failure_type, "delay_ms": delay_ms}
+        if read_delay_ms is not None:
+            payload["read_delay_ms"] = read_delay_ms
+        if drop_probability is not None:
+            payload["drop_probability"] = drop_probability
+        if source_reliability is not None:
+            payload["source_reliability"] = source_reliability
         return await self._post(
             "/failure",
-            {"thing": thing, "type": failure_type, "delay_ms": delay_ms},
+            payload,
         )
 
     async def clear(self, thing: str) -> dict[str, Any]:

@@ -2160,15 +2160,12 @@ def _alternative_affordance(
     for affordance in cognitive_map.runtime_affordances.values():
         if affordance.id in excluded_ids or primitive_for_affordance(affordance) != action.action:
             continue
-        candidate_semantics = {
-            (key, str(affordance.grounding[key])) for key in semantic_keys if key in affordance.grounding
-        }
-        if original_semantics:
-            if not original_semantics.intersection(candidate_semantics):
-                continue
-        elif (
-            affordance.entity_id != original_affordance.entity_id
-            and affordance.action_name != original_affordance.action_name
+        if not _equivalent_recovery_affordance(
+            action,
+            original_affordance=original_affordance,
+            candidate=affordance,
+            semantic_keys=semantic_keys,
+            original_semantics=original_semantics,
         ):
             continue
         candidates.append(affordance)
@@ -2181,6 +2178,88 @@ def _alternative_affordance(
             affordance.confidence,
         ),
     )
+
+
+def _equivalent_recovery_affordance(
+    action: PrimitiveAction,
+    *,
+    original_affordance: RuntimeAffordance,
+    candidate: RuntimeAffordance,
+    semantic_keys: set[str],
+    original_semantics: set[tuple[str, str]],
+) -> bool:
+    if primitive_for_affordance(candidate) != action.action:
+        return False
+    if _declared_effect_conflicts(action.expected_effect, candidate):
+        return False
+    if not _compatible_declared_effects(original_affordance, candidate):
+        return False
+    if not _compatible_binding(original_affordance, candidate):
+        return False
+    if not _compatible_recovery_policy_flags(original_affordance, candidate):
+        return False
+
+    candidate_semantics = {(key, str(candidate.grounding[key])) for key in semantic_keys if key in candidate.grounding}
+    if original_semantics:
+        return bool(original_semantics.intersection(candidate_semantics))
+    return (
+        candidate.entity_id == original_affordance.entity_id or candidate.action_name == original_affordance.action_name
+    )
+
+
+def _compatible_declared_effects(original_affordance: RuntimeAffordance, candidate: RuntimeAffordance) -> bool:
+    original = _string_values(
+        original_affordance.grounding.get("achieves"), original_affordance.grounding.get("effects")
+    )
+    proposed = _string_values(candidate.grounding.get("achieves"), candidate.grounding.get("effects"))
+    return not original or not proposed or original == proposed
+
+
+def _declared_effect_conflicts(expected_effect: str, candidate: RuntimeAffordance) -> bool:
+    normalized_expected = expected_effect.strip()
+    if not normalized_expected:
+        return False
+    declared_effects = _string_values(candidate.grounding.get("achieves"), candidate.grounding.get("effects"))
+    return bool(declared_effects and normalized_expected not in declared_effects)
+
+
+def _compatible_binding(original_affordance: RuntimeAffordance, candidate: RuntimeAffordance) -> bool:
+    original = _string_values(
+        original_affordance.grounding.get("parameter"),
+        original_affordance.grounding.get("binds_parameter"),
+        original_affordance.grounding.get("parameters"),
+        original_affordance.grounding.get("binds_parameters"),
+    )
+    proposed = _string_values(
+        candidate.grounding.get("parameter"),
+        candidate.grounding.get("binds_parameter"),
+        candidate.grounding.get("parameters"),
+        candidate.grounding.get("binds_parameters"),
+    )
+    return not original or not proposed or original == proposed
+
+
+def _compatible_recovery_policy_flags(original_affordance: RuntimeAffordance, candidate: RuntimeAffordance) -> bool:
+    for key in ("safety_level", "reversible", "irreversible", "idempotent"):
+        original = original_affordance.grounding.get(key)
+        proposed = candidate.grounding.get(key)
+        if original is not None and proposed is not None and original != proposed:
+            return False
+    return True
+
+
+def _string_values(*values: object) -> set[str]:
+    items: set[str] = set()
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, (list, tuple, set)):
+            items.update(str(item).strip() for item in value if str(item).strip())
+        else:
+            text = str(value).strip()
+            if text:
+                items.add(text)
+    return items
 
 
 def _verification_failure(result: ExecutionResult, observation_failure: str | None) -> ExecutionResult:

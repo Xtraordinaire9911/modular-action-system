@@ -1,0 +1,55 @@
+{
+  "boundary": {
+    "production_default_unchanged": true,
+    "promotion_requires": [
+      "independent live ambiguous rerun",
+      "locked holdout without post-hoc tuning",
+      "false-halt and miss-rate review",
+      "CIM/verifier integration review before gate replacement"
+    ],
+    "shadow_mode_only": true
+  },
+  "comparison": {
+    "best_shadow_balanced_accuracy_delta": 0.166667,
+    "best_shadow_strategy": "bayesian_feature_shadow",
+    "recommendation": "consider_shadow_to_gate_promotion_after_independent_rerun",
+    "shadow_balanced_accuracy_delta": {
+      "bayesian_feature_shadow": 0.166667
+    }
+  },
+  "data_source": "bayesian_vs_rule_first_fusion_ablation",
+  "metrics": {
+    "production": {
+      "balanced_accuracy": 0.8333333333333333,
+      "false_halt_rate": 0.0,
+      "false_negative": 10,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.11538746766746044,
+      "miss_rate": 0.3333333333333333,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "true_negative": 10,
+      "true_positive": 20
+    },
+    "shadow": {
+      "balanced_accuracy": 1.0,
+      "false_halt_rate": 0.0,
+      "false_negative": 0,
+      "false_positive": 0,
+      "mean_detection_latency_ms": 0.11538746766746044,
+      "miss_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative": 10,
+      "true_positive": 30
+    }
+  },
+  "mode": "shadow_ablation",
+  "production_gate_changed": false,
+  "production_strategy": "rule_first_locked_threshold",
+  "recommendation": "consider_shadow_to_gate_promotion_after_independent_rerun",
+  "shadow_strategy": "bayesian_feature_shadow",
+  "source_holdout_report": "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+  "source_live_ambiguous_summary": "artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json",
+  "trial_count": 40
+}

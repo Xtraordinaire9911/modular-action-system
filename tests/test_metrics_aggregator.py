@@ -186,7 +186,84 @@ def test_runtime_metrics_are_derived_from_verified_episode_and_transition_eviden
     assert report.values["RecoveryTriggerRate"] == 1.0
     assert report.values["RecoverySuccessRate"] == 1.0
     assert report.values["RTA"] == 1.0
-    assert report.metadata == {"data_source": "live", "episode_ids": ["ep-live"]}
+    assert report.metadata["data_source"] == "live"
+    assert report.metadata["episode_ids"] == ["ep-live"]
+    assert report.metadata["measurement_counts"]["primitive_actions"] == 1
+
+
+def test_runtime_dataset_derives_primitive_and_recovery_rows_from_transition_ledger():
+    ledger = TransitionLedger()
+    ledger.record(
+        TransitionRecord(
+            task_id="task-live",
+            episode_id="ep-live",
+            transition_id="ep-live:t1",
+            step=1,
+            state_id_before="s1",
+            state_id_after="s2",
+            skill_id="set_temperature",
+            affordance_key="wot:thermostat:set_temperature",
+            backend="wot",
+            params={"primitive_action": "invoke", "expected_effect": "thermostat.target == 22"},
+            success=False,
+            execution_success=True,
+            postcondition_passed=False,
+            latency_ms=0,
+            attempt=1,
+            observation_delta={},
+            recovery_action="retry",
+            recovery_tier=1,
+            failure_reason="postcondition_failed",
+        )
+    )
+    ledger.record(
+        TransitionRecord(
+            task_id="task-live",
+            episode_id="ep-live",
+            transition_id="ep-live:t2",
+            step=2,
+            state_id_before="s2",
+            state_id_after="s3",
+            skill_id="set_temperature",
+            affordance_key="wot:thermostat:set_temperature",
+            backend="wot",
+            params={"primitive_action": "invoke", "expected_effect": "thermostat.target == 22"},
+            success=True,
+            execution_success=True,
+            postcondition_passed=True,
+            latency_ms=15,
+            attempt=2,
+            observation_delta={},
+            recovery_action="retry",
+            recovery_tier=1,
+            recovery_of_transition_id="ep-live:t1",
+        )
+    )
+    result = RuntimeStepResult(
+        RuntimeState.COMPLETED,
+        None,
+        recovery_tier=1,
+        failure_type="postcondition_failed",
+        recovery_trace=[{"policy": "retry", "selected": True}],
+        episode_id="ep-live",
+        attempts=2,
+        recovery_attempted=True,
+        recovery_succeeded=True,
+        final_outcome_verified=True,
+    )
+
+    dataset = dataset_from_runtime_results([result], ledger)
+    report = aggregate_metrics(dataset, data_source="live", episode_ids=[result.episode_id])
+
+    assert [action.action for action in dataset.primitive_actions] == ["invoke", "invoke"]
+    assert [case.checked for case in dataset.verification_cases] == [True, True]
+    assert [case.passed for case in dataset.verification_cases] == [False, True]
+    assert report.values["ExpectedEffectSuccessRate"] == 0.5
+    assert report.values["RetryTransitionRate"] == 1.0
+    assert report.values["FalseSuccessRate"] == 0.5
+    assert report.values["ATL"] == 7.5
+    assert report.metadata["measurement_counts"]["primitive_actions"] == 2
+    assert report.metadata["measurement_counts"]["routing_cases"] == 0
 
 
 def test_verified_rollback_counts_as_recovery_but_not_task_success():

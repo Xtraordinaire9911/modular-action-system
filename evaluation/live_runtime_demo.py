@@ -41,6 +41,7 @@ from src.runtime.live_environment import (
     ThreadedDomEffector,
 )
 from src.verification.active_perception import ActivePerceptionResolver
+from src.verification.conflict_detector import EpistemicArbiter
 
 
 def run_live_runtime_demo(
@@ -51,6 +52,7 @@ def run_live_runtime_demo(
     wot_base_url: str = "http://127.0.0.1:8080",
     control_url: str = "http://127.0.0.1:8081",
     headless: bool = True,
+    fusion_strategy: str = "rule_first",
 ) -> dict[str, str]:
     """Run all live cases with one isolated browser context."""
 
@@ -67,7 +69,15 @@ def run_live_runtime_demo(
         control_url=control_url,
         output_dir=target,
     )
-    return asyncio.run(_run_with_browser(config, transition_path, failure_path, headless=headless))
+    return asyncio.run(
+        _run_with_browser(
+            config,
+            transition_path,
+            failure_path,
+            headless=headless,
+            fusion_strategy=fusion_strategy,
+        )
+    )
 
 
 def run_live_runtime_ablation(
@@ -101,11 +111,12 @@ async def _run_with_browser(
     failure_path: Path,
     *,
     headless: bool,
+    fusion_strategy: str,
 ) -> dict[str, str]:
     session = ThreadedBrowserSession(config.dashboard_url, headless=headless)
     await session.start()
     try:
-        return await _run_suite(session, config, transition_path, failure_path)
+        return await _run_suite(session, config, transition_path, failure_path, fusion_strategy=fusion_strategy)
     finally:
         await session.close()
 
@@ -196,6 +207,8 @@ async def _run_suite(
     config: LiveEnvironmentConfig,
     transition_path: Path,
     failure_path: Path,
+    *,
+    fusion_strategy: str = "rule_first",
 ) -> dict[str, str]:
     control = SmartRoomControlClient(config.control_url, timeout_s=config.request_timeout_s)
     transition_ledger = TransitionLedger(transition_path)
@@ -209,6 +222,7 @@ async def _run_suite(
         control,
         transition_ledger,
         failure_ledger,
+        fusion_strategy=fusion_strategy,
     )
     results.append(normal)
     cases.append(normal_case)
@@ -219,6 +233,7 @@ async def _run_suite(
         control,
         transition_ledger,
         failure_ledger,
+        fusion_strategy=fusion_strategy,
     )
     results.append(timeout)
     cases.append(timeout_case)
@@ -229,6 +244,7 @@ async def _run_suite(
         control,
         transition_ledger,
         failure_ledger,
+        fusion_strategy=fusion_strategy,
     )
     results.append(rollback)
     cases.append(rollback_case)
@@ -239,6 +255,7 @@ async def _run_suite(
         control,
         transition_ledger,
         failure_ledger,
+        fusion_strategy=fusion_strategy,
     )
     results.append(conflict)
     cases.append(conflict_case)
@@ -249,6 +266,7 @@ async def _run_suite(
         control,
         transition_ledger,
         failure_ledger,
+        fusion_strategy=fusion_strategy,
     )
     results.extend([reflex_warmup, reflex_repeat])
     cases.append(reflex_case)
@@ -325,6 +343,7 @@ async def _normal_goal_case(
     failures: TraceLedger,
     *,
     mode: str = "full",
+    fusion_strategy: str = "rule_first",
 ) -> tuple[RuntimeStepResult, dict[str, Any]]:
     await control.reset()
     await session.open(config.dashboard_url)
@@ -337,7 +356,9 @@ async def _normal_goal_case(
         allowed_affordance_sources=_mode_sources(mode),
     )
     initial = await environment.observe(_initial_request(task_id))
-    manager = _goal_manager(environment, session, task_id, transitions, failures, mode=mode)
+    manager = _goal_manager(
+        environment, session, task_id, transitions, failures, mode=mode, fusion_strategy=fusion_strategy
+    )
     result = await manager.run_observed_goal(
         initial,
         goal_spec=GoalSpec(
@@ -364,6 +385,7 @@ async def _timeout_recovery_case(
     failures: TraceLedger,
     *,
     mode: str = "full",
+    fusion_strategy: str = "rule_first",
 ) -> tuple[RuntimeStepResult, dict[str, Any]]:
     await control.reset()
     await session.open(config.dashboard_url)
@@ -388,6 +410,7 @@ async def _timeout_recovery_case(
         transition_ledger=transitions,
         failure_ledger=failures,
         recovery_cascade=_recovery_for_mode(mode),
+        epistemic_arbiter=_arbiter_for_strategy(fusion_strategy),
     )
     await control.inject("thermostat", "timeout", delay_ms=1000)
 
@@ -424,6 +447,8 @@ async def _postcondition_rollback_case(
     control: SmartRoomControlClient,
     transitions: TransitionLedger,
     failures: TraceLedger,
+    *,
+    fusion_strategy: str = "rule_first",
 ) -> tuple[RuntimeStepResult, dict[str, Any]]:
     reset = await control.reset()
     previous = int(reset["state"]["thermostat"]["targetTemperature"])
@@ -495,6 +520,7 @@ async def _postcondition_rollback_case(
         transition_ledger=transitions,
         failure_ledger=failures,
         recovery_cascade=RecoveryCascade(),
+        epistemic_arbiter=_arbiter_for_strategy(fusion_strategy),
     )
     initial.apply_affordances_to(manager.cognitive_map)
     await control.inject("thermostat", "postcondition_mismatch")
@@ -521,6 +547,8 @@ async def _conflict_active_perception_case(
     control: SmartRoomControlClient,
     transitions: TransitionLedger,
     failures: TraceLedger,
+    *,
+    fusion_strategy: str = "rule_first",
 ) -> tuple[RuntimeStepResult, dict[str, Any]]:
     await control.reset()
     await session.open(f"{config.dashboard_url}/?fault=stale_temperature")
@@ -539,6 +567,7 @@ async def _conflict_active_perception_case(
         transitions,
         failures,
         active_perception_resolver=ActivePerceptionResolver(probe, max_attempts=2),
+        fusion_strategy=fusion_strategy,
     )
     result = await manager.run_observed_goal(
         initial,
@@ -563,6 +592,8 @@ async def _system1_reflex_case(
     control: SmartRoomControlClient,
     transitions: TransitionLedger,
     failures: TraceLedger,
+    *,
+    fusion_strategy: str = "rule_first",
 ) -> tuple[RuntimeStepResult, RuntimeStepResult, dict[str, Any]]:
     await control.reset()
     await session.open(config.dashboard_url)
@@ -614,6 +645,7 @@ async def _system1_reflex_case(
         episode_policy=_live_policy(),
         transition_ledger=transitions,
         failure_ledger=failures,
+        epistemic_arbiter=_arbiter_for_strategy(fusion_strategy),
     )
     initial.apply_affordances_to(manager.cognitive_map)
     warmup = await manager.run_skill(
@@ -632,9 +664,11 @@ async def _system1_reflex_case(
         "repeat_used_system1_fast_path": repeat.system1_fast_path,
         "repeat_still_verified": repeat.final_outcome_verified,
         "routing_latency_recorded": repeat.system1_routing_latency_ms >= 0,
+        "latency_report_links_both_episodes": bool(warmup.episode_id and repeat.episode_id),
     }
     payload = _case_payload("system1_reflex_repeat", repeat, checks)
     payload["warmup_episode_id"] = warmup.episode_id
+    payload["system1_latency_report"] = _system1_latency_report(warmup, repeat, transitions)
     return warmup, repeat, payload
 
 
@@ -647,6 +681,7 @@ def _goal_manager(
     *,
     active_perception_resolver: ActivePerceptionResolver | None = None,
     mode: str = "full",
+    fusion_strategy: str = "rule_first",
 ) -> ContinuousInteractionManager:
     dom = RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(session))
     wot = RuntimeAffordanceExecutor("wot", environment, WotExecutor(environment.tds))
@@ -665,7 +700,12 @@ def _goal_manager(
         failure_ledger=failures,
         active_perception_resolver=active_perception_resolver,
         recovery_cascade=_recovery_for_mode(mode),
+        epistemic_arbiter=_arbiter_for_strategy(fusion_strategy),
     )
+
+
+def _arbiter_for_strategy(fusion_strategy: str) -> EpistemicArbiter:
+    return EpistemicArbiter(fusion_strategy=fusion_strategy)  # type: ignore[arg-type]
 
 
 class _NoRecoveryCascade(RecoveryCascade):
@@ -798,6 +838,55 @@ def _case_payload(name: str, result: RuntimeStepResult, checks: dict[str, bool])
         "evidence_passed": all(checks.values()),
         "evidence_checks": checks,
         "result": _result_payload(result),
+    }
+
+
+def _system1_latency_report(
+    warmup: RuntimeStepResult,
+    repeat: RuntimeStepResult,
+    transitions: TransitionLedger,
+) -> dict[str, Any]:
+    """Summarize warm-up vs repeated System-1 routing latency from live evidence."""
+
+    warmup_records = transitions.for_episode(warmup.episode_id)
+    repeat_records = transitions.for_episode(repeat.episode_id)
+    warmup_transition_latency = _episode_transition_latency_ms(warmup, warmup_records)
+    repeat_transition_latency = _episode_transition_latency_ms(repeat, repeat_records)
+    episodes = [warmup, repeat]
+    total_transition_latency = warmup_transition_latency + repeat_transition_latency
+    cache_hits = sum(1 for result in episodes if result.system1_cache_hit)
+    return {
+        "episode_ids": [warmup.episode_id, repeat.episode_id],
+        "cache_hit_rate": round(cache_hits / len(episodes), 3),
+        "total_transition_latency_ms": round(total_transition_latency, 3),
+        "amortized_transition_latency_ms": round(total_transition_latency / len(episodes), 3),
+        "warmup": _system1_episode_latency_payload(warmup, warmup_transition_latency, warmup_records),
+        "repeat": _system1_episode_latency_payload(repeat, repeat_transition_latency, repeat_records),
+    }
+
+
+def _episode_transition_latency_ms(result: RuntimeStepResult, records: list[Any]) -> float:
+    if records:
+        return round(sum(float(record.latency_ms) for record in records), 3)
+    if result.execution_result is not None:
+        return round(float(result.execution_result.latency_ms), 3)
+    return 0.0
+
+
+def _system1_episode_latency_payload(
+    result: RuntimeStepResult,
+    transition_latency_ms: float,
+    records: list[Any],
+) -> dict[str, Any]:
+    return {
+        "episode_id": result.episode_id,
+        "cache_hit": result.system1_cache_hit,
+        "fast_path": result.system1_fast_path,
+        "routing_latency_ms": round(float(result.system1_routing_latency_ms), 3),
+        "transition_latency_ms": transition_latency_ms,
+        "total_episode_latency_ms": transition_latency_ms,
+        "transition_count": len(records),
+        "verified": result.final_outcome_verified,
     }
 
 

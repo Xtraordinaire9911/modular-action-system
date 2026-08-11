@@ -101,3 +101,36 @@ def test_void_elements_inside_runtime_overlays_do_not_hide_following_affordances
 
     assert [affordance.label for affordance in pam.affordances] == ["Real action"]
     assert pam.affordances[0].locator["selector"] == "#real-action"
+
+
+def test_a_selector_shared_by_several_elements_is_narrowed_to_one():
+    """A class name names every product at once, which is not a locator.
+
+    Anything that later queries the selector - a probe asking whether the
+    target is disabled - would silently measure the first match and report on
+    the wrong element.
+    """
+    html = """
+    <button class="add-cart-btn" data-id="headphones" aria-label="Add Headphones">Add</button>
+    <button class="add-cart-btn" data-id="laptop" aria-label="Add Laptop">Add</button>
+    <button class="add-cart-btn" data-id="keyboard" aria-label="Add Keyboard">Add</button>
+    """
+    pam = DomTransducer().transduce(html, page_id="shop")
+    selectors = [a.locator["selector"] for a in pam.affordances]
+
+    assert len(set(selectors)) == 3, f"selectors still collide: {selectors}"
+    assert "button.add-cart-btn[data-id='laptop']" in selectors
+
+
+def test_a_selector_that_cannot_be_narrowed_says_so_in_its_confidence():
+    """Nothing distinguishes these, so the locator is as weak as a positional one."""
+    html = '<button class="row">Go</button><button class="row">Go</button>'
+    pam = DomTransducer().transduce(html, page_id="twins")
+
+    assert all(a.locator["selector"] == "button.row" for a in pam.affordances)
+    assert all(a.confidence == 0.55 for a in pam.affordances)
+
+
+def test_a_unique_class_selector_keeps_its_confidence():
+    pam = DomTransducer().transduce('<button class="only">Go</button>', page_id="one")
+    assert pam.affordances[0].confidence == 0.7

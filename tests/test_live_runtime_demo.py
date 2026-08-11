@@ -5,9 +5,11 @@ from __future__ import annotations
 import asyncio
 
 import run_demo
+from evaluation import live_runtime_demo
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
 from src.effectors.wot_executor import WotExecutor
 from src.runtime.continuous_interaction_manager import RuntimeStepResult
+from src.runtime.episode import TransitionLedger, TransitionRecord
 from src.runtime.state_machine import RuntimeState
 
 
@@ -136,3 +138,77 @@ def test_runtime_trace_entry_records_cim_controller_for_live_steps():
     assert entry["controller"] == "ContinuousInteractionManager.run_skill"
     assert entry["runtime_step"]["state"] == "completed"
     assert entry["runtime_step"]["selected_backend"] == "wot"
+
+
+def test_system1_latency_report_links_warmup_repeat_and_amortized_runtime():
+    ledger = TransitionLedger()
+    warmup = RuntimeStepResult(
+        RuntimeState.COMPLETED,
+        ExecutionResult("set_temperature_reflex", "wot", True, 30.0, 1.0),
+        episode_id="ep-warmup",
+        final_outcome_verified=True,
+        system1_cache_hit=False,
+        system1_fast_path=False,
+        system1_routing_latency_ms=4.0,
+    )
+    repeat = RuntimeStepResult(
+        RuntimeState.COMPLETED,
+        ExecutionResult("set_temperature_reflex", "wot", True, 8.0, 1.0),
+        episode_id="ep-repeat",
+        final_outcome_verified=True,
+        system1_cache_hit=True,
+        system1_fast_path=True,
+        system1_routing_latency_ms=0.5,
+    )
+    ledger.record(
+        TransitionRecord(
+            task_id="live_system1_reflex",
+            episode_id="ep-warmup",
+            transition_id="ep-warmup:transition-0001",
+            step=1,
+            state_id_before="s0",
+            state_id_after="s1",
+            skill_id="set_temperature_reflex",
+            affordance_key="WOT:thermostat.set_target_temperature",
+            backend="wot",
+            params={"target": 21},
+            success=True,
+            execution_success=True,
+            postcondition_passed=True,
+            latency_ms=30.0,
+            attempt=1,
+            observation_delta={},
+        )
+    )
+    ledger.record(
+        TransitionRecord(
+            task_id="live_system1_reflex",
+            episode_id="ep-repeat",
+            transition_id="ep-repeat:transition-0001",
+            step=1,
+            state_id_before="s1",
+            state_id_after="s2",
+            skill_id="set_temperature_reflex",
+            affordance_key="WOT:thermostat.set_target_temperature",
+            backend="wot",
+            params={"target": 21},
+            success=True,
+            execution_success=True,
+            postcondition_passed=True,
+            latency_ms=8.0,
+            attempt=1,
+            observation_delta={},
+        )
+    )
+
+    report = live_runtime_demo._system1_latency_report(warmup, repeat, ledger)
+
+    assert report["episode_ids"] == ["ep-warmup", "ep-repeat"]
+    assert report["cache_hit_rate"] == 0.5
+    assert report["warmup"]["cache_hit"] is False
+    assert report["repeat"]["cache_hit"] is True
+    assert report["repeat"]["fast_path"] is True
+    assert report["warmup"]["transition_latency_ms"] == 30.0
+    assert report["repeat"]["transition_latency_ms"] == 8.0
+    assert report["total_transition_latency_ms"] == 38.0
+    assert report["amortized_transition_latency_ms"] == 19.0

@@ -1,0 +1,35 @@
+{
+  "data_source": "gate_enabled_recovery_impact",
+  "metrics": {
+    "ExpectedEffectSuccessRate": {
+      "baseline": 0.875,
+      "bayesian_gate": 0.875,
+      "delta": 0.0
+    },
+    "FalseSuccessDetectionRate": {
+      "baseline": 0.0,
+      "bayesian_gate": 0.0,
+      "delta": 0.0
+    },
+    "RecoverySuccessRate": {
+      "baseline": 1.0,
+      "bayesian_gate": 1.0,
+      "delta": 0.0
+    },
+    "RecoveryTriggerRate": {
+      "baseline": 0.3333333333333333,
+      "bayesian_gate": 0.3333333333333333,
+      "delta": 0.0
+    },
+    "TSR": {
+      "baseline": 0.8333333333333334,
+      "bayesian_gate": 0.8333333333333334,
+      "delta": 0.0
+    }
+  },
+  "no_regression": true,
+  "recommendation": "bayesian_gate_runtime_impact_passed",
+  "regressions": [],
+  "source_baseline_metrics": "artifacts/live_runtime_demo_y_runtime_evidence/measured_metrics.json",
+  "source_gate_metrics": "artifacts/live_runtime_demo_bayesian_gate/measured_metrics.json"
+}

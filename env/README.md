@@ -51,6 +51,7 @@ DOM side:
 
 ```text
 http://localhost:3000/?fault=layout_shift,selector_mutation,stale_temperature
+http://localhost:3000/?fault=stale_temperature&stale_offset=-1.5&source_reliability={"dom":0.55,"wot":0.85}
 ```
 
 or from Playwright:
@@ -61,3 +62,15 @@ window.__injectFault("selector_mutation")
 
 See `scripts/inject_failures.py` for the mapping from fault type to expected
 recovery tier.
+
+Fine-grained WoT-side ambiguous fusion hooks:
+
+```bash
+curl -XPOST localhost:8081/failure \
+  -H 'Content-Type: application/json' \
+  -d '{"thing":"thermostat","type":"timeout","read_delay_ms":450,"source_reliability":{"dom":0.6,"wot":0.9}}'
+
+curl -XPOST localhost:8081/failure \
+  -H 'Content-Type: application/json' \
+  -d '{"thing":"thermostat","type":"offline","drop_probability":0.7,"source_reliability":{"dom":0.65,"wot":0.35}}'
+```

@@ -14,6 +14,7 @@ Prereqs: `uv run playwright install chromium` and the miniwob clone under
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 import time
 from datetime import datetime
@@ -23,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_agent_on_env import _start_static_server  # noqa: E402
 from src.benchmarks.miniwob_tasks import DEMO_TASKS, MiniwobController, run_task  # noqa: E402
+from src.benchmarks.scripted_runtime import run_scripted_task_episode  # noqa: E402
 
 
 def main() -> None:
@@ -57,9 +59,19 @@ def main() -> None:
             print(f"== Task {index}/{len(suite)}: {task.title} ({task.name}) ==")
             session.open(f"{base}/{task.name}.html")
             time.sleep(0.6)  # let the page settle before clicking START
-            outcome = run_task(controller, task)
+            episode = asyncio.run(
+                run_scripted_task_episode(
+                    task_id=f"miniwob:{task.name}",
+                    run=lambda task=task: run_task(controller, task),
+                    data_source="miniwob_scripted",
+                )
+            )
+            outcome = episode.scripted_outcome
             print(f"   instruction: {outcome['utterance']}")
-            print(f"   reward={outcome['reward']:.2f} -> {'SOLVED' if outcome['success'] else 'missed'}\n")
+            print(
+                f"   reward={outcome['reward']:.2f} -> {'SOLVED' if outcome['success'] else 'missed'} "
+                f"| episode={episode.result.episode_id}\n"
+            )
             session.screenshot(str(shots / f"{index:02d}_{task.name}.png"))
             outcomes.append(outcome)
             if args.pause_between and index < len(suite):

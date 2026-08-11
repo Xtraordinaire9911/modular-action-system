@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Smart Room - device state</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#eef2f7;color:#1e293b;min-height:100vh}
+header{background:#1e293b;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px}
+header .logo{font-size:1.2rem;font-weight:800;color:#818cf8}
+header .sub{font-size:.8rem;color:#94a3b8}
+main{max-width:760px;margin:28px auto;padding:0 18px;display:grid;gap:18px}
+.card{background:#fff;border-radius:12px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.card h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:12px}
+.row{display:flex;align-items:baseline;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.row:last-child{border-bottom:none}
+.name{font-size:.92rem;color:#334155}
+.val{font-size:1.5rem;font-weight:800;color:#4f46e5;font-variant-numeric:tabular-nums}
+.val.stale{color:#f59e0b}
+.meta{font-size:.72rem;color:#94a3b8;margin-top:2px}
+.ro{font-size:.68rem;background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:4px;margin-left:8px}
+#td{background:#0f172a;color:#cbd5e1;border-radius:12px;padding:16px 20px;
+    font:11.5px/1.6 ui-monospace,Consolas,monospace;white-space:pre;overflow:auto;max-height:210px}
+#td .k{color:#818cf8}
+.note{font-size:.78rem;color:#64748b;line-height:1.6}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">Smart Room</span>
+  <span class="sub">device state, as reported by the Thing Description endpoints</span>
+</header>
+<main>
+  <section class="card">
+    <h2>Thermostat A</h2>
+    <div class="row">
+      <div>
+        <div class="name">targetTemperature</div>
+        <div class="meta">writable property</div>
+      </div>
+      <div class="val" id="target">--</div>
+    </div>
+    <div class="row">
+      <div>
+        <div class="name">currentTemperature <span class="ro">read-only</span></div>
+        <div class="meta">sensor reading</div>
+      </div>
+      <div class="val" id="current">--</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Last device exchange</h2>
+    <div id="td">no request yet</div>
+    <p class="note" style="margin-top:12px">
+      Values above are read back from the device after every write. A write that
+      is acknowledged but does not change the reading is the failure this
+      surface exists to expose.
+    </p>
+  </section>
+</main>
+<script>
+// Updated from the agent process after each device call, so the page is a view
+// of real device state rather than a mock that agrees with itself.
+window.__setDevice = function (state) {
+  document.getElementById('target').textContent = state.target + '°C';
+  document.getElementById('current').textContent = state.current + '°C';
+  document.getElementById('target').className = 'val' + (state.stale ? ' stale' : '');
+};
+window.__setExchange = function (text) {
+  document.getElementById('td').textContent = text;
+};
+</script>
+</body>
+</html>

@@ -15,8 +15,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from src.contracts.types import Condition, ExecutionResult, Observation, RollbackSpec, SkillCall, SkillTuple
-from src.runtime.cognitive_map import CognitiveMap
-from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
+from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec, StaticRuntimeEnvironmentAdapter
 
 
 class NoOpExecutor:
@@ -54,24 +53,23 @@ def build_smoke_skill_library() -> dict[str, SkillTuple]:
 
 
 async def run_smoke_pipeline(task_id: str = "pipeline_smoke_task") -> dict:
-    cognitive_map = CognitiveMap(task_id=task_id)
-    manager = ContinuousInteractionManager(
+    outcome = await RuntimeEpisodeRunner(
         skill_library=build_smoke_skill_library(),
-        executors={"noop": NoOpExecutor()},
-        cognitive_map=cognitive_map,
-    )
-    result = await manager.run_skill(
+    ).run_skill_episode(
+        StaticRuntimeEnvironmentAdapter({"noop": NoOpExecutor()}),
         SkillCall(skill_id="pipeline_smoke", params={}),
-        Observation(),
+        RuntimeEpisodeSpec(task_id=task_id, data_source="smoke_pipeline"),
     )
+    result = outcome.result
     return {
         "task_id": task_id,
+        "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
         "state": result.state.value,
         "selected_backend": result.selected_backend,
         "reason": result.reason,
         "recovery_tier": result.recovery_tier,
         "execution_result": asdict(result.execution_result) if result.execution_result else None,
-        "cognitive_map": cognitive_map.snapshot(),
+        "cognitive_map": outcome.cognitive_map.snapshot(),
     }
 
 
@@ -91,6 +89,7 @@ def run_live_demo_pipeline(
     wot_base_url: str = "http://127.0.0.1:8080",
     control_url: str = "http://127.0.0.1:8081",
     headless: bool = True,
+    fusion_strategy: str = "rule_first",
 ) -> dict[str, str]:
     """Run the real Docker + Playwright runtime-control tracer bullet."""
 
@@ -103,6 +102,7 @@ def run_live_demo_pipeline(
         wot_base_url=wot_base_url,
         control_url=control_url,
         headless=headless,
+        fusion_strategy=fusion_strategy,
     )
 
 
@@ -148,6 +148,214 @@ def run_fusion_calibration_pipeline(
     )
 
 
+def run_fusion_campaign_pipeline(
+    output_dir: str | Path = "artifacts/live_fusion_campaign",
+    *,
+    repetitions: int = 30,
+    seed_start: int = 1000,
+    dashboard_url: str = "http://127.0.0.1:3000",
+    thing_directory_url: str = "http://127.0.0.1:8082/things",
+    wot_base_url: str = "http://127.0.0.1:8080",
+    control_url: str = "http://127.0.0.1:8081",
+    headless: bool = True,
+    dry_run: bool = False,
+) -> dict[str, str]:
+    from evaluation.live_fusion_campaign import run_live_repeated_fusion_campaign
+
+    return run_live_repeated_fusion_campaign(
+        output_dir,
+        repetitions=repetitions,
+        seed_start=seed_start,
+        dashboard_url=dashboard_url,
+        thing_directory_url=thing_directory_url,
+        wot_base_url=wot_base_url,
+        control_url=control_url,
+        headless=headless,
+        dry_run=dry_run,
+    )
+
+
+def run_fusion_holdout_pipeline(
+    campaign_summary_path: str | Path = "artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
+    output_dir: str | Path = "artifacts/live_fusion_holdout",
+    *,
+    calibration_repetitions: int = 20,
+    holdout_repetitions: int | None = None,
+) -> dict[str, str]:
+    from evaluation.fusion_holdout import write_locked_holdout_report
+
+    return write_locked_holdout_report(
+        campaign_summary_path,
+        output_dir,
+        calibration_repetitions=calibration_repetitions,
+        holdout_repetitions=holdout_repetitions,
+    )
+
+
+def run_bayesian_fusion_comparator_pipeline(
+    holdout_report_path: str | Path = "artifacts/live_fusion_holdout/fusion_holdout_report.json",
+    output_dir: str | Path = "artifacts/bayesian_fusion_comparator",
+    *,
+    posterior_threshold: float = 0.5,
+) -> dict[str, str]:
+    from evaluation.bayesian_fusion_comparator import write_bayesian_fusion_comparator_report
+
+    return write_bayesian_fusion_comparator_report(
+        holdout_report_path,
+        output_dir,
+        posterior_threshold=posterior_threshold,
+    )
+
+
+def run_noisy_fusion_stress_pipeline(
+    output_dir: str | Path = "artifacts/noisy_fusion_stress",
+    *,
+    repetitions: int = 30,
+    seed_start: int = 3000,
+    posterior_threshold: float = 0.5,
+) -> dict[str, str]:
+    from evaluation.noisy_fusion_stress import write_noisy_fusion_stress_report
+
+    return write_noisy_fusion_stress_report(
+        output_dir,
+        repetitions=repetitions,
+        seed_start=seed_start,
+        posterior_threshold=posterior_threshold,
+    )
+
+
+def run_live_ambiguous_fusion_pipeline(
+    output_dir: str | Path = "artifacts/live_ambiguous_fusion_campaign",
+    *,
+    repetitions: int = 30,
+    seed_start: int = 4000,
+    dashboard_url: str = "http://127.0.0.1:3000",
+    thing_directory_url: str = "http://127.0.0.1:8082/things",
+    wot_base_url: str = "http://127.0.0.1:8080",
+    control_url: str = "http://127.0.0.1:8081",
+    headless: bool = True,
+    dry_run: bool = False,
+    fusion_strategy: str = "rule_first",
+) -> dict[str, str]:
+    from evaluation.live_ambiguous_fusion_campaign import run_live_ambiguous_fusion_campaign
+
+    return run_live_ambiguous_fusion_campaign(
+        output_dir,
+        repetitions=repetitions,
+        seed_start=seed_start,
+        dashboard_url=dashboard_url,
+        thing_directory_url=thing_directory_url,
+        wot_base_url=wot_base_url,
+        control_url=control_url,
+        headless=headless,
+        dry_run=dry_run,
+        fusion_strategy=fusion_strategy,
+    )
+
+
+def run_live_ambiguous_fusion_holdout_pipeline(
+    live_ambiguous_summary_path: str | Path = "artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json",
+    output_dir: str | Path = "artifacts/live_ambiguous_fusion_holdout",
+    *,
+    calibration_repetitions: int = 20,
+    holdout_repetitions: int | None = 10,
+    posterior_threshold: float = 0.5,
+) -> dict[str, str]:
+    from evaluation.live_ambiguous_fusion_holdout import write_live_ambiguous_locked_holdout_report
+
+    return write_live_ambiguous_locked_holdout_report(
+        live_ambiguous_summary_path,
+        output_dir,
+        calibration_repetitions=calibration_repetitions,
+        holdout_repetitions=holdout_repetitions,
+        posterior_threshold=posterior_threshold,
+    )
+
+
+def run_fusion_ablation_report_pipeline(
+    holdout_report_path: (
+        str | Path
+    ) = "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+    output_dir: str | Path = "artifacts/bayesian_vs_rule_first_ablation",
+) -> dict[str, str]:
+    from evaluation.fusion_ablation_report import write_fusion_ablation_report
+
+    return write_fusion_ablation_report(holdout_report_path, output_dir)
+
+
+def run_bayesian_shadow_stability_pipeline(
+    holdout_report_paths: list[str | Path],
+    output_dir: str | Path = "artifacts/bayesian_shadow_stability",
+) -> dict[str, str]:
+    from evaluation.bayesian_shadow_stability import write_bayesian_shadow_stability_report
+
+    return write_bayesian_shadow_stability_report(holdout_report_paths, output_dir)
+
+
+def run_open_web_mock_failure_suite_pipeline(
+    output_dir: str | Path = "artifacts/open_web_mock_failure_suite",
+    *,
+    seed_start: int = 8000,
+) -> dict[str, str]:
+    from evaluation.open_web_mock_failure_suite import write_open_web_mock_failure_suite_report
+
+    return write_open_web_mock_failure_suite_report(output_dir, seed_start=seed_start)
+
+
+def run_open_web_mock_runtime_suite_pipeline(
+    output_dir: str | Path = "artifacts/open_web_mock_runtime_suite",
+    *,
+    seed_start: int = 9000,
+) -> dict[str, str]:
+    from evaluation.open_web_mock_runtime_runner import run_open_web_mock_runtime_suite
+
+    return run_open_web_mock_runtime_suite(output_dir, seed_start=seed_start)
+
+
+def run_open_web_playwright_fixture_suite_pipeline(
+    output_dir: str | Path = "artifacts/open_web_playwright_fixture_suite",
+    *,
+    seed_start: int = 10000,
+    headless: bool = True,
+    action_timeout_ms: int = 1000,
+    capture_screenshots: bool = True,
+    session_factory=None,
+) -> dict[str, str]:
+    from evaluation.open_web_playwright_fixture_runner import run_open_web_playwright_fixture_suite
+
+    return run_open_web_playwright_fixture_suite(
+        output_dir,
+        seed_start=seed_start,
+        headless=headless,
+        action_timeout_ms=action_timeout_ms,
+        capture_screenshots=capture_screenshots,
+        session_factory=session_factory,
+    )
+
+
+def run_open_web_randomized_holdout_pipeline(
+    output_dir: str | Path = "artifacts/open_web_randomized_holdout",
+    *,
+    dev_repetitions: int = 3,
+    holdout_repetitions: int = 3,
+    headless: bool = True,
+    action_timeout_ms: int = 750,
+    capture_screenshots: bool = True,
+    session_factory=None,
+) -> dict[str, str]:
+    from evaluation.open_web_randomized_holdout import run_open_web_randomized_holdout_suite
+
+    return run_open_web_randomized_holdout_suite(
+        output_dir,
+        dev_repetitions=dev_repetitions,
+        holdout_repetitions=holdout_repetitions,
+        headless=headless,
+        action_timeout_ms=action_timeout_ms,
+        capture_screenshots=capture_screenshots,
+        session_factory=session_factory,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -155,6 +363,111 @@ def main() -> None:
     parser.add_argument("--live-demo", action="store_true", help="Run the Docker + Playwright live tracer bullet.")
     parser.add_argument("--live-ablation", action="store_true", help="Compare live full/no-recovery/DOM/WoT modes.")
     parser.add_argument("--fusion-calibration", action="store_true", help="Run labeled live fusion calibration.")
+    parser.add_argument("--fusion-campaign", action="store_true", help="Run repeated live fusion/recovery campaign.")
+    parser.add_argument("--fusion-campaign-dry-run", action="store_true", help="Write the repeated campaign plan only.")
+    parser.add_argument("--fusion-holdout", action="store_true", help="Build locked calibration/holdout report.")
+    parser.add_argument(
+        "--bayesian-fusion-comparator",
+        action="store_true",
+        help="Compare experimental Bayesian posterior against locked rule-first fusion.",
+    )
+    parser.add_argument(
+        "--noisy-fusion-stress",
+        action="store_true",
+        help="Run synthetic ambiguous/noisy fusion stress cases for Bayesian comparator evaluation.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-fusion",
+        action="store_true",
+        help="Run live ambiguous fusion profiles mapped onto current smart-room fault API.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-fusion-dry-run",
+        action="store_true",
+        help="Write the live ambiguous fusion profile plan only.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-fusion-holdout",
+        action="store_true",
+        help="Build locked holdout and shadow-strategy comparison from a live ambiguous fusion summary.",
+    )
+    parser.add_argument(
+        "--fusion-ablation-report",
+        action="store_true",
+        help="Write Bayesian-vs-rule-first fusion ablation report from a shadow holdout report.",
+    )
+    parser.add_argument(
+        "--bayesian-shadow-stability",
+        action="store_true",
+        help="Compare initial and rerun Bayesian shadow holdouts before any production promotion.",
+    )
+    parser.add_argument(
+        "--open-web-mock-failure-suite",
+        action="store_true",
+        help="Write oracle-labeled local mock fixtures/report for open-web-style failure modes.",
+    )
+    parser.add_argument(
+        "--open-web-mock-runtime-suite",
+        action="store_true",
+        help="Run open-web mock failure cases through RuntimeEpisodeRunner with oracle re-observation.",
+    )
+    parser.add_argument(
+        "--open-web-playwright-fixture-suite",
+        action="store_true",
+        help="Run local open-web mock fixtures through Playwright and RuntimeEpisodeRunner.",
+    )
+    parser.add_argument(
+        "--open-web-randomized-holdout",
+        action="store_true",
+        help="Run seeded six-family dev/locked-holdout variants through Playwright.",
+    )
+    parser.add_argument("--open-web-dev-repetitions", type=int, default=3)
+    parser.add_argument("--open-web-holdout-repetitions", type=int, default=3)
+    parser.add_argument(
+        "--campaign-summary",
+        default="artifacts/live_fusion_campaign_full/fusion_campaign_summary.json",
+        help="Input campaign summary for --fusion-holdout.",
+    )
+    parser.add_argument(
+        "--holdout-report",
+        default="artifacts/live_fusion_holdout/fusion_holdout_report.json",
+        help="Input locked holdout report for comparator or ablation commands.",
+    )
+    parser.add_argument(
+        "--holdout-reports",
+        nargs="+",
+        help="Input holdout reports for --bayesian-shadow-stability.",
+    )
+    parser.add_argument(
+        "--live-ambiguous-summary",
+        default="artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json",
+        help="Input live ambiguous summary for --live-ambiguous-fusion-holdout.",
+    )
+    parser.add_argument(
+        "--posterior-threshold",
+        type=float,
+        default=0.5,
+        help="Posterior blocking threshold for --bayesian-fusion-comparator.",
+    )
+    parser.add_argument(
+        "--fusion-strategy",
+        choices=["rule_first", "bayesian_gate"],
+        default="rule_first",
+        help="Fusion strategy for live ambiguous campaign runs.",
+    )
+    parser.add_argument(
+        "--calibration-repetitions",
+        type=int,
+        default=20,
+        help="Calibration repetitions per condition for locked holdout.",
+    )
+    parser.add_argument(
+        "--holdout-repetitions",
+        type=int,
+        help="Holdout repetitions per condition; defaults to all remaining repetitions.",
+    )
+    parser.add_argument("--repetitions", type=int, default=30, help="Repeated campaign trials per condition.")
+    parser.add_argument("--seed-start", type=int, default=1000, help="First deterministic campaign seed.")
     parser.add_argument("--output-dir")
     parser.add_argument("--task-id", default="pipeline_smoke_task")
     parser.add_argument("--dashboard-url", default="http://127.0.0.1:3000")
@@ -164,7 +477,97 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.fusion_calibration:
+    if args.open_web_randomized_holdout:
+        summary = run_open_web_randomized_holdout_pipeline(
+            args.output_dir or "artifacts/open_web_randomized_holdout",
+            dev_repetitions=args.open_web_dev_repetitions,
+            holdout_repetitions=args.open_web_holdout_repetitions,
+            headless=not args.headed,
+        )
+    elif args.open_web_playwright_fixture_suite:
+        summary = run_open_web_playwright_fixture_suite_pipeline(
+            args.output_dir or "artifacts/open_web_playwright_fixture_suite",
+            seed_start=args.seed_start,
+            headless=not args.headed,
+        )
+    elif args.open_web_mock_runtime_suite:
+        summary = run_open_web_mock_runtime_suite_pipeline(
+            args.output_dir or "artifacts/open_web_mock_runtime_suite",
+            seed_start=args.seed_start,
+        )
+    elif args.open_web_mock_failure_suite:
+        summary = run_open_web_mock_failure_suite_pipeline(
+            args.output_dir or "artifacts/open_web_mock_failure_suite",
+            seed_start=args.seed_start,
+        )
+    elif args.bayesian_shadow_stability:
+        summary = run_bayesian_shadow_stability_pipeline(
+            args.holdout_reports
+            or [
+                "artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json",
+                "artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json",
+            ],
+            args.output_dir or "artifacts/bayesian_shadow_stability",
+        )
+    elif args.fusion_ablation_report:
+        summary = run_fusion_ablation_report_pipeline(
+            args.holdout_report,
+            args.output_dir or "artifacts/bayesian_vs_rule_first_ablation",
+        )
+    elif args.live_ambiguous_fusion_holdout:
+        summary = run_live_ambiguous_fusion_holdout_pipeline(
+            args.live_ambiguous_summary,
+            args.output_dir or "artifacts/live_ambiguous_fusion_holdout",
+            calibration_repetitions=args.calibration_repetitions,
+            holdout_repetitions=args.holdout_repetitions,
+            posterior_threshold=args.posterior_threshold,
+        )
+    elif args.live_ambiguous_fusion or args.live_ambiguous_fusion_dry_run:
+        summary = run_live_ambiguous_fusion_pipeline(
+            args.output_dir or "artifacts/live_ambiguous_fusion_campaign",
+            repetitions=args.repetitions,
+            seed_start=args.seed_start,
+            dashboard_url=args.dashboard_url,
+            thing_directory_url=args.thing_directory_url,
+            wot_base_url=args.wot_base_url,
+            control_url=args.control_url,
+            headless=not args.headed,
+            dry_run=args.live_ambiguous_fusion_dry_run,
+            fusion_strategy=args.fusion_strategy,
+        )
+    elif args.noisy_fusion_stress:
+        summary = run_noisy_fusion_stress_pipeline(
+            args.output_dir or "artifacts/noisy_fusion_stress",
+            repetitions=args.repetitions,
+            seed_start=args.seed_start,
+            posterior_threshold=args.posterior_threshold,
+        )
+    elif args.bayesian_fusion_comparator:
+        summary = run_bayesian_fusion_comparator_pipeline(
+            args.holdout_report,
+            args.output_dir or "artifacts/bayesian_fusion_comparator",
+            posterior_threshold=args.posterior_threshold,
+        )
+    elif args.fusion_holdout:
+        summary = run_fusion_holdout_pipeline(
+            args.campaign_summary,
+            args.output_dir or "artifacts/live_fusion_holdout",
+            calibration_repetitions=args.calibration_repetitions,
+            holdout_repetitions=args.holdout_repetitions,
+        )
+    elif args.fusion_campaign or args.fusion_campaign_dry_run:
+        summary = run_fusion_campaign_pipeline(
+            args.output_dir or "artifacts/live_fusion_campaign",
+            repetitions=args.repetitions,
+            seed_start=args.seed_start,
+            dashboard_url=args.dashboard_url,
+            thing_directory_url=args.thing_directory_url,
+            wot_base_url=args.wot_base_url,
+            control_url=args.control_url,
+            headless=not args.headed,
+            dry_run=args.fusion_campaign_dry_run,
+        )
+    elif args.fusion_calibration:
         summary = run_fusion_calibration_pipeline(
             args.output_dir or "artifacts/live_fusion_calibration",
             dashboard_url=args.dashboard_url,
@@ -190,6 +593,7 @@ def main() -> None:
             wot_base_url=args.wot_base_url,
             control_url=args.control_url,
             headless=not args.headed,
+            fusion_strategy=args.fusion_strategy,
         )
     elif args.demo:
         summary = run_runtime_demo_pipeline(args.output_dir or "artifacts/adaptation_demo")

@@ -248,6 +248,53 @@ def test_goal_executes_visual_alternative_after_dom_failure():
     assert records[1].recovery_of_transition_id == records[0].transition_id
 
 
+def test_goal_reroute_rejects_non_equivalent_visual_alternative():
+    failed = ExecutionResult("reserve", "dom", False, 1, 0.0, failure_reason="selector_not_found")
+    dom = _Executor("dom", [failed])
+    visual = _Executor("visual")
+    non_equivalent_visual = Affordance(
+        "visual_cancel",
+        "VISUAL",
+        "button",
+        "Cancel",
+        "click",
+        {
+            "entity_id": "booking",
+            "completion_for": "reserve",
+            "achieves": "booking.cancelled == true",
+            "mark_id": "M9",
+        },
+        0.9,
+    )
+    provider = _Provider([_live({"booking": {"confirmed": False}}, include_time=False)])
+    initial = LiveRuntimeObservation(
+        observation=Observation(accessibility_tree={"page_state": {"booking": {"confirmed": False}}}),
+        affordances=[
+            *[affordance for affordance in _affordances(include_time=False) if affordance.id == "dom_confirm"],
+            non_equivalent_visual,
+        ],
+    )
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": dom, "visual": visual},
+        CognitiveMap(task_id="goal-reroute-equivalence"),
+        observation_provider=provider,
+    )
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            initial,
+            goal_id="reserve",
+            goal_state="booking.confirmed == true",
+        )
+    )
+
+    assert result.state == RuntimeState.ESCALATED
+    assert len(dom.calls) == 1
+    assert visual.calls == []
+    assert [record.backend for record in manager.transition_ledger.records] == ["dom"]
+
+
 def test_failed_primitive_retry_keeps_retry_label_before_next_reroute_transition():
     failed = ExecutionResult("reserve", "dom", False, 1, 0.0, failure_reason="timeout")
     dom = _Executor("dom", [failed, failed])
