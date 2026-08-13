@@ -243,17 +243,30 @@ def run_episode(
         # between two observations of the same pixels.
         observer = VlmObserver(client=vision_client or available_vision_client(), max_calls=1)
         judgements: list[Any] = []
-        question = (
-            f"Is {proof_text or 'the effect of the action'} now shown in the "
-            f"{binding.state_entity} area of this page? Answer from the image only."
-        )
+        # Ask in the words the person used, not the page's internal hook. The
+        # cart shows "4K Monitor x1"; asking whether "monitor" is shown produced
+        # a confident False, because that is not what the region says.
+        # The question comes from the binding, because only the binding knows what
+        # its verification region looks like when the goal holds. Asking about the
+        # post title against a 32x32 arrow button got a confident False, and the
+        # model was right: the crop contained a triangle, not a title.
+        question = binding.visual_question(goal.parameters)
 
         def visual_second_opinion() -> Any:
+            # Spend the one paid call where a wrong answer would do damage: on
+            # the claim that the goal was reached. Before the action the DOM and
+            # the model would only agree that nothing has happened yet, which
+            # corroborates nothing and costs the same. This direction is the one
+            # that matters because a false success is the failure this project
+            # exists to prevent - an optimistic rollback shows a full cart in the
+            # DOM and an empty one on screen, and only a second modality sees it.
+            if not goal_reached():
+                return None
+
             # The region the goal names, not the whole viewport. A model asked
             # about the cart should be shown the cart: it is a better question,
-            # and an image is billed by area, so it is also roughly twenty times
-            # cheaper. Falls back to the full page when the region is not on the
-            # page yet, which is itself informative.
+            # and an image is billed by area, so it is also about fifty times
+            # cheaper. Falls back to the full page if the region is not rendered.
             image = session.screenshot_element(proof_region) or session.screenshot()
             judgement = observer.look(image, question, region=proof_region)
             judgements.append(judgement)

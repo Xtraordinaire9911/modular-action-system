@@ -255,9 +255,23 @@ def test_an_unsure_model_abstains_and_the_run_still_verifies_from_the_dom(tmp_pa
     assert episode.reached, "the DOM evidence alone should still carry the episode"
 
 
-def test_no_model_configured_is_reported_rather_than_assumed(tmp_path):
+def test_no_model_configured_is_reported_rather_than_assumed(tmp_path, monkeypatch):
+    """Passing no client is not enough: a real key on the machine would answer.
+
+    The point of this test is the unavailable path, so the keys have to actually
+    be absent - otherwise it silently becomes a second test of the happy path on
+    any machine where a key is configured, which is where it started failing.
+    """
+    for var in ("VLM_API_KEY", "DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    # Both entry points load the file, and the text path runs first - patching
+    # only the vision one let it put the key back before the vision client was
+    # asked for.
+    for module in ("src.perception.vlm_observer", "src.planner.intent_planner"):
+        monkeypatch.setattr(f"{module}.load_local_env", lambda *a, **k: [])
+
     episode = _intent_episode(None, tmp_path)
 
     assert episode.visual_evidence
     assert episode.visual_evidence[0]["source"] == "unavailable"
-    assert episode.reached
+    assert episode.reached, "the DOM evidence alone should still carry the episode"

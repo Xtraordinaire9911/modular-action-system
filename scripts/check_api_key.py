@@ -8,16 +8,15 @@ which client that resolves to, and - with ``--call`` - whether one minimal
 request actually succeeds.
 
 The ``--call`` check exists because "the key is set" and "the key works" are
-different facts, and only the second one matters on demo day. It sends a 1x1
-image, which is the smallest question a vision model can be asked: a few hundred
-tokens, well under a tenth of a cent even at the most expensive provider's rate.
+different facts, and only the second one matters on demo day.
 """
 
 from __future__ import annotations
 
 import argparse
-import base64
+import struct
 import sys
+import zlib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -26,11 +25,32 @@ from src.config.secrets import configured_key_names, describe_local_env  # noqa:
 
 _LINE = "=" * 78
 
-# A 1x1 transparent PNG. Small enough that the call costs nothing worth counting,
-# and real enough that a vision endpoint has to accept it as an image.
-_TINY_PNG = base64.b64decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx" "0gAAAABJRU5ErkJggg=="
-)
+# Errors that prove the key authenticated and the account can be served: the
+# request reached the service and was rejected on its contents, not on its
+# credentials. Worth separating, because "rejected" and "unauthorised" look
+# alike in a log and mean opposite things the day before a demo.
+_REACHED_THE_SERVICE = ("invalid_parameter", "InvalidParameter", "must be larger")
+
+
+def probe_png(size: int = 32) -> bytes:
+    """A small solid-white PNG, built from the standard library.
+
+    Deliberately not 1x1: qwen-vl rejects any side under 11 pixels with a 400
+    that reads like a broken key and is not one. 32x32 is a couple of image
+    tokens - the cheapest question a vision model will actually accept - and
+    solid white makes "is this blank" a question with a right answer, so a wrong
+    reply is distinguishable from a broken pipe.
+    """
+    row = bytes([0]) + bytes([255]) * (size * 3)  # filter byte, then RGB pixels
+    raw = row * size
+
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        crc = zlib.crc32(kind + payload) & 0xFFFFFFFF
+        return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", crc)
+
+    header = struct.pack(">2I5B", size, size, 8, 2, 0, 0, 0)  # 8-bit RGB, no interlace
+    signature = bytes([137, 80, 78, 71, 13, 10, 26, 10])
+    return signature + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
 
 
 def main() -> int:
@@ -69,23 +89,30 @@ def main() -> int:
         print("\n  No vision client to call. Fix the file first.\n")
         return 1
 
-    print(f"\n  calling {vision.name} with a 1x1 image ...")
+    image = probe_png()
+    print(f"\n  calling {vision.name} with a 32x32 image ({len(image)} bytes) ...")
     from src.perception.vlm_observer import VlmObserver
 
     observer = VlmObserver(client=vision, max_calls=1)
-    judgement = observer.look(_TINY_PNG, "Is this image blank? Answer from the image only.", region="1x1 probe")
+    judgement = observer.look(image, "Is this image completely blank? Answer from the image only.", region="32x32")
 
-    print(f"    source     : {judgement.source}")
+    print(f"    source      : {judgement.source}")
     print(f"    model       : {judgement.model}")
     if judgement.error:
         print(f"    error       : {judgement.error}")
     else:
         print(f"    answer      : {judgement.answer} at confidence {judgement.confidence:.2f}")
+        print(f"    evidence    : {judgement.evidence}")
         print(f"    latency     : {judgement.latency_ms:.0f} ms")
 
     if judgement.source in {"vlm", "low_confidence"}:
-        print("\n  The key works: a real model answered. Low confidence on a blank 1x1 is expected")
-        print("  and is the honest answer, so either source above means the round trip succeeded.\n")
+        print("\n  The key works: a real model answered. Low confidence on a blank square is the")
+        print("  honest answer, so either source above means the round trip succeeded.\n")
+        return 0
+    if any(marker in judgement.error for marker in _REACHED_THE_SERVICE):
+        print("\n  The key authenticated and the request reached the service; it was rejected on")
+        print("  the contents of this probe rather than on credentials. If you see this, the")
+        print("  probe needs fixing, not your key.\n")
         return 0
     print("\n  The call did not reach a model. See docs_setup/VLM_SETUP.md section 7.\n")
     return 1

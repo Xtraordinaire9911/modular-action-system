@@ -57,6 +57,7 @@ Reply with JSON only, no prose:
 
 Rules:
 - Judge only from the image. Do not assume what a page usually looks like.
+- The image is often a small crop of a page rather than a whole page. Answer about what is inside the crop; do not reason about which part of the page it came from, and do not answer false merely because you cannot see the surrounding context.
 - If the region is ambiguous, cut off, or you cannot see the relevant area, \
 answer with your best guess and a confidence below 0.5.
 """

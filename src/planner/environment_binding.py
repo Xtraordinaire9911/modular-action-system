@@ -32,7 +32,11 @@ class EnvironmentBinding:
     goal_state: str
     page: str  # file under env/mock_envs
     completion_template: str  # selector family; {subject} filled from parameters
-    subject_parameter: str  # which parameter names the thing acted on
+    # Which parameter names the thing acted on. A tuple because the intent layer
+    # is free to name it: the rule fallback emits "item"/"subject", and a model
+    # reading the same prompt may reasonably emit "target" or "post". Binding to
+    # one name made every model-derived forum goal unsupported.
+    subject_parameter: str
     success_selector: str  # the region whose text proves the goal
     success_template: str  # text that must appear there, {subject} filled the same way
     # The intent layer speaks in goal names ("item_in_cart"); the runtime checks
@@ -47,6 +51,16 @@ class EnvironmentBinding:
     # cannot point at is not actionable.
     parameter_controls: dict[str, str] = field(default_factory=dict)
     subject_aliases: dict[str, str] = field(default_factory=dict)
+    # Other names the same value may arrive under, tried in order after the
+    # primary one. Naming is the intent layer's business, not this layer's.
+    subject_parameter_aliases: tuple[str, ...] = ()
+    # What the verification region *looks like* once the goal holds, phrased so a
+    # model shown only that crop can answer it. This has to be declared per
+    # binding rather than derived from the subject: the cart region shows the
+    # item's name, while the upvote region is a 32x32 arrow whose only visible
+    # change is that it becomes filled. Asking about the post title against an
+    # arrow got a confident False, correctly - the crop had no title in it.
+    visual_claim: str = "an entry for {subject}"
 
     def subject_of(self, parameters: dict[str, Any]) -> str:
         """The concrete thing this goal is about, as the page names it.
@@ -56,7 +70,7 @@ class EnvironmentBinding:
         form, or a change of adjective all still resolve - and an unknown
         subject returns empty rather than a guess, so the caller can refuse.
         """
-        raw = str(parameters.get(self.subject_parameter, "")).strip().lower()
+        raw = self.raw_subject(parameters).lower()
         if not raw:
             return ""
         if raw in self.subject_aliases:
@@ -66,6 +80,20 @@ class EnvironmentBinding:
                 return hook
         tail = re.sub(r"[^a-z0-9 ]", "", raw).split()
         return tail[-1] if tail else ""
+
+    def raw_subject(self, parameters: dict[str, Any]) -> str:
+        """The subject as the person said it, under whichever name it arrived.
+
+        Kept separate from :meth:`subject_of` because the two have different
+        readers: the page wants its own hook ("monitor"), and a question put to a
+        vision model wants the words a person would use ("4K Monitor"). Asking
+        the model about the internal hook produced confident wrong answers.
+        """
+        for name in (self.subject_parameter, *self.subject_parameter_aliases):
+            value = str(parameters.get(name, "")).strip()
+            if value:
+                return value
+        return ""
 
     def completion_for(self, parameters: dict[str, Any]) -> str:
         """The selector whose use completes this goal, or empty if unresolved."""
@@ -80,6 +108,11 @@ class EnvironmentBinding:
     def success_region(self, parameters: dict[str, Any]) -> str:
         subject = self.subject_of(parameters)
         return self.success_selector.format(subject=subject) if subject else ""
+
+    def visual_question(self, parameters: dict[str, Any]) -> str:
+        """One question about the verification region, answerable from it alone."""
+        claim = self.visual_claim.format(subject=self.raw_subject(parameters) or "the expected item")
+        return f"Does this image show {claim}? Answer from the image only."
 
     def runtime_goal_state(self) -> str:
         """The goal as a predicate the runtime's condition evaluator can check."""
@@ -112,6 +145,7 @@ BINDINGS: dict[str, EnvironmentBinding] = {
         page="shopping.html",
         completion_template="button.add-cart-btn[data-id='{subject}']",
         subject_parameter="item",
+        subject_parameter_aliases=("target", "product", "subject"),
         # The cart, not the whole page. The product name is printed in the
         # listing before anything is added, so a body-text check reports the
         # goal as already met and the episode passes without acting.
@@ -137,6 +171,9 @@ BINDINGS: dict[str, EnvironmentBinding] = {
         page="forum.html",
         completion_template="button.upvote-btn[data-post='{subject}']",
         subject_parameter="subject",
+        subject_parameter_aliases=("target", "post", "item", "title"),
+        # The whole visible change is the button turning from outlined to filled.
+        visual_claim="a small triangular vote button that is filled in with a solid colour rather than plain or outlined",
         # A vote count is already non-empty before the action.  Scope the oracle
         # to the state-bearing class the page adds only after a successful vote;
         # otherwise an empty success string matches the initial count and the
