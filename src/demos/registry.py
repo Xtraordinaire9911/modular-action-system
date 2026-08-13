@@ -158,6 +158,15 @@ DEMOS: list[Demo] = [
         duration_hint="~40s",
     ),
     Demo(
+        name="model-value",
+        title="Do the models earn their place?",
+        summary="Measures whether the intent model understands what the rules cannot, and whether the vision "
+        "model catches a false success the DOM confirms. Needs a configured API key.",
+        command=("scripts/eval_model_value.py", "--reps", "3"),
+        requires=("browser",),
+        duration_hint="~2min",
+    ),
+    Demo(
         name="offline",
         title="Deterministic offline trace",
         summary="Runtime trace, postcondition checks and recovery metrics. No browser, no Docker.",

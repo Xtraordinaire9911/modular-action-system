@@ -66,6 +66,55 @@ a few cents. Three spend guards make a runaway loop impossible:
   screenshot digest);
 - an exhausted ceiling is reported as `budget_exhausted`, not silently skipped.
 
+## 2b. Does the model actually help? Measured, not assumed
+
+Connecting a model and having it help are different achievements.
+`scripts/eval_model_value.py` measures the second, with numbers that can come out
+against the model:
+
+```bash
+python scripts/eval_model_value.py --reps 5
+```
+
+**Intent** — five requests phrased to avoid the fallback's keywords while meaning
+the same thing:
+
+| group | rules | model |
+| --- | --- | --- |
+| needs interpretation | **0/5** | **4/5** |
+| rules already handle (regression check) | 2/2 | 2/2 |
+| out of scope (must refuse) | 2/2 | 2/2 |
+
+**Vision** — against `invisible_confirmation`, a fault that leaves the
+confirmation text in the DOM and paints over the region, so every text oracle in
+this project passes while a person sees nothing:
+
+| metric | value |
+| --- | --- |
+| detection (DOM wrong, n=5) | **100%** |
+| false alarm (DOM right, n=10) | **0%** |
+| accuracy on graded trials | 100% |
+| mean confidence, clear conditions | 1.00 |
+| mean confidence, region cut off mid-word | 0.90 |
+
+**The confidence number is nearly useless as a gate, and that is measured.** The
+model reports 1.00 on everything it can read and 0.90 when the text is literally
+cut in half. The threshold started at 0.55, which no answer ever approached, so
+the abstention path was decorative. It is now 0.95 — inside the range the model
+actually uses — and re-running this evaluation is how you set it for a different
+model.
+
+A confident wrong answer still passes that gate. What makes a wrong answer safe
+is that a disagreement becomes a conflict in the arbiter, which never consults
+confidence.
+
+The first run of this evaluation failed, which is the point of having it: the
+model correctly reported "the image is blank and shows no content" at confidence
+0.10, and the threshold discarded it, so detection was 0%. The cause was the
+prompt telling it to be unsure whenever it "could not see the relevant area" — a
+description a blank region satisfies. "I cannot tell" and "I can see plainly, and
+it is not there" are different, and the prompt now separates them.
+
 ## 3. Getting a key — step by step
 
 You need a phone number and an email. **No payment method is required for the

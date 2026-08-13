@@ -45,7 +45,22 @@ DEFAULT_LEDGER = Path("artifacts/vlm_observer/calls.jsonl")
 
 # Below this the answer is not used as evidence. A model that is unsure is more
 # useful as an abstention than as a coin flip the arbiter has to fuse.
-MIN_USABLE_CONFIDENCE = 0.55
+#
+# Calibrated from measurement rather than guessed. scripts/eval_model_value.py
+# puts qwen-vl-plus in front of four conditions and reads the confidence back:
+# it returns 1.00 on every clear one - the item plainly present, the region
+# plainly blank, a different item plainly shown - and 0.90 on a region cut off
+# mid-word. That is the whole range. The first value here was 0.55, which no
+# answer ever came near, so the gate could not fire and the abstention path was
+# decorative.
+#
+# Two consequences worth stating. This number is specific to this model: another
+# one with a different calibration needs the evaluation re-run, and a model that
+# reports 1.00 on everything cannot be gated on confidence at all. And the gate
+# is not what makes a wrong answer safe - a confident wrong answer passes it.
+# What makes it safe is that a disagreement becomes a conflict in the arbiter,
+# which does not consult confidence.
+MIN_USABLE_CONFIDENCE = 0.95
 
 _SYSTEM_PROMPT = """You are looking at a screenshot of a web page or device \
 dashboard and answering one factual question about what is visible.

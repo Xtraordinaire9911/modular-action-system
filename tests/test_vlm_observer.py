@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from src.perception.vlm_observer import VlmObserver
+from src.perception.vlm_observer import MIN_USABLE_CONFIDENCE, VlmObserver
 
 
 class _Client:
@@ -70,7 +70,8 @@ def test_the_judgement_identifies_which_image_it_came_from(tmp_path):
 
 
 def test_a_confident_answer_becomes_a_visual_assertion_with_the_model_s_confidence(tmp_path):
-    observer = _observer(_Client(_reply(True, 0.82)), tmp_path)
+    confident = 0.98  # above the calibrated threshold; see MIN_USABLE_CONFIDENCE
+    observer = _observer(_Client(_reply(True, confident)), tmp_path)
 
     judgement = observer.look(b"png", "Is the cart non-empty?", region="#cart-items")
     assertion = judgement.as_assertion("cart", "holds_item")
@@ -79,7 +80,7 @@ def test_a_confident_answer_becomes_a_visual_assertion_with_the_model_s_confiden
     assert assertion is not None
     assert assertion.source == "visual"
     assert assertion.value is True
-    assert assertion.confidence == 0.82, "the model's confidence, not 1.0"
+    assert assertion.confidence == confident, "the model's confidence, not 1.0"
     assert assertion.provenance["model"] == "fake-vision-1"
     assert assertion.provenance["screenshot_sha256"] == judgement.screenshot_sha256
     assert assertion.provenance["is_model_derived"] is True
@@ -87,7 +88,7 @@ def test_a_confident_answer_becomes_a_visual_assertion_with_the_model_s_confiden
 
 def test_confidence_is_never_rounded_up_to_certainty(tmp_path):
     """The state-tree channel stamps 1.0 on everything, which is why it is not used."""
-    observer = _observer(_Client(_reply(True, 0.6)), tmp_path)
+    observer = _observer(_Client(_reply(True, 0.97)), tmp_path)
 
     assertion = observer.look(b"png", "q").as_assertion("cart", "holds_item")
 
@@ -248,3 +249,19 @@ def test_nothing_configured_means_no_client(monkeypatch, tmp_path):
         monkeypatch.delenv(var, raising=False)
 
     assert available_vision_client() is None
+
+
+def test_the_threshold_sits_inside_the_range_the_model_actually_uses(tmp_path):
+    """A gate no answer ever approaches is not a gate.
+
+    The first value here was 0.55, and the measured range for qwen-vl-plus is
+    1.00 on clear evidence and 0.90 on a region cut off mid-word - so nothing
+    ever fell below it and the abstention path could not fire. These two pin the
+    calibrated boundary in both directions.
+    """
+    clear = _observer(_Client(_reply(True, 1.0)), tmp_path).look(b"a", "q")
+    murky = _observer(_Client(_reply(True, 0.90)), tmp_path).look(b"b", "q")
+
+    assert 0.9 < MIN_USABLE_CONFIDENCE <= 1.0, "the gate must sit inside the range the model uses"
+    assert clear.usable, "a plainly readable region must count as evidence"
+    assert not murky.usable, "a region cut off mid-word must not"

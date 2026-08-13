@@ -238,18 +238,22 @@ def test_a_real_screenshot_reaches_the_vision_model(tmp_path):
 
 
 def test_the_model_answer_is_recorded_with_its_own_confidence(tmp_path):
-    episode = _intent_episode(_FakeVision(True, 0.83), tmp_path)
+    # Inside the calibrated range: qwen-vl-plus reports 1.00 on clear evidence
+    # and 0.90 when the text is cut off, so the gate sits at 0.95. A fake below
+    # that is correctly treated as an abstention rather than as evidence.
+    confident = 0.98
+    episode = _intent_episode(_FakeVision(True, confident), tmp_path)
     used = [j for j in episode.visual_evidence if j["is_model_derived"]]
 
     assert used, "a confident answer was not treated as evidence"
-    assert used[0]["confidence"] == 0.83, "the model's confidence, not 1.0"
+    assert used[0]["confidence"] == confident, "the model's confidence, not 1.0"
     assert used[0]["model"] == "fake-vision-1"
     assert used[0]["screenshot_sha256"]
 
 
 def test_an_unsure_model_abstains_and_the_run_still_verifies_from_the_dom(tmp_path):
     """A hesitant model must not be able to break a goal the DOM confirms."""
-    episode = _intent_episode(_FakeVision(True, 0.2), tmp_path)
+    episode = _intent_episode(_FakeVision(True, 0.90), tmp_path)
 
     assert episode.visual_evidence and not any(j["is_model_derived"] for j in episode.visual_evidence)
     assert episode.reached, "the DOM evidence alone should still carry the episode"

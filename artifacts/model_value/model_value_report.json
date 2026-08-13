@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-14T00:02:49",
+  "at": "2026-08-14T00:33:30",
   "intent": {
     "cases": [
       {
@@ -120,6 +120,9 @@
         "confidence": 1.0,
         "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
         "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
         "agrees": true
       },
       {
@@ -129,6 +132,9 @@
         "confidence": 1.0,
         "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
         "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
         "agrees": true
       },
       {
@@ -138,24 +144,9 @@
         "confidence": 1.0,
         "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
         "source": "vlm",
-        "agrees": true
-      },
-      {
-        "condition": "clean",
-        "dom_says_met": true,
-        "model_says_met": true,
-        "confidence": 1.0,
-        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
-        "source": "vlm",
-        "agrees": true
-      },
-      {
-        "condition": "clean",
-        "dom_says_met": true,
-        "model_says_met": true,
-        "confidence": 1.0,
-        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
-        "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
         "agrees": true
       },
       {
@@ -165,6 +156,9 @@
         "confidence": 1.0,
         "evidence": "The image is completely blank with no visible content.",
         "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
         "agrees": false
       },
       {
@@ -174,6 +168,9 @@
         "confidence": 1.0,
         "evidence": "The image is completely blank with no visible content.",
         "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
         "agrees": false
       },
       {
@@ -183,34 +180,100 @@
         "confidence": 1.0,
         "evidence": "The image is completely blank with no visible content.",
         "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
         "agrees": false
       },
       {
-        "condition": "invisible_confirmation",
-        "dom_says_met": true,
-        "model_says_met": false,
-        "confidence": 1.0,
-        "evidence": "The image is completely blank with no visible content.",
-        "source": "vlm",
-        "agrees": false
+        "condition": "wrong_item",
+        "dom_says_met": false,
+        "model_says_met": null,
+        "confidence": 0.0,
+        "evidence": "",
+        "source": "error",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": null,
+        "agrees": null
       },
       {
-        "condition": "invisible_confirmation",
-        "dom_says_met": true,
+        "condition": "wrong_item",
+        "dom_says_met": false,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image is completely blank with no visible content.",
+        "evidence": "The image shows an entry for a Pro Laptop, not wireless headphones.",
         "source": "vlm",
-        "agrees": false
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "wrong_item",
+        "dom_says_met": false,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows an entry for a Pro Laptop, not wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is incomplete and does not specify headphones.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is incomplete and does not specify headphones.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is incomplete and does not specify headphones.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
       }
     ],
     "summary": {
-      "clean_trials": 5,
-      "faulted_trials": 5,
-      "abstentions": 0,
-      "agreement_rate": 1.0,
+      "trials": 12,
+      "accuracy": 1.0,
       "detection_rate": 1.0,
-      "false_alarm_rate": 0.0
+      "false_alarm_rate": 0.0,
+      "dom_wrong_trials": 3,
+      "dom_right_trials": 5,
+      "mean_confidence_clear": 1.0,
+      "mean_confidence_ambiguous": 0.9,
+      "no_answer": 4,
+      "transport_errors": 1,
+      "stability": {
+        "clean": 1.0,
+        "invisible_confirmation": 1.0,
+        "wrong_item": 1.0
+      }
     }
   }
 }
