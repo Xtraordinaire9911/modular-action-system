@@ -1,0 +1,18 @@
+{
+  "video": "artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4",
+  "preview": "artifacts/runtime_recovery_demo/preview.png",
+  "runtime_report": "artifacts/runtime_recovery_demo/runtime-report.json",
+  "scene_videos": [
+    "overlay obstruction",
+    "session expiry",
+    "optimistic rollback",
+    "DOM/visual disagreement",
+    "visible ineffective affordance"
+  ],
+  "verified_runtime_recoveries": 5,
+  "simulated_boundaries": [
+    "PlannerPort feedback",
+    "VLM feedback in DOM/visual scene"
+  ],
+  "claim": "The recording proves the Runtime recovery integration contract with explicitly fake upstream feedback; it does not prove a production Planner or VLM."
+}
