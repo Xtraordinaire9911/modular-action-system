@@ -447,7 +447,7 @@ def main() -> None:
     parser.add_argument(
         "--generalized-browser-recovery",
         action="store_true",
-        help="Run observation-driven browser recovery on dev/locked-holdout obstruction variants.",
+        help="Run capability-driven five-family browser recovery on dev/locked-holdout variants.",
     )
     parser.add_argument("--open-web-dev-repetitions", type=int, default=3)
     parser.add_argument("--open-web-holdout-repetitions", type=int, default=3)

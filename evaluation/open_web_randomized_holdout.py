@@ -237,6 +237,9 @@ def _parameters_for(
         return {
             "session_age_s": age_base + repetition * (17 if split == "dev" else 91) + rng.randint(0, 5),
             "auth_code": (401, 419, 440)[repetition % 3] if split == "dev" else (403, 498, 499)[repetition % 3],
+            "target_control_id": f"profile-{split}-{rng.randint(1000, 9999)}",
+            "recovery_control_id": f"session-{split}-{rng.randint(1000, 9999)}",
+            "recovery_label": ("Renew access", "Continue session", "Reconnect")[repetition % 3],
         }
     if case_id == "openweb-autocomplete-validation":
         submitted = (
@@ -255,6 +258,10 @@ def _parameters_for(
         return {
             "backend_status_code": codes[repetition % len(codes)],
             "rollback_delay_ms": delay_base + repetition * 25 + rng.randint(0, 9),
+            "target_control_id": f"commit-{split}-{rng.randint(1000, 9999)}",
+            "recovery_control_id": f"compensate-{split}-{rng.randint(1000, 9999)}",
+            "alternative_control_id": f"alternate-{split}-{rng.randint(1000, 9999)}",
+            "recovery_label": ("Undo pending state", "Restore checkout", "Reconcile order")[repetition % 3],
         }
     if case_id == "openweb-dom-visual-disagreement":
         dom_plan, visual_plan = ("premium", "basic") if split == "dev" else ("basic", "premium")
@@ -264,6 +271,9 @@ def _parameters_for(
             "visual_highlighted_plan": visual_plan,
             "highlight_width_px": widths[repetition % len(widths)],
             "highlight_hue": (260 + rng.randint(0, 15)) if split == "dev" else (15 + rng.randint(0, 15)),
+            "target_control_id": f"plan-{split}-{rng.randint(1000, 9999)}",
+            "recovery_control_id": f"probe-{split}-{rng.randint(1000, 9999)}",
+            "recovery_label": ("Recheck evidence", "Refresh visual state", "Observe selection")[repetition % 3],
         }
     if case_id == "openweb-visible-ineffective-affordance":
         code_base = 110 if split == "dev" else 710
@@ -271,6 +281,9 @@ def _parameters_for(
             "ack_code": f"ACK-{code_base + repetition}-{rng.randint(0, 9)}",
             "reported_clicks": repetition + 1,
             "control_revision": f"{split}-toggle-{rng.randint(100, 999)}",
+            "target_control_id": f"toggle-{split}-{rng.randint(1000, 9999)}",
+            "alternative_control_id": f"equivalent-{split}-{rng.randint(1000, 9999)}",
+            "recovery_label": ("Use settings API", "Apply through menu", "Enable via alternate")[repetition % 3],
         }
     raise ValueError(f"unsupported open-web failure case: {case_id}")
 

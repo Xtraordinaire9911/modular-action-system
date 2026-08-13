@@ -136,3 +136,36 @@ def test_missing_recovery_capability_has_one_deterministic_fail_closed_plan():
     assert (
         first.reason == "failure requires semantic replanning but no safe, verifiable recovery affordance was observed"
     )
+
+
+@pytest.mark.parametrize("relation", ["remediates", "compensates", "equivalent_to", "restores", "observes"])
+def test_same_planner_selects_every_generic_recovery_relation(relation):
+    target = "failed-target"
+    cognitive_map = CognitiveMap(task_id=f"relation-{relation}")
+    cognitive_map.add_affordance(_affordance(target, entity="failed-entity", grounding={}))
+    relation_target = "episode-x:transition-0001" if relation == "compensates" else target
+    cognitive_map.add_affordance(
+        _affordance(
+            "fresh-capability",
+            entity="recovery-capability",
+            grounding={
+                relation: relation_target,
+                "recovery_postcondition": "oracle.capability_effect == true",
+                "recovery_safe": True,
+                "idempotent": True,
+                "irreversible": False,
+            },
+        )
+    )
+
+    context = build_action_context(cognitive_map, request_type="goal_spec", failure=_failure(target))
+    plan = System2Planner(AffordanceController()).plan(context, goal_id="goal", goal_state="oracle.done == true")
+
+    assert not plan.requires_escalation
+    assert plan.actions == [
+        PrimitiveAction(
+            "click",
+            affordance_id="fresh-capability",
+            expected_effect="oracle.capability_effect == true",
+        )
+    ]

@@ -6,12 +6,19 @@
 
 ## 1. Current finding
 
-The six open-web fixtures currently prove **six-family failure detection**, not
-six-family successful recovery. Only overlay obstruction has a reachable,
-automated success path. Of the remaining fixtures, autocomplete is explicitly
+The six open-web fixtures prove six-family failure detection. Five supported
+families now also have bounded capability-driven recovery: overlay obstruction,
+session continuation, compensation plus alternate commit, visual-state
+re-observation, and equivalent-alternative execution. Autocomplete is explicitly
 outside Yixin's Runtime/recovery delivery scope: its suggestions and constraints
 belong to environment/perception, and choosing a valid value belongs to the
-Agent/Planner. The fixture remains only as a false-success detection witness.
+Agent/Planner. It remains only as a false-success detection witness.
+
+The formal controlled-browser run contains 30 episodes: five families × three
+dev and three holdout variants. All 30 return `verified_success`, perform exactly
+one semantic loopback through the same `System2Planner`, and link the final
+oracle to the last transition. This is controlled local-browser evidence, not
+unrestricted open-web or external-model evidence.
 
 The main chain defect was also architectural: after a primitive failure,
 `ContinuousInteractionManager` called a separate `PreconditionRepairPlanner`
@@ -52,15 +59,15 @@ time and request binding. Runtime checks the adapter's nonce/time contract and
 rejects missing, replayed, or pre-request observations; it does not pretend to
 independently reconstruct when an adapter captured the world.
 
-## 3. Environment-side gaps by failure family
+## 3. Bounded capability status by failure family
 
 | Family | What exists now | Missing environment/perception capability | Owner/dependency | Bounded outcome and present evidence |
 |---|---|---|---|---|
 | Overlay obstruction | Blocking element, structurally marked safe dismiss control, target, mutable oracle | No critical environment gap for the bounded case | Yixin consumes Ruiyao-style observation contract | **Verified:** failure -> Agent replan -> repair -> resume -> fresh goal oracle |
-| Session expiry | Expired session and stale save form | Login/token-refresh affordance, credential/HITL handoff, post-login continuation state, persisted backend oracle | Environment + Fadi supervised/PiP handoff; Runtime pause/resume contract is Yixin | **Target:** `user_action_required`; current six-family artifact only proves `terminal_failure` detection |
-| Optimistic UI rollback | UI reports submit while backend oracle stays false | Alternative commit route and/or real compensation/rollback operation with oracle-visible completion | Environment/Skill contract; Yixin executes supplied rollback | **Target:** false-success rejection then rollback/escalation; current artifact proves rejection only |
-| DOM/visual disagreement | Conflicting DOM and visual state | Real screenshot-derived visual assertion, provenance/confidence/timestamp, active probe that can resolve the conflict, action handlers that update oracle | Ruiyao VLM/perception + environment | **Target:** active perception/escalation; current artifact is scripted conflict detection only |
-| Visible ineffective affordance | Accepted click with no state change | Equivalent alternative affordance/backend, repair action, or explicit unsupported-state signal | Environment/Skill contract | **Target:** replan/escalation; current artifact proves ineffective-action detection only |
+| Session expiry | Expired session, stale form, observed idempotent restoration capability, persisted oracle | Real credentials/provider-specific login remain external | Environment authors capability; Agent selects; Runtime executes/verifies | **Verified bounded case:** failed save -> restore -> resumed save -> oracle |
+| Optimistic UI rollback | False optimistic state, observed compensation relation, alternative commit, backend oracle | Production compensation still depends on a real Skill/environment contract | Environment/Skill contract; Agent selects; Runtime executes/verifies | **Verified bounded case:** false success -> compensation -> alternate commit -> oracle |
+| DOM/visual disagreement | Observed recheck capability plus VLM-to-active-perception adapter with confidence/provenance | No checked-in external-provider VLM run | Perception supplies evidence; Runtime fuses; Agent selects semantic capability | **Verified bounded browser recheck; VLM probe contract verified with fake client** |
+| Visible ineffective affordance | Accepted ineffective click plus observed `equivalent_to` alternative and mutable oracle | Production alternatives remain environment-authored | Environment declares equivalence; Agent selects; Runtime executes/verifies | **Verified bounded case:** ineffective action -> equivalent route -> oracle |
 
 Adding those capabilities is not “cheating” if they are environment contracts
 available to any agent and varied in held-out tests. It is cheating if Runtime
@@ -112,14 +119,13 @@ or expected answer.
 1. The production model-backed implementation of `System2Planner` is absent;
    the current default is a declared deterministic fallback. This belongs to
    the Agent/Planner owner, not to Yixin's model responsibility.
-2. There is no resumable `user_action_required -> fresh observation -> resume`
-   protocol for session login/HITL.
-3. Rollback availability is not yet uniformly derived from executable Skill
-   contracts in the GoalSpec path.
-4. Cross-family browser evaluation still has fixture-specific action/oracle
-   adapters and the generalized recovery runner explicitly filters to overlay.
-5. DOM/visual conflict does not yet receive real VLM evidence in this suite.
-6. `src/planner/system2_recovery.py` is a legacy planner-layer request builder
+2. Real credential login/token refresh and production compensation still depend
+   on environment/Skill providers; bounded controls are contract witnesses.
+3. A VLM active-perception adapter is implemented and tested, but no checked-in
+   artifact proves an external VLM provider was configured and run.
+4. Real unrestricted open-web evidence is absent; the runner uses controlled
+   local fixtures even though production planning has no family/case branch.
+5. `src/planner/system2_recovery.py` is a legacy planner-layer request builder
    used by `PlanningGate`, not by the CIM GoalSpec execution loop. It should be
    renamed or unified by its planner owner later to avoid architectural naming
    confusion; Runtime does not invoke it.
@@ -153,12 +159,12 @@ cancellation; and turning a missing capability into synthetic success.
 | Gap | Priority | Concrete acceptance criterion |
 |---|---:|---|
 | Agent replan state-machine properties | P0 | Generated/parameterized tests cover success, replan, ambiguity, stale proposal, budget, cancellation, and no production fixture branches |
-| HITL pause/resume | P1 | Typed token; no execution while paused; resume requires fresh observation and revalidation |
-| Goal-path rollback contract | P1 | Compensation is executable, idempotency is declared, checkpoint restoration is independently verified |
-| Active-perception recovery | P1, dependency | Conflict context reaches Agent; probe result has source/provenance/time; unresolved conflict remains blocked |
-| Alternative-affordance replanning | P1 | Agent can choose an equivalent newly observed affordance; Runtime validates equivalence/safety and prevents loops |
-| Evaluation de-specialization | P1 | One environment-adapter protocol runs all supported families; fixture ID remains evaluation metadata only |
-| Held-out generative validation | P1 | New labels/IDs/layouts/timings/state variants pass without new production branches |
+| HITL pause/resume | Done | Typed token; no execution while paused; resume requires fresh observation and revalidation |
+| Goal-path compensation witness | Done, bounded | Compensation is executable, idempotency is declared, alternate commit is independently verified |
+| Active-perception recovery | Done, bounded | VLM probe result has source/provenance/time; unresolved or ambiguous evidence remains blocked |
+| Alternative-affordance replanning | Done, bounded | Agent chooses an observed equivalent relation and Runtime prevents stale execution |
+| Evaluation de-specialization | Done for supported local scope | One environment-adapter protocol runs five families; fixture ID remains evaluation metadata only |
+| Held-out generative validation | Done for supported local scope | New labels/IDs/timings/state variants pass without new production branches |
 
 ## 7. Causal model for repeated reopenings
 
@@ -208,11 +214,8 @@ state-machine/invariant tests.
 
 ## 10. Closure evidence required
 
-Implementation may be called complete when the typed handoff, loopback, tests,
-and docs land and the bounded implementation checks pass. Broader recovery
-evidence remains open for the four in-scope families until their required
-environment/perception capabilities are supplied (or explicitly declared
-unsupported), all supported outcomes pass held-out state-machine and browser
-cases, full CI/live checks pass, and an independent fresh-context review finds
-no hidden fixture branch or duplicated success authority. Autocomplete does not
-gate Yixin's closure.
+The bounded five-family implementation may be called complete when full CI/live
+checks and fresh review agree with the 30-episode evidence. Broader production
+or open-web closure still requires real provider capabilities, external VLM
+evidence, and non-fixture environments. Autocomplete does not gate Yixin's
+closure.

@@ -48,6 +48,10 @@ _SAFE_GROUNDING_KEYS = frozenset(
         "safety_level",
         "recovery_role",
         "remediates",
+        "compensates",
+        "equivalent_to",
+        "restores",
+        "observes",
         "recovery_postcondition",
         "recovery_safe",
     ]

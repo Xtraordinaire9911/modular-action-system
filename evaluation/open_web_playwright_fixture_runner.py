@@ -304,6 +304,29 @@ async def _apply_fixture_variant(
                             `${p.ack_code}: ${p.reported_clicks} click(s) accepted; notifications remain disabled.`;
                     };
                 }
+
+                const target = document.querySelector('[data-capability-target="true"]');
+                if (target && p.target_control_id) {
+                    target.setAttribute('data-affordance-id', p.target_control_id);
+                }
+                const recovery = document.querySelector('[data-recovery-role]');
+                if (recovery && p.recovery_control_id) {
+                    recovery.setAttribute('data-affordance-id', p.recovery_control_id);
+                    recovery.textContent = p.recovery_label || recovery.textContent;
+                }
+                const alternative = document.querySelector('[data-equivalent-to]');
+                if (alternative && p.alternative_control_id) {
+                    alternative.setAttribute('data-affordance-id', p.alternative_control_id);
+                    alternative.textContent = p.recovery_label || alternative.textContent;
+                }
+                if (target && p.target_control_id) {
+                    for (const relation of ['data-remediates', 'data-compensates',
+                                            'data-equivalent-to', 'data-restores', 'data-observes']) {
+                        document.querySelectorAll(`[${relation}]`).forEach((node) => {
+                            node.setAttribute(relation, p.target_control_id);
+                        });
+                    }
+                }
             }""",
             payload,
         )

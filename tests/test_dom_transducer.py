@@ -134,3 +134,27 @@ def test_a_selector_that_cannot_be_narrowed_says_so_in_its_confidence():
 def test_a_unique_class_selector_keeps_its_confidence():
     pam = DomTransducer().transduce('<button class="only">Go</button>', page_id="one")
     assert pam.affordances[0].confidence == 0.7
+
+
+def test_transducer_exposes_generic_recovery_capability_relations():
+    html = """
+    <button data-affordance-id="goal-x" data-entity-id="goal">Try</button>
+    <button data-affordance-id="cap-y"
+            data-recovery-role="capability"
+            data-compensates="goal-x,transition-z"
+            data-recovery-postcondition="oracle.restored == true"
+            data-recovery-safe="true"
+            data-idempotent="true"
+            data-irreversible="false"
+            data-safety-level="low">Recover</button>
+    """
+
+    pam = DomTransducer().transduce(html, page_id="capabilities")
+    recovery = pam.by_id("cap-y")
+
+    assert recovery is not None
+    assert recovery.locator["compensates"] == ["goal-x", "transition-z"]
+    assert recovery.locator["recovery_postcondition"] == "oracle.restored == true"
+    assert recovery.locator["recovery_safe"] is True
+    assert recovery.locator["idempotent"] is True
+    assert recovery.locator["irreversible"] is False

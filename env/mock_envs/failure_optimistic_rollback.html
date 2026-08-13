@@ -4,14 +4,46 @@
   <meta charset="utf-8" />
   <title>Open-web mock: optimistic UI backend mismatch</title>
 </head>
-<body data-case-id="openweb-optimistic-rollback"
-      data-oracle-state='{"ui_order_submitted":true,"backend_order_confirmed":false}'>
+<body data-case-id="openweb-optimistic-rollback" data-goal-oracle-key="backend_order_confirmed"
+      data-oracle-state='{"ui_order_submitted":false,"backend_order_confirmed":false,"compensated":false}'>
   <h1>Checkout</h1>
-  <button id="place-order" type="button"
+  <button id="place-order" type="button" data-capability-target="true"
+          data-affordance-id="primary-commit"
+          data-completion-for="confirm_plan"
+          data-achieves="oracle.expected_effect_satisfied == true"
           onclick="document.getElementById('ui-status').textContent='Order submitted'; document.getElementById('api-status').textContent='Backend confirmation failed'">
     Place order
   </button>
+  <button id="compensate-order" type="button"
+          data-affordance-id="compensate-order"
+          data-recovery-role="compensate"
+          data-compensates="primary-commit"
+          data-recovery-postcondition="oracle.compensated == true"
+          data-recovery-safe="true" data-idempotent="true"
+          data-irreversible="false" data-safety-level="low">Restore checkout</button>
+  <button id="alternate-order" type="button" hidden
+          data-affordance-id="alternate-commit"
+          data-completion-for="confirm_plan"
+          data-achieves="oracle.expected_effect_satisfied == true">Confirm through alternate route</button>
   <p id="ui-status">Order not submitted.</p>
   <p id="api-status" data-testid="backend-oracle">Backend pending.</p>
+  <script>
+    const readOracle = () => JSON.parse(document.body.getAttribute('data-oracle-state') || '{}');
+    const writeOracle = (update) => document.body.setAttribute(
+      'data-oracle-state', JSON.stringify({...readOracle(), ...update})
+    );
+    document.querySelector('#place-order').addEventListener('click', () => {
+      writeOracle({ui_order_submitted: true, backend_order_confirmed: false});
+    });
+    document.querySelector('#compensate-order').addEventListener('click', () => {
+      writeOracle({ui_order_submitted: false, compensated: true});
+      document.querySelector('#place-order').remove();
+      document.querySelector('#alternate-order').hidden = false;
+    });
+    document.querySelector('#alternate-order').addEventListener('click', () => {
+      writeOracle({backend_order_confirmed: true});
+      document.querySelector('#api-status').textContent = 'Backend confirmed through alternate route.';
+    });
+  </script>
 </body>
 </html>

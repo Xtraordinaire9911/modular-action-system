@@ -76,9 +76,8 @@ class AffordanceController:
         candidates: list[tuple[int, float, RuntimeAffordance, str]] = []
         for affordance in context.affordances:
             grounding = affordance.grounding
-            role = str(grounding.get("recovery_role") or "")
             postcondition = str(grounding.get("recovery_postcondition") or "")
-            if role not in {"clear_obstruction", "restore_precondition"} or not postcondition:
+            if not postcondition:
                 continue
             if grounding.get("recovery_safe") is not True:
                 continue
@@ -86,12 +85,7 @@ class AffordanceController:
                 continue
             if grounding.get("safety_level") != "low":
                 continue
-            relations = _string_values(grounding.get("remediates"))
-            relation_strength = 0
-            if failure.failed_affordance_id in relations:
-                relation_strength = 2
-            elif failure.failed_entity_id and failure.failed_entity_id in relations:
-                relation_strength = 1
+            relation_strength = _recovery_relation_strength(grounding, failure)
             if relation_strength:
                 candidates.append((relation_strength, affordance.confidence, affordance, postcondition))
 
@@ -119,7 +113,7 @@ class AffordanceController:
                     expected_effect=postcondition,
                 )
             ],
-            reason="existing Agent/Planner selected a safe observed precondition repair from fresh failure context",
+            reason="existing Agent/Planner selected a related, verifiable recovery capability from fresh evidence",
         )
 
     def plan_task(self, context: ActionContext, task_plan: RuntimeTaskPlan) -> PrimitivePlan:
@@ -178,3 +172,24 @@ def _string_values(value: object) -> set[str]:
     if isinstance(value, list | tuple | set):
         return {str(item).strip() for item in value if str(item).strip()}
     return set()
+
+
+def _recovery_relation_strength(grounding: dict[str, Any], failure: Any) -> int:
+    targets = {
+        failure.failed_affordance_id,
+        failure.failed_entity_id,
+        failure.expected_effect,
+        failure.transition_id,
+    }
+    targets.discard("")
+    strongest = 0
+    for relation, weight in (
+        ("compensates", 5),
+        ("equivalent_to", 4),
+        ("remediates", 3),
+        ("restores", 2),
+        ("observes", 1),
+    ):
+        if _string_values(grounding.get(relation)) & targets:
+            strongest = max(strongest, weight)
+    return strongest

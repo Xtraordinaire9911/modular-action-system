@@ -4,17 +4,46 @@
   <meta charset="utf-8" />
   <title>Open-web mock: session expiry</title>
 </head>
-<body data-case-id="openweb-session-expiry"
+<body data-case-id="openweb-session-expiry" data-goal-oracle-key="profile_update_persisted"
       data-oracle-state='{"session_valid":false,"profile_update_persisted":false}'>
   <h1>Profile editor</h1>
   <p id="session-banner">Session expired, but stale form content is still visible.</p>
   <form id="profile-form">
     <label>Display name <input id="display-name" value="Yixin" /></label>
-    <button id="save-profile" type="button"
+    <button id="save-profile" type="button" data-capability-target="true"
+            data-affordance-id="profile-save"
+            data-completion-for="confirm_plan"
+            data-achieves="oracle.expected_effect_satisfied == true"
             onclick="document.getElementById('status').textContent='Redirected to login; update not persisted.'">
       Save profile
     </button>
+    <button id="renew-session" type="button"
+            data-affordance-id="session-renewal"
+            data-recovery-role="restore_precondition"
+            data-remediates="profile-save"
+            data-restores="profile-save"
+            data-recovery-postcondition="oracle.session_valid == true"
+            data-recovery-safe="true" data-idempotent="true"
+            data-irreversible="false" data-safety-level="low">
+      Renew session
+    </button>
   </form>
   <p id="status">Unsaved changes.</p>
+  <script>
+    const readOracle = () => JSON.parse(document.body.getAttribute('data-oracle-state') || '{}');
+    const writeOracle = (update) => document.body.setAttribute(
+      'data-oracle-state', JSON.stringify({...readOracle(), ...update})
+    );
+    document.querySelector('#renew-session').addEventListener('click', () => {
+      writeOracle({session_valid: true});
+      document.querySelector('#status').textContent = 'Session renewed; original task can continue.';
+    });
+    document.querySelector('#save-profile').addEventListener('click', () => {
+      if (readOracle().session_valid) {
+        writeOracle({profile_update_persisted: true});
+        document.querySelector('#status').textContent = 'Profile update persisted.';
+      }
+    });
+  </script>
 </body>
 </html>

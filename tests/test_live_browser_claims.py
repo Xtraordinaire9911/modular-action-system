@@ -191,8 +191,8 @@ def test_randomized_open_web_holdout_changes_real_page_state_and_detects_all_fai
         assert any(value in observed.values() for value in expected.values())
 
 
-def test_generalized_recovery_discovers_unseen_controls_and_verifies_the_original_goal(tmp_path):
-    """Claim: recovery follows fresh geometry/semantics, not a fixture-specific script."""
+def test_generalized_recovery_uses_one_capability_contract_across_failure_families(tmp_path):
+    """Claim: one relation-driven Agent policy recovers five held-out families."""
     import json
 
     from evaluation.generalized_browser_recovery import run_generalized_browser_recovery_suite
@@ -206,39 +206,37 @@ def test_generalized_recovery_discovers_unseen_controls_and_verifies_the_origina
     )
     report = json.loads((tmp_path / "generalized_browser_recovery_report.json").read_text())
 
-    assert report["summary"] == {
-        "all_recovered_and_verified": True,
-        "dev_count": 1,
-        "episode_count": 2,
-        "final_verified_count": 2,
-        "holdout_count": 1,
-        "recovery_success_count": 2,
-    }
+    summary = report["summary"]
+    assert summary["all_recovered_and_verified"] is True
+    assert summary["episode_count"] == 10
+    assert summary["dev_count"] == summary["holdout_count"] == 5
+    assert summary["final_verified_count"] == summary["recovery_success_count"] == 10
+    assert summary["failure_family_count"] == 5
+    assert all(row["episodes"] == row["verified"] == 2 for row in summary["per_family"].values())
     controls = {
         (
             row["variant"]["parameters"]["remediation_control_id"],
             row["variant"]["parameters"]["remediation_label"],
         )
         for row in report["episodes"]
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction"
     }
     assert len(controls) == 2
     for row in report["episodes"]:
         transitions = row["transitions"]
-        assert [transition["recovery_action"] for transition in transitions] == [
-            "replan",
-            "agent_replan",
-            "resume_after_replan",
-        ]
+        assert [transition["recovery_action"] for transition in transitions[:2]] == ["replan", "agent_replan"]
         assert transitions[0]["postcondition_passed"] is False
         assert transitions[1]["postcondition_passed"] is True
-        assert transitions[2]["postcondition_passed"] is True
         assert transitions[1]["recovery_of_transition_id"] == transitions[0]["transition_id"]
-        assert [transition["recovery_tier"] for transition in transitions] == [2, 2, 2]
-        assert transitions[2]["recovery_of_transition_id"] == transitions[1]["transition_id"]
-        assert row["runtime"]["final_verification_transition_id"] == transitions[2]["transition_id"]
-        observations = row["browser"]["obstruction_observations"]
-        assert [observation["blocked"] for observation in observations] == [True, False, False]
-        assert row["browser"]["oracles"][-1]["primary_action_completed"] is True
+        assert all(transition["recovery_tier"] == 2 for transition in transitions)
+        if len(transitions) == 3:
+            assert transitions[2]["recovery_action"] == "resume_after_replan"
+            assert transitions[2]["postcondition_passed"] is True
+            assert transitions[2]["recovery_of_transition_id"] == transitions[1]["transition_id"]
+        assert row["runtime"]["final_verification_transition_id"] == transitions[-1]["transition_id"]
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction":
+            observations = row["browser"]["obstruction_observations"]
+            assert [observation["blocked"] for observation in observations] == [True, False, False]
         assert len(row["failures"]) == 1
         assert row["failures"][0]["recovery_action"] == "replan"
         assert row["failures"][0]["recovery_success"] is True

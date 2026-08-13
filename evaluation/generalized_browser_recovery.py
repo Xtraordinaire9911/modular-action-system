@@ -136,6 +136,7 @@ class _GeneralizedRecoveryAdapter:
     async def observe(self, request: ObservationRequest) -> LiveRuntimeObservation:
         self.requests.append(request)
         oracle = await _read_fixture_oracle(self.session)
+        goal_satisfied = await _read_declared_goal_oracle(self.session, oracle)
         self.oracles.append(dict(oracle))
         html = await _maybe_await(self.session.evaluate("() => document.documentElement.outerHTML"))
         page = DomTransducer().transduce(
@@ -177,8 +178,9 @@ class _GeneralizedRecoveryAdapter:
             observation=Observation(
                 device_states={
                     "oracle": {
-                        "expected_effect_satisfied": bool(oracle.get("primary_action_completed")),
+                        "expected_effect_satisfied": goal_satisfied,
                         "state": oracle,
+                        **oracle,
                     }
                 },
                 assertions=assertions,
@@ -215,6 +217,8 @@ class _GeneralizedRecoveryAdapter:
 
 
 def _bind_goal_affordance(affordance: Affordance) -> Affordance:
+    if affordance.locator.get("completion_for") or affordance.locator.get("achieves"):
+        return affordance
     if affordance.locator.get("selector") != _TARGET_SELECTOR:
         return affordance
     locator = {
@@ -225,6 +229,13 @@ def _bind_goal_affordance(affordance: Affordance) -> Affordance:
         "stable_key": "goal:confirm-plan",
     }
     return replace(affordance, locator=locator)
+
+
+async def _read_declared_goal_oracle(session: BrowserSessionLike, oracle: dict[str, Any]) -> bool:
+    key = await _maybe_await(session.evaluate("() => document.body.getAttribute('data-goal-oracle-key') || ''"))
+    if isinstance(key, str) and key:
+        return bool(oracle.get(key))
+    return bool(oracle.get("primary_action_completed"))
 
 
 def _execution_result(
@@ -256,6 +267,11 @@ def _call_payload(skill_call: SkillCall, affordance: Affordance, result: Executi
         "selector": affordance.locator.get("selector"),
         "success": result.success,
         "failure_reason": result.failure_reason or "",
+        "recovery_relations": {
+            key: affordance.locator[key]
+            for key in ("remediates", "compensates", "equivalent_to", "restores", "observes")
+            if key in affordance.locator
+        },
     }
 
 
@@ -291,8 +307,6 @@ async def _run_generalized_browser_recovery_suite_async(
     factory = session_factory or _default_session_factory
     rows: list[dict[str, Any]] = []
     for variant in variants:
-        if variant.case.case_id != "openweb-overlay-obstruction":
-            raise ValueError("generalized recovery suite currently evaluates obstruction variants only")
         fixture_path = (Path("env/mock_envs") / variant.case.html_fixture).resolve()
         url = fixture_path.as_uri()
         session = await _maybe_await(factory(url, headless=headless, action_timeout_ms=action_timeout_ms))
@@ -357,10 +371,10 @@ async def _run_generalized_browser_recovery_suite_async(
             "browser_execution": True,
             "canonical_cim_execution": True,
             "policy_inputs": [
-                "fresh obstruction measurement",
-                "observed remediation affordance relation",
-                "safety and reversibility metadata",
-                "fresh remediation postcondition",
+                "fresh typed failure context",
+                "observed generic recovery-capability relation",
+                "declared reversibility and idempotency metadata",
+                "fresh capability postcondition",
                 "fresh original-goal oracle",
             ],
             "policy_forbidden_inputs": [
@@ -370,10 +384,13 @@ async def _run_generalized_browser_recovery_suite_async(
                 "known remediation selector",
                 "product or button text",
             ],
-            "claim_boundary": "controlled local-browser holdout evidence; not unrestricted open-web evidence",
+            "claim_boundary": (
+                "controlled local-browser capability holdout evidence; autocomplete and unrestricted open web excluded"
+            ),
         },
         "summary": {
             "episode_count": len(rows),
+            "failure_family_count": len({row["variant"]["case"]["failure_class"] for row in rows}),
             "dev_count": sum(1 for row in rows if row["variant"]["split"] == "dev"),
             "holdout_count": sum(1 for row in rows if row["variant"]["split"] == "holdout"),
             "recovery_success_count": sum(1 for row in rows if row["runtime"]["recovery_succeeded"]),
@@ -381,6 +398,18 @@ async def _run_generalized_browser_recovery_suite_async(
             "all_recovered_and_verified": all(
                 row["runtime"]["recovery_succeeded"] and row["runtime"]["final_outcome_verified"] for row in rows
             ),
+            "per_family": {
+                family: {
+                    "episodes": sum(1 for row in rows if row["variant"]["case"]["failure_class"] == family),
+                    "verified": sum(
+                        1
+                        for row in rows
+                        if row["variant"]["case"]["failure_class"] == family
+                        and row["runtime"]["final_outcome_verified"]
+                    ),
+                }
+                for family in sorted({row["variant"]["case"]["failure_class"] for row in rows})
+            },
         },
         "episodes": rows,
         "artifacts": {
@@ -411,7 +440,7 @@ def run_generalized_browser_recovery_suite(
         variant
         for split, repetitions in (("dev", dev_repetitions), ("holdout", holdout_repetitions))
         for variant in build_open_web_failure_variants(split, repetitions=repetitions)  # type: ignore[arg-type]
-        if variant.case.case_id == "openweb-overlay-obstruction"
+        if variant.case.case_id != "openweb-autocomplete-validation"
     ]
     return asyncio.run(
         _run_generalized_browser_recovery_suite_async(

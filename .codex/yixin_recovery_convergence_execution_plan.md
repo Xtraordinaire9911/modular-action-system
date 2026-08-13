@@ -10,10 +10,26 @@ fixture-specific decisions in Runtime.
 
 ## Status
 
-**Bounded Agent/Runtime implementation complete and verified; broader recovery
-evidence is not closed.** Existing obstruction repair proves one supported
-recovery family. Autocomplete is excluded from Yixin's delivery scope; four
-other in-scope environment capabilities remain external dependencies.
+**Five-family bounded recovery implementation and internal validation
+complete; independent fresh-context closure review remains pending.**
+Autocomplete is excluded from Yixin's delivery scope. One generic
+capability contract now covers obstruction, session continuation, compensation,
+visual-state re-observation, and equivalent-alternative recovery without
+failure-family branches in production planning/runtime code.
+
+## Current expansion deliverable
+
+```text
+fresh FailureContext + observed capabilities
+  -> same System2Planner chooses one semantic recovery action
+  -> Runtime validates and executes a generic primitive
+  -> fresh capability postcondition
+  -> same Agent resumes the original goal
+  -> final independent oracle
+```
+
+The four newly added scenarios, together with obstruction, are witnesses for
+one contract rather than separate Runtime handlers.
 
 ## Constraints
 
@@ -40,8 +56,15 @@ other in-scope environment capabilities remain external dependencies.
 | Extend the existing ActionContext/Planner input with fresh failure evidence and attempted-action history | completed | `src/runtime/action_context.py` |
 | Preserve bounded transparent Runtime recovery and deterministic fail-closed behavior | completed | No replan without a fresh observation; retry/reroute remain bounded |
 | Add state-machine/property tests plus representative browser integration witnesses | completed for bounded supported scope | Generated IDs/labels, ambiguity, stale proposal/observation, linked Agent loopback; Chromium holdout |
-| Reconcile README, STATUS, artifacts, demo claims, and ownership boundaries | completed | README/STATUS/dossier separate one recovered family, four in-scope dependencies, and the upstream autocomplete witness |
+| Reconcile README, STATUS, artifacts, demo claims, and ownership boundaries | completed | README/STATUS/dossier describe five bounded recovery families, exclude autocomplete, and preserve real-open-web/external-VLM claim boundaries |
 | Run focused, full, live-browser, anti-cheating, and fresh-context review | completed for implementation scope | Fresh reviews produced adversarial counterexamples; nonce/capture binding, cancellation/deadline ordering, reroute freshness, primitive compatibility, final-oracle linkage, and metadata handling were corrected and revalidated |
+| Define the generic recovery-capability algebra and planner selection rules | completed | Typed `restores`, `remediates`, `compensates`, `equivalent_to`, `observes`, and verifiable postcondition relations |
+| Expose four capabilities from browser observations without fixture/family inputs | completed | Session continuation, compensation, active-perception probe, equivalent alternative |
+| Generalize the browser recovery runner beyond obstruction | completed | One adapter protocol runs five families; no production/planner case-ID branch |
+| Add randomized dev/holdout witnesses for all four capabilities | completed | 30/30 verified; one same-Agent replan each; final oracle linked |
+| Produce a Friday demo artifact and concise code walkthrough map | completed | `CAPABILITY_RECOVERY_DEMO.md`; one live-browser command, report, transition/failure ledgers, screenshots |
+| Re-run full/static/live checks and reconcile claims | completed | Ruff, Black, mypy, 624 non-live tests, 14 Chromium tests, formal 30-episode run, anti-specialization scan |
+| Obtain independent fresh-context closure review | pending | Required before changing the bounded implementation status to architecture closure |
 
 ## Files modified
 
@@ -55,18 +78,19 @@ other in-scope environment capabilities remain external dependencies.
 - `src/runtime/live_observation.py` — typed live observation response contract.
 - `src/recovery/recovery_cascade.py` — explicit replan disposition.
 - `src/perception/browser_obstruction.py` — measured obstruction/recovery-affordance observation.
-- `evaluation/generalized_browser_recovery.py` — real-browser one-family recovery evidence.
+- `evaluation/generalized_browser_recovery.py` — real-browser five-family recovery evidence.
+- `src/perception/vlm_active_probe.py` — fresh screenshot/VLM conflict probe adapter.
 - `tests/test_agent_runtime_replan_contract.py` — invariant/property witnesses.
 - `tests/test_precondition_repair.py` — integrated same-planner recovery witnesses.
 
 ## Latest verification
 
 - Ruff: all files pass.
-- Black: 264 files compliant.
-- mypy: 115 source files pass.
-- pytest non-live: 616 passed, 14 deselected.
-- pytest live Chromium: 14 passed, 616 deselected.
-- Formal obstruction recovery: 3 dev + 3 locked holdout, 6/6 recovered and final-oracle verified.
+- Black: 266 files compliant.
+- mypy: 116 source files pass.
+- pytest non-live: 624 passed, 14 deselected.
+- pytest live Chromium: 14 passed, 624 deselected.
+- Formal capability recovery: five families × 3 dev + 3 locked holdout, 30/30 recovered and final-oracle verified.
 - Every formal episode has exactly one Agent replan and explicitly links
   `final_verification_transition_id` to its last transition.
 - Production anti-cheat scan: no open-web case ID, fixture family, known selector,
