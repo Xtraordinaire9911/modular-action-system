@@ -8,9 +8,10 @@
 
 The six open-web fixtures currently prove **six-family failure detection**, not
 six-family successful recovery. Only overlay obstruction has a reachable,
-automated success path. The other five environments either omit the capability
-needed to recover or do not expose enough authoritative evidence to choose and
-verify a recovery.
+automated success path. Of the remaining fixtures, autocomplete is explicitly
+outside Yixin's Runtime/recovery delivery scope: its suggestions and constraints
+belong to environment/perception, and choosing a valid value belongs to the
+Agent/Planner. The fixture remains only as a false-success detection witness.
 
 The main chain defect was also architectural: after a primitive failure,
 `ContinuousInteractionManager` called a separate `PreconditionRepairPlanner`
@@ -57,7 +58,6 @@ independently reconstruct when an adapter captured the world.
 |---|---|---|---|---|
 | Overlay obstruction | Blocking element, structurally marked safe dismiss control, target, mutable oracle | No critical environment gap for the bounded case | Yixin consumes Ruiyao-style observation contract | **Verified:** failure -> Agent replan -> repair -> resume -> fresh goal oracle |
 | Session expiry | Expired session and stale save form | Login/token-refresh affordance, credential/HITL handoff, post-login continuation state, persisted backend oracle | Environment + Fadi supervised/PiP handoff; Runtime pause/resume contract is Yixin | **Target:** `user_action_required`; current six-family artifact only proves `terminal_failure` detection |
-| Autocomplete async mutation | Input and submit that always rewrites value | Valid suggestion list or constraint schema, selection affordance, clarification route, stable accepted-value oracle | Environment/perception + upstream Agent | **Target:** replan/clarification; current artifact only proves mismatch detection |
 | Optimistic UI rollback | UI reports submit while backend oracle stays false | Alternative commit route and/or real compensation/rollback operation with oracle-visible completion | Environment/Skill contract; Yixin executes supplied rollback | **Target:** false-success rejection then rollback/escalation; current artifact proves rejection only |
 | DOM/visual disagreement | Conflicting DOM and visual state | Real screenshot-derived visual assertion, provenance/confidence/timestamp, active probe that can resolve the conflict, action handlers that update oracle | Ruiyao VLM/perception + environment | **Target:** active perception/escalation; current artifact is scripted conflict detection only |
 | Visible ineffective affordance | Accepted click with no state change | Equivalent alternative affordance/backend, repair action, or explicit unsupported-state signal | Environment/Skill contract | **Target:** replan/escalation; current artifact proves ineffective-action detection only |
@@ -209,9 +209,10 @@ state-machine/invariant tests.
 ## 10. Closure evidence required
 
 Implementation may be called complete when the typed handoff, loopback, tests,
-and docs land and the bounded implementation checks pass. Cross-family
-generalized recovery remains open until the five
-missing environment/perception capabilities are supplied (or explicitly
-declared unsupported), all supported outcomes pass held-out state-machine and
-browser cases, full CI/live checks pass, and an independent fresh-context review
-finds no hidden fixture branch or duplicated success authority.
+and docs land and the bounded implementation checks pass. Broader recovery
+evidence remains open for the four in-scope families until their required
+environment/perception capabilities are supplied (or explicitly declared
+unsupported), all supported outcomes pass held-out state-machine and browser
+cases, full CI/live checks pass, and an independent fresh-context review finds
+no hidden fixture branch or duplicated success authority. Autocomplete does not
+gate Yixin's closure.

@@ -10,9 +10,10 @@ fixture-specific decisions in Runtime.
 
 ## Status
 
-**Bounded Agent/Runtime implementation complete and verified; cross-family
-generalized recovery is not closed.** Existing obstruction repair and videos
-prove one supported recovery family, not the five missing capabilities.
+**Bounded Agent/Runtime implementation complete and verified; broader recovery
+evidence is not closed.** Existing obstruction repair proves one supported
+recovery family. Autocomplete is excluded from Yixin's delivery scope; four
+other in-scope environment capabilities remain external dependencies.
 
 ## Constraints
 
@@ -39,7 +40,7 @@ prove one supported recovery family, not the five missing capabilities.
 | Extend the existing ActionContext/Planner input with fresh failure evidence and attempted-action history | completed | `src/runtime/action_context.py` |
 | Preserve bounded transparent Runtime recovery and deterministic fail-closed behavior | completed | No replan without a fresh observation; retry/reroute remain bounded |
 | Add state-machine/property tests plus representative browser integration witnesses | completed for bounded supported scope | Generated IDs/labels, ambiguity, stale proposal/observation, linked Agent loopback; Chromium holdout |
-| Reconcile README, STATUS, artifacts, demo claims, and ownership boundaries | completed | README/STATUS/dossier now state one recovered family and five fail-closed families |
+| Reconcile README, STATUS, artifacts, demo claims, and ownership boundaries | completed | README/STATUS/dossier separate one recovered family, four in-scope dependencies, and the upstream autocomplete witness |
 | Run focused, full, live-browser, anti-cheating, and fresh-context review | completed for implementation scope | Fresh reviews produced adversarial counterexamples; nonce/capture binding, cancellation/deadline ordering, reroute freshness, primitive compatibility, final-oracle linkage, and metadata handling were corrected and revalidated |
 
 ## Files modified
