@@ -107,6 +107,7 @@ class VisualJudgement:
     latency_ms: float = 0.0
     source: str = "unavailable"  # vlm | low_confidence | unavailable | error
     error: str = ""
+    retries: int = 0  # how many attempts were needed, so flakiness stays visible
 
     @property
     def is_model_derived(self) -> bool:
@@ -129,6 +130,7 @@ class VisualJudgement:
             "question": self.question,
             "latency_ms": round(self.latency_ms, 1),
             "is_model_derived": self.is_model_derived,
+            "retries": self.retries,
             "error": self.error,
         }
 
@@ -338,15 +340,30 @@ class VlmObserver:
         base.model = getattr(self.client, "name", "unknown")
         self.billed_calls += 1
         started = time.monotonic()
-        try:
-            raw = self.client.describe(_SYSTEM_PROMPT, question, image_png)
-            payload = _extract_json(raw)
-            base.answer = bool(payload.get("answer"))
-            base.confidence = max(0.0, min(1.0, float(payload.get("confidence", 0.0) or 0.0)))
-            base.evidence = str(payload.get("evidence", "")).strip()
-        except Exception as exc:
+        # One retry. Measured over repeated evaluation runs, roughly one call in
+        # twelve came back as a transport error or an unparseable reply - enough
+        # to lose a verification during a demo. A single retry is the cheapest
+        # honest answer: the failures observed were transient, and retrying twice
+        # would start hiding a service that is actually down.
+        last_error: Exception | None = None
+        for attempt in range(2):
+            try:
+                raw = self.client.describe(_SYSTEM_PROMPT, question, image_png)
+                payload = _extract_json(raw)
+                base.answer = bool(payload.get("answer"))
+                base.confidence = max(0.0, min(1.0, float(payload.get("confidence", 0.0) or 0.0)))
+                base.evidence = str(payload.get("evidence", "")).strip()
+                base.retries = attempt
+                last_error = None
+                break
+            except Exception as exc:
+                last_error = exc
+                if attempt == 0:
+                    time.sleep(0.4)
+        if last_error is not None:
             base.source = "error"
-            base.error = f"{type(exc).__name__}: {exc}"
+            base.retries = 1
+            base.error = f"{type(last_error).__name__}: {last_error}"
             base.latency_ms = (time.monotonic() - started) * 1000.0
             self._record(base)
             return base

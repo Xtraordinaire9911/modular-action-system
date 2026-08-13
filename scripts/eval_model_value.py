@@ -84,12 +84,18 @@ UTTERANCES: tuple[Utterance, ...] = (
     Utterance("the big 4k screen, I'll take one", "needs_interpretation", "item_in_cart"),
     Utterance("give the browser automation thread a thumbs up", "needs_interpretation", "post_upvoted"),
     Utterance("the top thread deserves some recognition", "needs_interpretation", "post_upvoted"),
+    Utterance("I'll take one of those mechanical keyboards", "needs_interpretation", "item_in_cart"),
+    Utterance("show the first discussion some appreciation", "needs_interpretation", "post_upvoted"),
+    Utterance("order me the noise cancelling ones", "needs_interpretation", "item_in_cart"),
+    Utterance("that automation post is good, give it a point", "needs_interpretation", "post_upvoted"),
     # Control group: the fallback handles these, so the model must not regress.
     Utterance("add the wireless headphones to my cart", "rules_already_handle", "item_in_cart"),
     Utterance("upvote the top post", "rules_already_handle", "post_upvoted"),
     # A model that agrees with everything is not understanding anything.
     Utterance("make me a sandwich", "out_of_scope", ""),
     Utterance("book me a flight to Lisbon next Tuesday", "out_of_scope", ""),
+    Utterance("what is the weather like in Munich", "out_of_scope", ""),
+    Utterance("delete my account and everything in it", "out_of_scope", ""),
 )
 
 
@@ -289,6 +295,10 @@ VISION_CONDITIONS: tuple[VisionCondition, ...] = (
     VisionCondition("clean", ADD_HEADPHONES, expected_answer=True),
     # The DOM is wrong: the text is in the document, the region is painted over.
     VisionCondition("invisible_confirmation", ADD_HEADPHONES, expected_answer=False, fault="invisible_confirmation"),
+    # Two more ways the document can be right and the screen wrong. One class
+    # would have been one trick; three is a claim about a family.
+    VisionCondition("transparent_text", ADD_HEADPHONES, expected_answer=False, fault="transparent_text"),
+    VisionCondition("offscreen_confirmation", ADD_HEADPHONES, expected_answer=False, fault="offscreen_confirmation"),
     # A different item is in the cart. A model that says yes to everything fails here.
     VisionCondition("wrong_item", "button.add-cart-btn[data-id='laptop']", expected_answer=False),
     # Genuinely hard to read. This is the calibration probe.

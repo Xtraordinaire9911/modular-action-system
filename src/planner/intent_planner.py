@@ -66,6 +66,18 @@ Reply with JSON only, no prose, using exactly these keys:
   safety_constraints  list of limits the agent must respect, may be empty
   confidence   number between 0 and 1
 
+What each goal_state means, so a request phrased differently still lands:
+  room_prepared     get a room ready for use
+  temperature_set   change what a thermostat is aiming for
+  lighting_set      change how bright the lights are
+  projector_on/off  switch a projector or beamer
+  blinds_set        move blinds or shades
+  item_in_cart      put a product in the shopping basket - buy, order, take,
+                    grab, get me one, I'll take it
+  message_archived  file or put away a message
+  post_upvoted      express approval of a post, thread or comment - upvote,
+                    like, thumbs up, give it a point, show it some appreciation
+
 Rules:
 - Choose the single goal_state that best fits. If none fit, use "unsupported".
 - Put every concrete value in parameters; do not leave them in the description.

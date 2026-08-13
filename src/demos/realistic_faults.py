@@ -234,6 +234,48 @@ def _invisible_confirmation(session: Any, selector: str) -> bool:
     )
 
 
+def _transparent_text(session: Any, selector: str) -> bool:
+    """The confirmation is rendered in the background colour.
+
+    A stylesheet that half-loads, a theme that assumes a light background on a
+    light panel, or a deliberate dark pattern. The text is in the document, laid
+    out, and the exact colour of what is behind it. Screen readers and DOM checks
+    read it; nobody looking at the page does.
+    """
+    return bool(
+        session.evaluate(
+            """(sel)=>{
+                const el = document.querySelector(sel);
+                if (!el) return false;
+                el.style.color = 'transparent';
+                el.querySelectorAll('*').forEach(n => { n.style.color = 'transparent'; });
+                return true;
+            }""",
+            selector,
+        )
+    )
+
+
+def _offscreen_confirmation(session: Any, selector: str) -> bool:
+    """The confirmation is laid out far outside the viewport.
+
+    A common consequence of a broken layout: the element exists, has a size, and
+    sits at x = -9999. Every text query finds it and no user ever will.
+    """
+    return bool(
+        session.evaluate(
+            """(sel)=>{
+                const el = document.querySelector(sel);
+                if (!el) return false;
+                el.style.position = 'absolute';
+                el.style.left = '-9999px';
+                return true;
+            }""",
+            selector,
+        )
+    )
+
+
 FAULTS: dict[str, Fault] = {
     "layout_shift": Fault(
         key="layout_shift",
@@ -294,6 +336,29 @@ FAULTS: dict[str, Fault] = {
         expected_cause="target_occluded",
         expected_tier=2,
         apply=_invisible_confirmation,
+    ),
+    "transparent_text": Fault(
+        key="transparent_text",
+        name="Confirmation rendered in the background colour",
+        real_cause="a stylesheet half-loads or a theme assumes a light background on a light "
+        "panel, so the text is laid out in exactly the colour of what is behind it. Every "
+        "text-based check reads it and nobody looking at the page can.",
+        symptom="the region is legibly empty while the document says otherwise",
+        difficulty="hard",
+        expected_cause="target_occluded",
+        expected_tier=2,
+        apply=_transparent_text,
+    ),
+    "offscreen_confirmation": Fault(
+        key="offscreen_confirmation",
+        name="Confirmation laid out outside the viewport",
+        real_cause="a broken layout puts the element at a negative offset. It exists, it has a "
+        "size, and it sits nine thousand pixels to the left of anything a person can see.",
+        symptom="text queries find the confirmation, the screen does not show it",
+        difficulty="hard",
+        expected_cause="target_occluded",
+        expected_tier=2,
+        apply=_offscreen_confirmation,
     ),
     "session_expiry": Fault(
         key="session_expiry",
