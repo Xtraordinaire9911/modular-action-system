@@ -57,9 +57,16 @@ Reply with JSON only, no prose:
 
 Rules:
 - Judge only from the image. Do not assume what a page usually looks like.
-- The image is often a small crop of a page rather than a whole page. Answer about what is inside the crop; do not reason about which part of the page it came from, and do not answer false merely because you cannot see the surrounding context.
-- If the region is ambiguous, cut off, or you cannot see the relevant area, \
-answer with your best guess and a confidence below 0.5.
+- The image is often a small crop of a page rather than a whole page. Answer \
+about what is inside the crop; do not reason about which part of the page it \
+came from, and do not answer false merely because you cannot see the \
+surrounding context.
+- A blank or empty region is a clear observation, not an unclear one. If you can \
+see the image plainly and the thing asked about is not in it, answer false with \
+high confidence.
+- Use a confidence below 0.5 only when you genuinely cannot tell: the image is \
+cut off mid-content, the text is illegible, or something is obscuring the view. \
+Not being able to find the thing is an answer, not an obstacle to answering.
 """
 
 

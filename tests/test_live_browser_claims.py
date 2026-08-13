@@ -275,3 +275,45 @@ def test_no_model_configured_is_reported_rather_than_assumed(tmp_path, monkeypat
     assert episode.visual_evidence
     assert episode.visual_evidence[0]["source"] == "unavailable"
     assert episode.reached, "the DOM evidence alone should still carry the episode"
+
+
+def test_the_vision_check_catches_a_false_success_the_dom_confirms(session):
+    """The one claim that justifies paying for a second modality at all.
+
+    Needs a configured vision model, so it skips rather than fails without one -
+    but when a key is present this is the test that would catch the regression
+    that mattered most: an earlier prompt told the model to report low confidence
+    when it "could not see the relevant area", and a blank region satisfies that
+    description, so the model's correct "nothing is there" was thrown away as an
+    abstention and the detection rate was zero.
+    """
+    from src.demos.realistic_faults import FAULTS
+    from src.perception.vlm_observer import VlmObserver, available_vision_client
+    from src.planner.environment_binding import binding_for
+
+    client = available_vision_client()
+    if client is None:
+        pytest.skip("no vision model configured")
+
+    session.click("button.add-cart-btn[data-id='headphones']")
+    dom_text = (session.text_content("#cart-items") or "").lower()
+    assert "headphones" in dom_text, "the DOM oracle should pass before the fault"
+
+    assert FAULTS["invisible_confirmation"].apply(session, "#cart-items")
+    assert "headphones" in (session.text_content("#cart-items") or "").lower(), (
+        "the fault must leave the text in the DOM - hiding it would make both checks agree "
+        "and the experiment would prove nothing"
+    )
+
+    binding = binding_for("item_in_cart")
+    parameters = {"item": "wireless headphones"}
+    observer = VlmObserver(client=client, max_calls=1)
+    judgement = observer.look(
+        session.screenshot_element("#cart-items") or session.screenshot(),
+        binding.visual_question(parameters),
+        region="#cart-items",
+    )
+
+    assert judgement.usable, f"a confident negative must not be discarded as an abstention: {judgement.to_dict()}"
+    assert judgement.answer is False, "the region is painted over, so the model should not see the item"
+    assert judgement.as_assertion("cart", "holds_item") is not None, "the disagreement must reach the fusion"

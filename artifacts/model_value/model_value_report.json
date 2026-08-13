@@ -1,0 +1,216 @@
+{
+  "at": "2026-08-14T00:02:49",
+  "intent": {
+    "cases": [
+      {
+        "utterance": "I need the over-ear ones for my commute, grab them for me",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "could you get me that laptop with the i7 in it",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "the big 4k screen, I'll take one",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "give the browser automation thread a thumbs up",
+        "group": "needs_interpretation",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": false,
+        "model_correct": false
+      },
+      {
+        "utterance": "the top thread deserves some recognition",
+        "group": "needs_interpretation",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "add the wireless headphones to my cart",
+        "group": "rules_already_handle",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "item_in_cart",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "upvote the top post",
+        "group": "rules_already_handle",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "post_upvoted",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "make me a sandwich",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "book me a flight to Lisbon next Tuesday",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      }
+    ],
+    "summary": {
+      "needs_interpretation": {
+        "cases": 5,
+        "rules_correct": 0,
+        "model_correct": 4
+      },
+      "rules_already_handle": {
+        "cases": 2,
+        "rules_correct": 2,
+        "model_correct": 2
+      },
+      "out_of_scope": {
+        "cases": 2,
+        "rules_correct": 2,
+        "model_correct": 2
+      }
+    }
+  },
+  "vision": {
+    "trials": [
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "agrees": true
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "agrees": false
+      }
+    ],
+    "summary": {
+      "clean_trials": 5,
+      "faulted_trials": 5,
+      "abstentions": 0,
+      "agreement_rate": 1.0,
+      "detection_rate": 1.0,
+      "false_alarm_rate": 0.0
+    }
+  }
+}
