@@ -93,6 +93,9 @@ class Episode:
     episode_id: str = ""
     transitions: list[dict[str, Any]] = field(default_factory=list)
     goal_state_trail: list[dict[str, Any]] = field(default_factory=list)
+    primitive_plan: list[dict[str, Any]] = field(default_factory=list)
+    backends_used: list[str] = field(default_factory=list)
+    final_oracle: dict[str, Any] = field(default_factory=dict)
     # What the vision model was asked, what it said, and whether its answer was
     # used. Kept even when unusable, so a run can show that a model abstained
     # rather than leaving a reader to assume one was never consulted.
@@ -125,6 +128,9 @@ class Episode:
             "episode_id": self.episode_id,
             "transitions": self.transitions,
             "goal_state_trail": self.goal_state_trail,
+            "primitive_plan": self.primitive_plan,
+            "backends_used": self.backends_used,
+            "final_oracle": self.final_oracle,
             "visual_evidence": self.visual_evidence,
             "latency_ms": round(self.latency_ms, 1),
         }
@@ -265,6 +271,10 @@ def run_episode(
             )
         )
         solved = goal_reached()
+        # Read once more here, while the session is still open: this is the
+        # number the claim rests on, and it is taken independently of anything
+        # the runtime reported.
+        oracle_observed = adapter.text_content(proof_region)
     finally:
         session.close()
         httpd.shutdown()
@@ -285,16 +295,37 @@ def run_episode(
         episode_id=outcome.result.episode_id,
         transitions=[
             {
+                "transition_id": r.transition_id,
                 "step": r.step,
                 "skill_id": r.skill_id,
                 "backend": r.backend,
                 "affordance_key": r.affordance_key,
+                "params": dict(r.params),
                 "success": r.success,
+                "execution_success": r.execution_success,
                 "postcondition_passed": r.postcondition_passed,
+                "latency_ms": round(r.latency_ms, 2),
+                "attempt": r.attempt,
+                "recovery_action": r.recovery_action,
+                "recovery_tier": r.recovery_tier,
+                "recovery_of_transition_id": r.recovery_of_transition_id,
                 "failure_reason": r.failure_reason,
             }
             for r in outcome.transition_ledger.records
         ],
+        # The primitives the runtime planned, in full. A count says the plan
+        # existed; this says what it was, which is what a reader needs to tell
+        # a schema-driven plan from a pre-authored sequence.
+        primitive_plan=[dict(step) for step in outcome.result.primitive_plan],
+        backends_used=sorted({r.backend for r in outcome.transition_ledger.records if r.backend}),
+        # The oracle read once more at the end, independently of anything the
+        # runtime reported. This is the number the claim rests on.
+        final_oracle={
+            "region": proof_region,
+            "expected": proof_text,
+            "observed": oracle_observed,
+            "goal_reached": solved,
+        },
         # The goal predicate as the runtime saw it change: evidence that
         # verification re-observed rather than trusted the executor.
         goal_state_trail=[
