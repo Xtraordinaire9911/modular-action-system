@@ -69,9 +69,9 @@ _FLASH_JS = """
 # JS: find a descendant of `scope` with exact text, tag it, return its selector or null.
 _TAG_JS = (
     "(a)=>{const sc=document.querySelector(a.scope)||document;"
-    "const prior=document.getElementById('__cua_target'); if(prior) prior.removeAttribute('id');"
+    "const prior=document.querySelector('[data-cua-target=true]'); if(prior) prior.removeAttribute('data-cua-target');"
     "const el=[...sc.querySelectorAll(a.tag)].find(e=>e.textContent.trim()===a.text);"
-    "if(!el)return null;el.id='__cua_target';return '#__cua_target';}"
+    "if(!el)return null;el.setAttribute('data-cua-target','true');return '[data-cua-target=true]';}"
 )
 
 # JS: inject/update the env+task badge overlay (top-right corner, persists per page load).

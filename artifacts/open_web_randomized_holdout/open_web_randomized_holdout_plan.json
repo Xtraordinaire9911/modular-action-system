@@ -39,11 +39,14 @@
         },
         "parameters": {
           "modal_offset_px": -18,
+          "modal_padding_px": 18,
           "overlay_opacity": 0.42,
+          "remediation_control_id": "gate-dev-4103",
+          "remediation_label": "Accept preferences",
           "z_index": 1000
         },
         "repetition": 0,
-        "signature": "f1a1e5d5b3f5bbb6e64b",
+        "signature": "de29da24629f3ce5b69d",
         "split": "dev",
         "variant_id": "dev-openweb-overlay-obstruction-00-seed-12000"
       },
@@ -69,11 +72,14 @@
         },
         "parameters": {
           "modal_offset_px": -10,
+          "modal_padding_px": 21,
           "overlay_opacity": 0.52,
+          "remediation_control_id": "gate-dev-7834",
+          "remediation_label": "Continue",
           "z_index": 1001
         },
         "repetition": 1,
-        "signature": "bf621af534cd21fb65aa",
+        "signature": "50a09129ba199b18d5ec",
         "split": "dev",
         "variant_id": "dev-openweb-overlay-obstruction-01-seed-12001"
       },
@@ -99,11 +105,14 @@
         },
         "parameters": {
           "modal_offset_px": -2,
+          "modal_padding_px": 24,
           "overlay_opacity": 0.62,
+          "remediation_control_id": "gate-dev-4948",
+          "remediation_label": "Acknowledge",
           "z_index": 1002
         },
         "repetition": 2,
-        "signature": "24c6f54204ae02f9d51e",
+        "signature": "947857d9568dca03c6e6",
         "split": "dev",
         "variant_id": "dev-openweb-overlay-obstruction-02-seed-12002"
       },
@@ -578,11 +587,14 @@
         },
         "parameters": {
           "modal_offset_px": 44,
+          "modal_padding_px": 31,
           "overlay_opacity": 0.74,
+          "remediation_control_id": "gate-holdout-9444",
+          "remediation_label": "Carry on with browsing",
           "z_index": 4000
         },
         "repetition": 0,
-        "signature": "5c83845b83fb733c5c56",
+        "signature": "5697b68c90d56486450b",
         "split": "holdout",
         "variant_id": "holdout-openweb-overlay-obstruction-00-seed-22000"
       },
@@ -608,11 +620,14 @@
         },
         "parameters": {
           "modal_offset_px": 49,
+          "modal_padding_px": 34,
           "overlay_opacity": 0.84,
+          "remediation_control_id": "gate-holdout-7701",
+          "remediation_label": "Understood",
           "z_index": 4001
         },
         "repetition": 1,
-        "signature": "5fed63035c799d3acb53",
+        "signature": "bc05bf5d5a69940d21c5",
         "split": "holdout",
         "variant_id": "holdout-openweb-overlay-obstruction-01-seed-22001"
       },
@@ -638,11 +653,14 @@
         },
         "parameters": {
           "modal_offset_px": 56,
+          "modal_padding_px": 37,
           "overlay_opacity": 0.94,
+          "remediation_control_id": "gate-holdout-3608",
+          "remediation_label": "Got it",
           "z_index": 4002
         },
         "repetition": 2,
-        "signature": "fc42db0eee511e14f843",
+        "signature": "546aff56beedbf72c06a",
         "split": "holdout",
         "variant_id": "holdout-openweb-overlay-obstruction-02-seed-22002"
       },

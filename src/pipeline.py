@@ -356,6 +356,29 @@ def run_open_web_randomized_holdout_pipeline(
     )
 
 
+def run_generalized_browser_recovery_pipeline(
+    output_dir: str | Path = "artifacts/generalized_browser_recovery",
+    *,
+    dev_repetitions: int = 3,
+    holdout_repetitions: int = 3,
+    headless: bool = True,
+    action_timeout_ms: int = 500,
+    capture_screenshots: bool = True,
+    session_factory=None,
+) -> dict[str, str]:
+    from evaluation.generalized_browser_recovery import run_generalized_browser_recovery_suite
+
+    return run_generalized_browser_recovery_suite(
+        output_dir,
+        dev_repetitions=dev_repetitions,
+        holdout_repetitions=holdout_repetitions,
+        headless=headless,
+        action_timeout_ms=action_timeout_ms,
+        capture_screenshots=capture_screenshots,
+        session_factory=session_factory,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the modular action system pipeline.")
     parser.add_argument("--smoke", action="store_true", help="Run the current smoke orchestration path.")
@@ -421,6 +444,11 @@ def main() -> None:
         action="store_true",
         help="Run seeded six-family dev/locked-holdout variants through Playwright.",
     )
+    parser.add_argument(
+        "--generalized-browser-recovery",
+        action="store_true",
+        help="Run the five-family Runtime/Planner recovery handoff check on dev/holdout variants.",
+    )
     parser.add_argument("--open-web-dev-repetitions", type=int, default=3)
     parser.add_argument("--open-web-holdout-repetitions", type=int, default=3)
     parser.add_argument(
@@ -477,7 +505,14 @@ def main() -> None:
     parser.add_argument("--headed", action="store_true", help="Show Chromium for the live demo.")
     args = parser.parse_args()
 
-    if args.open_web_randomized_holdout:
+    if args.generalized_browser_recovery:
+        summary = run_generalized_browser_recovery_pipeline(
+            args.output_dir or "artifacts/generalized_browser_recovery",
+            dev_repetitions=args.open_web_dev_repetitions,
+            holdout_repetitions=args.open_web_holdout_repetitions,
+            headless=not args.headed,
+        )
+    elif args.open_web_randomized_holdout:
         summary = run_open_web_randomized_holdout_pipeline(
             args.output_dir or "artifacts/open_web_randomized_holdout",
             dev_repetitions=args.open_web_dev_repetitions,

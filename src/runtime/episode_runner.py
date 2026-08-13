@@ -19,9 +19,9 @@ from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, Executor, RuntimeStepResult
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.goal_spec import GoalSpec
-from src.runtime.live_observation import LiveRuntimeObservation
+from src.runtime.live_observation import LiveRuntimeObservation, bind_live_observation_to_request
 from src.runtime.plan_validator import PlanValidator
-from src.runtime.system2_planner import System2Planner
+from src.runtime.planner_port import PlannerPort
 from src.verification.active_perception import ActivePerceptionResolver
 from src.verification.conflict_detector import EpistemicArbiter
 
@@ -72,8 +72,12 @@ class StaticRuntimeEnvironmentAdapter:
     async def observe(self, request: ObservationRequest) -> LiveRuntimeObservation | Observation:
         self.requests.append(request)
         if len(self._observations) > 1:
-            return self._observations.pop(0)
-        return self._observations[0]
+            observed = self._observations.pop(0)
+        else:
+            observed = self._observations[0]
+        if isinstance(observed, LiveRuntimeObservation):
+            return bind_live_observation_to_request(observed, request_id=request.request_id)
+        return observed
 
     def executors(self) -> dict[str, Executor]:
         return self._executors
@@ -95,7 +99,7 @@ class RuntimeEpisodeRunner:
         llm_judge: LLMJudge | None = None,
         use_llm_judge: bool = False,
         active_perception_resolver: ActivePerceptionResolver | None = None,
-        system2_planner: System2Planner | None = None,
+        system2_planner: PlannerPort | None = None,
         plan_validator: PlanValidator | None = None,
     ) -> None:
         self.skill_library = dict(skill_library or {})

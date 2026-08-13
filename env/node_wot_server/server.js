@@ -23,12 +23,15 @@
  *                   "read_delay_ms":450, "drop_probability":0.7,
  *                   "source_reliability":{"wot":0.35}}
  *   POST /reset
+ *   POST /restore  {"state":{...}, "faults":{...}}
+ *   POST /lease/acquire  {"episode_id":"..."}
+ *   POST /lease/restore  (X-Episode-Lease: <lease_id>)
+ *   POST /lease/release  (X-Episode-Lease: <lease_id>)
  */
 "use strict";
 
 const http = require("http");
-const { Servient } = require("@node-wot/core");
-const { HttpServer } = require("@node-wot/binding-http");
+const { randomUUID } = require("node:crypto");
 
 // ── mutable device state ────────────────────────────────────────────────────
 const INITIAL = {
@@ -39,11 +42,131 @@ const INITIAL = {
   occupancy: { occupied: false, peopleCount: 0 },
 };
 let state = structuredClone(INITIAL);
+let stateGeneration = 0;
+let activeLease = null;
 
 // ── fault injection registry ─────────────────────────────────────────────────
 // faults[thing] = { type, delay_ms, read_delay_ms, drop_probability, source_reliability }
 const faults = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const FAILURE_TYPES = new Set(["timeout", "offline", "postcondition_mismatch", "malformed"]);
+
+function isPlainObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasExactKeys(value, expected) {
+  const actual = Object.keys(value).sort();
+  const wanted = [...expected].sort();
+  return actual.length === wanted.length && actual.every((key, index) => key === wanted[index]);
+}
+
+function isFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isValidState(candidate) {
+  if (!isPlainObject(candidate) || !hasExactKeys(candidate, Object.keys(INITIAL))) return false;
+  const { thermostat, lights, projector, blinds, occupancy } = candidate;
+  return (
+    isPlainObject(thermostat) &&
+    hasExactKeys(thermostat, ["targetTemperature", "currentTemperature"]) &&
+    isFiniteNumber(thermostat.targetTemperature) &&
+    thermostat.targetTemperature >= 16 &&
+    thermostat.targetTemperature <= 30 &&
+    isFiniteNumber(thermostat.currentTemperature) &&
+    thermostat.currentTemperature >= 16 &&
+    thermostat.currentTemperature <= 30 &&
+    isPlainObject(lights) &&
+    hasExactKeys(lights, ["brightness"]) &&
+    Number.isInteger(lights.brightness) &&
+    lights.brightness >= 0 &&
+    lights.brightness <= 100 &&
+    isPlainObject(projector) &&
+    hasExactKeys(projector, ["power"]) &&
+    ["on", "off"].includes(projector.power) &&
+    isPlainObject(blinds) &&
+    hasExactKeys(blinds, ["position"]) &&
+    Number.isInteger(blinds.position) &&
+    blinds.position >= 0 &&
+    blinds.position <= 100 &&
+    isPlainObject(occupancy) &&
+    hasExactKeys(occupancy, ["occupied", "peopleCount"]) &&
+    typeof occupancy.occupied === "boolean" &&
+    Number.isInteger(occupancy.peopleCount) &&
+    occupancy.peopleCount >= 0
+  );
+}
+
+function isValidFaults(candidate) {
+  if (!isPlainObject(candidate)) return false;
+  return Object.entries(candidate).every(([thing, fault]) => {
+    if (!Object.hasOwn(INITIAL, thing) || !isPlainObject(fault)) return false;
+    const keys = Object.keys(fault);
+    if (!keys.includes("type") || keys.some((key) => !["type", "delay_ms"].includes(key))) return false;
+    if (!FAILURE_TYPES.has(fault.type)) return false;
+    return fault.delay_ms === undefined || (isFiniteNumber(fault.delay_ms) && fault.delay_ms >= 0);
+  });
+}
+
+function isValidFailureRequest(candidate) {
+  if (!isPlainObject(candidate) || !Object.hasOwn(INITIAL, candidate.thing)) return false;
+  if (Object.hasOwn(candidate, "clear")) {
+    return candidate.clear === true && hasExactKeys(candidate, ["thing", "clear"]);
+  }
+  const allowed = ["thing", "type", "delay_ms", "read_delay_ms", "drop_probability", "source_reliability"];
+  if (Object.keys(candidate).some((key) => !allowed.includes(key))) return false;
+  if (!FAILURE_TYPES.has(candidate.type)) return false;
+  for (const key of ["delay_ms", "read_delay_ms"]) {
+    if (candidate[key] !== undefined && !(isFiniteNumber(candidate[key]) && candidate[key] >= 0)) return false;
+  }
+  if (candidate.drop_probability !== undefined) {
+    if (!isFiniteNumber(candidate.drop_probability)) return false;
+    if (candidate.drop_probability < 0 || candidate.drop_probability > 1) return false;
+  }
+  if (candidate.source_reliability !== undefined && !isPlainObject(candidate.source_reliability)) return false;
+  return true;
+}
+
+function isValidCheckpoint(candidate) {
+  return (
+    isPlainObject(candidate) &&
+    hasExactKeys(candidate, ["state", "faults"]) &&
+    isValidState(candidate.state) &&
+    isValidFaults(candidate.faults)
+  );
+}
+
+function restoreCheckpoint(checkpoint) {
+  stateGeneration += 1;
+  state = structuredClone(checkpoint.state);
+  for (const key of Object.keys(faults)) delete faults[key];
+  Object.assign(faults, structuredClone(checkpoint.faults));
+}
+
+function currentCheckpoint() {
+  return { state: structuredClone(state), faults: structuredClone(faults) };
+}
+
+function resetToInitial() {
+  stateGeneration += 1;
+  state = structuredClone(INITIAL);
+  for (const key of Object.keys(faults)) delete faults[key];
+}
+
+function leaseConflict(leaseId) {
+  if (activeLease === null) {
+    return leaseId
+      ? { statusCode: 409, payload: { error: "stale episode lease" } }
+      : null;
+  }
+  if (leaseId === activeLease.leaseId) return null;
+  return {
+    statusCode: 423,
+    payload: { error: "control plane is leased", episode_id: activeLease.episodeId },
+  };
+}
 
 function shouldDropRead(f) {
   if (!f || !f.drop_probability) return false;
@@ -53,12 +176,21 @@ function shouldDropRead(f) {
 }
 
 async function guard(thing, { read = false } = {}) {
+  const generationAtStart = stateGeneration;
   const f = faults[thing];
-  if (!f) return;
+  if (!f) return generationAtStart;
   if (read && f.read_delay_ms) await sleep(f.read_delay_ms);
   if (read && shouldDropRead(f)) throw new Error("backend dropped read (injected)");
   if (f.type === "timeout") await sleep(f.delay_ms || 1500);
+  assertCurrentGeneration(generationAtStart);
   if (f.type === "offline") throw new Error("backend offline (injected)");
+  return generationAtStart;
+}
+
+function assertCurrentGeneration(generation) {
+  if (generation !== stateGeneration) {
+    throw new Error("interaction invalidated by reset or restore");
+  }
 }
 
 function applyWrite(thing, key, value) {
@@ -80,14 +212,17 @@ async function exposeThing(servient, def) {
   }
   for (const [name, key] of Object.entries(def.writables || {})) {
     thing.setPropertyWriteHandler(name, async (v) => {
-      await guard(def.thing);
-      applyWrite(def.thing, key, await v.value());
+      const generation = await guard(def.thing);
+      const value = await v.value();
+      assertCurrentGeneration(generation);
+      applyWrite(def.thing, key, value);
     });
   }
   for (const [action, handler] of Object.entries(def.actions)) {
     thing.setActionHandler(action, async (params) => {
-      await guard(def.thing);
+      const generation = await guard(def.thing);
       const value = params ? await params.value() : undefined;
+      assertCurrentGeneration(generation);
       return handler(value);
     });
   }
@@ -221,42 +356,136 @@ function startThingDirectory(thingNames, port = 8082, wotPort = 8080) {
 }
 
 // ── control plane (failure injection) ────────────────────────────────────────
+function processControlRequest(method, url, body = "", leaseId = "") {
+  if (method === "POST" && url === "/lease/acquire") {
+    let request;
+    try {
+      request = JSON.parse(body || "{}");
+    } catch (_error) {
+      return { statusCode: 400, payload: { error: "invalid lease JSON" } };
+    }
+    if (
+      !isPlainObject(request) ||
+      !hasExactKeys(request, ["episode_id"]) ||
+      typeof request.episode_id !== "string" ||
+      request.episode_id.trim().length === 0 ||
+      request.episode_id.length > 256
+    ) {
+      return { statusCode: 400, payload: { error: "invalid episode lease request" } };
+    }
+    if (activeLease !== null) {
+      return {
+        statusCode: 409,
+        payload: { error: "episode lease already active", episode_id: activeLease.episodeId },
+      };
+    }
+    const checkpoint = currentCheckpoint();
+    activeLease = {
+      leaseId: randomUUID(),
+      episodeId: request.episode_id,
+      checkpoint,
+    };
+    resetToInitial();
+    return {
+      statusCode: 200,
+      payload: {
+        status: "acquired",
+        lease_id: activeLease.leaseId,
+        episode_id: activeLease.episodeId,
+        checkpoint: structuredClone(checkpoint),
+      },
+    };
+  }
+  if (method === "POST" && (url === "/lease/restore" || url === "/lease/release")) {
+    if (activeLease === null) {
+      return { statusCode: 409, payload: { error: "no episode lease is active" } };
+    }
+    const conflict = leaseConflict(leaseId);
+    if (conflict !== null) return conflict;
+    const checkpoint = activeLease.checkpoint;
+    const episodeId = activeLease.episodeId;
+    restoreCheckpoint(checkpoint);
+    if (url === "/lease/release") activeLease = null;
+    return {
+      statusCode: 200,
+      payload: {
+        status: url === "/lease/release" ? "released" : "restored",
+        episode_id: episodeId,
+        ...currentCheckpoint(),
+      },
+    };
+  }
+  if (method === "POST" && url === "/reset") {
+    const conflict = leaseConflict(leaseId);
+    if (conflict !== null) return conflict;
+    resetToInitial();
+    return { statusCode: 200, payload: { status: "reset", state: structuredClone(state) } };
+  }
+  if (method === "POST" && url === "/restore") {
+    const conflict = leaseConflict(leaseId);
+    if (conflict !== null) return conflict;
+    let checkpoint;
+    try {
+      checkpoint = JSON.parse(body || "{}");
+    } catch (_error) {
+      return { statusCode: 400, payload: { error: "invalid checkpoint JSON" } };
+    }
+    if (!isValidCheckpoint(checkpoint)) {
+      return { statusCode: 400, payload: { error: "invalid checkpoint" } };
+    }
+    restoreCheckpoint(checkpoint);
+    return {
+      statusCode: 200,
+      payload: { status: "restored", state: structuredClone(state), faults: structuredClone(faults) },
+    };
+  }
+  if (method === "POST" && url === "/failure") {
+    const conflict = leaseConflict(leaseId);
+    if (conflict !== null) return conflict;
+    let failure;
+    try {
+      failure = JSON.parse(body || "{}");
+    } catch (_error) {
+      return { statusCode: 400, payload: { error: "invalid failure JSON" } };
+    }
+    if (!isValidFailureRequest(failure)) {
+      return { statusCode: 400, payload: { error: "invalid failure request" } };
+    }
+    if (failure.clear) {
+      delete faults[failure.thing];
+    } else {
+      faults[failure.thing] = { type: failure.type };
+      for (const key of ["delay_ms", "read_delay_ms", "drop_probability", "source_reliability"]) {
+        if (failure[key] !== undefined) faults[failure.thing][key] = failure[key];
+      }
+    }
+    return { statusCode: 200, payload: { status: "ok", faults: structuredClone(faults) } };
+  }
+  if (method === "GET" && url === "/state") {
+    return { statusCode: 200, payload: { state: structuredClone(state), faults: structuredClone(faults) } };
+  }
+  return { statusCode: 404, payload: { error: "not found" } };
+}
+
 function startControlPlane(port = 8081) {
   const srv = http.createServer((req, res) => {
     let body = "";
     req.on("data", (c) => (body += c));
     req.on("end", () => {
       res.setHeader("Content-Type", "application/json");
-      if (req.method === "POST" && req.url === "/reset") {
-        state = structuredClone(INITIAL);
-        for (const k of Object.keys(faults)) delete faults[k];
-        return res.end(JSON.stringify({ status: "reset", state }));
-      }
-      if (req.method === "POST" && req.url === "/failure") {
-        const f = JSON.parse(body || "{}");
-        if (f.clear) delete faults[f.thing];
-        else {
-          faults[f.thing] = {
-            type: f.type,
-            delay_ms: f.delay_ms,
-            read_delay_ms: f.read_delay_ms,
-            drop_probability: f.drop_probability,
-            source_reliability: f.source_reliability,
-          };
-        }
-        return res.end(JSON.stringify({ status: "ok", faults }));
-      }
-      if (req.method === "GET" && req.url === "/state") {
-        return res.end(JSON.stringify({ state, faults }));
-      }
-      res.statusCode = 404;
-      res.end(JSON.stringify({ error: "not found" }));
+      const leaseId = String(req.headers["x-episode-lease"] || "");
+      const result = processControlRequest(req.method || "", req.url || "", body, leaseId);
+      res.statusCode = result.statusCode;
+      res.end(JSON.stringify(result.payload));
     });
   });
   srv.listen(port, () => console.log(`control plane on :${port}`));
+  return srv;
 }
 
 async function main() {
+  const { Servient } = require("@node-wot/core");
+  const { HttpServer } = require("@node-wot/binding-http");
   const servient = new Servient();
   servient.addServer(new HttpServer({ port: 8080 }));
   const defs = buildDefs();
@@ -268,7 +497,11 @@ async function main() {
   console.log("smart-room WoT servient ready on :8080 (TDs at /<thing>, directory at :8082/things)");
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
+
+module.exports = { guard, isValidCheckpoint, processControlRequest, startControlPlane };

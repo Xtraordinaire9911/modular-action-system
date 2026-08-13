@@ -189,3 +189,122 @@ def test_randomized_open_web_holdout_changes_real_page_state_and_detects_all_fai
         observed = row["browser"]["observed_oracles"][-1]
         expected = row["variant"]["parameters"]
         assert any(value in observed.values() for value in expected.values())
+
+
+def test_generalized_recovery_waits_for_an_injected_planner_implementation(tmp_path):
+    """Claim: Runtime exposes the handoff but does not implement Planner policy."""
+    import json
+
+    from evaluation.generalized_browser_recovery import run_generalized_browser_recovery_suite
+
+    run_generalized_browser_recovery_suite(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        action_timeout_ms=400,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "generalized_browser_recovery_report.json").read_text())
+
+    summary = report["summary"]
+    assert summary["all_recovered_and_verified"] is False
+    assert summary["episode_count"] == 10
+    assert summary["dev_count"] == summary["holdout_count"] == 5
+    assert summary["final_verified_count"] == summary["recovery_success_count"] == 0
+    assert summary["failure_family_count"] == 5
+    assert all(row["episodes"] == 2 and row["verified"] == 0 for row in summary["per_family"].values())
+    controls = {
+        (
+            row["variant"]["parameters"]["remediation_control_id"],
+            row["variant"]["parameters"]["remediation_label"],
+        )
+        for row in report["episodes"]
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction"
+    }
+    assert len(controls) == 2
+    for row in report["episodes"]:
+        transitions = row["transitions"]
+        assert [transition["recovery_action"] for transition in transitions] == ["replan"]
+        assert transitions[0]["postcondition_passed"] is False
+        assert transitions[0]["recovery_tier"] == 2
+        assert row["runtime"]["final_verification_transition_id"] == ""
+        assert row["runtime"]["user_action_required"] is True
+        assert row["runtime"]["replan_count"] == 1
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction":
+            observations = row["browser"]["obstruction_observations"]
+            assert [observation["blocked"] for observation in observations] == [True]
+        assert len(row["failures"]) == 1
+        assert row["failures"][0]["recovery_action"] == "replan"
+        assert row["failures"][0]["recovery_success"] is False
+
+
+# --- the vision model is load-bearing, not decorative --------------------------------
+
+
+class _FakeVision:
+    """Stands in for a real vision model so CI can exercise the path."""
+
+    name = "fake-vision-1"
+
+    def __init__(self, answer: bool, confidence: float) -> None:
+        self.answer = answer
+        self.confidence = confidence
+        self.images: list[bytes] = []
+
+    def describe(self, system: str, question: str, image_png: bytes) -> str:
+        self.images.append(image_png)
+        return '{"answer": %s, "confidence": %s, "evidence": "stand-in for a real model"}' % (
+            "true" if self.answer else "false",
+            self.confidence,
+        )
+
+
+def _intent_episode(client, tmp_path):
+    from pathlib import Path
+
+    from scripts.run_intent_episode import run_episode
+
+    return run_episode(
+        "add the wireless headphones to my cart",
+        repo=Path("."),
+        headed=False,
+        verbose=False,
+        vision_client=client,
+    )
+
+
+def test_a_real_screenshot_reaches_the_vision_model(tmp_path):
+    """Claim: an image is sent, not a description of one."""
+    client = _FakeVision(True, 0.9)
+
+    episode = _intent_episode(client, tmp_path)
+
+    assert client.images, "no screenshot was ever sent"
+    assert client.images[0][:8] == b"\x89PNG\r\n\x1a\n", "what was sent is not a PNG"
+    assert episode.reached
+
+
+def test_the_model_answer_is_recorded_with_its_own_confidence(tmp_path):
+    episode = _intent_episode(_FakeVision(True, 0.83), tmp_path)
+    used = [j for j in episode.visual_evidence if j["is_model_derived"]]
+
+    assert used, "a confident answer was not treated as evidence"
+    assert used[0]["confidence"] == 0.83, "the model's confidence, not 1.0"
+    assert used[0]["model"] == "fake-vision-1"
+    assert used[0]["screenshot_sha256"]
+
+
+def test_an_unsure_model_abstains_and_the_run_still_verifies_from_the_dom(tmp_path):
+    """A hesitant model must not be able to break a goal the DOM confirms."""
+    episode = _intent_episode(_FakeVision(True, 0.2), tmp_path)
+
+    assert episode.visual_evidence and not any(j["is_model_derived"] for j in episode.visual_evidence)
+    assert episode.reached, "the DOM evidence alone should still carry the episode"
+
+
+def test_no_model_configured_is_reported_rather_than_assumed(tmp_path):
+    episode = _intent_episode(None, tmp_path)
+
+    assert episode.visual_evidence
+    assert episode.visual_evidence[0]["source"] == "unavailable"
+    assert episode.reached

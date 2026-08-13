@@ -5,7 +5,8 @@
   "description": "Eclipse Thingweb node-wot servient exposing the smart-room IoT Things (W3C TD 1.1).",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test server.test.js"
   },
   "dependencies": {
     "@node-wot/core": "^0.8.16",

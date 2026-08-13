@@ -29,19 +29,19 @@ matching its code.
 |---|---|---|
 | Observe → plan → act → verify → recover | **Implemented** | Runs end to end in one process; see `scripts/run_agent_loop_demo.py`. |
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
-| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. `STATUS.md` still says "future interface only" and is now out of date on this row. |
+| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. |
 | Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Unlike the intent layer above, this one is still consumed only by the narrated demo — the runtime picks affordances through its own action context. |
-| A model actually running | **Not exercised** | No API key is configured, so every recorded intent and mark decision in this repository is `rule_fallback` / `heuristic`. The model paths have unit tests against fakes and have never run against a real model. **No image is ever sent to a model** — there is no VLM anywhere in the repository. |
+| A model actually running | **VLM path implemented; external-provider run not evidenced** | `src/perception/vlm_observer.py` sends real PNG screenshot bytes to the configured vision client and preserves model confidence/provenance before fusion. CI exercises this contract with a fake vision client. No checked-in artifact proves that an external model provider was configured and run, and intent/mark selection still uses labelled fallbacks when no model client is supplied. |
 | Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
-| Recovery | **Implemented, four tiers** | All four are exercised by the loop demo and are genuinely different actions: retry, clear the obstruction, satisfy the precondition, hand over. Which tier is used is decided at run time from what was measured. Scored against ground truth the diagnosis never sees. |
+| Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
 | Live behaviour is tested | **Implemented** | `pytest -m live` opens a real Chromium and asserts the claims in this table against a real page (selector uniqueness, measured geometry, episode isolation, region-scoped verification, the probes). CI runs it as its own job. The fast suite excludes it and cannot corroborate any live claim on its own. |
 | Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is the narration surface and is honest about what it runs, but it is a second loop. `scripts/run_intent_episode.py` is the one that drives the integrated runtime; the demo has not been migrated onto it. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
-| Picture-in-Picture supervised interface | **Not implemented** | See Terminology below. What exists is browser-context isolation plus a tier-4 handover that pauses and records a human decision. Both are weaker than a supervised PiP interface and neither is a substitute for it. |
+| Picture-in-Picture supervised interface | **Implemented for the web, not for Windows** | See Terminology below. `src/isolation/episode.py` and `src/runtime/intervention.py` give a serialized episode its own browser context, checkpoint/restore of WoT state, an input lease, and a supervised pause a person can take over from. That is a genuine supervised interface. What is **not** claimed is the UFO2 Windows form: no child desktop, no OS-level input or process boundary. Browser-context isolation on its own is still not PiP. |
 
 Every runtime decision records whether it came from a model or a deterministic
 fallback, and both paths are written to a JSONL ledger under `artifacts/`, so
@@ -67,10 +67,17 @@ not it:
 | **Browser-context isolation** (`src/perception/browser_session.py`) | one episode cannot observe or disturb another: separate cookies, storage, cache | no human can watch or intervene; there is nothing to take over |
 | **Narration panel** (`src/demos/narration_console.py`) | a viewer can read what the agent is doing and why, while it happens | read-only; it displays, it does not hand control to anyone |
 
-The closest thing the project actually has to human oversight is the tier-4
-handover in `src/recovery/supervised_takeover.py`, which pauses the episode,
-records what the supervisor decided, and reports a correction rate. That is a
-real oversight mechanism and it is still not a PiP interface.
+Human oversight now exists in two places. `src/recovery/supervised_takeover.py`
+pauses a tier-4 episode, records what the supervisor decided and reports a
+correction rate. On top of that, `src/isolation/episode.py` and
+`src/runtime/intervention.py` give an episode its own browser context and WoT
+checkpoint, and hand the input lease to a person who can take over mid-episode -
+which does meet the definition above, for the web.
+
+What is still not claimed is the Windows form in the paper: a child desktop over
+RDP with an independent OS input and process boundary. Two properties in this
+repository were being described with the word "PiP" before any of that existed,
+and both are still not it on their own:
 
 The module formerly called `pip_console` is now `narration_console`, for the
 same reason.
@@ -331,6 +338,22 @@ uv run python -m src.pipeline --open-web-randomized-holdout \
 
 This remains controlled local-browser evidence, not real open-web evidence.
 
+Run the five-family Runtime/Planner boundary check on randomized dev and
+locked-holdout capability variants. Fresh observations expose generic relations
+(`remediates`, `restores`, `compensates`, `observes`, or `equivalent_to`) through
+`PlannerPort`; the default controller intentionally does not select one:
+
+```bash
+uv run python -m src.pipeline --generalized-browser-recovery \
+  --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
+```
+
+Evidence is written under `artifacts/generalized_browser_recovery/`. Without an
+externally supplied Planner implementation, each episode must stop after the
+typed handoff instead of using a hidden Runtime policy. Autocomplete is excluded
+from recovery scope. See `YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the ownership
+and integration matrix.
+
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:
 
@@ -413,6 +436,26 @@ Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
 `--control-url` when Docker is mapped to non-default host ports. These are live
 measurements; `python -m src.pipeline --demo` remains the deterministic synthetic
 white-box path.
+
+### 6. Project PiP MVP: isolated task sessions
+
+The first PiP milestone is implemented as a cross-platform task-session boundary.
+Call `ContinuousInteractionManager.run_isolated_goal()` or
+`run_isolated_skill()` with a `BrowserWotIsolationProvider`. The runtime then:
+
+1. saves the exact smart-room state and faults;
+2. resets the room and creates a fresh Playwright browser context before the
+   first observation;
+3. pauses at Tier 4 while an `InterventionBroker` waits for Approve, Reject,
+   Resume, or Cancel;
+4. re-observes and replans after a human takeover; and
+5. restores the saved room state and closes the browser context in `finally`.
+
+The mock WoT server has one global room, so a server-held episode lease
+deliberately serializes isolated episodes, even when separate managers create
+separate providers. It is not the Windows RDP child desktop from the UFO2 paper:
+independent Windows input queues, application processes, and a visible nested
+desktop remain a later Windows-specific provider.
 
 ## Demo
 
@@ -581,6 +624,8 @@ rather than raising, so the registry stays valid while a feature is in review.
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
 | External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
 | Session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. This is browser-context isolation, **not** Picture-in-Picture — see Terminology below. |
+| Project PiP MVP | `src/isolation/episode.py` provisions a fresh browser context, checkpoints/resets/restores WoT state, serializes episodes, and transfers the input lease during human takeover. `src/runtime/intervention.py` records supervised Tier-4 decisions. |
+| Full UFO2 Windows PiP | Future Windows-specific provider; RDP child desktop and independent OS input/process isolation are not claimed by this MVP. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
 | WoT TD parsing | `src/perception/td_affordance_parser.py`, including HATEOAS forms, methods, security, rate limits, state sources. |

@@ -58,7 +58,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-76af3fe8f06b",
+        "episode_id": "episode-832a077b78dd",
         "executor_failure_reason": "TimeoutError: Page.click: Timeout 750ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
         "executor_success": false,
         "failure_boundary": "immediate_runtime_error",
@@ -68,26 +68,32 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-76af3fe8f06b:transition-0001"
-        ]
+          "episode-832a077b78dd:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
           "modal_offset_px": -18,
+          "modal_padding_px": 18,
           "overlay_opacity": 0.42,
+          "remediation_control_id": "gate-dev-4103",
+          "remediation_label": "Accept preferences",
           "z_index": 1000
         },
         "repetition": 0,
         "seed": 12000,
-        "signature": "f1a1e5d5b3f5bbb6e64b",
+        "signature": "de29da24629f3ce5b69d",
         "split": "dev",
         "variant_id": "dev-openweb-overlay-obstruction-00-seed-12000"
       }
@@ -145,7 +151,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-bfcd06328108",
+        "episode_id": "episode-ceee1ee4a7d7",
         "executor_failure_reason": "TimeoutError: Page.click: Timeout 750ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
         "executor_success": false,
         "failure_boundary": "immediate_runtime_error",
@@ -155,26 +161,32 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-bfcd06328108:transition-0001"
-        ]
+          "episode-ceee1ee4a7d7:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
           "modal_offset_px": -10,
+          "modal_padding_px": 21,
           "overlay_opacity": 0.52,
+          "remediation_control_id": "gate-dev-7834",
+          "remediation_label": "Continue",
           "z_index": 1001
         },
         "repetition": 1,
         "seed": 12001,
-        "signature": "bf621af534cd21fb65aa",
+        "signature": "50a09129ba199b18d5ec",
         "split": "dev",
         "variant_id": "dev-openweb-overlay-obstruction-01-seed-12001"
       }
@@ -232,7 +244,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-f9438cb9da48",
+        "episode_id": "episode-1be8fceabf8e",
         "executor_failure_reason": "TimeoutError: Page.click: Timeout 750ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
         "executor_success": false,
         "failure_boundary": "immediate_runtime_error",
@@ -242,26 +254,32 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-f9438cb9da48:transition-0001"
-        ]
+          "episode-1be8fceabf8e:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
           "modal_offset_px": -2,
+          "modal_padding_px": 24,
           "overlay_opacity": 0.62,
+          "remediation_control_id": "gate-dev-4948",
+          "remediation_label": "Acknowledge",
           "z_index": 1002
         },
         "repetition": 2,
         "seed": 12002,
-        "signature": "24c6f54204ae02f9d51e",
+        "signature": "947857d9568dca03c6e6",
         "split": "dev",
         "variant_id": "dev-openweb-overlay-obstruction-02-seed-12002"
       }
@@ -322,7 +340,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-afbb3c30b4e6",
+        "episode_id": "episode-fd934c609386",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -332,16 +350,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-afbb3c30b4e6:transition-0001"
-        ]
+          "episode-fd934c609386:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -411,7 +432,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-8cbc11576b3f",
+        "episode_id": "episode-b1bb23c90d5d",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -421,16 +442,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-8cbc11576b3f:transition-0001"
-        ]
+          "episode-b1bb23c90d5d:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -500,7 +524,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-79f4912e1732",
+        "episode_id": "episode-4ffe69425404",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -510,16 +534,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-79f4912e1732:transition-0001"
-        ]
+          "episode-4ffe69425404:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -597,7 +624,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-fd60d01f2544",
+        "episode_id": "episode-9439ef1c0110",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -607,16 +634,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-fd60d01f2544:transition-0001"
-        ]
+          "episode-9439ef1c0110:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -695,7 +725,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-00fcf6843083",
+        "episode_id": "episode-ed41c0c2c813",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -705,16 +735,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-00fcf6843083:transition-0001"
-        ]
+          "episode-ed41c0c2c813:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -793,7 +826,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-dc8f9e542bbb",
+        "episode_id": "episode-caead0c136c5",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -803,16 +836,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-dc8f9e542bbb:transition-0001"
-        ]
+          "episode-caead0c136c5:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -883,7 +919,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-4fef3a131582",
+        "episode_id": "episode-e35195c0283e",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -893,16 +929,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-4fef3a131582:transition-0001"
-        ]
+          "episode-e35195c0283e:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -972,7 +1011,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-04024c40a025",
+        "episode_id": "episode-0a3d68860a20",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -982,16 +1021,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-04024c40a025:transition-0001"
-        ]
+          "episode-0a3d68860a20:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1061,7 +1103,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-a0c33b601a8b",
+        "episode_id": "episode-261e421282b8",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1071,16 +1113,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-a0c33b601a8b:transition-0001"
-        ]
+          "episode-261e421282b8:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1146,7 +1191,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-4bd60417967d",
+        "episode_id": "episode-3b90d2d8ac4b",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1156,16 +1201,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-4bd60417967d:transition-0001"
-        ]
+          "episode-3b90d2d8ac4b:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1233,7 +1281,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-b5d40f9c1181",
+        "episode_id": "episode-67024c14d9e3",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1243,16 +1291,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-b5d40f9c1181:transition-0001"
-        ]
+          "episode-67024c14d9e3:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1320,7 +1371,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-991f0179a690",
+        "episode_id": "episode-1d29a49edbb3",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1330,16 +1381,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-991f0179a690:transition-0001"
-        ]
+          "episode-1d29a49edbb3:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1413,7 +1467,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-2075a2e473fa",
+        "episode_id": "episode-597f50dd21b9",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1423,16 +1477,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-2075a2e473fa:transition-0001"
-        ]
+          "episode-597f50dd21b9:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1505,7 +1562,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-6815f3912548",
+        "episode_id": "episode-cf0287901b7c",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1515,16 +1572,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-6815f3912548:transition-0001"
-        ]
+          "episode-cf0287901b7c:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1597,7 +1657,7 @@
       },
       "runtime": {
         "attempts": 1,
-        "episode_id": "episode-bac307b4f72f",
+        "episode_id": "episode-e20d8aa284f9",
         "executor_failure_reason": null,
         "executor_success": true,
         "failure_boundary": "recoverable_execution_failure",
@@ -1607,16 +1667,19 @@
           "initial_observation",
           "post_action_verification"
         ],
+        "outcome": "terminal_failure",
         "postcondition_passed": [
           false
         ],
         "reason": "automated recovery exhausted",
         "recovery_attempted": true,
         "recovery_succeeded": false,
+        "replan_count": 0,
         "state": "escalated",
         "transition_ids": [
-          "episode-bac307b4f72f:transition-0001"
-        ]
+          "episode-e20d8aa284f9:transition-0001"
+        ],
+        "user_action_required": false
       },
       "variant": {
         "parameters": {
@@ -1637,24 +1700,24 @@
     "metadata": {
       "data_source": "open_web_playwright_fixture_suite",
       "episode_ids": [
-        "episode-00fcf6843083",
-        "episode-04024c40a025",
-        "episode-2075a2e473fa",
-        "episode-4bd60417967d",
-        "episode-4fef3a131582",
-        "episode-6815f3912548",
-        "episode-76af3fe8f06b",
-        "episode-79f4912e1732",
-        "episode-8cbc11576b3f",
-        "episode-991f0179a690",
-        "episode-a0c33b601a8b",
-        "episode-afbb3c30b4e6",
-        "episode-b5d40f9c1181",
-        "episode-bac307b4f72f",
-        "episode-bfcd06328108",
-        "episode-dc8f9e542bbb",
-        "episode-f9438cb9da48",
-        "episode-fd60d01f2544"
+        "episode-0a3d68860a20",
+        "episode-1be8fceabf8e",
+        "episode-1d29a49edbb3",
+        "episode-261e421282b8",
+        "episode-3b90d2d8ac4b",
+        "episode-4ffe69425404",
+        "episode-597f50dd21b9",
+        "episode-67024c14d9e3",
+        "episode-832a077b78dd",
+        "episode-9439ef1c0110",
+        "episode-b1bb23c90d5d",
+        "episode-caead0c136c5",
+        "episode-ceee1ee4a7d7",
+        "episode-cf0287901b7c",
+        "episode-e20d8aa284f9",
+        "episode-e35195c0283e",
+        "episode-ed41c0c2c813",
+        "episode-fd934c609386"
       ],
       "measurement_counts": {
         "adaptation_cases": 18,
@@ -1669,7 +1732,7 @@
       }
     },
     "values": {
-      "ATL": 155.1099444444,
+      "ATL": 153.7606111111,
       "BRA": 0.0,
       "BackwardRetention": 0.0,
       "BoundaryClassificationRate": 1.0,
@@ -1685,7 +1748,7 @@
       "FalseSuccessRate": 1.0,
       "HeldOutGain": 0.0,
       "ImprovementEfficiency": 0.0,
-      "MTL": 155.1099444444,
+      "MTL": 153.7606111111,
       "MeanTimeToRecovery": 0.0,
       "OSR": 0.0,
       "PCR": 1.0,

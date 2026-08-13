@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from src.benchmarks.task_spec import BenchmarkTask
@@ -50,6 +51,8 @@ class RuntimeWebEnvironmentAdapter:
                 goal_state=self._goal_state,
             ),
             page_state={"benchmark": {"solved": self._adapter.is_solved(self._task)}},
+            response_to_request_id=request.request_id,
+            captured_at_ms=int(time.time() * 1000),
         )
 
     def executors(self) -> dict[str, "_RuntimeWebExecutor"]:

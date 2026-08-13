@@ -47,6 +47,13 @@ class AffordanceController:
                 reason="unresolved conflicts block affordance-level planning",
             )
 
+        if context.failure is not None:
+            return PrimitivePlan(
+                actions=[PrimitiveAction("ask_user", expected_effect="provide an Agent recovery proposal")],
+                requires_escalation=True,
+                reason="recovery planning is owned by the injected Agent/Planner implementation",
+            )
+
         task_plan = self._task_planner.plan(
             context,
             goal_id=goal_id,
