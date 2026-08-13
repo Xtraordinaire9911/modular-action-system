@@ -18,6 +18,7 @@ one-off ``VLM_API_KEY=... python ...`` still take precedence over the file.
 
 from __future__ import annotations
 
+import codecs
 import os
 from pathlib import Path
 
@@ -73,9 +74,71 @@ def load_local_env(path: str | Path = DEFAULT_ENV_FILE) -> list[str]:
     return applied
 
 
-def configured_key_names() -> list[str]:
-    """Which known keys are set right now. Names only, never values."""
+def configured_key_names(path: str | Path = DEFAULT_ENV_FILE) -> list[str]:
+    """Which known keys are set, after loading the local file. Names only.
+
+    Loads first on purpose. An earlier version only read the environment, so it
+    answered "nothing is configured" for a correctly written file and sent the
+    reader looking for a problem that was not there.
+    """
+    load_local_env(path)
     return [name for name in KNOWN_KEYS if os.environ.get(name)]
 
 
-__all__ = ["DEFAULT_ENV_FILE", "KNOWN_KEYS", "configured_key_names", "load_local_env"]
+def describe_local_env(path: str | Path = DEFAULT_ENV_FILE) -> list[str]:
+    """Explain what is wrong with the key file, revealing nothing from it.
+
+    Every message names the line and the shape, never the contents. The check
+    that matters most is the one this was written for: a file holding a bare key
+    with no ``NAME=`` in front of it, which is silently ignored and looks
+    identical to a missing file from the outside.
+    """
+    target = Path(path)
+    if not target.is_file():
+        return [f"{target} does not exist. Create it with one line: DASHSCOPE_API_KEY=sk-..."]
+
+    try:
+        raw = target.read_bytes()
+    except OSError as exc:
+        return [f"{target} could not be read: {exc}"]
+
+    notes: list[str] = []
+    if raw[:3] == codecs.BOM_UTF8:
+        notes.append("the file starts with a byte order mark; save it as UTF-8 without BOM")
+
+    lines = raw.decode("utf-8-sig", errors="replace").splitlines()
+    meaningful = [
+        (n, line.strip()) for n, line in enumerate(lines, 1) if line.strip() and not line.strip().startswith("#")
+    ]
+    if not meaningful:
+        notes.append(f"{target} has no settings in it, only blank or commented lines")
+
+    for number, line in meaningful:
+        if "=" not in line:
+            notes.append(
+                f"line {number} is {len(line)} characters with no '=' in it. This looks like a bare "
+                "key. It needs the variable name in front, for example: DASHSCOPE_API_KEY=<the key>"
+            )
+            continue
+        name = line.partition("=")[0].strip()
+        value = line.partition("=")[2].strip().strip("'\"")
+        if not value:
+            notes.append(f"line {number} sets {name} to nothing")
+        elif name not in KNOWN_KEYS:
+            notes.append(
+                f"line {number} sets {name!r}, which this project does not read. Known names: {', '.join(KNOWN_KEYS)}"
+            )
+
+    if not notes:
+        names = configured_key_names(path)
+        notes.append(f"{target} looks correct. Configured: {', '.join(names) if names else 'nothing'}")
+    return notes
+
+
+__all__ = [
+    "DEFAULT_ENV_FILE",
+    "KNOWN_KEYS",
+    "configured_key_names",
+    "describe_local_env",
+    "load_local_env",
+]

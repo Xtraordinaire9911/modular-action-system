@@ -79,3 +79,76 @@ def test_a_missing_file_is_not_an_error():
 def test_the_allowlist_covers_every_provider_the_code_can_use():
     for expected in ("DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         assert expected in KNOWN_KEYS
+
+
+# --- the diagnostic ------------------------------------------------------------------
+
+
+def test_a_bare_key_with_no_name_is_named_as_the_problem(tmp_path):
+    """The failure this was written for: silently ignored, looks like a missing file."""
+    from src.config.secrets import describe_local_env
+
+    path = tmp_path / ".env.local"
+    path.write_text("sk-" + "x" * 100 + "\n", encoding="utf-8")
+
+    notes = describe_local_env(path)
+
+    assert len(notes) == 1
+    assert "no '=' in it" in notes[0] and "DASHSCOPE_API_KEY=" in notes[0]
+    assert "sk-" not in notes[0], "the diagnostic must not echo the key"
+
+
+def test_a_missing_file_says_what_to_create(tmp_path):
+    from src.config.secrets import describe_local_env
+
+    notes = describe_local_env(tmp_path / "absent")
+
+    assert "does not exist" in notes[0] and "DASHSCOPE_API_KEY=" in notes[0]
+
+
+def test_an_unknown_variable_name_is_reported_with_the_known_ones(tmp_path):
+    from src.config.secrets import describe_local_env
+
+    path = tmp_path / ".env.local"
+    path.write_text("QWEN_KEY=sk-abc\n", encoding="utf-8")
+
+    notes = describe_local_env(path)
+
+    assert "does not read" in notes[0] and "DASHSCOPE_API_KEY" in notes[0]
+    assert "sk-abc" not in notes[0]
+
+
+def test_a_correct_file_is_confirmed_without_revealing_the_value(tmp_path, monkeypatch):
+    from src.config.secrets import describe_local_env
+
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+    path = tmp_path / ".env.local"
+    path.write_text("DASHSCOPE_API_KEY=sk-secret-value\n", encoding="utf-8")
+
+    notes = describe_local_env(path)
+
+    assert "looks correct" in notes[0] and "DASHSCOPE_API_KEY" in notes[0]
+    assert "sk-secret-value" not in notes[0]
+
+
+def test_configured_key_names_loads_the_file_first(tmp_path, monkeypatch):
+    """The earlier version only read the environment and reported a correct file as empty."""
+    from src.config.secrets import configured_key_names
+
+    monkeypatch.delenv("ZHIPU_API_KEY", raising=False)
+    path = tmp_path / ".env.local"
+    path.write_text("ZHIPU_API_KEY=sk-abc\n", encoding="utf-8")
+
+    assert "ZHIPU_API_KEY" in configured_key_names(path)
+
+
+def test_a_byte_order_mark_is_reported_because_editors_add_them(tmp_path, monkeypatch):
+    from src.config.secrets import describe_local_env
+
+    monkeypatch.delenv("DASHSCOPE_API_KEY", raising=False)
+    path = tmp_path / ".env.local"
+    path.write_bytes(b"\xef\xbb\xbfDASHSCOPE_API_KEY=sk-abc\n")
+
+    notes = describe_local_env(path)
+
+    assert any("byte order mark" in note for note in notes)

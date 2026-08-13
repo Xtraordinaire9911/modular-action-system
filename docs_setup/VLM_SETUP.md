@@ -118,13 +118,26 @@ values — so a key cannot end up in a log line.
    (with the leading dot, no `.txt`).
 3. Paste the one line above and save.
 
-Then check it took effect — this prints the *name*, never the key:
+**The `NAME=` part is not optional.** A file containing only the key is silently
+ignored, and from the outside that looks exactly like a missing file. This is the
+single most common way this goes wrong.
+
+Then check it, with one command:
 
 ```bash
-python -c "from src.config.secrets import configured_key_names; print(configured_key_names())"
+python scripts/check_api_key.py
 ```
 
-Expected: `['DASHSCOPE_API_KEY']`
+It reports the shape of the file, which names are set, and which client they
+resolve to — and it prints no key. If the file is wrong it says exactly what is
+wrong with which line. To also prove the key *works*, not just that it is set:
+
+```bash
+python scripts/check_api_key.py --call
+```
+
+That sends a single 1×1 pixel image, which is the smallest question a vision
+model can be asked — a fraction of a cent even at the most expensive provider.
 
 ## 5. Running it
 
