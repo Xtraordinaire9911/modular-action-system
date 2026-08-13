@@ -166,3 +166,82 @@ def test_the_threshold_is_configurable_and_reported(tmp_path):
     observer = _observer(_Client(_reply(True, 0.4)), tmp_path, min_confidence=0.3)
 
     assert observer.look(b"png", "q").is_model_derived is True
+
+
+# --- spend guards ------------------------------------------------------------------
+
+
+def test_the_same_screenshot_and_question_is_never_paid_for_twice(tmp_path):
+    """The runtime observes repeatedly; the pixels and the question do not change."""
+    client = _Client(_reply(True, 0.9))
+    observer = _observer(client, tmp_path, max_calls=5)
+
+    first = observer.look(b"png", "Is the cart non-empty?")
+    second = observer.look(b"png", "Is the cart non-empty?")
+
+    assert len(client.images) == 1, "the second look was billed"
+    assert observer.billed_calls == 1
+    assert second is first
+
+
+def test_a_different_screenshot_is_a_new_question(tmp_path):
+    client = _Client(_reply(True, 0.9))
+    observer = _observer(client, tmp_path, max_calls=5)
+
+    observer.look(b"before", "q")
+    observer.look(b"after", "q")
+
+    assert len(client.images) == 2
+
+
+def test_the_ceiling_stops_a_runaway_loop_from_spending(tmp_path):
+    """A recovery loop must not be able to bill once per attempt."""
+    client = _Client(_reply(True, 0.9))
+    observer = _observer(client, tmp_path, max_calls=2)
+
+    judgements = [observer.look(f"png-{n}".encode(), "q") for n in range(5)]
+
+    assert len(client.images) == 2, "the ceiling did not hold"
+    assert [j.source for j in judgements[2:]] == ["budget_exhausted"] * 3
+    assert all(j.as_assertion("cart", "holds_item") is None for j in judgements[2:])
+
+
+def test_an_exhausted_budget_is_reported_not_silently_skipped(tmp_path):
+    observer = _observer(_Client(_reply(True, 0.9)), tmp_path, max_calls=0)
+
+    judgement = observer.look(b"png", "q")
+
+    assert judgement.source == "budget_exhausted"
+    assert "ceiling of 0" in judgement.error
+
+
+# --- provider precedence -------------------------------------------------------------
+
+
+def test_providers_are_ordered_cheapest_first_and_exclude_text_only_vendors(monkeypatch):
+    """DeepSeek is absent on purpose: its API takes text, so it cannot answer this."""
+    from src.perception.vlm_observer import VISION_PROVIDERS
+
+    names = [model for _, model, _ in VISION_PROVIDERS]
+
+    assert names[0] == "qwen-vl-plus", "the cheapest configured option should win"
+    assert not any("deepseek" in name for name in names)
+
+
+def test_an_explicit_endpoint_overrides_the_table(monkeypatch):
+    from src.perception.vlm_observer import available_vision_client
+
+    monkeypatch.setenv("DASHSCOPE_API_KEY", "cheap")
+    monkeypatch.setenv("VLM_API_KEY", "explicit")
+    monkeypatch.setenv("VLM_MODEL", "some-other-vl")
+
+    assert available_vision_client().name == "some-other-vl"
+
+
+def test_nothing_configured_means_no_client(monkeypatch):
+    from src.perception.vlm_observer import available_vision_client
+
+    for var in ("VLM_API_KEY", "DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+
+    assert available_vision_client() is None

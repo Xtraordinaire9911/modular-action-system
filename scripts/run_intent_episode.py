@@ -237,7 +237,11 @@ def run_episode(
         # arbiter raises a conflict and the runtime re-observes rather than
         # trusting either one. With no model configured it abstains, and the run
         # reports that instead of pretending a model looked.
-        observer = VlmObserver(client=vision_client or available_vision_client())
+        # One paid call per episode. The runtime observes more than once, so an
+        # unguarded second opinion would bill per observation rather than per
+        # question, and the answer to "is the cart non-empty" does not change
+        # between two observations of the same pixels.
+        observer = VlmObserver(client=vision_client or available_vision_client(), max_calls=1)
         judgements: list[Any] = []
         question = (
             f"Is {proof_text or 'the effect of the action'} now shown in the "
@@ -245,7 +249,13 @@ def run_episode(
         )
 
         def visual_second_opinion() -> Any:
-            judgement = observer.look(session.screenshot(), question, region=proof_region)
+            # The region the goal names, not the whole viewport. A model asked
+            # about the cart should be shown the cart: it is a better question,
+            # and an image is billed by area, so it is also roughly twenty times
+            # cheaper. Falls back to the full page when the region is not on the
+            # page yet, which is itself informative.
+            image = session.screenshot_element(proof_region) or session.screenshot()
+            judgement = observer.look(image, question, region=proof_region)
             judgements.append(judgement)
             return judgement.as_assertion(binding.state_entity, binding.state_attribute)
 

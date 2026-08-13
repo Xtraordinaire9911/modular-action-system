@@ -258,6 +258,33 @@ class BrowserSession:
             raise last_error
         raise RuntimeError("screenshot failed without an exception")
 
+    def screenshot_element(self, selector: str) -> bytes:
+        """Capture only the element ``selector`` names, or b"" if it is not there.
+
+        Two reasons this exists rather than cropping a full-page capture. A model
+        asked whether a cart contains an item should be shown the cart, not a
+        1280x800 page it has to search first. And an image is billed by area: a
+        vision model charges roughly one token per 28x28 patch, so a 320x120
+        region costs about 60 tokens where the whole viewport costs about 1300.
+        Same question, same answer, a twentieth of the bill.
+
+        Returns empty bytes rather than raising when the element is absent, so a
+        caller treats it as "could not look" instead of failing the run.
+        """
+        # Fetched off the protocol rather than declared on it: the protocol
+        # describes the surface every injected fake has to provide, and a fake
+        # page in a unit test has no reason to implement locators.
+        locate = getattr(self._page, "locator", None)
+        if locate is None:
+            return b""
+        try:
+            locator = locate(selector).first
+            if locator.count() == 0:
+                return b""
+            return bytes(locator.screenshot(animations="disabled"))
+        except Exception:
+            return b""
+
     def evaluate(self, expression: str, arg: Any | None = None) -> Any:
         evaluator = getattr(self._page, "evaluate", None)
         if evaluator is None:

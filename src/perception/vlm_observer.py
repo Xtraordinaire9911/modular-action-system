@@ -208,19 +208,56 @@ class OpenAIVisionClient:
         return response.choices[0].message.content or ""
 
 
+# Ordered cheapest first, because the only reason to pay more for this question
+# would be if a costlier model answered "is the cart non-empty" better, and it
+# does not. Each entry is (env var holding the key, model, OpenAI-compatible
+# base URL or None for the vendor default).
+#
+# Alibaba Model Studio leads for two measured reasons rather than a preference:
+# qwen-vl-plus bills input at about a fifteenth of Claude Sonnet's rate, and a
+# new Singapore-region account carries a free grant large enough that this
+# project's entire remaining schedule fits inside it. DeepSeek is deliberately
+# absent - its API takes text only, so it cannot answer a question about a
+# screenshot at any price.
+VISION_PROVIDERS: tuple[tuple[str, str, str | None], ...] = (
+    ("DASHSCOPE_API_KEY", "qwen-vl-plus", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+    ("ZHIPU_API_KEY", "glm-4v-flash", "https://open.bigmodel.cn/api/paas/v4"),
+    ("OPENAI_API_KEY", "gpt-4o-mini", None),
+)
+
+
 def available_vision_client() -> VisionClient | None:
-    """The first configured vision client, or None when nothing is configured.
+    """The cheapest configured vision client, or None when nothing is configured.
+
+    Precedence is cost, not preference, and it is overridable: setting
+    ``VLM_API_KEY`` (with optional ``VLM_MODEL`` and ``VLM_BASE_URL``) selects any
+    OpenAI-compatible endpoint and takes priority over the table. Anthropic is
+    tried last because it is the most expensive of the options for this
+    particular question.
 
     Returning None rather than raising is deliberate: the caller then records an
     unavailable judgement, which is a claim it can defend, instead of a model
     result it cannot.
     """
-    for factory in (AnthropicVisionClient, OpenAIVisionClient):
-        try:
-            return factory()  # type: ignore[abstract]
-        except Exception:
-            continue
-    return None
+    explicit = os.environ.get("VLM_API_KEY", "")
+    if explicit:
+        return OpenAIVisionClient(
+            model=os.environ.get("VLM_MODEL", "qwen-vl-plus"),
+            api_key=explicit,
+            base_url=os.environ.get("VLM_BASE_URL") or None,
+        )
+
+    for env_var, model, base_url in VISION_PROVIDERS:
+        key = os.environ.get(env_var, "")
+        if key:
+            try:
+                return OpenAIVisionClient(model=model, api_key=key, base_url=base_url)
+            except Exception:
+                continue
+    try:
+        return AnthropicVisionClient()
+    except Exception:
+        return None
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -237,16 +274,34 @@ class VlmObserver:
     client: VisionClient | None = None
     ledger_path: Path = DEFAULT_LEDGER
     min_confidence: float = MIN_USABLE_CONFIDENCE
+    # A hard ceiling on paid calls per observer. The runtime observes several
+    # times per episode, so an unguarded second opinion bills once per
+    # observation rather than once per question - and a recovery loop would bill
+    # once per attempt. This is the difference between a run costing a fraction
+    # of a cent and a runaway loop costing whatever it feels like.
+    max_calls: int = 2
     calls: list[dict[str, Any]] = field(default_factory=list)
+    billed_calls: int = 0
+    # Same pixels, same question, same answer. Reusing it is free and is also
+    # more honest than asking twice and possibly getting two answers.
+    _seen: dict[tuple[str, str], VisualJudgement] = field(default_factory=dict, repr=False)
 
     def look(self, image_png: bytes, question: str, *, region: str = "") -> VisualJudgement:
         """Answer ``question`` about ``image_png``, or say why it could not."""
         digest = hashlib.sha256(image_png).hexdigest()[:16]
         base = VisualJudgement(screenshot_sha256=digest, region=region, question=question)
 
+        cached = self._seen.get((digest, question))
+        if cached is not None:
+            return cached
         if self.client is None:
             base.source = "unavailable"
             base.error = "no vision client configured"
+            self._record(base)
+            return base
+        if self.billed_calls >= self.max_calls:
+            base.source = "budget_exhausted"
+            base.error = f"the per-run ceiling of {self.max_calls} vision calls was reached"
             self._record(base)
             return base
         if not image_png:
@@ -256,6 +311,7 @@ class VlmObserver:
             return base
 
         base.model = getattr(self.client, "name", "unknown")
+        self.billed_calls += 1
         started = time.monotonic()
         try:
             raw = self.client.describe(_SYSTEM_PROMPT, question, image_png)
@@ -275,6 +331,7 @@ class VlmObserver:
         # recorded so the run can show what it said and why it was not used.
         base.source = "vlm" if base.confidence >= self.min_confidence else "low_confidence"
         self._record(base)
+        self._seen[(digest, question)] = base
         return base
 
     def _record(self, judgement: VisualJudgement) -> None:
@@ -289,6 +346,7 @@ class VlmObserver:
 
 
 __all__ = [
+    "VISION_PROVIDERS",
     "AnthropicVisionClient",
     "MIN_USABLE_CONFIDENCE",
     "OpenAIVisionClient",
