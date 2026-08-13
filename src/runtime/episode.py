@@ -43,6 +43,8 @@ class ObservationRequest:
     reason: str
     step: int
     previous_result: ExecutionResult | None = None
+    request_id: str = field(default_factory=lambda: f"request-{uuid.uuid4().hex}")
+    requested_at_ms: int = field(default_factory=lambda: int(time.time() * 1000))
 
 
 class ObservationProvider(Protocol):
@@ -76,6 +78,19 @@ class EpisodeContext:
             return self.cancellation.reason or "episode cancelled"
         if self.step_count >= self.policy.max_steps:
             return "episode max_steps exhausted"
+        if time.monotonic() - self.started_monotonic >= self.policy.deadline_s:
+            return "episode deadline exceeded"
+        return None
+
+    def post_attempt_terminal_reason(self) -> str | None:
+        """Cancellation/deadline checked after an admitted attempt.
+
+        Reaching max_steps does not invalidate the attempt that consumed the
+        final permitted step; it only prevents another attempt.
+        """
+
+        if self.cancellation.cancelled:
+            return self.cancellation.reason or "episode cancelled"
         if time.monotonic() - self.started_monotonic >= self.policy.deadline_s:
             return "episode deadline exceeded"
         return None

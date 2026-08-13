@@ -15,3 +15,14 @@ class RuntimeState(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     ESCALATED = "escalated"
+
+
+class RuntimeOutcome(str, Enum):
+    """Closed terminal result projection; world success remains oracle-owned."""
+
+    VERIFIED_SUCCESS = "verified_success"
+    USER_ACTION_REQUIRED = "user_action_required"
+    CANCELLED = "cancelled"
+    BUDGET_EXHAUSTED = "budget_exhausted"
+    UNSUPPORTED = "unsupported"
+    TERMINAL_FAILURE = "terminal_failure"

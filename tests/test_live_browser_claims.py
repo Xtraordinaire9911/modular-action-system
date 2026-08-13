@@ -189,3 +189,56 @@ def test_randomized_open_web_holdout_changes_real_page_state_and_detects_all_fai
         observed = row["browser"]["observed_oracles"][-1]
         expected = row["variant"]["parameters"]
         assert any(value in observed.values() for value in expected.values())
+
+
+def test_generalized_recovery_discovers_unseen_controls_and_verifies_the_original_goal(tmp_path):
+    """Claim: recovery follows fresh geometry/semantics, not a fixture-specific script."""
+    import json
+
+    from evaluation.generalized_browser_recovery import run_generalized_browser_recovery_suite
+
+    run_generalized_browser_recovery_suite(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        action_timeout_ms=400,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "generalized_browser_recovery_report.json").read_text())
+
+    assert report["summary"] == {
+        "all_recovered_and_verified": True,
+        "dev_count": 1,
+        "episode_count": 2,
+        "final_verified_count": 2,
+        "holdout_count": 1,
+        "recovery_success_count": 2,
+    }
+    controls = {
+        (
+            row["variant"]["parameters"]["remediation_control_id"],
+            row["variant"]["parameters"]["remediation_label"],
+        )
+        for row in report["episodes"]
+    }
+    assert len(controls) == 2
+    for row in report["episodes"]:
+        transitions = row["transitions"]
+        assert [transition["recovery_action"] for transition in transitions] == [
+            "replan",
+            "agent_replan",
+            "resume_after_replan",
+        ]
+        assert transitions[0]["postcondition_passed"] is False
+        assert transitions[1]["postcondition_passed"] is True
+        assert transitions[2]["postcondition_passed"] is True
+        assert transitions[1]["recovery_of_transition_id"] == transitions[0]["transition_id"]
+        assert [transition["recovery_tier"] for transition in transitions] == [2, 2, 2]
+        assert transitions[2]["recovery_of_transition_id"] == transitions[1]["transition_id"]
+        assert row["runtime"]["final_verification_transition_id"] == transitions[2]["transition_id"]
+        observations = row["browser"]["obstruction_observations"]
+        assert [observation["blocked"] for observation in observations] == [True, False, False]
+        assert row["browser"]["oracles"][-1]["primary_action_completed"] is True
+        assert len(row["failures"]) == 1
+        assert row["failures"][0]["recovery_action"] == "replan"
+        assert row["failures"][0]["recovery_success"] is True

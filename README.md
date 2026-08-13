@@ -29,12 +29,12 @@ matching its code.
 |---|---|---|
 | Observe → plan → act → verify → recover | **Implemented** | Runs end to end in one process; see `scripts/run_agent_loop_demo.py`. |
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
-| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. `STATUS.md` still says "future interface only" and is now out of date on this row. |
+| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. |
 | Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Unlike the intent layer above, this one is still consumed only by the narrated demo — the runtime picks affordances through its own action context. |
 | A model actually running | **Not exercised** | No API key is configured, so every recorded intent and mark decision in this repository is `rule_fallback` / `heuristic`. The model paths have unit tests against fakes and have never run against a real model. **No image is ever sent to a model** — there is no VLM anywhere in the repository. |
 | Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
-| Recovery | **Implemented, four tiers** | All four are exercised by the loop demo and are genuinely different actions: retry, clear the obstruction, satisfy the precondition, hand over. Which tier is used is decided at run time from what was measured. Scored against ground truth the diagnosis never sees. |
+| Recovery | **Bounded implementation; one browser family has verified autonomous repair** | Runtime performs fresh observation, verification, safety, budgets, transparent retry/reroute/rollback, and returns typed failures to the same Agent/Planner for semantic replanning. Overlay obstruction succeeds on disjoint dev/holdout IDs, labels, and geometry. The other five fixture families currently fail closed because their environments lack a reachable repair or resolvable evidence; this is not six-family or unrestricted open-web recovery. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
 | Live behaviour is tested | **Implemented** | `pytest -m live` opens a real Chromium and asserts the claims in this table against a real page (selector uniqueness, measured geometry, episode isolation, region-scoped verification, the probes). CI runs it as its own job. The fast suite excludes it and cannot corroborate any live claim on its own. |
@@ -330,6 +330,24 @@ uv run python -m src.pipeline --open-web-randomized-holdout \
 ```
 
 This remains controlled local-browser evidence, not real open-web evidence.
+
+Run the observation-driven recovery path on randomized dev and locked-holdout
+obstruction variants. The runtime is not given a case ID or a known overlay or
+remediation selector: it measures the target obstruction and returns fresh
+failure evidence to the same Agent/Planner. That planner selects a bounded safe
+control inside the blocker; Runtime validates and executes it, verifies the
+blocker is gone, replans the original goal, and verifies the final oracle:
+
+```bash
+uv run python -m src.pipeline --generalized-browser-recovery \
+  --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
+```
+
+Evidence is written under `artifacts/generalized_browser_recovery/`. The formal
+generated run contains six successful episodes, 18 linked transitions, and 24
+screenshots. All six episodes are variants of the **one obstruction family**.
+This remains controlled local-browser evidence. See
+`YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the five environment/chain gaps.
 
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:

@@ -219,10 +219,18 @@ def _parameters_for(
     if case_id == "openweb-overlay-obstruction":
         opacity = (0.42, 0.52, 0.62) if split == "dev" else (0.74, 0.84, 0.94)
         offset_base = -18 if split == "dev" else 42
+        labels = (
+            ("Accept preferences", "Continue", "Acknowledge")
+            if split == "dev"
+            else ("Carry on with browsing", "Understood", "Got it")
+        )
         return {
             "overlay_opacity": opacity[repetition % len(opacity)],
             "modal_offset_px": offset_base + repetition * 7 + rng.randint(0, 3),
             "z_index": (1000 if split == "dev" else 4000) + repetition,
+            "remediation_label": labels[repetition % len(labels)],
+            "remediation_control_id": f"gate-{split}-{rng.randint(1000, 9999)}",
+            "modal_padding_px": (18 if split == "dev" else 31) + repetition * 3,
         }
     if case_id == "openweb-session-expiry":
         age_base = 10 if split == "dev" else 180

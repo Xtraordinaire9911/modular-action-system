@@ -8,12 +8,19 @@ planner-facing affordance grounding.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
+from enum import Enum
 from typing import Literal
 
 from src.runtime.cognitive_map import CognitiveMap, Conflict, RuntimeAffordance
 
 RequestType = Literal["skill_call", "goal_spec", "primitive_action"]
+
+
+class PlannerHandoff(str, Enum):
+    NONE = "none"
+    REPLAN_REQUIRED = "replan_required"
+
 
 _SAFE_GROUNDING_KEYS = frozenset(
     [
@@ -37,6 +44,12 @@ _SAFE_GROUNDING_KEYS = frozenset(
         "effects",
         "observes",
         "idempotent",
+        "irreversible",
+        "safety_level",
+        "recovery_role",
+        "remediates",
+        "recovery_postcondition",
+        "recovery_safe",
     ]
 )
 _DEFAULT_ALLOWED_ACTIONS = ["click", "type", "select", "invoke", "read", "scroll", "wait", "ask_user", "done"]
@@ -51,6 +64,37 @@ class ActionContext:
     unresolved_conflicts: list[Conflict]
     allowed_actions: list[str]
     safety_constraints: list[str]
+    failure: FailureContext | None = None
+    attempted_actions: list[AttemptedAction] = field(default_factory=list)
+    remaining_steps: int | None = None
+    remaining_retries: int | None = None
+
+
+@dataclass(frozen=True)
+class AttemptedAction:
+    """Planner-visible history; contains semantic IDs, never backend handles."""
+
+    action: str
+    affordance_id: str
+    expected_effect: str
+    outcome: str
+    transition_id: str = ""
+
+
+@dataclass(frozen=True)
+class FailureContext:
+    """Fresh, typed evidence returned by Runtime to the existing Agent/Planner."""
+
+    failed_action: str
+    failed_affordance_id: str
+    failed_entity_id: str
+    expected_effect: str
+    failure_boundary: str
+    failure_type: str
+    reason: str
+    transition_id: str
+    observation_state_id: str
+    observation_request_id: str = ""
 
 
 def build_action_context(
@@ -59,6 +103,10 @@ def build_action_context(
     request_type: RequestType,
     allowed_actions: list[str] | None = None,
     safety_constraints: list[str] | None = None,
+    failure: FailureContext | None = None,
+    attempted_actions: list[AttemptedAction] | None = None,
+    remaining_steps: int | None = None,
+    remaining_retries: int | None = None,
 ) -> ActionContext:
     """Build a planner-facing snapshot without exposing raw DOM selectors."""
 
@@ -74,6 +122,10 @@ def build_action_context(
         unresolved_conflicts=list(cognitive_map.unresolved_conflicts()),
         allowed_actions=list(allowed_actions or _DEFAULT_ALLOWED_ACTIONS),
         safety_constraints=list(safety_constraints or []),
+        failure=failure,
+        attempted_actions=list(attempted_actions or []),
+        remaining_steps=remaining_steps,
+        remaining_retries=remaining_retries,
     )
 
 

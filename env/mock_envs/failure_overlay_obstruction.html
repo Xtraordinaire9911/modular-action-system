@@ -18,8 +18,25 @@
     <section class="modal">
       <h2>Cookie preferences</h2>
       <p>This overlay intentionally blocks the visible primary button.</p>
-      <button id="accept-cookies">Accept cookies first</button>
+      <button id="accept-cookies" data-dismiss="dialog">Accept cookies first</button>
     </section>
   </div>
+  <script>
+    const readOracle = () => {
+      try { return JSON.parse(document.body.getAttribute('data-oracle-state') || '{}'); }
+      catch (_) { return {}; }
+    };
+    const writeOracle = (update) => {
+      document.body.setAttribute('data-oracle-state', JSON.stringify({...readOracle(), ...update}));
+    };
+    document.querySelector('#primary-action').addEventListener('click', () => {
+      writeOracle({primary_action_completed: true});
+      document.querySelector('#status').textContent = 'Plan confirmed.';
+    });
+    document.querySelector('#accept-cookies').addEventListener('click', (event) => {
+      writeOracle({overlay_present: false});
+      event.currentTarget.closest('[data-testid="blocking-overlay"]').remove();
+    });
+  </script>
 </body>
 </html>

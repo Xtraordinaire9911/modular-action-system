@@ -8,6 +8,7 @@ in scattered places.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -24,6 +25,8 @@ class LiveRuntimeObservation:
     affordances: list[Affordance] = field(default_factory=list)
     provenance: dict[str, Any] = field(default_factory=dict)
     complete_affordance_snapshot: bool = True
+    response_to_request_id: str = ""
+    captured_at_ms: int = 0
 
     def apply_to(self, cognitive_map: CognitiveMap) -> Observation:
         """Update a map with observed affordances/state and return the observation."""
@@ -55,6 +58,8 @@ def observation_from_live_sources(
     visual_state: dict[str, Any] | None = None,
     screenshot: bytes | None = None,
     wot_tds: list[dict[str, Any]] | None = None,
+    response_to_request_id: str = "",
+    captured_at_ms: int = 0,
 ) -> LiveRuntimeObservation:
     """Build a live runtime observation from already-parsed environment outputs.
 
@@ -103,4 +108,24 @@ def observation_from_live_sources(
         ),
         affordances=affordances,
         provenance=provenance,
+        response_to_request_id=response_to_request_id,
+        captured_at_ms=captured_at_ms,
+    )
+
+
+def bind_live_observation_to_request(
+    observation: LiveRuntimeObservation,
+    *,
+    request_id: str,
+    captured_at_ms: int | None = None,
+) -> LiveRuntimeObservation:
+    """Bind an adapter capture to the Runtime-issued observation request."""
+
+    return LiveRuntimeObservation(
+        observation=observation.observation,
+        affordances=observation.affordances,
+        provenance=dict(observation.provenance),
+        complete_affordance_snapshot=observation.complete_affordance_snapshot,
+        response_to_request_id=request_id,
+        captured_at_ms=captured_at_ms or int(time.time() * 1000),
     )

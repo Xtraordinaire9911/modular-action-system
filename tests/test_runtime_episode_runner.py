@@ -8,7 +8,7 @@ from src.contracts.types import Affordance, ExecutionResult, Observation, SkillC
 from src.perception.page_affordance_model import PageAffordanceModel
 from src.runtime.episode import ObservationRequest
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec
-from src.runtime.live_observation import observation_from_live_sources
+from src.runtime.live_observation import bind_live_observation_to_request, observation_from_live_sources
 from src.runtime.state_machine import RuntimeState
 
 
@@ -39,8 +39,10 @@ class _Adapter:
     async def observe(self, request: ObservationRequest):
         self.requests.append(request)
         if request.reason == "initial_observation":
-            return _live({"booking": {"confirmed": False}})
-        return _live({"booking": {"confirmed": True}})
+            observed = _live({"booking": {"confirmed": False}})
+        else:
+            observed = _live({"booking": {"confirmed": True}})
+        return bind_live_observation_to_request(observed, request_id=request.request_id)
 
     def executors(self):
         return {"dom": self.executor}

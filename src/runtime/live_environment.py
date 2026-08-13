@@ -316,6 +316,8 @@ class SmartRoomLiveEnvironment:
                 "wot_affordance_count": len(wot_affordances),
             },
             complete_affordance_snapshot=True,
+            response_to_request_id=request.request_id,
+            captured_at_ms=captured_at_ms,
         )
 
     def find_affordance(self, affordance_id: str) -> Affordance | None:
