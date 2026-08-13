@@ -228,9 +228,10 @@ def test_providers_are_ordered_cheapest_first_and_exclude_text_only_vendors(monk
     assert not any("deepseek" in name for name in names)
 
 
-def test_an_explicit_endpoint_overrides_the_table(monkeypatch):
+def test_an_explicit_endpoint_overrides_the_table(monkeypatch, tmp_path):
     from src.perception.vlm_observer import available_vision_client
 
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("DASHSCOPE_API_KEY", "cheap")
     monkeypatch.setenv("VLM_API_KEY", "explicit")
     monkeypatch.setenv("VLM_MODEL", "some-other-vl")
@@ -238,9 +239,11 @@ def test_an_explicit_endpoint_overrides_the_table(monkeypatch):
     assert available_vision_client().name == "some-other-vl"
 
 
-def test_nothing_configured_means_no_client(monkeypatch):
+def test_nothing_configured_means_no_client(monkeypatch, tmp_path):
+    """Run from a directory with no .env.local, or the developer's own key answers."""
     from src.perception.vlm_observer import available_vision_client
 
+    monkeypatch.chdir(tmp_path)
     for var in ("VLM_API_KEY", "DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
         monkeypatch.delenv(var, raising=False)
 

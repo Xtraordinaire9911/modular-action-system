@@ -38,6 +38,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
+from src.config.secrets import load_local_env
 from src.contracts.types import ObservedAssertion
 
 DEFAULT_LEDGER = Path("artifacts/vlm_observer/calls.jsonl")
@@ -239,6 +240,7 @@ def available_vision_client() -> VisionClient | None:
     unavailable judgement, which is a claim it can defend, instead of a model
     result it cannot.
     """
+    load_local_env()
     explicit = os.environ.get("VLM_API_KEY", "")
     if explicit:
         return OpenAIVisionClient(

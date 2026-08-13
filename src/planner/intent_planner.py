@@ -36,6 +36,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
+from src.config.secrets import load_local_env
 from src.runtime.goal_spec import GoalSpec
 
 DEFAULT_LEDGER = Path("artifacts/intent_planner/calls.jsonl")
@@ -167,19 +168,46 @@ class OpenAIClient:
         return response.choices[0].message.content or ""
 
 
+# Ordered cheapest first, same table shape as the vision side. Interpreting one
+# sentence into a closed vocabulary of nine goal states is not a task that needs
+# a frontier model, and the fallback below already covers the phrasings we use.
+TEXT_PROVIDERS: tuple[tuple[str, str, str | None], ...] = (
+    ("DASHSCOPE_API_KEY", "qwen-plus", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+    ("ZHIPU_API_KEY", "glm-4-flash", "https://open.bigmodel.cn/api/paas/v4"),
+    ("OPENAI_API_KEY", "gpt-4o-mini", None),
+)
+
+
 def available_client() -> LLMClient | None:
-    """The first configured client, or None when nothing is configured.
+    """The cheapest configured client, or None when nothing is configured.
+
+    Precedence is cost, not preference. ``LLM_API_KEY`` (with optional
+    ``LLM_MODEL`` and ``LLM_BASE_URL``) overrides the table for any
+    OpenAI-compatible endpoint; Anthropic is tried last as the most expensive.
 
     Returning None rather than raising is deliberate: the caller then records a
     rule_fallback result, which is a claim it can defend, instead of a model
     result it cannot.
     """
-    for factory in (AnthropicClient, OpenAIClient):
-        try:
-            return factory()  # type: ignore[abstract]
-        except Exception:
-            continue
-    return None
+    load_local_env()
+    explicit = os.environ.get("LLM_API_KEY", "")
+    if explicit:
+        return OpenAIClient(
+            model=os.environ.get("LLM_MODEL", "qwen-plus"),
+            api_key=explicit,
+            base_url=os.environ.get("LLM_BASE_URL") or None,
+        )
+    for env_var, model, base_url in TEXT_PROVIDERS:
+        key = os.environ.get(env_var, "")
+        if key:
+            try:
+                return OpenAIClient(model=model, api_key=key, base_url=base_url)
+            except Exception:
+                continue
+    try:
+        return AnthropicClient()
+    except Exception:
+        return None
 
 
 def _extract_json(text: str) -> dict[str, Any]:

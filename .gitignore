@@ -40,6 +40,10 @@ docs/
 # thing being submitted.
 reports/
 
+# API keys live here and nowhere else. Never commit this file.
+.env.local
+.env
+
 # Runtime ledgers appended to on every run.
 artifacts/intent_planner/
 artifacts/vlm_observer/
