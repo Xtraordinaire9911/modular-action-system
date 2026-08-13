@@ -40,8 +40,9 @@ docs/
 # thing being submitted.
 reports/
 
-# Runtime ledger of intent-planner calls, appended to on every run.
+# Runtime ledgers appended to on every run.
 artifacts/intent_planner/
+artifacts/vlm_observer/
 
 # B-113 Development artifacts - added to ignore list
 B113_Development_Summary_CN_EN.md

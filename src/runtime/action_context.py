@@ -118,7 +118,11 @@ def build_action_context(
             "visual": dict(cognitive_map.visual_state),
             "wot": dict(cognitive_map.device_states),
         },
-        affordances=[_sanitize_affordance(affordance) for affordance in cognitive_map.runtime_affordances.values()],
+        affordances=[
+            _sanitize_affordance(affordance)
+            for affordance in cognitive_map.runtime_affordances.values()
+            if not _is_runtime_overlay(affordance)
+        ],
         unresolved_conflicts=list(cognitive_map.unresolved_conflicts()),
         allowed_actions=list(allowed_actions or _DEFAULT_ALLOWED_ACTIONS),
         safety_constraints=list(safety_constraints or []),
@@ -138,6 +142,10 @@ def _sanitize_affordance(affordance: RuntimeAffordance) -> RuntimeAffordance:
     if "label" not in grounding:
         grounding["label"] = affordance.action_name
     return replace(affordance, grounding=grounding)
+
+
+def _is_runtime_overlay(affordance: RuntimeAffordance) -> bool:
+    return bool(affordance.grounding.get("demo_overlay") or affordance.grounding.get("runtime_overlay"))
 
 
 def _is_safe_grounding_value(value: object) -> bool:

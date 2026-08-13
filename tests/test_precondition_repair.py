@@ -330,6 +330,11 @@ class _RecordingPlanner:
         return self.delegate.plan(context, **kwargs)
 
 
+class _ForbiddenInterventionBroker:
+    async def request(self, request):
+        raise AssertionError(f"autonomous Agent recovery must run before Tier-4 intervention: {request.reason}")
+
+
 def test_cim_executes_repair_reobserves_and_retries_original_goal_with_linked_transitions():
     executor = _RecoveryExecutor()
     provider = _RecoveryObservations()
@@ -349,6 +354,7 @@ def test_cim_executes_repair_reobserves_and_retries_original_goal_with_linked_tr
         ),
         transition_ledger=ledger,
         system2_planner=planner,
+        intervention_broker=_ForbiddenInterventionBroker(),
     )
 
     result = asyncio.run(

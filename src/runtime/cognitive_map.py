@@ -94,6 +94,23 @@ class CognitiveMap:
     conflicts: list[Conflict] = field(default_factory=list)
     execution_history: list[ExecutionResult] = field(default_factory=list)
 
+    def reset_for_episode(self) -> None:
+        """Drop transient perception/execution state without replacing this shared object."""
+
+        self.current_skill = None
+        self.affordances.clear()
+        self.entities.clear()
+        self.runtime_affordances.clear()
+        self.state_assertions.clear()
+        self.device_states.clear()
+        self.page_state.clear()
+        self.visual_state.clear()
+        self.fused_state.clear()
+        self.fused_assertions.clear()
+        self.conflicts.clear()
+        self.execution_history.clear()
+        self.touch()
+
     def set_current_skill(self, skill_call: SkillCall | None) -> None:
         self.current_skill = skill_call
         self.touch()

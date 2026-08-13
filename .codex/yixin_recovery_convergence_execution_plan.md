@@ -61,10 +61,10 @@ prove one supported recovery family, not the five missing capabilities.
 ## Latest verification
 
 - Ruff: all files pass.
-- Black: 256 files compliant.
-- mypy: 111 source files pass.
-- pytest non-live: 570 passed.
-- pytest live Chromium: 10 passed, 560 deselected.
+- Black: 264 files compliant.
+- mypy: 115 source files pass.
+- pytest non-live: 616 passed, 14 deselected.
+- pytest live Chromium: 14 passed, 616 deselected.
 - Formal obstruction recovery: 3 dev + 3 locked holdout, 6/6 recovered and final-oracle verified.
 - Every formal episode has exactly one Agent replan and explicitly links
   `final_verification_transition_id` to its last transition.

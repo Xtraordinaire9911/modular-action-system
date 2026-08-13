@@ -102,6 +102,10 @@ or expected answer.
 15. Every verified terminal result names the transition whose fresh
     postcondition/oracle established success, so the recovery chain no longer
     relies on report-side inference.
+16. PiP/human intervention is integrated as Tier 4 after autonomous recovery:
+    a recoverable semantic failure still returns to the same `System2Planner`
+    first; takeover resume re-observes and then re-enters that planner rather
+    than becoming a second recovery authority.
 
 ### Still open
 

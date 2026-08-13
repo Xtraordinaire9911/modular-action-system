@@ -37,6 +37,7 @@ class FakePage:
         self.calls.append(("click_xy", x, y))
 
     def screenshot(self, **kwargs):
+        self.calls.append(("screenshot", kwargs))
         return b"PNGDATA"
 
 
@@ -70,3 +71,20 @@ def test_session_satisfies_dom_and_pointer_protocols():
 def test_screenshot_returns_bytes():
     session = BrowserSession(FakePage(_HTML))
     assert session.screenshot() == b"PNGDATA"
+
+
+def test_screenshot_hides_runtime_overlays_without_mutating_the_page():
+    page = FakePage(_HTML)
+    session = BrowserSession(page)
+
+    assert session.screenshot("observation.png") == b"PNGDATA"
+
+    _, kwargs = page.calls[-1]
+    assert kwargs["path"] == "observation.png"
+    assert kwargs["full_page"] is True
+    assert kwargs["animations"] == "disabled"
+    assert "#__cua_cursor" in kwargs["style"]
+    assert "#__cua_cap" in kwargs["style"]
+    assert "[data-agent-overlay='true']" in kwargs["style"]
+    assert "[data-runtime-overlay='true']" in kwargs["style"]
+    assert ".__cua_hl" in kwargs["style"]

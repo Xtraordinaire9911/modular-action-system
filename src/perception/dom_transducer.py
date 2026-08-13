@@ -17,6 +17,7 @@ from src.perception.page_affordance_model import PageAffordanceModel
 _INTERACTIVE_TAGS = frozenset(["a", "button", "input", "select", "textarea", "label", "form", "option"])
 _STRIP_TAGS = frozenset(["script", "style", "meta", "link", "noscript", "head", "svg"])
 _VOID_STRIP_TAGS = frozenset(["meta", "link"])
+_HTML_VOID_TAGS = frozenset(["area", "base", "br", "embed", "hr", "img", "input", "source", "track", "wbr"])
 # Demo overlays (cursor, highlight ring, task badge) tag *live* page elements with
 # __cua_* ids/classes while a run is being shown. Those are our own artifacts, so
 # perception must ignore them: otherwise the transducer emits fabricated locators
@@ -53,6 +54,7 @@ _INPUT_TYPE_ACTION = {
 }
 _AFFORDANCE_TYPE = {"click": "button", "type": "input", "select": "input"}
 _SELECTOR_CONFIDENCE = {"id": 1.0, "testid": 0.97, "name": 0.85, "class": 0.7, "positional": 0.55}
+_RUNTIME_OVERLAY_IDS = frozenset(["__cua_cursor", "__cua_cap", "__cua_badge", "__cua_style"])
 
 
 def _strip_overlay_attrs(attr: dict[str, str]) -> dict[str, str]:
@@ -86,14 +88,20 @@ class _InteractiveParser(HTMLParser):
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self._depth += 1
         self.total_nodes += 1
-        if self._skip_depth is None and tag in _STRIP_TAGS:
-            if tag in _VOID_STRIP_TAGS:
+        attr = {k: (v or "") for k, v in attrs}
+        is_runtime_overlay = (
+            attr.get("id") in _RUNTIME_OVERLAY_IDS
+            or attr.get("data-agent-overlay") == "true"
+            or attr.get("data-runtime-overlay") == "true"
+        )
+        if self._skip_depth is None and (tag in _STRIP_TAGS or is_runtime_overlay):
+            if tag in _VOID_STRIP_TAGS or tag in _HTML_VOID_TAGS:
                 self._depth = max(0, self._depth - 1)
                 return
             self._skip_depth = self._depth
             return
         if self._skip_depth is not None:
-            if tag in _VOID_STRIP_TAGS:
+            if tag in _VOID_STRIP_TAGS or tag in _HTML_VOID_TAGS:
                 self._depth = max(0, self._depth - 1)
             return
 
@@ -123,8 +131,9 @@ class _InteractiveParser(HTMLParser):
                 self._open[-1]["text_parts"].append(text)
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        depth_before = self._depth
         self.handle_starttag(tag, attrs)
-        if tag not in _VOID_STRIP_TAGS:
+        if self._depth > depth_before:
             self.handle_endtag(tag)
 
 

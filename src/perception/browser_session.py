@@ -24,10 +24,22 @@ module unit-tests with a fake page and never needs a real browser in CI.
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Any, Protocol, cast
 
 from src.perception.dom_transducer import DomTransducer
 from src.perception.page_affordance_model import PageAffordanceModel
+
+_AGENT_SCREENSHOT_STYLE = """
+#__cua_cursor, #__cua_cap, #__cua_badge, .__cua_dot,
+[data-agent-overlay='true'], [data-runtime-overlay='true'] {
+    display: none !important;
+}
+.__cua_hl {
+    outline: none !important;
+    box-shadow: none !important;
+}
+"""
 
 
 class _PageDriver(Protocol):
@@ -77,6 +89,7 @@ class BrowserSession:
         self._url = url
         self._owner = _owner  # (playwright, browser) kept alive until close()
         self._transducer = DomTransducer()
+        self.context_id = f"browser-context-{uuid.uuid4().hex[:12]}"
         self._action_timeout_ms = action_timeout_ms  # reapplied to each new episode page
         self._episode_index = 0
 
@@ -233,6 +246,7 @@ class BrowserSession:
                 kwargs: dict[str, Any] = {
                     "full_page": True,
                     "animations": "disabled",
+                    "style": _AGENT_SCREENSHOT_STYLE,
                 }
                 if path:
                     kwargs["path"] = path
