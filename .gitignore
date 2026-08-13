@@ -20,6 +20,10 @@ htmlcov/
 results/
 logs/
 screenshots/
+!artifacts/friday_generalized_recovery/
+!artifacts/friday_generalized_recovery/**
+!artifacts/runtime_recovery_demo/
+!artifacts/runtime_recovery_demo/**
 # Per-run demo output (screenshots, traces): regenerated on every run.
 eval_outputs/
 # Recorded demo videos. Every run writes one and they are a few MB each, so none
@@ -34,6 +38,8 @@ demo_video/
 local_docs/
 docs/
 *.png
+!artifacts/friday_generalized_recovery/**/*.png
+!artifacts/runtime_recovery_demo/**/*.png
 
 # Local report and presentation drafts. Kept out of the repository: the course
 # requires these to be written by hand, so a draft in history invites the wrong

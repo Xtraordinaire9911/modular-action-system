@@ -25,6 +25,9 @@ https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
 - [Open the final video directly](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
 - [Open the full-size visual preview](artifacts/runtime_recovery_demo/preview.png)
 - [Inspect the Runtime run report](artifacts/runtime_recovery_demo/runtime-report.json)
+- [Inspect the transition ledger](artifacts/runtime_recovery_demo/transition_ledger.jsonl)
+- [Inspect the failure ledger](artifacts/runtime_recovery_demo/failure_ledger.jsonl)
+- [Inspect the raw screenshots](artifacts/runtime_recovery_demo/screenshots/)
 - [Inspect the claim-boundary manifest](artifacts/runtime_recovery_demo/demo-manifest.json)
 
 The recording contains five controlled recovery scenes and all five finish with
@@ -370,6 +373,15 @@ externally supplied Planner implementation, each episode must stop after the
 typed handoff instead of using a hidden Runtime policy. Autocomplete is excluded
 from recovery scope. See `YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the ownership
 and integration matrix.
+
+The single successful obstruction-repair holdout evidence map is packaged under
+`artifacts/friday_generalized_recovery/`:
+
+- `artifacts/friday_generalized_recovery/evidence/generalized_browser_recovery_report.json`
+- `artifacts/friday_generalized_recovery/evidence/transition_ledger.jsonl`
+- `artifacts/friday_generalized_recovery/evidence/screenshots/`
+- `artifacts/friday_generalized_recovery/contact_sheet.png`
+- `artifacts/friday_generalized_recovery/generalized_browser_recovery_holdout.mp4`
 
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:

@@ -1,0 +1,350 @@
+{
+  "artifacts": {
+    "transition_ledger": "artifacts/friday_generalized_recovery/evidence/transition_ledger.jsonl"
+  },
+  "data_source": "generalized_browser_recovery",
+  "episodes": [
+    {
+      "browser": {
+        "calls": [
+          {
+            "affordance_id": "dom_button_1",
+            "failure_reason": "TimeoutError: Page.click: Timeout 1400ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    3 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n",
+            "label": "primary-action",
+            "primitive_action": "click",
+            "selector": "#primary-action",
+            "skill_id": "confirm_plan",
+            "success": false
+          },
+          {
+            "affordance_id": "dom_recovery_846b5c2141bd",
+            "failure_reason": "",
+            "label": "Carry on with browsing",
+            "primitive_action": "click",
+            "selector": "#gate-holdout-9444",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "dom_button_1",
+            "failure_reason": "",
+            "label": "primary-action",
+            "primitive_action": "click",
+            "selector": "#primary-action",
+            "skill_id": "confirm_plan",
+            "success": true
+          }
+        ],
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification",
+          "post_action_verification",
+          "post_action_verification"
+        ],
+        "obstruction_observations": [
+          {
+            "blocked": true,
+            "blocker": {
+              "ariaModal": "",
+              "rect": [
+                0,
+                0,
+                1280,
+                720
+              ],
+              "role": "",
+              "tag": "div",
+              "zIndex": "4000"
+            },
+            "controls": [
+              {
+                "action": "click",
+                "confidence": 0.78,
+                "evidence": {
+                  "blocker_control_count": 1,
+                  "measured_inside_blocker": true,
+                  "semantic_dismiss_signal": false,
+                  "single_enabled_control": true,
+                  "structural_dismiss_signal": false
+                },
+                "label": "Carry on with browsing",
+                "selector": "#gate-holdout-9444"
+              }
+            ],
+            "request_reason": "post_action_verification",
+            "target_affordance_id": "dom_button_1",
+            "target_exists": true,
+            "target_selector": "#primary-action"
+          },
+          {
+            "blocked": false,
+            "blocker": {},
+            "controls": [],
+            "request_reason": "post_action_verification",
+            "target_affordance_id": "dom_button_1",
+            "target_exists": true,
+            "target_selector": "#primary-action"
+          },
+          {
+            "blocked": false,
+            "blocker": {},
+            "controls": [],
+            "request_reason": "post_action_verification",
+            "target_affordance_id": "dom_button_1",
+            "target_exists": true,
+            "target_selector": "#primary-action"
+          }
+        ],
+        "oracles": [
+          {
+            "modal_offset_px": 44,
+            "overlay_opacity": 0.74,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 4000
+          },
+          {
+            "modal_offset_px": 44,
+            "overlay_opacity": 0.74,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 4000
+          },
+          {
+            "modal_offset_px": 44,
+            "overlay_opacity": 0.74,
+            "overlay_present": false,
+            "primary_action_completed": false,
+            "z_index": 4000
+          },
+          {
+            "modal_offset_px": 44,
+            "overlay_opacity": 0.74,
+            "overlay_present": false,
+            "primary_action_completed": true,
+            "z_index": 4000
+          }
+        ],
+        "screenshots": [
+          "artifacts/friday_generalized_recovery/evidence/screenshots/holdout-openweb-overlay-obstruction-00-seed-22000-01-initial_observation.png",
+          "artifacts/friday_generalized_recovery/evidence/screenshots/holdout-openweb-overlay-obstruction-00-seed-22000-02-post_action_verification.png",
+          "artifacts/friday_generalized_recovery/evidence/screenshots/holdout-openweb-overlay-obstruction-00-seed-22000-03-post_action_verification.png",
+          "artifacts/friday_generalized_recovery/evidence/screenshots/holdout-openweb-overlay-obstruction-00-seed-22000-04-post_action_verification.png"
+        ]
+      },
+      "runtime": {
+        "attempts": 3,
+        "episode_id": "episode-1c19a9019d9f",
+        "final_outcome_verified": true,
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 1,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "precondition_repair",
+            "reason": "fresh observation exposed a safe, verifiable precondition repair",
+            "recovery_of_transition_id": "episode-1c19a9019d9f:transition-0001",
+            "selected": true,
+            "selected_action": "repair_precondition",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "considered": true,
+            "evidence": {
+              "confidence": 0.78,
+              "failed_affordance_id": "dom_button_1",
+              "failed_entity_id": "oracle",
+              "observation_evidence": {
+                "blocker_control_count": 1,
+                "measured_inside_blocker": true,
+                "semantic_dismiss_signal": false,
+                "single_enabled_control": true,
+                "structural_dismiss_signal": false
+              },
+              "postcondition": "interaction_obstruction.present == false",
+              "recovery_role": "clear_obstruction",
+              "relation_strength": 3,
+              "selected_affordance_id": "dom_recovery_846b5c2141bd"
+            },
+            "policy": "precondition_repair_plan",
+            "reason": "fresh observation exposed a safe affordance that repairs the failed action precondition",
+            "recovery_of_transition_id": "episode-1c19a9019d9f:transition-0001",
+            "selected": true,
+            "selected_action": "repair_precondition",
+            "tier": 1
+          },
+          {
+            "attempt": 2,
+            "considered": true,
+            "policy": "precondition_repair_verification",
+            "reason": "fresh observation verified the repair postcondition",
+            "recovery_of_transition_id": "episode-1c19a9019d9f:transition-0002",
+            "selected": true,
+            "selected_action": "retry_after_repair",
+            "tier": 1
+          }
+        ],
+        "state": "completed",
+        "transition_ids": [
+          "episode-1c19a9019d9f:transition-0001",
+          "episode-1c19a9019d9f:transition-0002",
+          "episode-1c19a9019d9f:transition-0003"
+        ]
+      },
+      "transitions": [
+        {
+          "affordance_key": "dom:goal:confirm-plan",
+          "attempt": 1,
+          "backend": "dom",
+          "episode_id": "episode-1c19a9019d9f",
+          "execution_success": false,
+          "failure_reason": "TimeoutError: Page.click: Timeout 1400ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    3 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n",
+          "latency_ms": 1508.536,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "dom_button_1",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": false,
+          "recovery_action": "repair_precondition",
+          "recovery_of_transition_id": "",
+          "recovery_tier": 1,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-eb12c7101ec7219b",
+          "state_id_before": "state-114fbfb940c7561d",
+          "step": 1,
+          "success": false,
+          "task_id": "holdout-openweb-overlay-obstruction-00-seed-22000",
+          "timestamp_ms": 1786576947630,
+          "transition_id": "episode-1c19a9019d9f:transition-0001"
+        },
+        {
+          "affordance_key": "dom_recovery_846b5c2141bd",
+          "attempt": 2,
+          "backend": "dom",
+          "episode_id": "episode-1c19a9019d9f",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 939.843,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "dom_recovery_846b5c2141bd",
+            "expected_effect": "interaction_obstruction.present == false",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "repair_precondition",
+          "recovery_of_transition_id": "episode-1c19a9019d9f:transition-0001",
+          "recovery_tier": 1,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-31957ff7751413c1",
+          "state_id_before": "state-eb12c7101ec7219b",
+          "step": 2,
+          "success": true,
+          "task_id": "holdout-openweb-overlay-obstruction-00-seed-22000",
+          "timestamp_ms": 1786576949802,
+          "transition_id": "episode-1c19a9019d9f:transition-0002"
+        },
+        {
+          "affordance_key": "dom:goal:confirm-plan",
+          "attempt": 3,
+          "backend": "dom",
+          "episode_id": "episode-1c19a9019d9f",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 934.641,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "dom_button_1",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "retry_after_repair",
+          "recovery_of_transition_id": "episode-1c19a9019d9f:transition-0002",
+          "recovery_tier": 1,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-3a971cc03ca7c7c6",
+          "state_id_before": "state-31957ff7751413c1",
+          "step": 3,
+          "success": true,
+          "task_id": "holdout-openweb-overlay-obstruction-00-seed-22000",
+          "timestamp_ms": 1786576952770,
+          "transition_id": "episode-1c19a9019d9f:transition-0003"
+        }
+      ],
+      "variant": {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_holdout_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "holdout-openweb-overlay-obstruction-00-seed-22000",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 22000
+        },
+        "parameters": {
+          "modal_offset_px": 44,
+          "modal_padding_px": 31,
+          "overlay_opacity": 0.74,
+          "remediation_control_id": "gate-holdout-9444",
+          "remediation_label": "Carry on with browsing",
+          "z_index": 4000
+        },
+        "repetition": 0,
+        "signature": "5697b68c90d56486450b",
+        "split": "holdout",
+        "variant_id": "holdout-openweb-overlay-obstruction-00-seed-22000"
+      }
+    }
+  ],
+  "protocol": {
+    "browser_execution": true,
+    "canonical_cim_execution": true,
+    "claim_boundary": "controlled local-browser holdout evidence; not unrestricted open-web evidence",
+    "policy_forbidden_inputs": [
+      "fixture family",
+      "case id",
+      "known overlay selector",
+      "known remediation selector",
+      "product or button text"
+    ],
+    "policy_inputs": [
+      "fresh obstruction measurement",
+      "observed remediation affordance relation",
+      "safety and reversibility metadata",
+      "fresh remediation postcondition",
+      "fresh original-goal oracle"
+    ],
+    "runtime_entrypoint": "RuntimeEpisodeRunner.run_goal_episode"
+  },
+  "summary": {
+    "all_recovered_and_verified": true,
+    "dev_count": 0,
+    "episode_count": 1,
+    "final_verified_count": 1,
+    "holdout_count": 1,
+    "recovery_success_count": 1
+  }
+}

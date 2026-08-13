@@ -1,7 +1,7 @@
 {
   "artifacts": {
-    "failure_ledger": "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/failure_ledger.jsonl",
-    "transition_ledger": "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/transition_ledger.jsonl"
+    "failure_ledger": "artifacts/runtime_recovery_demo/failure_ledger.jsonl",
+    "transition_ledger": "artifacts/runtime_recovery_demo/transition_ledger.jsonl"
   },
   "data_source": "generalized_browser_recovery",
   "episodes": [
@@ -132,10 +132,10 @@
           }
         ],
         "screenshots": [
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-01-initial_observation.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-02-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-03-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-04-post_action_verification.png"
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-01-initial_observation.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-02-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-03-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-04-post_action_verification.png"
         ]
       },
       "failures": [
@@ -414,10 +414,10 @@
           }
         ],
         "screenshots": [
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-session-expiry-00-seed-12001-01-initial_observation.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-session-expiry-00-seed-12001-02-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-session-expiry-00-seed-12001-03-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-session-expiry-00-seed-12001-04-post_action_verification.png"
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-session-expiry-00-seed-12001-01-initial_observation.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-session-expiry-00-seed-12001-02-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-session-expiry-00-seed-12001-03-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-session-expiry-00-seed-12001-04-post_action_verification.png"
         ]
       },
       "failures": [
@@ -698,10 +698,10 @@
           }
         ],
         "screenshots": [
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-01-initial_observation.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-02-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-03-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-04-post_action_verification.png"
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-01-initial_observation.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-02-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-03-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-04-post_action_verification.png"
         ]
       },
       "failures": [
@@ -981,10 +981,10 @@
           }
         ],
         "screenshots": [
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-01-initial_observation.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-02-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-03-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-04-post_action_verification.png"
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-01-initial_observation.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-02-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-03-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-04-post_action_verification.png"
         ]
       },
       "failures": [
@@ -1251,9 +1251,9 @@
           }
         ],
         "screenshots": [
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-01-initial_observation.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-02-post_action_verification.png",
-          "/mnt/hdd/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260813_121806/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-03-post_action_verification.png"
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-01-initial_observation.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-02-post_action_verification.png",
+          "artifacts/runtime_recovery_demo/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-03-post_action_verification.png"
         ]
       },
       "failures": [
