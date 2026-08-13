@@ -21,7 +21,7 @@ from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLed
 from src.runtime.goal_spec import GoalSpec
 from src.runtime.live_observation import LiveRuntimeObservation, bind_live_observation_to_request
 from src.runtime.plan_validator import PlanValidator
-from src.runtime.system2_planner import System2Planner
+from src.runtime.planner_port import PlannerPort
 from src.verification.active_perception import ActivePerceptionResolver
 from src.verification.conflict_detector import EpistemicArbiter
 
@@ -99,7 +99,7 @@ class RuntimeEpisodeRunner:
         llm_judge: LLMJudge | None = None,
         use_llm_judge: bool = False,
         active_perception_resolver: ActivePerceptionResolver | None = None,
-        system2_planner: System2Planner | None = None,
+        system2_planner: PlannerPort | None = None,
         plan_validator: PlanValidator | None = None,
     ) -> None:
         self.skill_library = dict(skill_library or {})

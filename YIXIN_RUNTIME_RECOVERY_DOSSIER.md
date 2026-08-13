@@ -6,19 +6,20 @@
 
 ## 1. Current finding
 
-The six open-web fixtures prove six-family failure detection. Five supported
-families now also have bounded capability-driven recovery: overlay obstruction,
-session continuation, compensation plus alternate commit, visual-state
-re-observation, and equivalent-alternative execution. Autocomplete is explicitly
+The six open-web fixtures prove six-family failure detection. Five families now
+expose bounded recovery capabilities: overlay obstruction, session continuation,
+compensation plus alternate commit, visual-state re-observation, and
+equivalent-alternative execution. Runtime passes those capabilities and fresh
+failure evidence through `PlannerPort`; it does not select one. Autocomplete is explicitly
 outside Yixin's Runtime/recovery delivery scope: its suggestions and constraints
 belong to environment/perception, and choosing a valid value belongs to the
 Agent/Planner. It remains only as a false-success detection witness.
 
-The formal controlled-browser run contains 30 episodes: five families × three
-dev and three holdout variants. All 30 return `verified_success`, perform exactly
-one semantic loopback through the same `System2Planner`, and link the final
-oracle to the last transition. This is controlled local-browser evidence, not
-unrestricted open-web or external-model evidence.
+The earlier 30/30 artifact depended on a deterministic recovery selector added
+to the default Planner fallback. That selector crossed the ownership boundary
+and has been removed. Current evidence must therefore stop at the typed Planner
+handoff until the Planner owner supplies an implementation; the old result is
+not an active autonomous-recovery claim.
 
 The main chain defect was also architectural: after a primitive failure,
 `ContinuousInteractionManager` called a separate `PreconditionRepairPlanner`
@@ -27,9 +28,9 @@ maker. The original Agent/Planner never received the failure. The implemented
 boundary is now:
 
 ```text
-GoalSpec -> existing System2Planner -> validated PrimitiveAction
+GoalSpec -> externally owned PlannerPort implementation -> validated PrimitiveAction
          -> Runtime execute -> fresh observe/fuse/verify
-         -> typed FailureContext -> the same System2Planner replans
+         -> typed FailureContext -> the same PlannerPort is called again
          -> Runtime validates/executes/verifies again
 ```
 
@@ -63,11 +64,11 @@ independently reconstruct when an adapter captured the world.
 
 | Family | What exists now | Missing environment/perception capability | Owner/dependency | Bounded outcome and present evidence |
 |---|---|---|---|---|
-| Overlay obstruction | Blocking element, structurally marked safe dismiss control, target, mutable oracle | No critical environment gap for the bounded case | Yixin consumes Ruiyao-style observation contract | **Verified:** failure -> Agent replan -> repair -> resume -> fresh goal oracle |
-| Session expiry | Expired session, stale form, observed idempotent restoration capability, persisted oracle | Real credentials/provider-specific login remain external | Environment authors capability; Agent selects; Runtime executes/verifies | **Verified bounded case:** failed save -> restore -> resumed save -> oracle |
-| Optimistic UI rollback | False optimistic state, observed compensation relation, alternative commit, backend oracle | Production compensation still depends on a real Skill/environment contract | Environment/Skill contract; Agent selects; Runtime executes/verifies | **Verified bounded case:** false success -> compensation -> alternate commit -> oracle |
-| DOM/visual disagreement | Observed recheck capability plus VLM-to-active-perception adapter with confidence/provenance | No checked-in external-provider VLM run | Perception supplies evidence; Runtime fuses; Agent selects semantic capability | **Verified bounded browser recheck; VLM probe contract verified with fake client** |
-| Visible ineffective affordance | Accepted ineffective click plus observed `equivalent_to` alternative and mutable oracle | Production alternatives remain environment-authored | Environment declares equivalence; Agent selects; Runtime executes/verifies | **Verified bounded case:** ineffective action -> equivalent route -> oracle |
+| Overlay obstruction | Blocking element, structurally marked dismiss control, target, mutable oracle | Planner must choose the observed `remediates` capability | Perception exposes; Planner selects; Runtime executes/verifies | Runtime handoff ready; autonomous scene pending Planner integration |
+| Session expiry | Expired session, stale form, observed restoration capability, persisted oracle | Real credentials and Planner selection remain external | Environment authors; Planner selects; Runtime executes/verifies | Runtime handoff ready; full scene pending dependencies |
+| Optimistic UI rollback | False optimistic state, compensation relation, alternative commit, backend oracle | Planner selection and production compensation contract | Skill/environment authors; Planner selects; Runtime executes/verifies | Runtime handoff ready; full scene pending dependencies |
+| DOM/visual disagreement | Observed recheck capability and generic active-perception interface | VLM implementation/evidence and Planner selection | Perception supplies; Planner selects; Runtime fuses/verifies | Runtime interfaces ready; no Yixin VLM implementation claim |
+| Visible ineffective affordance | Ineffective click plus observed `equivalent_to` alternative | Planner must choose the alternative | Environment declares; Planner selects; Runtime executes/verifies | Runtime handoff ready; autonomous scene pending Planner integration |
 
 Adding those capabilities is not “cheating” if they are environment contracts
 available to any agent and varied in held-out tests. It is cheating if Runtime
@@ -82,9 +83,10 @@ or expected answer.
    history, and remaining budgets.
 2. Recovery metadata needed for planning is exposed without raw selectors or
    backend handles.
-3. A failed non-transparent action returns to the same `System2Planner`.
-4. The deterministic fallback in the existing Planner can select only a safe,
-   idempotent, reversible, explicitly related, independently verifiable repair.
+3. A failed non-transparent action returns through the same injected
+   `PlannerPort`.
+4. Runtime contains no relation-ranking or recovery-selection policy; the
+   default controller deterministically escalates until a Planner owner is injected.
 5. Runtime still validates that every planned action references a currently
    observed affordance before execution.
 6. Ambiguous or absent repairs fail closed; Runtime does not invent one.
@@ -109,20 +111,20 @@ or expected answer.
 15. Every verified terminal result names the transition whose fresh
     postcondition/oracle established success, so the recovery chain no longer
     relies on report-side inference.
-16. PiP/human intervention is integrated as Tier 4 after autonomous recovery:
-    a recoverable semantic failure still returns to the same `System2Planner`
+16. PiP/human intervention is integrated as Tier 4 after the Planner handoff:
+    a recoverable semantic failure first returns through `PlannerPort`
     first; takeover resume re-observes and then re-enters that planner rather
     than becoming a second recovery authority.
 
 ### Still open
 
-1. The production model-backed implementation of `System2Planner` is absent;
-   the current default is a declared deterministic fallback. This belongs to
-   the Agent/Planner owner, not to Yixin's model responsibility.
+1. The production recovery implementation behind `PlannerPort` is absent. The
+   default controller deliberately escalates on `FailureContext`. Selection
+   belongs to the Agent/Planner owner.
 2. Real credential login/token refresh and production compensation still depend
    on environment/Skill providers; bounded controls are contract witnesses.
-3. A VLM active-perception adapter is implemented and tested, but no checked-in
-   artifact proves an external VLM provider was configured and run.
+3. Runtime exposes the generic active-perception interface. VLM implementation,
+   provider configuration, and evidence belong to the perception owner.
 4. Real unrestricted open-web evidence is absent; the runner uses controlled
    local fixtures even though production planning has no family/case branch.
 5. `src/planner/system2_recovery.py` is a legacy planner-layer request builder
@@ -214,8 +216,8 @@ state-machine/invariant tests.
 
 ## 10. Closure evidence required
 
-The bounded five-family implementation may be called complete when full CI/live
-checks and fresh review agree with the 30-episode evidence. Broader production
-or open-web closure still requires real provider capabilities, external VLM
-evidence, and non-fixture environments. Autocomplete does not gate Yixin's
-closure.
+Yixin's bounded Runtime side may be called complete when the Planner and
+perception owners pass their proposals through the published interfaces and
+full integration tests verify execution, continuation, and final oracle truth.
+Until then, five-family autonomous recovery and a finished video must remain
+open. Autocomplete does not gate Yixin's Runtime scope.

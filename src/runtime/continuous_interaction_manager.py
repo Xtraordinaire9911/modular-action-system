@@ -45,6 +45,7 @@ from src.runtime.intervention import (
 )
 from src.runtime.live_observation import LiveRuntimeObservation
 from src.runtime.plan_validator import PlanValidator
+from src.runtime.planner_port import PlannerPort
 from src.runtime.primitive_action import PrimitiveAction
 from src.runtime.state_machine import RuntimeOutcome, RuntimeState
 from src.runtime.system2_planner import System2Planner
@@ -165,7 +166,7 @@ class ContinuousInteractionManager:
         llm_judge: LLMJudge | None = None,
         use_llm_judge: bool = False,
         active_perception_resolver: ActivePerceptionResolver | None = None,
-        system2_planner: System2Planner | None = None,
+        system2_planner: PlannerPort | None = None,
         plan_validator: PlanValidator | None = None,
         observation_provider: ObservationProvider | None = None,
         episode_policy: EpisodePolicy | None = None,

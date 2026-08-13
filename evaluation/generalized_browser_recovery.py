@@ -26,6 +26,7 @@ from src.runtime.continuous_interaction_manager import Executor
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec
 from src.runtime.live_observation import LiveRuntimeObservation
+from src.runtime.planner_port import PlannerPort
 
 _GOAL_ID = "confirm_plan"
 _GOAL_STATE = "oracle.expected_effect_satisfied == true"
@@ -283,9 +284,14 @@ async def _run_generalized_browser_recovery_suite_async(
     action_timeout_ms: int,
     capture_screenshots: bool,
     session_factory: SessionFactory | None,
+    system2_planner: PlannerPort | None,
 ) -> dict[str, str]:
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
+    screenshot_dir = target / "screenshots"
+    if screenshot_dir.exists():
+        for stale_screenshot in screenshot_dir.glob("*.png"):
+            stale_screenshot.unlink()
     transition_path = target / "transition_ledger.jsonl"
     failure_path = target / "failure_ledger.jsonl"
     for path in (transition_path, failure_path):
@@ -303,6 +309,7 @@ async def _run_generalized_browser_recovery_suite_async(
         ),
         transition_ledger=ledger,
         failure_ledger=failure_ledger,
+        system2_planner=system2_planner,
     )
     factory = session_factory or _default_session_factory
     rows: list[dict[str, Any]] = []
@@ -314,7 +321,7 @@ async def _run_generalized_browser_recovery_suite_async(
             session=session,
             variant=variant,
             url=url,
-            screenshot_dir=target / "screenshots",
+            screenshot_dir=screenshot_dir,
             capture_screenshots=capture_screenshots,
         )
         try:
@@ -370,14 +377,22 @@ async def _run_generalized_browser_recovery_suite_async(
             "runtime_entrypoint": "RuntimeEpisodeRunner.run_goal_episode",
             "browser_execution": True,
             "canonical_cim_execution": True,
-            "policy_inputs": [
+            "planner_boundary": (
+                "externally injected PlannerPort implementation used for this controlled run"
+                if system2_planner is not None
+                else "PlannerPort is injectable; the default controller intentionally escalates after failure"
+            ),
+            "planner_implementation": (
+                type(system2_planner).__name__ if system2_planner is not None else "default_fail_closed_controller"
+            ),
+            "planner_handoff_payload": [
                 "fresh typed failure context",
                 "observed generic recovery-capability relation",
                 "declared reversibility and idempotency metadata",
                 "fresh capability postcondition",
                 "fresh original-goal oracle",
             ],
-            "policy_forbidden_inputs": [
+            "runtime_forbidden_inputs": [
                 "fixture family",
                 "case id",
                 "known overlay selector",
@@ -385,7 +400,10 @@ async def _run_generalized_browser_recovery_suite_async(
                 "product or button text",
             ],
             "claim_boundary": (
-                "controlled local-browser capability holdout evidence; autocomplete and unrestricted open web excluded"
+                "controlled local-browser Runtime recovery evidence with an injected Planner; "
+                "no production Planner, production VLM, or open-web claim"
+                if system2_planner is not None
+                else "controlled local-browser Runtime/Planner handoff evidence; no autonomous recovery or open-web claim"
             ),
         },
         "summary": {
@@ -435,10 +453,12 @@ def run_generalized_browser_recovery_suite(
     action_timeout_ms: int = 500,
     capture_screenshots: bool = True,
     session_factory: SessionFactory | None = None,
+    system2_planner: PlannerPort | None = None,
 ) -> dict[str, str]:
     variants = [
         variant
         for split, repetitions in (("dev", dev_repetitions), ("holdout", holdout_repetitions))
+        if repetitions > 0
         for variant in build_open_web_failure_variants(split, repetitions=repetitions)  # type: ignore[arg-type]
         if variant.case.case_id != "openweb-autocomplete-validation"
     ]
@@ -450,6 +470,7 @@ def run_generalized_browser_recovery_suite(
             action_timeout_ms=action_timeout_ms,
             capture_screenshots=capture_screenshots,
             session_factory=session_factory,
+            system2_planner=system2_planner,
         )
     )
 

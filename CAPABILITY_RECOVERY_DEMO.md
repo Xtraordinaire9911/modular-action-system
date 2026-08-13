@@ -1,12 +1,11 @@
-# Capability-driven Browser Recovery Demo
+# Runtime Recovery Integration Demo Contract
 
 ## What this demo proves
 
-One existing Agent/Planner receives a fresh `FailureContext`, selects an
-observed recovery capability by semantic relation, and hands one primitive back
-to Runtime. Runtime validates, executes, freshly observes, verifies the
-capability postcondition, and then lets the same Agent resume the original
-goal.
+Runtime publishes a fresh `FailureContext` and observed recovery capabilities
+through `PlannerPort`. It validates, executes, freshly observes, verifies, and
+continues only after an externally owned Planner returns a primitive proposal.
+This repository intentionally contains no Yixin-authored recovery selector.
 
 The production path does not branch on fixture ID, failure-family name, button
 text, or a known selector. The five browser scenes are witnesses for one
@@ -15,7 +14,7 @@ contract:
 ```text
 failed transition
   -> fresh FailureContext + fresh observed affordances
-  -> same System2Planner
+  -> externally supplied PlannerPort implementation
   -> generic relation: remediates / restores / compensates / observes / equivalent_to
   -> Runtime validation + primitive execution
   -> fresh recovery_postcondition
@@ -26,9 +25,10 @@ failed transition
 Autocomplete is intentionally absent. It remains a false-success detection
 witness and is not part of Runtime recovery ownership.
 
-## Friday live command
+## Integration command
 
-Run one visible episode per supported family:
+Without an injected Planner implementation, this command demonstrates the
+typed handoff and deterministic escalation, not autonomous recovery:
 
 ```bash
 python -m src.pipeline \
@@ -39,8 +39,8 @@ python -m src.pipeline \
   --output-dir artifacts/friday_capability_recovery_demo
 ```
 
-For formal headless evidence, use three development and three locked-holdout
-variants per family:
+After the Planner owner connects an implementation, the same runner can be used
+for three development and three locked-holdout variants per family:
 
 ```bash
 python -m src.pipeline \
@@ -49,6 +49,27 @@ python -m src.pipeline \
   --open-web-holdout-repetitions 3 \
   --output-dir artifacts/generalized_browser_recovery
 ```
+
+## Demo-only recording with simulated upstream feedback
+
+For a Runtime recovery demonstration before the Planner and VLM owners finish
+their integrations, run:
+
+```bash
+python -m scripts.record_recovery_contract_demo
+```
+
+The recording script injects `DemoPlannerStub` through `PlannerPort` and
+simulates the visual feedback needed by the DOM/visual scene. These dependencies
+are disclosed in `demo_manifest.json` but omitted from the on-screen narration;
+the video cards describe only the Runtime path. Both stubs live only in the
+recording script. Runtime validation, execution, fresh observation,
+recovery-postcondition checking, continuation, transition ledger, and final
+oracle are the real project path.
+
+This video may be used to claim that the Runtime recovery contract works when
+its upstream interfaces provide valid feedback. It must not be used to claim
+that the production Planner or VLM is complete.
 
 ## Five visible scenes
 
@@ -60,11 +81,9 @@ python -m src.pipeline \
 | DOM/visual disagreement | Selection is not consistent across observations | `observes` / `remediates` | Agent requests a fresh state recheck, verifies consistency, then resumes the original selection. |
 | Ineffective affordance | Click executes but required state does not change | `equivalent_to` | Agent selects a freshly observed equivalent affordance and reaches the original goal without retry looping. |
 
-The DOM/visual browser scene proves the active-reobservation contract. The
-separate VLM adapter captures a fresh PNG and converts model judgements into
-provenance-bearing assertions, but the checked-in evidence uses a fake vision
-client. Do not claim a real external VLM run unless a configured provider is
-actually used and its artifact is retained.
+The DOM/visual scene depends on the generic active-perception interface. VLM
+invocation and evidence belong to the perception owner and are not implemented
+by Yixin's Runtime code.
 
 ## Code walkthrough positions
 
@@ -72,9 +91,9 @@ actually used and its artifact is retained.
 |---|---|
 | DOM capability metadata becomes observed affordance metadata | `src/perception/dom_transducer.py` |
 | Fresh failure evidence enters the existing Agent context | `src/runtime/action_context.py` |
-| Same Planner ranks generic capability relations | `src/runtime/affordance_controller.py` |
+| Planner injection contract | `src/runtime/planner_port.py` |
 | Runtime executes, re-observes, verifies, and returns to Agent | `src/runtime/continuous_interaction_manager.py` |
-| Fresh screenshot-to-VLM active-perception adapter | `src/perception/vlm_active_probe.py` |
+| Generic active-perception interface | `src/verification/active_perception.py` |
 | Five-family browser orchestration and evidence writing | `evaluation/generalized_browser_recovery.py` |
 | Randomized development/holdout IDs and labels | `evaluation/open_web_randomized_holdout.py` |
 | Environment-provided recovery capabilities | `env/mock_envs/failure_*.html` |
@@ -86,10 +105,8 @@ actually used and its artifact is retained.
 - Failure contexts: `artifacts/generalized_browser_recovery/failure_ledger.jsonl`
 - Fresh screenshots: `artifacts/generalized_browser_recovery/screenshots/`
 
-Current formal result: 30 episodes across five families, split into 15
-development and 15 locked holdout episodes; 30/30 recovered and passed the
-independent final oracle, with exactly one semantic Agent replan per episode.
-
-This supports a bounded capability-generalization claim over randomized local
-browser fixtures. It does not establish unrestricted open-web recovery, real
-credential-provider integration, or an external-VLM run.
+The previous 30/30 result used a local deterministic Planner fallback that has
+now been removed as out of ownership scope. Current honest status is: Runtime
+handoff, validation, execution, fresh verification, continuation, and evidence
+contracts exist; autonomous five-family selection and the final recovery video
+wait for the Planner and perception integrations.

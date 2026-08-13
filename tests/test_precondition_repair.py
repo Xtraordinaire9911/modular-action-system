@@ -2,12 +2,13 @@ import asyncio
 
 from src.contracts.types import Affordance, ExecutionResult, Observation, ObservedAssertion
 from src.perception.browser_obstruction import observe_browser_obstruction
-from src.runtime.action_context import FailureContext, build_action_context
-from src.runtime.affordance_controller import AffordanceController
+from src.runtime.action_context import FailureContext
+from src.runtime.affordance_controller import AffordanceController, PrimitivePlan
 from src.runtime.cognitive_map import CognitiveMap, RuntimeAffordance
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.live_observation import LiveRuntimeObservation, bind_live_observation_to_request
+from src.runtime.primitive_action import PrimitiveAction
 from src.runtime.state_machine import RuntimeOutcome, RuntimeState
 from src.runtime.system2_planner import System2Planner
 
@@ -43,88 +44,6 @@ def _failure_context(target: RuntimeAffordance) -> FailureContext:
         transition_id="episode:transition-0001",
         observation_state_id="state-fresh",
     )
-
-
-def test_existing_agent_planner_uses_explicit_relation_not_label_or_selector():
-    target = _runtime_affordance("target-17", entity_id="goal-control", grounding={"selector": "#random"})
-    repair = _runtime_affordance(
-        "fresh-control-91",
-        entity_id="blocker",
-        grounding={
-            "selector": ".layout-dependent-value",
-            "label": "previously unseen wording",
-            "recovery_role": "clear_obstruction",
-            "remediates": "target-17",
-            "recovery_postcondition": "interaction_obstruction.present == false",
-            "recovery_safe": True,
-            "idempotent": True,
-            "irreversible": False,
-        },
-    )
-    cognitive_map = CognitiveMap(task_id="generic")
-    cognitive_map.add_affordance(target)
-    cognitive_map.add_affordance(repair)
-
-    context = build_action_context(
-        cognitive_map,
-        request_type="goal_spec",
-        failure=_failure_context(target),
-    )
-    plan = System2Planner(AffordanceController()).plan(context, goal_id="generic_goal", goal_state="oracle.done")
-
-    assert not plan.requires_escalation
-    assert plan.actions[0].affordance_id == repair.id
-    assert plan.actions[0].expected_effect == "interaction_obstruction.present == false"
-
-
-def test_existing_agent_planner_refuses_unrelated_unsafe_or_unverifiable_controls():
-    target = _runtime_affordance("target", entity_id="goal-control", grounding={})
-    candidates = [
-        _runtime_affordance(
-            "unrelated",
-            entity_id="blocker",
-            grounding={
-                "recovery_role": "clear_obstruction",
-                "remediates": "some-other-target",
-                "recovery_postcondition": "interaction_obstruction.present == false",
-                "recovery_safe": True,
-                "idempotent": True,
-            },
-        ),
-        _runtime_affordance(
-            "unsafe",
-            entity_id="blocker",
-            grounding={
-                "recovery_role": "clear_obstruction",
-                "remediates": "target",
-                "recovery_postcondition": "interaction_obstruction.present == false",
-                "recovery_safe": False,
-                "idempotent": True,
-            },
-        ),
-        _runtime_affordance(
-            "unverifiable",
-            entity_id="blocker",
-            grounding={
-                "recovery_role": "clear_obstruction",
-                "remediates": "target",
-                "recovery_safe": True,
-                "idempotent": True,
-            },
-        ),
-    ]
-    cognitive_map = CognitiveMap(task_id="refuse")
-    cognitive_map.add_affordance(target)
-    for candidate in candidates:
-        cognitive_map.add_affordance(candidate)
-
-    plan = System2Planner(AffordanceController()).plan(
-        build_action_context(cognitive_map, request_type="goal_spec", failure=_failure_context(target)),
-        goal_id="generic_goal",
-        goal_state="oracle.done",
-    )
-    assert plan.requires_escalation
-    assert plan.actions[0].action == "ask_user"
 
 
 class _RawBrowserScan:
@@ -320,13 +239,25 @@ class _RecoveryObservations:
         return bind_live_observation_to_request(self.sequence.pop(0), request_id=request.request_id)
 
 
-class _RecordingPlanner:
+class _InjectedPlannerStub:
+    """Test-only PlannerPort implementation; production policy belongs upstream."""
+
     def __init__(self):
         self.delegate = System2Planner(AffordanceController())
         self.contexts = []
 
     def plan(self, context, **kwargs):
         self.contexts.append(context)
+        if context.failure is not None:
+            return PrimitivePlan(
+                [
+                    PrimitiveAction(
+                        "click",
+                        affordance_id="freshly-observed-repair",
+                        expected_effect="interaction_obstruction.present == false",
+                    )
+                ]
+            )
         return self.delegate.plan(context, **kwargs)
 
 
@@ -339,7 +270,7 @@ def test_cim_executes_repair_reobserves_and_retries_original_goal_with_linked_tr
     executor = _RecoveryExecutor()
     provider = _RecoveryObservations()
     ledger = TransitionLedger()
-    planner = _RecordingPlanner()
+    planner = _InjectedPlannerStub()
     manager = ContinuousInteractionManager(
         {},
         {"dom": executor},
@@ -392,7 +323,7 @@ def test_cim_executes_repair_reobserves_and_retries_original_goal_with_linked_tr
 
 def test_runtime_does_not_replan_from_a_stale_observation():
     executor = _RecoveryExecutor()
-    planner = _RecordingPlanner()
+    planner = _InjectedPlannerStub()
     manager = ContinuousInteractionManager(
         {},
         {"dom": executor},
@@ -423,7 +354,7 @@ class _PlainObservationProvider:
 
 def test_plain_state_delta_cannot_authorize_semantic_replanning_from_retained_affordances():
     executor = _RecoveryExecutor()
-    planner = _RecordingPlanner()
+    planner = _InjectedPlannerStub()
     manager = ContinuousInteractionManager(
         {},
         {"dom": executor},
@@ -458,7 +389,7 @@ class _ReplayProvider:
 def test_replayed_complete_snapshot_cannot_authorize_replanning():
     snapshot = _live_observation(done=False, obstruction=False, include_repair=False)
     executor = _RecoveryExecutor()
-    planner = _RecordingPlanner()
+    planner = _InjectedPlannerStub()
     manager = ContinuousInteractionManager(
         {},
         {"dom": executor},
@@ -498,7 +429,7 @@ class _RelabelledStaleProvider:
 def test_relabelled_old_capture_cannot_authorize_replanning():
     snapshot = _live_observation(done=False, obstruction=True, include_repair=True)
     executor = _RecoveryExecutor()
-    planner = _RecordingPlanner()
+    planner = _InjectedPlannerStub()
     manager = ContinuousInteractionManager(
         {},
         {"dom": executor},
@@ -519,33 +450,6 @@ def test_relabelled_old_capture_cannot_authorize_replanning():
     assert result.state == RuntimeState.ESCALATED
     assert result.replan_count == 0
     assert executor.calls == ["observed-target"]
-
-
-def test_recovery_planner_rejects_missing_risk_metadata():
-    target = _runtime_affordance("target", entity_id="target", grounding={})
-    repair = _runtime_affordance(
-        "repair",
-        entity_id="obstruction",
-        grounding={
-            "recovery_role": "clear_obstruction",
-            "remediates": "target",
-            "recovery_postcondition": "obstruction.present == false",
-            "recovery_safe": True,
-            "idempotent": True,
-            "safety_level": "low",
-        },
-    )
-    cognitive_map = CognitiveMap(task_id="missing-risk")
-    cognitive_map.add_affordance(target)
-    cognitive_map.add_affordance(repair)
-
-    plan = System2Planner(AffordanceController()).plan(
-        build_action_context(cognitive_map, request_type="goal_spec", failure=_failure_context(target)),
-        goal_id="goal",
-        goal_state="oracle.done == true",
-    )
-
-    assert plan.requires_escalation
 
 
 def test_runtime_enforces_observed_affordance_risk_metadata_before_execution():

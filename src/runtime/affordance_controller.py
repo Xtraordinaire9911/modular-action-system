@@ -48,7 +48,11 @@ class AffordanceController:
             )
 
         if context.failure is not None:
-            return self._plan_after_failure(context)
+            return PrimitivePlan(
+                actions=[PrimitiveAction("ask_user", expected_effect="provide an Agent recovery proposal")],
+                requires_escalation=True,
+                reason="recovery planning is owned by the injected Agent/Planner implementation",
+            )
 
         task_plan = self._task_planner.plan(
             context,
@@ -63,58 +67,6 @@ class AffordanceController:
                 reason=task_plan.reason,
             )
         return self.plan_task(context, task_plan)
-
-    def _plan_after_failure(self, context: ActionContext) -> PrimitivePlan:
-        """Choose semantic recovery through the normal planner boundary.
-
-        This deterministic controller is the non-model fallback of the existing
-        System-2 planner. Runtime supplies facts; it does not select this action.
-        """
-
-        failure = context.failure
-        assert failure is not None
-        candidates: list[tuple[int, float, RuntimeAffordance, str]] = []
-        for affordance in context.affordances:
-            grounding = affordance.grounding
-            postcondition = str(grounding.get("recovery_postcondition") or "")
-            if not postcondition:
-                continue
-            if grounding.get("recovery_safe") is not True:
-                continue
-            if grounding.get("idempotent") is not True or grounding.get("irreversible") is not False:
-                continue
-            if grounding.get("safety_level") != "low":
-                continue
-            relation_strength = _recovery_relation_strength(grounding, failure)
-            if relation_strength:
-                candidates.append((relation_strength, affordance.confidence, affordance, postcondition))
-
-        if not candidates:
-            return PrimitivePlan(
-                actions=[PrimitiveAction("ask_user", expected_effect="no safe observed recovery plan is available")],
-                requires_escalation=True,
-                reason="failure requires semantic replanning but no safe, verifiable recovery affordance was observed",
-            )
-
-        candidates.sort(key=lambda row: (row[0], row[1]), reverse=True)
-        best = candidates[0]
-        if len(candidates) > 1 and best[:2] == candidates[1][:2]:
-            return PrimitivePlan(
-                actions=[PrimitiveAction("ask_user", expected_effect="disambiguate recovery affordances")],
-                requires_escalation=True,
-                reason="multiple equally supported recovery affordances remain ambiguous",
-            )
-        _, _, affordance, postcondition = best
-        return PrimitivePlan(
-            actions=[
-                PrimitiveAction(
-                    _primitive_for_affordance(affordance),
-                    affordance_id=affordance.id,
-                    expected_effect=postcondition,
-                )
-            ],
-            reason="existing Agent/Planner selected a related, verifiable recovery capability from fresh evidence",
-        )
 
     def plan_task(self, context: ActionContext, task_plan: RuntimeTaskPlan) -> PrimitivePlan:
         _ = context
@@ -164,32 +116,3 @@ def _primitive_for_affordance(affordance: RuntimeAffordance) -> PrimitiveActionT
     if action_type in {"action", "invoke"} or action_name.startswith("set_"):
         return "invoke"
     return "click"
-
-
-def _string_values(value: object) -> set[str]:
-    if isinstance(value, str):
-        return {value.strip()} if value.strip() else set()
-    if isinstance(value, list | tuple | set):
-        return {str(item).strip() for item in value if str(item).strip()}
-    return set()
-
-
-def _recovery_relation_strength(grounding: dict[str, Any], failure: Any) -> int:
-    targets = {
-        failure.failed_affordance_id,
-        failure.failed_entity_id,
-        failure.expected_effect,
-        failure.transition_id,
-    }
-    targets.discard("")
-    strongest = 0
-    for relation, weight in (
-        ("compensates", 5),
-        ("equivalent_to", 4),
-        ("remediates", 3),
-        ("restores", 2),
-        ("observes", 1),
-    ):
-        if _string_values(grounding.get(relation)) & targets:
-            strongest = max(strongest, weight)
-    return strongest

@@ -34,7 +34,7 @@ matching its code.
 | A model actually running | **VLM path implemented; external-provider run not evidenced** | `src/perception/vlm_observer.py` sends real PNG screenshot bytes to the configured vision client and preserves model confidence/provenance before fusion. CI exercises this contract with a fake vision client. No checked-in artifact proves that an external model provider was configured and run, and intent/mark selection still uses labelled fallbacks when no model client is supplied. |
 | Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
-| Recovery | **Five-family bounded recovery verified** | Runtime returns typed failures to the same Agent/Planner. One generic relation-driven policy recovers obstruction, session continuation, optimistic compensation, visual-state recheck, and equivalent alternatives across 30 Chromium dev/holdout episodes. Autocomplete remains only a false-success witness and is not a Runtime recovery deliverable. |
+| Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
 | Live behaviour is tested | **Implemented** | `pytest -m live` opens a real Chromium and asserts the claims in this table against a real page (selector uniqueness, measured geometry, episode isolation, region-scoped verification, the probes). CI runs it as its own job. The fast suite excludes it and cannot corroborate any live claim on its own. |
@@ -338,24 +338,21 @@ uv run python -m src.pipeline --open-web-randomized-holdout \
 
 This remains controlled local-browser evidence, not real open-web evidence.
 
-Run the observation-driven recovery path on randomized dev and locked-holdout
-capability variants. Runtime/Planner receives no case ID, failure-family name,
-known selector, or expected answer. Fresh observations expose generic relations
-(`remediates`, `restores`, `compensates`, `observes`, or `equivalent_to`); the
-same Agent selects a capability, Runtime executes and verifies it, and that
-Agent resumes the original goal:
+Run the five-family Runtime/Planner boundary check on randomized dev and
+locked-holdout capability variants. Fresh observations expose generic relations
+(`remediates`, `restores`, `compensates`, `observes`, or `equivalent_to`) through
+`PlannerPort`; the default controller intentionally does not select one:
 
 ```bash
 uv run python -m src.pipeline --generalized-browser-recovery \
   --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
 ```
 
-Evidence is written under `artifacts/generalized_browser_recovery/`. The formal
-generated run contains 30 successful episodes: five families × three dev and
-three holdout variants. Every episode has one same-Agent replan and an explicit
-final-oracle transition link. Autocomplete is excluded from recovery scope.
-This remains controlled local-browser evidence, not unrestricted open web. See
-`YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the responsibility and capability matrix.
+Evidence is written under `artifacts/generalized_browser_recovery/`. Without an
+externally supplied Planner implementation, each episode must stop after the
+typed handoff instead of using a hidden Runtime policy. Autocomplete is excluded
+from recovery scope. See `YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the ownership
+and integration matrix.
 
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:
