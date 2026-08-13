@@ -18,6 +18,23 @@ and failure-injection evaluation.
 
 https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
 
+### Five-family Runtime recovery contract demo
+
+[![Open the five-family Runtime recovery demo](artifacts/runtime_recovery_demo/preview.png)](https://raw.githubusercontent.com/Garrulus21yyx/A-Modular-Action-System-Architecture/develop/artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
+
+- [Open the final video directly](https://raw.githubusercontent.com/Garrulus21yyx/A-Modular-Action-System-Architecture/develop/artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
+- [Open the full-size visual preview](artifacts/runtime_recovery_demo/preview.png)
+- [Inspect the Runtime run report](artifacts/runtime_recovery_demo/runtime-report.json)
+- [Inspect the claim-boundary manifest](artifacts/runtime_recovery_demo/demo-manifest.json)
+
+The recording contains five controlled recovery scenes and all five finish with
+a fresh, independent final oracle. It demonstrates the real Runtime handoff,
+proposal validation, execution, re-observation, recovery-postcondition check,
+continuation, and final verification path. Upstream Planner feedback and the
+VLM feedback used by the DOM/visual scene are explicitly simulated; this video
+does not claim a production Planner, production VLM, or unrestricted open-web
+run.
+
 
 ## What is implemented, and what is not
 
