@@ -70,8 +70,16 @@ class ResolvedDeviceTarget:
     href: str
     method: str
     value: Any
+    # The directory identifies a Thing by a UUID and names it in `title`. The id
+    # is what the executor addresses; the title is the only part a person reading
+    # a report can recognise, so both are kept.
+    thing_title: str = ""
     read_href: str = ""
     read_method: str = "GET"
+    # The discovered source this resolved to, kept so a caller can write and read
+    # back through the executor's own API instead of re-deriving the endpoint from
+    # the strings above. Two derivations of one address is one too many.
+    source: Any = None
     # Which Things the directory offered, so a run can show that the target was
     # picked from what was discovered rather than from a list in the code.
     discovered_things: list[str] = field(default_factory=list)
@@ -80,6 +88,7 @@ class ResolvedDeviceTarget:
         return {
             "goal_state": self.binding.goal_state,
             "thing_id": self.thing_id,
+            "thing_title": self.thing_title,
             "property": self.property,
             "write": {"href": self.href, "method": self.method},
             "read": {"href": self.read_href, "method": self.read_method},
@@ -159,7 +168,11 @@ def device_binding_for(goal_state: str) -> DeviceBinding | None:
 
 
 def _match(candidate: str, aliases: tuple[str, ...]) -> bool:
-    lowered = candidate.lower()
+    # An empty candidate matches nothing. Without this guard "" is a substring of
+    # every alias, so one TD with no title would resolve every device goal to it.
+    lowered = candidate.strip().lower()
+    if not lowered:
+        return False
     return any(alias in lowered or lowered in alias for alias in aliases)
 
 
@@ -184,7 +197,17 @@ def resolve_device_target(
             discovered_things=discovered,
         )
 
-    candidates = [m for m in models if _match(str(getattr(m, "thing_id", "")), binding.thing_aliases)]
+    # Match on the title as well as the id. Found by running this against the real
+    # servient: its TDs identify Things by "urn:uuid:f3c4..." and carry the human
+    # name in `title`, so matching the id alone resolved nothing at all in the live
+    # room while passing every test that used friendly ids. Both are TD vocabulary;
+    # neither is an endpoint.
+    candidates = [
+        m
+        for m in models
+        if _match(str(getattr(m, "thing_id", "")), binding.thing_aliases)
+        or _match(str(getattr(m, "title", "")), binding.thing_aliases)
+    ]
     if not candidates:
         return DeviceResolutionError(
             reason="thing_not_discovered",
@@ -212,6 +235,7 @@ def resolve_device_target(
             return ResolvedDeviceTarget(
                 binding=binding,
                 thing_id=str(source.thing_id),
+                thing_title=str(getattr(model, "title", "") or ""),
                 property=str(source.property),
                 href=str(source.href),
                 method=str(source.method),
@@ -219,6 +243,7 @@ def resolve_device_target(
                 read_href=str(reader.href),
                 read_method="GET",
                 discovered_things=discovered,
+                source=source,
             )
 
     if read_only_hits:
@@ -235,11 +260,93 @@ def resolve_device_target(
     )
 
 
+# --- composite goals ------------------------------------------------------------
+# "prepare the room" is not one write. It is several, each to a different Thing,
+# and it is only met when every one of them is separately confirmed by reading
+# the property back. Declaring it as a list of the single-device goals keeps one
+# resolution path: a composite part cannot reach a device the corresponding
+# single goal could not.
+
+
+@dataclass(frozen=True)
+class CompositePart:
+    """One write a composite goal needs, and whether the goal fails without it."""
+
+    goal_state: str  # a key in DEVICE_BINDINGS
+    value: Any  # what "prepared" means for this property
+    # A room with no blinds is still a room that can be prepared. A room with no
+    # projector is not, for this goal. Optional parts that the directory does not
+    # offer are reported as skipped - never dropped quietly, because a goal that
+    # silently did less than it claimed is the failure this project is about.
+    required: bool = True
+    value_parameter: str = ""  # lets the utterance override the default
+
+    def value_from(self, parameters: dict[str, Any]) -> Any:
+        if self.value_parameter and parameters.get(self.value_parameter) is not None:
+            return parameters[self.value_parameter]
+        return self.value
+
+
+@dataclass(frozen=True)
+class CompositeDeviceGoal:
+    goal_state: str
+    parts: tuple[CompositePart, ...]
+    description: str = ""
+
+
+COMPOSITE_GOALS: dict[str, CompositeDeviceGoal] = {
+    "room_prepared": CompositeDeviceGoal(
+        goal_state="room_prepared",
+        parts=(
+            CompositePart(goal_state="projector_on", value="on"),
+            CompositePart(goal_state="lighting_set", value=30, value_parameter="percent"),
+            CompositePart(goal_state="blinds_set", value=20, required=False, value_parameter="percent"),
+            CompositePart(goal_state="temperature_set", value=21, required=False, value_parameter="degrees"),
+        ),
+        description="projector on and lights down for a presentation, blinds and temperature if the room has them",
+    ),
+}
+
+
+def composite_goal_for(goal_state: str) -> CompositeDeviceGoal | None:
+    return COMPOSITE_GOALS.get(goal_state)
+
+
+def resolve_composite_goal(
+    goal: CompositeDeviceGoal,
+    models: list[Any],
+    parameters: dict[str, Any],
+) -> list[tuple[CompositePart, ResolvedDeviceTarget | DeviceResolutionError]]:
+    """Resolve every part against the discovered Things, keeping the failures.
+
+    The failures are returned rather than raised because which part could not be
+    reached is the interesting half of the answer: "prepared the room except the
+    blinds, which this room does not have" is a different report from "prepared
+    the room".
+    """
+    resolved: list[tuple[CompositePart, ResolvedDeviceTarget | DeviceResolutionError]] = []
+    for part in goal.parts:
+        binding = device_binding_for(part.goal_state)
+        if binding is None:
+            resolved.append(
+                (part, DeviceResolutionError(reason="no_binding", detail=f"no binding for {part.goal_state}"))
+            )
+            continue
+        value = part.value_from(parameters)
+        resolved.append((part, resolve_device_target(binding, models, {binding.value_parameter or "value": value})))
+    return resolved
+
+
 __all__ = [
+    "COMPOSITE_GOALS",
     "DEVICE_BINDINGS",
+    "CompositeDeviceGoal",
+    "CompositePart",
     "DeviceBinding",
     "DeviceResolutionError",
     "ResolvedDeviceTarget",
+    "composite_goal_for",
     "device_binding_for",
+    "resolve_composite_goal",
     "resolve_device_target",
 ]

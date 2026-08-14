@@ -54,5 +54,13 @@ pythonpath = ["."]
 # has to stay fast enough to run on every edit. They are not optional evidence
 # though - CI runs them as a separate job, because a suite that never opens a
 # browser cannot corroborate a single claim about live behaviour.
-markers = ["live: needs a real browser (run with -m live)"]
-addopts = "-m 'not live'"
+markers = [
+  "live: needs a real browser (run with -m live)",
+  # The smart room is a separate exclusion from `live`, and not a stricter one:
+  # CI's live job has a browser but no Docker, so a smart-room test in `live`
+  # would fail there for a reason that says nothing about the code. These run
+  # against a servient someone started:
+  #   docker compose -f env/docker-compose.yml up -d && pytest -m smartroom
+  "smartroom: needs the WoT servient from env/docker-compose.yml (run with -m smartroom)",
+]
+addopts = "-m 'not live and not smartroom'"
