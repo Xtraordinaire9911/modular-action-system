@@ -13,7 +13,11 @@ from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, RuntimeStepResult
 from src.runtime.episode import EpisodePolicy, ObservationRequest
 from src.runtime.intervention import InMemoryInterventionBroker, InterventionAction, InterventionDecision
-from src.runtime.live_observation import LiveRuntimeObservation, observation_from_live_sources
+from src.runtime.live_observation import (
+    LiveRuntimeObservation,
+    bind_live_observation_to_request,
+    observation_from_live_sources,
+)
 from src.runtime.state_machine import RuntimeState
 
 
@@ -38,7 +42,10 @@ class _ObservationProvider:
 
     async def observe(self, request: ObservationRequest) -> LiveRuntimeObservation | Observation:
         self.requests.append(request)
-        return self.observations.pop(0)
+        observed = self.observations.pop(0)
+        if isinstance(observed, LiveRuntimeObservation):
+            return bind_live_observation_to_request(observed, request_id=request.request_id)
+        return observed
 
 
 class _PostActionConflictManager(ContinuousInteractionManager):

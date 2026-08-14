@@ -8,8 +8,8 @@
     .visual-highlight { outline: 4px solid #7c3aed; background: #f5f3ff; }
   </style>
 </head>
-<body data-case-id="openweb-dom-visual-disagreement"
-      data-oracle-state='{"dom_selected_plan":"premium","visual_highlighted_plan":"basic"}'>
+<body data-case-id="openweb-dom-visual-disagreement" data-goal-oracle-key="plan_confirmed"
+      data-oracle-state='{"dom_selected_plan":"premium","visual_highlighted_plan":"basic","selection_consistent":false,"plan_confirmed":false}'>
   <h1>Choose plan</h1>
   <section data-plan="basic" class="visual-highlight" aria-selected="false">
     <h2>Basic</h2>
@@ -17,8 +17,36 @@
   </section>
   <section data-plan="premium" aria-selected="true">
     <h2>Premium</h2>
-    <button id="choose-premium">Choose Premium</button>
+    <button id="choose-premium" data-capability-target="true"
+            data-affordance-id="choose-observed-plan"
+            data-completion-for="confirm_plan"
+            data-achieves="oracle.expected_effect_satisfied == true">Choose Premium</button>
   </section>
+  <button id="recheck-selection"
+          data-affordance-id="observe-selection"
+          data-recovery-role="active_perception"
+          data-observes="choose-observed-plan"
+          data-remediates="choose-observed-plan"
+          data-recovery-postcondition="oracle.selection_consistent == true"
+          data-recovery-safe="true" data-idempotent="true"
+          data-irreversible="false" data-safety-level="low">Recheck visual evidence</button>
   <p id="status">DOM selected: premium. Visual highlight: basic.</p>
+  <script>
+    const readOracle = () => JSON.parse(document.body.getAttribute('data-oracle-state') || '{}');
+    const writeOracle = (update) => document.body.setAttribute(
+      'data-oracle-state', JSON.stringify({...readOracle(), ...update})
+    );
+    document.querySelector('#choose-premium').addEventListener('click', () => {
+      if (readOracle().selection_consistent) writeOracle({plan_confirmed: true});
+    });
+    document.querySelector('#recheck-selection').addEventListener('click', () => {
+      const selected = readOracle().dom_selected_plan;
+      document.querySelectorAll('[data-plan]').forEach((node) => {
+        node.classList.toggle('visual-highlight', node.getAttribute('data-plan') === selected);
+      });
+      writeOracle({visual_highlighted_plan: selected, selection_consistent: true});
+      document.querySelector('#status').textContent = `Fresh visual evidence agrees on ${selected}.`;
+    });
+  </script>
 </body>
 </html>

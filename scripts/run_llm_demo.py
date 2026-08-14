@@ -348,11 +348,18 @@ def main() -> int:
 
     vision = available_vision_client()
     text = available_client()
-    # One paid vision call per scene, so a four-scene run cannot cost more than four.
-    observer = VlmObserver(client=vision, max_calls=len(SCENES))
+    # Both ledgers are written into this run's folder rather than the shared one.
+    # The shared ledger is appended to by every run and every test, so a reader
+    # cannot tell which lines belong to the recording; these two files are
+    # exactly the calls the video shows being made.
+    observer = VlmObserver(
+        client=vision,
+        ledger_path=out / "vision-calls.jsonl",
+        max_calls=len(SCENES),  # one paid call per scene at most
+    )
     # No fallback: this demo exists to compare the model against the rules, and a
     # planner that quietly answers with the rules would compare them to themselves.
-    planner = IntentPlanner(client=text, allow_fallback=False)
+    planner = IntentPlanner(client=text, ledger_path=out / "intent-calls.jsonl", allow_fallback=False)
 
     print(f"\n{_LINE}\n  THE SAME LOOP, WITH AND WITHOUT A MODEL\n{_LINE}")
     print(f"  intent model : {getattr(text, 'name', '') or 'not configured - the run will say so'}")

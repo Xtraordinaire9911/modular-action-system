@@ -6,7 +6,7 @@ from src.contracts.types import Condition, ExecutionResult, Observation, Rollbac
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
 from src.runtime.episode import CancellationToken, EpisodePolicy, ObservationRequest, TransitionLedger
-from src.runtime.state_machine import RuntimeState
+from src.runtime.state_machine import RuntimeOutcome, RuntimeState
 
 
 class _SequenceExecutor:
@@ -21,6 +21,18 @@ class _SequenceExecutor:
         if isinstance(outcome, Exception):
             raise outcome
         return outcome
+
+
+class _CallbackExecutor:
+    def __init__(self, callback):
+        self.backend = "wot"
+        self.callback = callback
+        self.calls: list[SkillCall] = []
+
+    async def execute(self, skill_call, observation):
+        self.calls.append(skill_call)
+        await self.callback()
+        return _result("wot", success=True, value=22)
 
 
 class _SequenceObservationProvider:
@@ -99,6 +111,7 @@ def test_idempotent_timeout_is_retried_and_verified_from_fresh_observation():
     assert result.state == RuntimeState.COMPLETED
     assert result.recovery_attempted and result.recovery_succeeded
     assert result.final_outcome_verified
+    assert result.final_verification_transition_id == result.transition_ids[-1]
     assert result.attempts == 2
     assert len(executor.calls) == 2
     assert len(provider.requests) == 2
@@ -205,6 +218,7 @@ def test_episode_policy_can_raise_retry_budget_above_cascade_default():
     assert result.state == RuntimeState.COMPLETED
     assert result.attempts == 3
     assert len(executor.calls) == 3
+    assert result.final_verification_transition_id == result.transition_ids[-1]
 
 
 def test_non_retryable_dom_failure_executes_visual_reroute():
@@ -279,4 +293,54 @@ def test_human_cancellation_stops_episode_before_executor_call():
 
     assert result.state == RuntimeState.ESCALATED
     assert result.reason == "operator stopped task"
+    assert result.failure_type == "cancelled"
+    assert result.outcome is RuntimeOutcome.CANCELLED
     assert executor.calls == []
+
+
+def test_cancellation_during_skill_execution_cannot_be_projected_as_success():
+    token = CancellationToken()
+
+    async def cancel_during_execute():
+        token.cancel("operator stopped during execution")
+
+    executor = _CallbackExecutor(cancel_during_execute)
+    provider = _SequenceObservationProvider([Observation(device_states={"thermostat": {"temperature": 22}})])
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill()},
+        {"wot": executor},
+        CognitiveMap(task_id="cancelled-during-execution"),
+        observation_provider=provider,
+        cancellation_token=token,
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
+
+    assert result.state is RuntimeState.ESCALATED
+    assert result.outcome is RuntimeOutcome.CANCELLED
+    assert result.reason == "operator stopped during execution"
+    assert not result.final_outcome_verified
+    assert result.final_verification_transition_id == ""
+
+
+def test_deadline_during_skill_execution_cannot_be_projected_as_success():
+    async def exceed_deadline():
+        await asyncio.sleep(0.01)
+
+    executor = _CallbackExecutor(exceed_deadline)
+    provider = _SequenceObservationProvider([Observation(device_states={"thermostat": {"temperature": 22}})])
+    manager = ContinuousInteractionManager(
+        {"set_temperature": _skill()},
+        {"wot": executor},
+        CognitiveMap(task_id="deadline-during-execution"),
+        observation_provider=provider,
+        episode_policy=EpisodePolicy(deadline_s=0.001),
+    )
+
+    result = asyncio.run(manager.run_skill(SkillCall("set_temperature", {"target": 22}), Observation()))
+
+    assert result.state is RuntimeState.ESCALATED
+    assert result.outcome is RuntimeOutcome.BUDGET_EXHAUSTED
+    assert result.reason == "episode deadline exceeded"
+    assert not result.final_outcome_verified
+    assert result.final_verification_transition_id == ""

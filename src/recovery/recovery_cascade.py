@@ -12,7 +12,14 @@ from src.recovery.retry_policy import RetryPolicy
 from src.recovery.rollback_policy import RollbackPolicy
 from src.runtime.cognitive_map import CognitiveMap
 
-RecoveryActionType = Literal["retry", "reroute", "rollback", "escalate_human", "abort"]
+RecoveryActionType = Literal[
+    "retry",
+    "reroute",
+    "replan",
+    "rollback",
+    "escalate_human",
+    "abort",
+]
 
 
 @dataclass
@@ -23,6 +30,7 @@ class RecoveryContext:
     retry_count: int = 0
     tried_backends: list[str] = field(default_factory=list)
     rollback_available: bool = False
+    agent_replan_available: bool = False
     max_retry_attempts: int | None = None
 
 
@@ -87,6 +95,7 @@ class RecoveryCascade:
         retry_count: int = 0,
         tried_backends: list[str] | None = None,
         rollback_available: bool = False,
+        agent_replan_available: bool = False,
         boundary: str = "",
         max_retry_attempts: int | None = None,
     ) -> RecoveryTrace:
@@ -98,6 +107,7 @@ class RecoveryCascade:
             retry_count=retry_count,
             tried_backends=tried_backends,
             rollback_available=rollback_available,
+            agent_replan_available=agent_replan_available,
             boundary=boundary,
             max_retry_attempts=max_retry_attempts,
         )
@@ -113,6 +123,7 @@ class RecoveryCascade:
         retry_count: int = 0,
         tried_backends: list[str] | None = None,
         rollback_available: bool = False,
+        agent_replan_available: bool = False,
         boundary: str = "",
         max_retry_attempts: int | None = None,
     ) -> tuple[RecoveryAction, RecoveryTrace]:
@@ -123,6 +134,7 @@ class RecoveryCascade:
             retry_count=retry_count,
             tried_backends=tried_backends or [],
             rollback_available=rollback_available,
+            agent_replan_available=agent_replan_available,
             max_retry_attempts=max_retry_attempts,
         )
         action, steps = self._decide_and_trace(result, skill_tuple, cognitive_map, context, available_backends)
@@ -203,6 +215,11 @@ class RecoveryCascade:
         )
         if reroute.should_reroute:
             return RecoveryAction("reroute", reroute.selected_backend, 2, reroute.reason), steps
+
+        if context.agent_replan_available:
+            reason = "fresh typed failure evidence is available to the existing Agent/Planner"
+            steps.append(RecoveryDecisionStep(2, "agent_replan", True, True, reason))
+            return RecoveryAction("replan", recovery_tier=2, reason=reason), steps
 
         rollback = self.rollback_policy.decide(skill_tuple, cognitive_map)
         rollback_allowed = rollback.should_rollback and context.rollback_available

@@ -258,9 +258,13 @@ async def _apply_fixture_variant(
                 if (payload.caseId === 'openweb-overlay-obstruction') {
                     const overlay = document.querySelector('#cookie-wall');
                     const modal = document.querySelector('#cookie-wall .modal');
+                    const remediation = document.querySelector('#accept-cookies');
                     overlay.style.background = `rgba(0,0,0,${p.overlay_opacity})`;
                     overlay.style.zIndex = String(p.z_index);
                     modal.style.transform = `translateX(${p.modal_offset_px}px)`;
+                    modal.style.padding = `${p.modal_padding_px || 24}px`;
+                    remediation.textContent = p.remediation_label || remediation.textContent;
+                    remediation.id = p.remediation_control_id || remediation.id;
                 } else if (payload.caseId === 'openweb-session-expiry') {
                     document.querySelector('#session-banner').textContent =
                         `Session expired ${p.session_age_s}s ago (HTTP ${p.auth_code}).`;
@@ -299,6 +303,29 @@ async def _apply_fixture_variant(
                         document.querySelector('#status').textContent =
                             `${p.ack_code}: ${p.reported_clicks} click(s) accepted; notifications remain disabled.`;
                     };
+                }
+
+                const target = document.querySelector('[data-capability-target="true"]');
+                if (target && p.target_control_id) {
+                    target.setAttribute('data-affordance-id', p.target_control_id);
+                }
+                const recovery = document.querySelector('[data-recovery-role]');
+                if (recovery && p.recovery_control_id) {
+                    recovery.setAttribute('data-affordance-id', p.recovery_control_id);
+                    recovery.textContent = p.recovery_label || recovery.textContent;
+                }
+                const alternative = document.querySelector('[data-equivalent-to]');
+                if (alternative && p.alternative_control_id) {
+                    alternative.setAttribute('data-affordance-id', p.alternative_control_id);
+                    alternative.textContent = p.recovery_label || alternative.textContent;
+                }
+                if (target && p.target_control_id) {
+                    for (const relation of ['data-remediates', 'data-compensates',
+                                            'data-equivalent-to', 'data-restores', 'data-observes']) {
+                        document.querySelectorAll(`[${relation}]`).forEach((node) => {
+                            node.setAttribute(relation, p.target_control_id);
+                        });
+                    }
                 }
             }""",
             payload,
@@ -456,7 +483,10 @@ async def _run_open_web_playwright_fixture_suite_async(
                     "runtime": {
                         "episode_id": result.episode_id,
                         "state": result.state.value,
+                        "outcome": result.outcome.value,
                         "attempts": result.attempts,
+                        "replan_count": result.replan_count,
+                        "user_action_required": result.user_action_required,
                         "executor_success": bool(result.execution_result and result.execution_result.success),
                         "executor_failure_reason": (
                             result.execution_result.failure_reason if result.execution_result else ""

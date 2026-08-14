@@ -18,6 +18,51 @@ and failure-injection evaluation.
 
 https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
 
+### What the language model actually changes
+
+[![Open the model-versus-rules demo](artifacts/llm_demo/preview.png)](artifacts/llm_demo/llm-vs-rules.mp4)
+
+- [Open the video directly](artifacts/llm_demo/llm-vs-rules.mp4) (1 min 51 s)
+- [Inspect the run report](artifacts/llm_demo/run-report.json)
+- [Inspect every vision call this recording made](artifacts/llm_demo/vision-calls.jsonl), and [every intent call](artifacts/llm_demo/intent-calls.jsonl) — model, latency, raw reply, screenshot digest
+- [Inspect the evaluation behind the claims](artifacts/model_value/model_value_report.json)
+
+Four scenes, each running the rule-based path and the model path **on the same
+sentence, at the same time**, because a caption saying "sent to a language
+model" looks identical whether a model ran or not. On screen: all twelve
+fallback patterns and which matched; the request sent and the model's raw reply,
+revealed line by line, with latency and provider-reported token counts; the
+exact image bytes handed to the vision model, rendered in the page, beside its
+answer in its own words; and running totals for calls, tokens and model time.
+
+Scene 1 is the control — a sentence written to match a keyword pattern, where
+the model earns nothing. Scene 4 is the decisive one: the confirmation is in the
+DOM and painted over on screen, so every text-based check in this repository
+passes, and only looking catches it. Result of the recorded run: **rules 1/4,
+model 4/4, one false success caught**, on 7 model calls and about 2,800 tokens.
+`qwen-plus` for intent, `qwen-vl-plus` for vision. Run it with
+`python scripts/run_llm_demo.py`.
+
+### Five-family Runtime recovery contract demo
+
+[![Open the five-family Runtime recovery demo](artifacts/runtime_recovery_demo/preview.png)](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
+
+- [Open the final video directly](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
+- [Open the full-size visual preview](artifacts/runtime_recovery_demo/preview.png)
+- [Inspect the Runtime run report](artifacts/runtime_recovery_demo/runtime-report.json)
+- [Inspect the transition ledger](artifacts/runtime_recovery_demo/transition_ledger.jsonl)
+- [Inspect the failure ledger](artifacts/runtime_recovery_demo/failure_ledger.jsonl)
+- [Inspect the raw screenshots](artifacts/runtime_recovery_demo/screenshots/)
+- [Inspect the claim-boundary manifest](artifacts/runtime_recovery_demo/demo-manifest.json)
+
+The recording contains five controlled recovery scenes and all five finish with
+a fresh, independent final oracle. It demonstrates the real Runtime handoff,
+proposal validation, execution, re-observation, recovery-postcondition check,
+continuation, and final verification path. Upstream Planner feedback and the
+VLM feedback used by the DOM/visual scene are explicitly simulated; this video
+does not claim a production Planner, production VLM, or unrestricted open-web
+run.
+
 
 ## What is implemented, and what is not
 
@@ -29,12 +74,12 @@ matching its code.
 |---|---|---|
 | Observe → plan → act → verify → recover | **Implemented** | Runs end to end in one process; see `scripts/run_agent_loop_demo.py`. |
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
-| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. `STATUS.md` still says "future interface only" and is now out of date on this row. |
+| Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. |
 | Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Unlike the intent layer above, this one is still consumed only by the narrated demo — the runtime picks affordances through its own action context. |
 | A model actually running | **Running, and measured** | Both layers run against a real endpoint (`qwen-plus`, `qwen-vl-plus`), and `scripts/eval_model_value.py` asks whether they earn their place. **Intent** — on nine requests phrased to avoid the fallback's keywords the rules score **0/9** and the model **9/9**, with no regression on the two the rules already handled and 4/4 correct refusals including "delete my account". **Vision** — against three separate ways a page can be right in the DOM and wrong on screen (painted over, rendered in the background colour, laid out off-screen): detection **100%** over 12 trials where the DOM is wrong, false alarm **0%** over 8 where it is right, and the model never changed its mind between repetitions. Evidence in `artifacts/model_value/`. |
 | Verification independent of the executor | **Implemented, two modalities** | The page or device is re-read; a backend reporting success is not treated as task success. A vision model independently judges the region the goal names, and its answer enters the arbiter as a `source="visual"` assertion, so a goal is confirmed by two sources or a disagreement becomes a conflict. That catches the one class of false success a text oracle cannot see: a confirmation present in the DOM and absent from the screen. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
-| Recovery | **Implemented, four tiers** | All four are exercised by the loop demo and are genuinely different actions: retry, clear the obstruction, satisfy the precondition, hand over. Which tier is used is decided at run time from what was measured. Scored against ground truth the diagnosis never sees. |
+| Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
 | Model confidence as a safety gate | **Weak, and calibrated rather than assumed** | `qwen-vl-plus` reports 1.00 on every clear observation and 0.90 on a region cut off mid-word; that is its whole range. The abstention threshold was 0.55 — a value no answer ever came near, so the gate could not fire. It is now 0.95, set from the measurement, and it is model-specific: another model needs `scripts/eval_model_value.py` re-run. **A confident wrong answer still passes the gate.** What makes a wrong answer safe is the arbiter turning a disagreement into a conflict, which does not consult confidence. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
@@ -338,6 +383,31 @@ uv run python -m src.pipeline --open-web-randomized-holdout \
 ```
 
 This remains controlled local-browser evidence, not real open-web evidence.
+
+Run the five-family Runtime/Planner boundary check on randomized dev and
+locked-holdout capability variants. Fresh observations expose generic relations
+(`remediates`, `restores`, `compensates`, `observes`, or `equivalent_to`) through
+`PlannerPort`; the default controller intentionally does not select one:
+
+```bash
+uv run python -m src.pipeline --generalized-browser-recovery \
+  --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
+```
+
+Evidence is written under `artifacts/generalized_browser_recovery/`. Without an
+externally supplied Planner implementation, each episode must stop after the
+typed handoff instead of using a hidden Runtime policy. Autocomplete is excluded
+from recovery scope. See `YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the ownership
+and integration matrix.
+
+The single successful obstruction-repair holdout evidence map is packaged under
+`artifacts/friday_generalized_recovery/`:
+
+- `artifacts/friday_generalized_recovery/evidence/generalized_browser_recovery_report.json`
+- `artifacts/friday_generalized_recovery/evidence/transition_ledger.jsonl`
+- `artifacts/friday_generalized_recovery/evidence/screenshots/`
+- `artifacts/friday_generalized_recovery/contact_sheet.png`
+- `artifacts/friday_generalized_recovery/generalized_browser_recovery_holdout.mp4`
 
 Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
 fault API:

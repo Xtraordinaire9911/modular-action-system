@@ -124,6 +124,9 @@ prompt telling it to be unsure whenever it "could not see the relevant area" —
 description a blank region satisfies. "I cannot tell" and "I can see plainly, and
 it is not there" are different, and the prompt now separates them.
 
+The recording of this is at the top of the README, with the calls it made beside
+it in `artifacts/llm_demo/`.
+
 To watch the same contrast rather than read it, `scripts/run_llm_demo.py` runs
 four narrated scenes that put the rule-based path beside the model path on the
 same sentence, ending with a page whose confirmation only the vision model

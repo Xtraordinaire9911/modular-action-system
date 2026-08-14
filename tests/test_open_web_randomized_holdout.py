@@ -33,6 +33,10 @@ def test_locked_holdout_has_disjoint_seeds_signatures_and_parameter_domains():
     holdout_overlay = next(row for row in holdout if row["case"]["case_id"] == "openweb-overlay-obstruction")
     assert dev_overlay["parameters"]["overlay_opacity"] < 0.7
     assert holdout_overlay["parameters"]["overlay_opacity"] > 0.7
+    assert dev_overlay["parameters"]["remediation_label"] != holdout_overlay["parameters"]["remediation_label"]
+    assert (
+        dev_overlay["parameters"]["remediation_control_id"] != holdout_overlay["parameters"]["remediation_control_id"]
+    )
 
 
 def test_randomized_holdout_runner_persists_split_and_per_family_evidence(tmp_path):

@@ -4,11 +4,17 @@ import asyncio
 
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
 from src.perception.page_affordance_model import PageAffordanceModel
+from src.runtime.affordance_controller import AffordanceController
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager
-from src.runtime.episode import EpisodePolicy, ObservationRequest
-from src.runtime.live_observation import LiveRuntimeObservation, observation_from_live_sources
-from src.runtime.state_machine import RuntimeState
+from src.runtime.episode import CancellationToken, EpisodePolicy, ObservationRequest
+from src.runtime.live_observation import (
+    LiveRuntimeObservation,
+    bind_live_observation_to_request,
+    observation_from_live_sources,
+)
+from src.runtime.state_machine import RuntimeOutcome, RuntimeState
+from src.runtime.system2_planner import System2Planner
 
 
 def _affordances(include_time=True, include_visual=False, include_visual_room=False):
@@ -113,7 +119,10 @@ class _Provider:
 
     async def observe(self, request):
         self.requests.append(request)
-        return self.observations.pop(0)
+        observed = self.observations.pop(0)
+        if isinstance(observed, LiveRuntimeObservation):
+            return bind_live_observation_to_request(observed, request_id=request.request_id)
+        return observed
 
 
 def test_goal_reobserves_and_replans_between_every_primitive_action():
@@ -149,6 +158,7 @@ def test_goal_reobserves_and_replans_between_every_primitive_action():
     assert len(provider.requests) == 3
     assert result.attempts == 3
     assert len(result.transition_ids) == 3
+    assert result.final_verification_transition_id == result.transition_ids[-1]
 
 
 def test_primitive_expected_effect_requires_fresh_verified_state():
@@ -173,6 +183,7 @@ def test_primitive_expected_effect_requires_fresh_verified_state():
 
     assert result.state == RuntimeState.ESCALATED
     assert result.failure_type == "postcondition_failed"
+    assert result.outcome is RuntimeOutcome.USER_ACTION_REQUIRED
     assert "expected_effect=\"form.room == 'A'\"" in manager.transition_ledger.records[0].failure_reason
     assert manager.transition_ledger.records[0].execution_success is True
     assert manager.transition_ledger.records[0].postcondition_passed is False
@@ -248,6 +259,107 @@ def test_goal_executes_visual_alternative_after_dom_failure():
     assert records[1].recovery_of_transition_id == records[0].transition_id
 
 
+def test_partial_state_delta_cannot_authorize_reroute_to_retained_affordance():
+    failed = ExecutionResult("reserve", "dom", False, 1, 0.0, failure_reason="selector_not_found")
+    dom = _Executor("dom", [failed])
+    visual = _Executor("visual")
+    provider = _Provider([Observation(accessibility_tree={"page_state": {"booking": {"confirmed": False}}})])
+    initial = LiveRuntimeObservation(
+        observation=Observation(accessibility_tree={"page_state": {"booking": {"confirmed": False}}}),
+        affordances=[
+            affordance
+            for affordance in _affordances(include_time=False, include_visual=True)
+            if "confirm" in affordance.id
+        ],
+    )
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": dom, "visual": visual},
+        CognitiveMap(task_id="partial-reroute"),
+        observation_provider=provider,
+    )
+
+    result = asyncio.run(manager.run_observed_goal(initial, goal_id="reserve", goal_state="booking.confirmed == true"))
+
+    assert result.state == RuntimeState.ESCALATED
+    assert result.outcome is RuntimeOutcome.TERMINAL_FAILURE
+    assert len(dom.calls) == 1
+    assert visual.calls == []
+    assert "complete fresh affordance snapshot" in result.reason
+
+
+class _CancellingPlanner:
+    def __init__(self, token):
+        self.token = token
+        self.delegate = System2Planner(AffordanceController())
+
+    def plan(self, context, **kwargs):
+        plan = self.delegate.plan(context, **kwargs)
+        self.token.cancel("operator cancelled during planning")
+        return plan
+
+
+def test_cancellation_at_attempt_boundary_is_not_projected_as_budget_exhaustion():
+    token = CancellationToken()
+    executor = _Executor("dom")
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": executor},
+        CognitiveMap(task_id="cancel-at-attempt"),
+        system2_planner=_CancellingPlanner(token),
+        cancellation_token=token,
+    )
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            _live({"booking": {"confirmed": False}}, include_time=False),
+            goal_id="reserve",
+            goal_state="booking.confirmed == true",
+        )
+    )
+
+    assert result.failure_type == "cancelled"
+    assert result.outcome is RuntimeOutcome.CANCELLED
+    assert result.reason == "operator cancelled during planning"
+    assert executor.calls == []
+
+
+class _CancellingExecutor(_Executor):
+    def __init__(self, token):
+        super().__init__("dom")
+        self.token = token
+
+    async def execute(self, skill_call, observation):
+        result = await super().execute(skill_call, observation)
+        self.token.cancel("operator cancelled after action")
+        return result
+
+
+def test_post_action_cancellation_wins_over_newly_satisfied_goal():
+    token = CancellationToken()
+    executor = _CancellingExecutor(token)
+    provider = _Provider([_live({"booking": {"confirmed": True}}, include_time=False)])
+    manager = ContinuousInteractionManager(
+        {},
+        {"dom": executor},
+        CognitiveMap(task_id="cancel-after-action"),
+        observation_provider=provider,
+        cancellation_token=token,
+    )
+
+    result = asyncio.run(
+        manager.run_observed_goal(
+            _live({"booking": {"confirmed": False}}, include_time=False),
+            goal_id="reserve",
+            goal_state="booking.confirmed == true",
+        )
+    )
+
+    assert result.failure_type == "cancelled"
+    assert result.outcome is RuntimeOutcome.CANCELLED
+    assert not result.final_outcome_verified
+
+
 def test_goal_reroute_rejects_non_equivalent_visual_alternative():
     failed = ExecutionResult("reserve", "dom", False, 1, 0.0, failure_reason="selector_not_found")
     dom = _Executor("dom", [failed])
@@ -290,6 +402,8 @@ def test_goal_reroute_rejects_non_equivalent_visual_alternative():
     )
 
     assert result.state == RuntimeState.ESCALATED
+    assert result.replan_count == 1
+    assert result.outcome is RuntimeOutcome.USER_ACTION_REQUIRED
     assert len(dom.calls) == 1
     assert visual.calls == []
     assert [record.backend for record in manager.transition_ledger.records] == ["dom"]

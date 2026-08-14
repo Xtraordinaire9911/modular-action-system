@@ -229,6 +229,30 @@ def test_plan_validator_rejects_unknown_affordance_and_disallowed_action():
     assert disallowed.errors == ["action type is not allowed: type"]
 
 
+def test_plan_validator_rejects_primitive_incompatible_with_observed_affordance():
+    cmap = CognitiveMap(task_id="task_plan_validator_primitive")
+    cmap.add_affordance(
+        RuntimeAffordance(
+            id="dom_confirm",
+            source="dom",
+            entity_id="booking_form",
+            action_name="confirm",
+            action_type="button",
+            confidence=0.9,
+            grounding={"label": "Confirm"},
+        )
+    )
+    context = build_action_context(cmap, request_type="goal_spec", allowed_actions=["click", "type"])
+
+    result = PlanValidator().validate(
+        context,
+        [PrimitiveAction("type", affordance_id="dom_confirm", value="not valid for a button")],
+    )
+
+    assert not result.valid
+    assert result.errors == ["action type is incompatible with affordance dom_confirm: expected click"]
+
+
 def test_plan_validator_blocks_ordinary_actions_when_conflicts_are_unresolved():
     cmap = CognitiveMap(task_id="task_plan_validator_conflict")
     cmap.add_affordance(

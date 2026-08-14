@@ -55,6 +55,22 @@ _INPUT_TYPE_ACTION = {
 _AFFORDANCE_TYPE = {"click": "button", "type": "input", "select": "input"}
 _SELECTOR_CONFIDENCE = {"id": 1.0, "testid": 0.97, "name": 0.85, "class": 0.7, "positional": 0.55}
 _RUNTIME_OVERLAY_IDS = frozenset(["__cua_cursor", "__cua_cap", "__cua_badge", "__cua_style"])
+_SEMANTIC_DATA_ATTRIBUTES = {
+    "data-entity-id": "entity_id",
+    "data-completion-for": "completion_for",
+    "data-achieves": "achieves",
+    "data-recovery-role": "recovery_role",
+    "data-remediates": "remediates",
+    "data-compensates": "compensates",
+    "data-equivalent-to": "equivalent_to",
+    "data-restores": "restores",
+    "data-observes": "observes",
+    "data-recovery-postcondition": "recovery_postcondition",
+    "data-recovery-safe": "recovery_safe",
+    "data-idempotent": "idempotent",
+    "data-irreversible": "irreversible",
+    "data-safety-level": "safety_level",
+}
 
 
 def _strip_overlay_attrs(attr: dict[str, str]) -> dict[str, str]:
@@ -209,6 +225,25 @@ def _bbox_from_attrs(attr: dict[str, str]) -> list[int] | None:
     return parts if len(parts) == 4 else None
 
 
+def _semantic_locator_attrs(attr: dict[str, str]) -> dict[str, Any]:
+    semantics: dict[str, Any] = {}
+    for html_name, contract_name in _SEMANTIC_DATA_ATTRIBUTES.items():
+        raw = attr.get(html_name)
+        if raw is None or not raw.strip():
+            continue
+        value: Any = raw.strip()
+        if contract_name in {"recovery_safe", "idempotent", "irreversible"}:
+            normalized = value.lower()
+            if normalized not in {"true", "false"}:
+                continue
+            value = normalized == "true"
+        elif contract_name in {"remediates", "compensates", "equivalent_to", "restores", "observes"}:
+            parts = [part.strip() for part in value.split(",") if part.strip()]
+            value = parts[0] if len(parts) == 1 else parts
+        semantics[contract_name] = value
+    return semantics
+
+
 def _map_action_to_type(action: str) -> Literal["button", "input", "property", "action", "event", "sensor"]:
     return _AFFORDANCE_TYPE.get(action, "button")  # type: ignore[return-value]
 
@@ -247,13 +282,17 @@ class DomTransducer:
                     confidence = _SELECTOR_CONFIDENCE["positional"]  # still ambiguous, and says so
                 selector = refined
             disabled = "disabled" in attr or attr.get("aria-disabled") == "true"
-            locator: dict[str, Any] = {"selector": selector, "strategy": "css"}
+            locator: dict[str, Any] = {
+                "selector": selector,
+                "strategy": "css",
+                **_semantic_locator_attrs(attr),
+            }
             bbox = _bbox_from_attrs(attr)
             if bbox is not None:
                 locator["bbox"] = bbox
             affordances.append(
                 Affordance(
-                    id=f"dom_{node['tag']}_{node['nth']}",
+                    id=attr.get("data-affordance-id") or f"dom_{node['tag']}_{node['nth']}",
                     source="DOM",
                     type=_map_action_to_type(action),
                     label=_label_for(node),

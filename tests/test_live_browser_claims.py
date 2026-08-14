@@ -191,6 +191,53 @@ def test_randomized_open_web_holdout_changes_real_page_state_and_detects_all_fai
         assert any(value in observed.values() for value in expected.values())
 
 
+def test_generalized_recovery_waits_for_an_injected_planner_implementation(tmp_path):
+    """Claim: Runtime exposes the handoff but does not implement Planner policy."""
+    import json
+
+    from evaluation.generalized_browser_recovery import run_generalized_browser_recovery_suite
+
+    run_generalized_browser_recovery_suite(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        action_timeout_ms=400,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "generalized_browser_recovery_report.json").read_text())
+
+    summary = report["summary"]
+    assert summary["all_recovered_and_verified"] is False
+    assert summary["episode_count"] == 10
+    assert summary["dev_count"] == summary["holdout_count"] == 5
+    assert summary["final_verified_count"] == summary["recovery_success_count"] == 0
+    assert summary["failure_family_count"] == 5
+    assert all(row["episodes"] == 2 and row["verified"] == 0 for row in summary["per_family"].values())
+    controls = {
+        (
+            row["variant"]["parameters"]["remediation_control_id"],
+            row["variant"]["parameters"]["remediation_label"],
+        )
+        for row in report["episodes"]
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction"
+    }
+    assert len(controls) == 2
+    for row in report["episodes"]:
+        transitions = row["transitions"]
+        assert [transition["recovery_action"] for transition in transitions] == ["replan"]
+        assert transitions[0]["postcondition_passed"] is False
+        assert transitions[0]["recovery_tier"] == 2
+        assert row["runtime"]["final_verification_transition_id"] == ""
+        assert row["runtime"]["user_action_required"] is True
+        assert row["runtime"]["replan_count"] == 1
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction":
+            observations = row["browser"]["obstruction_observations"]
+            assert [observation["blocked"] for observation in observations] == [True]
+        assert len(row["failures"]) == 1
+        assert row["failures"][0]["recovery_action"] == "replan"
+        assert row["failures"][0]["recovery_success"] is False
+
+
 # --- the vision model is load-bearing, not decorative --------------------------------
 
 
