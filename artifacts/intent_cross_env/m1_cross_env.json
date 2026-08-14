@@ -6,14 +6,14 @@
         "tasks": 2,
         "solved": 2,
         "success_rate": 1.0,
-        "mean_latency_ms": 494.278
+        "mean_latency_ms": 1957.664
       },
       {
         "env": "shopping.html",
         "tasks": 4,
         "solved": 4,
         "success_rate": 1.0,
-        "mean_latency_ms": 493.747
+        "mean_latency_ms": 2222.996
       }
     ],
     "overall_success_rate": 1.0,
@@ -23,7 +23,7 @@
       "refused_intent": 1,
       "unsupported_goal": 0
     },
-    "model_derived_episodes": 0
+    "model_derived_episodes": 6
   },
   "episodes": [
     {
@@ -35,21 +35,34 @@
       "parameters": {
         "item": "wireless headphones"
       },
-      "layer1_source": "rule_fallback",
-      "model_derived": false,
+      "layer1_source": "llm",
+      "model_derived": true,
       "completion": "button.add-cart-btn[data-id='headphones']",
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-f5aba5f2d74e",
+      "episode_id": "episode-3e6e40beb14f",
       "transitions": [
         {
+          "transition_id": "episode-3e6e40beb14f:transition-0001",
           "step": 1,
-          "skill_id": "intent_22992050",
+          "skill_id": "intent_66318488",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Wireless Headphones to cart",
+          "params": {
+            "primitive_action": "click",
+            "affordance_id": "dom_button_2",
+            "value": null,
+            "expected_effect": "cart.holds_item == true"
+          },
           "success": true,
+          "execution_success": true,
           "postcondition_passed": true,
+          "latency_ms": 95.3,
+          "attempt": 1,
+          "recovery_action": "",
+          "recovery_tier": null,
+          "recovery_of_transition_id": "",
           "failure_reason": ""
         }
       ],
@@ -61,9 +74,46 @@
         {
           "value": true,
           "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "visual"
         }
       ],
-      "latency_ms": 491.9
+      "primitive_plan": [
+        {
+          "action": "click",
+          "affordance_id": "dom_button_2",
+          "value": null,
+          "expected_effect": "cart.holds_item == true"
+        }
+      ],
+      "backends_used": [
+        "dom"
+      ],
+      "final_oracle": {
+        "region": "#cart-items",
+        "expected": "headphones",
+        "observed": "Wireless Headphones x1$79.99",
+        "goal_reached": true
+      },
+      "visual_evidence": [
+        {
+          "source": "vlm",
+          "answer": true,
+          "confidence": 1.0,
+          "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+          "model": "qwen-vl-plus",
+          "screenshot_sha256": "58594aec6e0501c0",
+          "region": "#cart-items",
+          "question": "Does this image show an entry for wireless headphones? Answer from the image only.",
+          "latency_ms": 1149.4,
+          "is_model_derived": true,
+          "retries": 0,
+          "error": ""
+        }
+      ],
+      "latency_ms": 1929.4
     },
     {
       "utterance": "put the pro laptop in my cart",
@@ -74,21 +124,34 @@
       "parameters": {
         "item": "pro laptop"
       },
-      "layer1_source": "rule_fallback",
-      "model_derived": false,
+      "layer1_source": "llm",
+      "model_derived": true,
       "completion": "button.add-cart-btn[data-id='laptop']",
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-8014998c58ea",
+      "episode_id": "episode-433e15873ee6",
       "transitions": [
         {
+          "transition_id": "episode-433e15873ee6:transition-0001",
           "step": 1,
-          "skill_id": "intent_25391657",
+          "skill_id": "intent_30719681",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Pro Laptop to cart",
+          "params": {
+            "primitive_action": "click",
+            "affordance_id": "dom_button_3",
+            "value": null,
+            "expected_effect": "cart.holds_item == true"
+          },
           "success": true,
+          "execution_success": true,
           "postcondition_passed": true,
+          "latency_ms": 100.15,
+          "attempt": 1,
+          "recovery_action": "",
+          "recovery_tier": null,
+          "recovery_of_transition_id": "",
           "failure_reason": ""
         }
       ],
@@ -100,9 +163,46 @@
         {
           "value": true,
           "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "visual"
         }
       ],
-      "latency_ms": 494.6
+      "primitive_plan": [
+        {
+          "action": "click",
+          "affordance_id": "dom_button_3",
+          "value": null,
+          "expected_effect": "cart.holds_item == true"
+        }
+      ],
+      "backends_used": [
+        "dom"
+      ],
+      "final_oracle": {
+        "region": "#cart-items",
+        "expected": "laptop",
+        "observed": "Pro Laptop 15\" x1$1299.00",
+        "goal_reached": true
+      },
+      "visual_evidence": [
+        {
+          "source": "vlm",
+          "answer": true,
+          "confidence": 1.0,
+          "evidence": "The text 'Pro Laptop 15\" x1' is visible in the image.",
+          "model": "qwen-vl-plus",
+          "screenshot_sha256": "dd225e70d2581701",
+          "region": "#cart-items",
+          "question": "Does this image show an entry for pro laptop? Answer from the image only.",
+          "latency_ms": 1420.8,
+          "is_model_derived": true,
+          "retries": 0,
+          "error": ""
+        }
+      ],
+      "latency_ms": 2440.4
     },
     {
       "utterance": "add the mechanical keyboard to my cart please",
@@ -113,21 +213,34 @@
       "parameters": {
         "item": "mechanical keyboard"
       },
-      "layer1_source": "rule_fallback",
-      "model_derived": false,
+      "layer1_source": "llm",
+      "model_derived": true,
       "completion": "button.add-cart-btn[data-id='keyboard']",
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-9b6a81e9168b",
+      "episode_id": "episode-fd3e59a8fb7b",
       "transitions": [
         {
+          "transition_id": "episode-fd3e59a8fb7b:transition-0001",
           "step": 1,
-          "skill_id": "intent_69869047",
+          "skill_id": "intent_36345294",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Mechanical Keyboard to cart",
+          "params": {
+            "primitive_action": "click",
+            "affordance_id": "dom_button_4",
+            "value": null,
+            "expected_effect": "cart.holds_item == true"
+          },
           "success": true,
+          "execution_success": true,
           "postcondition_passed": true,
+          "latency_ms": 84.61,
+          "attempt": 1,
+          "recovery_action": "",
+          "recovery_tier": null,
+          "recovery_of_transition_id": "",
           "failure_reason": ""
         }
       ],
@@ -139,9 +252,46 @@
         {
           "value": true,
           "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "visual"
         }
       ],
-      "latency_ms": 493.7
+      "primitive_plan": [
+        {
+          "action": "click",
+          "affordance_id": "dom_button_4",
+          "value": null,
+          "expected_effect": "cart.holds_item == true"
+        }
+      ],
+      "backends_used": [
+        "dom"
+      ],
+      "final_oracle": {
+        "region": "#cart-items",
+        "expected": "keyboard",
+        "observed": "Mechanical Keyboard x1$149.00",
+        "goal_reached": true
+      },
+      "visual_evidence": [
+        {
+          "source": "vlm",
+          "answer": true,
+          "confidence": 1.0,
+          "evidence": "The text 'Mechanical Keyboard x1' is visible in the image.",
+          "model": "qwen-vl-plus",
+          "screenshot_sha256": "b9520aae8395fe82",
+          "region": "#cart-items",
+          "question": "Does this image show an entry for mechanical keyboard? Answer from the image only.",
+          "latency_ms": 1417.3,
+          "is_model_derived": true,
+          "retries": 0,
+          "error": ""
+        }
+      ],
+      "latency_ms": 2513.2
     },
     {
       "utterance": "add the 4k monitor to my cart",
@@ -152,21 +302,34 @@
       "parameters": {
         "item": "4k monitor"
       },
-      "layer1_source": "rule_fallback",
-      "model_derived": false,
+      "layer1_source": "llm",
+      "model_derived": true,
       "completion": "button.add-cart-btn[data-id='monitor']",
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-ba5c571b0bd1",
+      "episode_id": "episode-bb5b831f0cb4",
       "transitions": [
         {
+          "transition_id": "episode-bb5b831f0cb4:transition-0001",
           "step": 1,
-          "skill_id": "intent_21284335",
+          "skill_id": "intent_65790188",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add 4K Monitor to cart",
+          "params": {
+            "primitive_action": "click",
+            "affordance_id": "dom_button_5",
+            "value": null,
+            "expected_effect": "cart.holds_item == true"
+          },
           "success": true,
+          "execution_success": true,
           "postcondition_passed": true,
+          "latency_ms": 89.42,
+          "attempt": 1,
+          "recovery_action": "",
+          "recovery_tier": null,
+          "recovery_of_transition_id": "",
           "failure_reason": ""
         }
       ],
@@ -178,9 +341,46 @@
         {
           "value": true,
           "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "visual"
         }
       ],
-      "latency_ms": 494.7
+      "primitive_plan": [
+        {
+          "action": "click",
+          "affordance_id": "dom_button_5",
+          "value": null,
+          "expected_effect": "cart.holds_item == true"
+        }
+      ],
+      "backends_used": [
+        "dom"
+      ],
+      "final_oracle": {
+        "region": "#cart-items",
+        "expected": "monitor",
+        "observed": "4K Monitor 27\" x1$399.00",
+        "goal_reached": true
+      },
+      "visual_evidence": [
+        {
+          "source": "vlm",
+          "answer": true,
+          "confidence": 1.0,
+          "evidence": "The text '4K Monitor' is visible in the image.",
+          "model": "qwen-vl-plus",
+          "screenshot_sha256": "a8d8763e2a7224bc",
+          "region": "#cart-items",
+          "question": "Does this image show an entry for 4k monitor? Answer from the image only.",
+          "latency_ms": 1057.6,
+          "is_model_derived": true,
+          "retries": 0,
+          "error": ""
+        }
+      ],
+      "latency_ms": 2009.0
     },
     {
       "utterance": "upvote the top post",
@@ -189,23 +389,36 @@
       "goal_state": "post_upvoted",
       "runtime_goal_state": "post.upvoted == true",
       "parameters": {
-        "subject": "top"
+        "target": "the top post"
       },
-      "layer1_source": "rule_fallback",
-      "model_derived": false,
+      "layer1_source": "llm",
+      "model_derived": true,
       "completion": "button.upvote-btn[data-post='1']",
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-894f26289cf2",
+      "episode_id": "episode-a5388889d0ec",
       "transitions": [
         {
+          "transition_id": "episode-a5388889d0ec:transition-0001",
           "step": 1,
-          "skill_id": "intent_7346626",
+          "skill_id": "intent_5106348",
           "backend": "dom",
           "affordance_key": "dom:semantic::Upvote post: AI agents are changing everything",
+          "params": {
+            "primitive_action": "click",
+            "affordance_id": "dom_button_1",
+            "value": null,
+            "expected_effect": "post.upvoted == true"
+          },
           "success": true,
+          "execution_success": true,
           "postcondition_passed": true,
+          "latency_ms": 72.78,
+          "attempt": 1,
+          "recovery_action": "",
+          "recovery_tier": null,
+          "recovery_of_transition_id": "",
           "failure_reason": ""
         }
       ],
@@ -217,9 +430,46 @@
         {
           "value": true,
           "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "visual"
         }
       ],
-      "latency_ms": 494.0
+      "primitive_plan": [
+        {
+          "action": "click",
+          "affordance_id": "dom_button_1",
+          "value": null,
+          "expected_effect": "post.upvoted == true"
+        }
+      ],
+      "backends_used": [
+        "dom"
+      ],
+      "final_oracle": {
+        "region": "button.upvote-btn[data-post='1'].voted",
+        "expected": "\u25b2",
+        "observed": "\u25b2",
+        "goal_reached": true
+      },
+      "visual_evidence": [
+        {
+          "source": "vlm",
+          "answer": true,
+          "confidence": 1.0,
+          "evidence": "The triangle is filled with a solid blue color.",
+          "model": "qwen-vl-plus",
+          "screenshot_sha256": "4f6dd61da0fdce84",
+          "region": "button.upvote-btn[data-post='1'].voted",
+          "question": "Does this image show a small triangular vote button that is filled in with a solid colour rather than plain or outlined? Answer from the image only.",
+          "latency_ms": 1343.3,
+          "is_model_derived": true,
+          "retries": 0,
+          "error": ""
+        }
+      ],
+      "latency_ms": 1901.1
     },
     {
       "utterance": "upvote the browser automation post",
@@ -228,23 +478,36 @@
       "goal_state": "post_upvoted",
       "runtime_goal_state": "post.upvoted == true",
       "parameters": {
-        "subject": "browser automation"
+        "target": "the browser automation post"
       },
-      "layer1_source": "rule_fallback",
-      "model_derived": false,
+      "layer1_source": "llm",
+      "model_derived": true,
       "completion": "button.upvote-btn[data-post='2']",
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-9008d66afd3b",
+      "episode_id": "episode-05143c860bf5",
       "transitions": [
         {
+          "transition_id": "episode-05143c860bf5:transition-0001",
           "step": 1,
-          "skill_id": "intent_17336168",
+          "skill_id": "intent_32337679",
           "backend": "dom",
           "affordance_key": "dom:semantic::Upvote post: Best practices for browser automation",
+          "params": {
+            "primitive_action": "click",
+            "affordance_id": "dom_button_2",
+            "value": null,
+            "expected_effect": "post.upvoted == true"
+          },
           "success": true,
+          "execution_success": true,
           "postcondition_passed": true,
+          "latency_ms": 69.13,
+          "attempt": 1,
+          "recovery_action": "",
+          "recovery_tier": null,
+          "recovery_of_transition_id": "",
           "failure_reason": ""
         }
       ],
@@ -256,9 +519,46 @@
         {
           "value": true,
           "source": "dom"
+        },
+        {
+          "value": true,
+          "source": "visual"
         }
       ],
-      "latency_ms": 494.5
+      "primitive_plan": [
+        {
+          "action": "click",
+          "affordance_id": "dom_button_2",
+          "value": null,
+          "expected_effect": "post.upvoted == true"
+        }
+      ],
+      "backends_used": [
+        "dom"
+      ],
+      "final_oracle": {
+        "region": "button.upvote-btn[data-post='2'].voted",
+        "expected": "\u25b2",
+        "observed": "\u25b2",
+        "goal_reached": true
+      },
+      "visual_evidence": [
+        {
+          "source": "vlm",
+          "answer": true,
+          "confidence": 0.95,
+          "evidence": "The triangle is filled with a solid blue color.",
+          "model": "qwen-vl-plus",
+          "screenshot_sha256": "4f6dd61da0fdce84",
+          "region": "button.upvote-btn[data-post='2'].voted",
+          "question": "Does this image show a small triangular vote button that is filled in with a solid colour rather than plain or outlined? Answer from the image only.",
+          "latency_ms": 1134.6,
+          "is_model_derived": true,
+          "retries": 0,
+          "error": ""
+        }
+      ],
+      "latency_ms": 2014.2
     },
     {
       "utterance": "make me a sandwich",
@@ -276,6 +576,10 @@
       "episode_id": "",
       "transitions": [],
       "goal_state_trail": [],
+      "primitive_plan": [],
+      "backends_used": [],
+      "final_oracle": {},
+      "visual_evidence": [],
       "latency_ms": 0.0
     }
   ]

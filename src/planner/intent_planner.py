@@ -81,6 +81,11 @@ What each goal_state means, so a request phrased differently still lands:
 Rules:
 - Choose the single goal_state that best fits. If none fit, use "unsupported".
 - Put every concrete value in parameters; do not leave them in the description.
+- Always name the thing being acted on in parameters, under "target", in the \
+user's own words. Do this even when they point at it by position or by \
+description rather than by name - "the top post", "the first one", "the cheap \
+one" all go in as written. A goal with no target cannot be carried out, so \
+omitting it throws the request away.
 - success_evidence must be checkable by re-observing the environment, not by \
 trusting that an action ran.
 """
