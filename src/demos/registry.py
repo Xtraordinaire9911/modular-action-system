@@ -184,7 +184,7 @@ DEMOS: list[Demo] = [
     Demo(
         name="room-prepared",
         title="One sentence prepares a room, and every property is checked",
-        summary="Discovers the Thing Descriptions at runtime, resolves \"prepare the room\" to four "
+        summary='Discovers the Thing Descriptions at runtime, resolves "prepare the room" to four '
         "writable properties, writes each one and reads each one back. --ignore drops a write to show "
         "the read-back catching it.",
         command=("scripts/run_room_prepared.py",),
