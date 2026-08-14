@@ -18,6 +18,7 @@ from src.planner.goal_state_adapter import GoalStateReportingAdapter
 @dataclass
 class _Observation:
     accessibility_tree: dict[str, Any] = field(default_factory=dict)
+    assertions: list[Any] = field(default_factory=list)
 
 
 @dataclass
@@ -88,3 +89,44 @@ def test_reset_and_executors_pass_straight_through():
 
     assert inner.reset_calls == 1
     assert adapter.executors() is not None and "dom" in adapter.executors()
+
+
+def test_a_confident_second_source_is_attached_as_an_assertion():
+    """A vision model's answer must reach the arbiter, not a log line."""
+    from src.contracts.types import ObservedAssertion
+
+    visual = ObservedAssertion(entity_id="cart", attribute="holds_item", value=True, source="visual", confidence=0.81)
+    adapter = GoalStateReportingAdapter(
+        _Inner(),
+        fact=lambda ok: {"cart": {"holds_item": ok}},
+        holds=lambda: True,
+        second_opinion=lambda: visual,
+    )
+
+    observation = _observe(adapter).observation
+
+    assert observation.assertions == [visual]
+    assert observation.assertions[0].confidence == 0.81, "not rounded up by the tree channel"
+    assert adapter.second_opinions == [visual]
+
+
+def test_an_abstaining_second_source_contributes_nothing():
+    adapter = GoalStateReportingAdapter(
+        _Inner(),
+        fact=lambda ok: {"cart": {"holds_item": ok}},
+        holds=lambda: True,
+        second_opinion=lambda: None,
+    )
+
+    observation = _observe(adapter).observation
+
+    assert observation.assertions == []
+    assert adapter.second_opinions == []
+
+
+def test_the_dom_fact_is_reported_whether_or_not_a_second_source_exists():
+    adapter = GoalStateReportingAdapter(_Inner(), fact=lambda ok: {"cart": {"holds_item": ok}}, holds=lambda: True)
+
+    page_state = _observe(adapter).observation.accessibility_tree["page_state"]
+
+    assert page_state["cart"] == {"holds_item": True}

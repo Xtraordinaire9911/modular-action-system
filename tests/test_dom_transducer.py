@@ -65,6 +65,44 @@ def test_compression_ratio_reported():
     assert pam.to_dict()["page_id"] == "booking_dashboard"
 
 
+def test_runtime_overlay_elements_and_their_descendants_are_excluded():
+    html = """
+    <button id="before" aria-label="Real before">Real before</button>
+    <div id="__cua_cursor" role="button" aria-label="Cursor overlay">
+      <button id="nested-cursor-action">Nested cursor action</button>
+    </div>
+    <button id="__cua_cap">Caption overlay</button>
+    <section data-agent-overlay="true">
+      <a href="/agent-only">Agent overlay link</a>
+    </section>
+    <input data-runtime-overlay="true" aria-label="Runtime overlay input">
+    <button id="after" aria-label="Real after">Real after</button>
+    """
+
+    pam = DomTransducer().transduce(html)
+
+    assert [affordance.label for affordance in pam.affordances] == ["Real before", "Real after"]
+    assert [affordance.locator["selector"] for affordance in pam.affordances] == ["#before", "#after"]
+
+
+def test_void_elements_inside_runtime_overlays_do_not_hide_following_affordances():
+    html = """
+    <div data-runtime-overlay="true">
+      <img src="cursor.png" alt="Overlay cursor">
+    </div>
+    <div data-agent-overlay="true">
+      <img src="badge.png" alt="Overlay badge" />
+      <button aria-label="Nested overlay action">Ignore me</button>
+    </div>
+    <button id="real-action" aria-label="Real action">Run</button>
+    """
+
+    pam = DomTransducer().transduce(html)
+
+    assert [affordance.label for affordance in pam.affordances] == ["Real action"]
+    assert pam.affordances[0].locator["selector"] == "#real-action"
+
+
 def test_a_selector_shared_by_several_elements_is_narrowed_to_one():
     """A class name names every product at once, which is not a locator.
 
@@ -96,3 +134,27 @@ def test_a_selector_that_cannot_be_narrowed_says_so_in_its_confidence():
 def test_a_unique_class_selector_keeps_its_confidence():
     pam = DomTransducer().transduce('<button class="only">Go</button>', page_id="one")
     assert pam.affordances[0].confidence == 0.7
+
+
+def test_transducer_exposes_generic_recovery_capability_relations():
+    html = """
+    <button data-affordance-id="goal-x" data-entity-id="goal">Try</button>
+    <button data-affordance-id="cap-y"
+            data-recovery-role="capability"
+            data-compensates="goal-x,transition-z"
+            data-recovery-postcondition="oracle.restored == true"
+            data-recovery-safe="true"
+            data-idempotent="true"
+            data-irreversible="false"
+            data-safety-level="low">Recover</button>
+    """
+
+    pam = DomTransducer().transduce(html, page_id="capabilities")
+    recovery = pam.by_id("cap-y")
+
+    assert recovery is not None
+    assert recovery.locator["compensates"] == ["goal-x", "transition-z"]
+    assert recovery.locator["recovery_postcondition"] == "oracle.restored == true"
+    assert recovery.locator["recovery_safe"] is True
+    assert recovery.locator["idempotent"] is True
+    assert recovery.locator["irreversible"] is False

@@ -43,6 +43,8 @@ class ObservationRequest:
     reason: str
     step: int
     previous_result: ExecutionResult | None = None
+    request_id: str = field(default_factory=lambda: f"request-{uuid.uuid4().hex}")
+    requested_at_ms: int = field(default_factory=lambda: int(time.time() * 1000))
 
 
 class ObservationProvider(Protocol):
@@ -70,15 +72,45 @@ class EpisodeContext:
     backend_attempts: dict[str, int] = field(default_factory=dict)
     tried_backends: list[str] = field(default_factory=list)
     cancellation: CancellationToken = field(default_factory=CancellationToken)
+    paused_started_monotonic: float | None = None
+    paused_duration_s: float = 0.0
 
     def terminal_reason(self) -> str | None:
         if self.cancellation.cancelled:
             return self.cancellation.reason or "episode cancelled"
         if self.step_count >= self.policy.max_steps:
             return "episode max_steps exhausted"
-        if time.monotonic() - self.started_monotonic >= self.policy.deadline_s:
+        if self.elapsed_s() >= self.policy.deadline_s:
             return "episode deadline exceeded"
         return None
+
+    def post_attempt_terminal_reason(self) -> str | None:
+        """Cancellation/deadline checked after an admitted attempt.
+
+        Reaching max_steps does not invalidate the attempt that consumed the
+        final permitted step; it only prevents another attempt.
+        """
+
+        if self.cancellation.cancelled:
+            return self.cancellation.reason or "episode cancelled"
+        if self.elapsed_s() >= self.policy.deadline_s:
+            return "episode deadline exceeded"
+        return None
+
+    def pause_clock(self) -> None:
+        if self.paused_started_monotonic is None:
+            self.paused_started_monotonic = time.monotonic()
+
+    def resume_clock(self) -> None:
+        if self.paused_started_monotonic is not None:
+            self.paused_duration_s += time.monotonic() - self.paused_started_monotonic
+            self.paused_started_monotonic = None
+
+    def elapsed_s(self) -> float:
+        paused = self.paused_duration_s
+        if self.paused_started_monotonic is not None:
+            paused += time.monotonic() - self.paused_started_monotonic
+        return max(0.0, time.monotonic() - self.started_monotonic - paused)
 
     def can_attempt_backend(self, backend: str) -> bool:
         return self.backend_attempts.get(backend, 0) < self.policy.max_attempts_per_backend

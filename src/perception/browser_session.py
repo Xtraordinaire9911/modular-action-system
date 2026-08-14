@@ -24,10 +24,22 @@ module unit-tests with a fake page and never needs a real browser in CI.
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Any, Protocol, cast
 
 from src.perception.dom_transducer import DomTransducer
 from src.perception.page_affordance_model import PageAffordanceModel
+
+_AGENT_SCREENSHOT_STYLE = """
+#__cua_cursor, #__cua_cap, #__cua_badge, .__cua_dot,
+[data-agent-overlay='true'], [data-runtime-overlay='true'] {
+    display: none !important;
+}
+.__cua_hl {
+    outline: none !important;
+    box-shadow: none !important;
+}
+"""
 
 
 class _PageDriver(Protocol):
@@ -77,6 +89,7 @@ class BrowserSession:
         self._url = url
         self._owner = _owner  # (playwright, browser) kept alive until close()
         self._transducer = DomTransducer()
+        self.context_id = f"browser-context-{uuid.uuid4().hex[:12]}"
         self._action_timeout_ms = action_timeout_ms  # reapplied to each new episode page
         self._episode_index = 0
 
@@ -233,6 +246,7 @@ class BrowserSession:
                 kwargs: dict[str, Any] = {
                     "full_page": True,
                     "animations": "disabled",
+                    "style": _AGENT_SCREENSHOT_STYLE,
                 }
                 if path:
                     kwargs["path"] = path
@@ -243,6 +257,33 @@ class BrowserSession:
         if last_error is not None:
             raise last_error
         raise RuntimeError("screenshot failed without an exception")
+
+    def screenshot_element(self, selector: str) -> bytes:
+        """Capture only the element ``selector`` names, or b"" if it is not there.
+
+        Two reasons this exists rather than cropping a full-page capture. A model
+        asked whether a cart contains an item should be shown the cart, not a
+        1280x800 page it has to search first. And an image is billed by area: a
+        vision model charges roughly one token per 28x28 patch, so a 320x120
+        region costs about 60 tokens where the whole viewport costs about 1300.
+        Same question, same answer, a twentieth of the bill.
+
+        Returns empty bytes rather than raising when the element is absent, so a
+        caller treats it as "could not look" instead of failing the run.
+        """
+        # Fetched off the protocol rather than declared on it: the protocol
+        # describes the surface every injected fake has to provide, and a fake
+        # page in a unit test has no reason to implement locators.
+        locate = getattr(self._page, "locator", None)
+        if locate is None:
+            return b""
+        try:
+            locator = locate(selector).first
+            if locator.count() == 0:
+                return b""
+            return bytes(locator.screenshot(animations="disabled"))
+        except Exception:
+            return b""
 
     def evaluate(self, expression: str, arg: Any | None = None) -> Any:
         evaluator = getattr(self._page, "evaluate", None)

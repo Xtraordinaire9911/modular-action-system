@@ -4,13 +4,35 @@
   <meta charset="utf-8" />
   <title>Open-web mock: visible ineffective affordance</title>
 </head>
-<body data-case-id="openweb-visible-ineffective-affordance"
+<body data-case-id="openweb-visible-ineffective-affordance" data-goal-oracle-key="notifications_enabled"
       data-oracle-state='{"toggle_clicked":true,"notifications_enabled":false}'>
   <h1>Notification preferences</h1>
-  <button id="notification-toggle" type="button"
+  <button id="notification-toggle" type="button" data-capability-target="true"
+          data-affordance-id="notification-toggle"
+          data-completion-for="confirm_plan"
+          data-achieves="oracle.expected_effect_satisfied == true"
           onclick="document.getElementById('status').textContent='Click accepted, but notifications remain disabled.'">
     Enable notifications
   </button>
+  <button id="notification-alternative" type="button"
+          data-affordance-id="notification-alternative"
+          data-equivalent-to="notification-toggle"
+          data-recovery-postcondition="oracle.notifications_enabled == true"
+          data-recovery-safe="true" data-idempotent="true"
+          data-irreversible="false" data-safety-level="low">Use alternate settings route</button>
   <p id="status">Notifications disabled.</p>
+  <script>
+    const readOracle = () => JSON.parse(document.body.getAttribute('data-oracle-state') || '{}');
+    const writeOracle = (update) => document.body.setAttribute(
+      'data-oracle-state', JSON.stringify({...readOracle(), ...update})
+    );
+    document.querySelector('#notification-toggle').addEventListener('click', () => {
+      writeOracle({toggle_clicked: true, notifications_enabled: false});
+    });
+    document.querySelector('#notification-alternative').addEventListener('click', () => {
+      writeOracle({notifications_enabled: true});
+      document.querySelector('#status').textContent = 'Notifications enabled through equivalent route.';
+    });
+  </script>
 </body>
 </html>

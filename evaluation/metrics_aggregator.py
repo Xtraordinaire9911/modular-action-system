@@ -305,9 +305,7 @@ def aggregate_metrics(
         len(dataset.primitive_actions),
     )
     false_successes = [
-        case
-        for case in dataset.verification_cases
-        if case.executor_success and case.checked and not case.passed
+        case for case in dataset.verification_cases if case.executor_success and case.checked and not case.passed
     ]
     report.add(
         "FalseSuccessRate",

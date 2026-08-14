@@ -356,7 +356,9 @@ async def _normal_goal_case(
         allowed_affordance_sources=_mode_sources(mode),
     )
     initial = await environment.observe(_initial_request(task_id))
-    manager = _goal_manager(environment, session, task_id, transitions, failures, mode=mode, fusion_strategy=fusion_strategy)
+    manager = _goal_manager(
+        environment, session, task_id, transitions, failures, mode=mode, fusion_strategy=fusion_strategy
+    )
     result = await manager.run_observed_goal(
         initial,
         goal_spec=GoalSpec(

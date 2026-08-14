@@ -164,3 +164,207 @@ def test_probes_report_when_they_cannot_run(session):
 
     assert interactability(session, missing).exists is False
     assert occlusion(session, missing).missing is True
+
+
+def test_randomized_open_web_holdout_changes_real_page_state_and_detects_all_failures(tmp_path):
+    """Claim: seeded holdout parameters reach Chromium and fresh-oracle verification."""
+    import json
+
+    from evaluation.open_web_randomized_holdout import run_open_web_randomized_holdout_suite
+
+    run_open_web_randomized_holdout_suite(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        action_timeout_ms=300,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "open_web_randomized_holdout_report.json").read_text())
+    holdout = json.loads((tmp_path / "holdout" / "open_web_playwright_fixture_report.json").read_text())
+
+    assert report["summary"]["holdout_passed"] is True
+    assert report["summary"]["holdout_failure_families_passed"] == 6
+    for row in holdout["cases"]:
+        assert row["browser"]["observed_oracles"]
+        observed = row["browser"]["observed_oracles"][-1]
+        expected = row["variant"]["parameters"]
+        assert any(value in observed.values() for value in expected.values())
+
+
+def test_generalized_recovery_waits_for_an_injected_planner_implementation(tmp_path):
+    """Claim: Runtime exposes the handoff but does not implement Planner policy."""
+    import json
+
+    from evaluation.generalized_browser_recovery import run_generalized_browser_recovery_suite
+
+    run_generalized_browser_recovery_suite(
+        tmp_path,
+        dev_repetitions=1,
+        holdout_repetitions=1,
+        action_timeout_ms=400,
+        capture_screenshots=False,
+    )
+    report = json.loads((tmp_path / "generalized_browser_recovery_report.json").read_text())
+
+    summary = report["summary"]
+    assert summary["all_recovered_and_verified"] is False
+    assert summary["episode_count"] == 10
+    assert summary["dev_count"] == summary["holdout_count"] == 5
+    assert summary["final_verified_count"] == summary["recovery_success_count"] == 0
+    assert summary["failure_family_count"] == 5
+    assert all(row["episodes"] == 2 and row["verified"] == 0 for row in summary["per_family"].values())
+    controls = {
+        (
+            row["variant"]["parameters"]["remediation_control_id"],
+            row["variant"]["parameters"]["remediation_label"],
+        )
+        for row in report["episodes"]
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction"
+    }
+    assert len(controls) == 2
+    for row in report["episodes"]:
+        transitions = row["transitions"]
+        assert [transition["recovery_action"] for transition in transitions] == ["replan"]
+        assert transitions[0]["postcondition_passed"] is False
+        assert transitions[0]["recovery_tier"] == 2
+        assert row["runtime"]["final_verification_transition_id"] == ""
+        assert row["runtime"]["user_action_required"] is True
+        assert row["runtime"]["replan_count"] == 1
+        if row["variant"]["case"]["case_id"] == "openweb-overlay-obstruction":
+            observations = row["browser"]["obstruction_observations"]
+            assert [observation["blocked"] for observation in observations] == [True]
+        assert len(row["failures"]) == 1
+        assert row["failures"][0]["recovery_action"] == "replan"
+        assert row["failures"][0]["recovery_success"] is False
+
+
+# --- the vision model is load-bearing, not decorative --------------------------------
+
+
+class _FakeVision:
+    """Stands in for a real vision model so CI can exercise the path."""
+
+    name = "fake-vision-1"
+
+    def __init__(self, answer: bool, confidence: float) -> None:
+        self.answer = answer
+        self.confidence = confidence
+        self.images: list[bytes] = []
+
+    def describe(self, system: str, question: str, image_png: bytes) -> str:
+        self.images.append(image_png)
+        return '{"answer": %s, "confidence": %s, "evidence": "stand-in for a real model"}' % (
+            "true" if self.answer else "false",
+            self.confidence,
+        )
+
+
+def _intent_episode(client, tmp_path):
+    from pathlib import Path
+
+    from scripts.run_intent_episode import run_episode
+
+    return run_episode(
+        "add the wireless headphones to my cart",
+        repo=Path("."),
+        headed=False,
+        verbose=False,
+        vision_client=client,
+    )
+
+
+def test_a_real_screenshot_reaches_the_vision_model(tmp_path):
+    """Claim: an image is sent, not a description of one."""
+    client = _FakeVision(True, 0.9)
+
+    episode = _intent_episode(client, tmp_path)
+
+    assert client.images, "no screenshot was ever sent"
+    assert client.images[0][:8] == b"\x89PNG\r\n\x1a\n", "what was sent is not a PNG"
+    assert episode.reached
+
+
+def test_the_model_answer_is_recorded_with_its_own_confidence(tmp_path):
+    # Inside the calibrated range: qwen-vl-plus reports 1.00 on clear evidence
+    # and 0.90 when the text is cut off, so the gate sits at 0.95. A fake below
+    # that is correctly treated as an abstention rather than as evidence.
+    confident = 0.98
+    episode = _intent_episode(_FakeVision(True, confident), tmp_path)
+    used = [j for j in episode.visual_evidence if j["is_model_derived"]]
+
+    assert used, "a confident answer was not treated as evidence"
+    assert used[0]["confidence"] == confident, "the model's confidence, not 1.0"
+    assert used[0]["model"] == "fake-vision-1"
+    assert used[0]["screenshot_sha256"]
+
+
+def test_an_unsure_model_abstains_and_the_run_still_verifies_from_the_dom(tmp_path):
+    """A hesitant model must not be able to break a goal the DOM confirms."""
+    episode = _intent_episode(_FakeVision(True, 0.90), tmp_path)
+
+    assert episode.visual_evidence and not any(j["is_model_derived"] for j in episode.visual_evidence)
+    assert episode.reached, "the DOM evidence alone should still carry the episode"
+
+
+def test_no_model_configured_is_reported_rather_than_assumed(tmp_path, monkeypatch):
+    """Passing no client is not enough: a real key on the machine would answer.
+
+    The point of this test is the unavailable path, so the keys have to actually
+    be absent - otherwise it silently becomes a second test of the happy path on
+    any machine where a key is configured, which is where it started failing.
+    """
+    for var in ("VLM_API_KEY", "DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    # Both entry points load the file, and the text path runs first - patching
+    # only the vision one let it put the key back before the vision client was
+    # asked for.
+    for module in ("src.perception.vlm_observer", "src.planner.intent_planner"):
+        monkeypatch.setattr(f"{module}.load_local_env", lambda *a, **k: [])
+
+    episode = _intent_episode(None, tmp_path)
+
+    assert episode.visual_evidence
+    assert episode.visual_evidence[0]["source"] == "unavailable"
+    assert episode.reached, "the DOM evidence alone should still carry the episode"
+
+
+def test_the_vision_check_catches_a_false_success_the_dom_confirms(session):
+    """The one claim that justifies paying for a second modality at all.
+
+    Needs a configured vision model, so it skips rather than fails without one -
+    but when a key is present this is the test that would catch the regression
+    that mattered most: an earlier prompt told the model to report low confidence
+    when it "could not see the relevant area", and a blank region satisfies that
+    description, so the model's correct "nothing is there" was thrown away as an
+    abstention and the detection rate was zero.
+    """
+    from src.demos.realistic_faults import FAULTS
+    from src.perception.vlm_observer import VlmObserver, available_vision_client
+    from src.planner.environment_binding import binding_for
+
+    client = available_vision_client()
+    if client is None:
+        pytest.skip("no vision model configured")
+
+    session.click("button.add-cart-btn[data-id='headphones']")
+    dom_text = (session.text_content("#cart-items") or "").lower()
+    assert "headphones" in dom_text, "the DOM oracle should pass before the fault"
+
+    assert FAULTS["invisible_confirmation"].apply(session, "#cart-items")
+    assert "headphones" in (session.text_content("#cart-items") or "").lower(), (
+        "the fault must leave the text in the DOM - hiding it would make both checks agree "
+        "and the experiment would prove nothing"
+    )
+
+    binding = binding_for("item_in_cart")
+    parameters = {"item": "wireless headphones"}
+    observer = VlmObserver(client=client, max_calls=1)
+    judgement = observer.look(
+        session.screenshot_element("#cart-items") or session.screenshot(),
+        binding.visual_question(parameters),
+        region="#cart-items",
+    )
+
+    assert judgement.usable, f"a confident negative must not be discarded as an abstention: {judgement.to_dict()}"
+    assert judgement.answer is False, "the region is painted over, so the model should not see the item"
+    assert judgement.as_assertion("cart", "holds_item") is not None, "the disagreement must reach the fusion"

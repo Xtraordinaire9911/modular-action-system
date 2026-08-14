@@ -11,7 +11,9 @@ def test_repeated_fusion_plan_builds_7_conditions_30_trials_with_unique_seeded_e
     assert len(plan) == 210
     assert len({trial.episode_id for trial in plan}) == 210
     assert len({trial.seed for trial in plan}) == 210
-    counts = {scenario: sum(1 for trial in plan if trial.scenario == scenario) for scenario in {t.scenario for t in plan}}
+    counts = {
+        scenario: sum(1 for trial in plan if trial.scenario == scenario) for scenario in {t.scenario for t in plan}
+    }
     assert set(counts.values()) == {30}
     assert {"clean", "stale_temperature", "wot_timeout", "wot_offline"}.issubset(counts)
     assert plan[0].episode_id.startswith("fusion_clean_rep_000_seed_700")

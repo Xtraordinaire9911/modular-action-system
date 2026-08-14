@@ -54,6 +54,18 @@ class FakeBenchPage:
         return None
 
 
+class _ImmediateSelectorSession:
+    def __init__(self) -> None:
+        self.values: dict[str, str] = {}
+
+    def evaluate(self, expression: str, arg=None):
+        _ = expression
+        return self.values.get(str(arg), "")
+
+    def text_content(self, selector: str) -> str | None:
+        raise AssertionError(f"slow text_content fallback should not run for {selector}")
+
+
 def _session() -> BrowserSession:
     return BrowserSession(FakeBenchPage(), url="http://bench/start")
 
@@ -97,6 +109,15 @@ def test_custom_success_check_overrides_text_proxy():
         success_check=lambda a: "submitted" in a.page_text().lower(),
     )
     assert adapter.run(task, steps=[("Submit", None)]).success
+
+
+def test_scoped_text_probe_returns_immediately_when_state_selector_is_absent():
+    session = _ImmediateSelectorSession()
+    adapter = WebBenchmarkAdapter(session)  # type: ignore[arg-type]
+
+    assert adapter.text_content("button.voted") == ""
+    session.values["button.voted"] = "▲"
+    assert adapter.text_content("button.voted") == "▲"
 
 
 def test_cross_env_aggregate_m1():

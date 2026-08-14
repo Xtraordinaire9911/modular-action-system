@@ -36,7 +36,7 @@ class OpenWebMockFailureCase:
 def build_open_web_mock_failure_suite(seed_start: int = 8000) -> list[OpenWebMockFailureCase]:
     """Return oracle-labeled mock cases for open-web-style failures."""
 
-    specs = [
+    specs: list[dict[str, Any]] = [
         {
             "case_id": "openweb-overlay-obstruction",
             "failure_class": "overlay_modal_obstruction",
@@ -76,7 +76,11 @@ def build_open_web_mock_failure_suite(seed_start: int = 8000) -> list[OpenWebMoc
             "html_fixture": "failure_optimistic_rollback.html",
             "goal": "Place an order only if the backend confirms it.",
             "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
-            "oracle_state": {"ui_order_submitted": True, "backend_order_confirmed": False},
+            "oracle_state": {
+                "ui_order_submitted": False,
+                "backend_order_confirmed": False,
+                "compensated": False,
+            },
             "expected_effect": "backend_order_confirmed == true",
             "runtime_mechanism": "executor-success/postcondition-success separation",
             "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
@@ -87,7 +91,12 @@ def build_open_web_mock_failure_suite(seed_start: int = 8000) -> list[OpenWebMoc
             "html_fixture": "failure_dom_visual_disagreement.html",
             "goal": "Choose the visually highlighted active plan.",
             "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
-            "oracle_state": {"dom_selected_plan": "premium", "visual_highlighted_plan": "basic"},
+            "oracle_state": {
+                "dom_selected_plan": "premium",
+                "visual_highlighted_plan": "basic",
+                "selection_consistent": False,
+                "plan_confirmed": False,
+            },
             "expected_effect": "selected_plan == visual_highlighted_plan",
             "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
             "expected_runtime_response": "block fast path and require active perception or human escalation",

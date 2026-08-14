@@ -11,8 +11,12 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
-from src.runtime.episode_runner import RuntimeEpisodeOutcome, RuntimeEpisodeRunner, RuntimeEpisodeSpec
-from src.runtime.episode_runner import StaticRuntimeEnvironmentAdapter
+from src.runtime.episode_runner import (
+    RuntimeEpisodeOutcome,
+    RuntimeEpisodeRunner,
+    RuntimeEpisodeSpec,
+    StaticRuntimeEnvironmentAdapter,
+)
 
 SCRIPTED_SOLVER_SKILL = "scripted_solver"
 

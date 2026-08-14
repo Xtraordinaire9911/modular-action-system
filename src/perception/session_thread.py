@@ -116,6 +116,9 @@ class ThreadedSession:
     def screenshot(self, path: str | None = None) -> bytes:
         return self._worker.call(lambda s: s.screenshot(path))
 
+    def screenshot_element(self, selector: str) -> bytes:
+        return self._worker.call(lambda s: s.screenshot_element(selector))
+
     def close(self) -> None:
         self._worker.close()
 

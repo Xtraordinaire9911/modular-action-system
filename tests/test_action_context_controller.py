@@ -46,6 +46,44 @@ def test_action_context_sanitizes_cognitive_map_for_planning():
     assert context.allowed_actions == ["type", "click", "wait", "ask_user", "done"]
 
 
+def test_action_context_excludes_runtime_and_demo_overlay_affordances():
+    cmap = CognitiveMap(task_id="task_without_runtime_overlays")
+    for affordance in [
+        RuntimeAffordance(
+            id="dom_real_action",
+            source="dom",
+            entity_id="booking_form",
+            action_name="confirm",
+            action_type="click",
+            confidence=0.95,
+            grounding={},
+        ),
+        RuntimeAffordance(
+            id="visual_demo_overlay",
+            source="visual",
+            entity_id="demo_cursor",
+            action_name="cursor",
+            action_type="click",
+            confidence=1.0,
+            grounding={"label": "Demo cursor", "demo_overlay": True},
+        ),
+        RuntimeAffordance(
+            id="dom_runtime_overlay",
+            source="dom",
+            entity_id="runtime_badge",
+            action_name="badge",
+            action_type="click",
+            confidence=1.0,
+            grounding={"label": "Runtime badge", "runtime_overlay": True},
+        ),
+    ]:
+        cmap.add_affordance(affordance)
+
+    context = build_action_context(cmap, request_type="goal_spec")
+
+    assert [affordance.id for affordance in context.affordances] == ["dom_real_action"]
+
+
 def test_affordance_controller_builds_typed_plan_without_durable_skill():
     cmap = CognitiveMap(task_id="task_no_skill_controller")
     for affordance in [
@@ -189,6 +227,30 @@ def test_plan_validator_rejects_unknown_affordance_and_disallowed_action():
     assert unknown.errors == ["unknown affordance_id: dom_missing"]
     assert not disallowed.valid
     assert disallowed.errors == ["action type is not allowed: type"]
+
+
+def test_plan_validator_rejects_primitive_incompatible_with_observed_affordance():
+    cmap = CognitiveMap(task_id="task_plan_validator_primitive")
+    cmap.add_affordance(
+        RuntimeAffordance(
+            id="dom_confirm",
+            source="dom",
+            entity_id="booking_form",
+            action_name="confirm",
+            action_type="button",
+            confidence=0.9,
+            grounding={"label": "Confirm"},
+        )
+    )
+    context = build_action_context(cmap, request_type="goal_spec", allowed_actions=["click", "type"])
+
+    result = PlanValidator().validate(
+        context,
+        [PrimitiveAction("type", affordance_id="dom_confirm", value="not valid for a button")],
+    )
+
+    assert not result.valid
+    assert result.errors == ["action type is incompatible with affordance dom_confirm: expected click"]
 
 
 def test_plan_validator_blocks_ordinary_actions_when_conflicts_are_unresolved():

@@ -12,9 +12,7 @@ def build_bayesian_shadow_stability_report(holdout_reports: Iterable[dict[str, A
     rows = [_summarize_holdout(report, index) for index, report in enumerate(reports)]
     positive_delta = all(row["balanced_accuracy_delta"] > 0 for row in rows)
     miss_rate_improved = all(row["bayesian_miss_rate"] <= row["rule_first_miss_rate"] for row in rows)
-    false_halt_not_regressed = all(
-        row["bayesian_false_halt_rate"] <= row["rule_first_false_halt_rate"] for row in rows
-    )
+    false_halt_not_regressed = all(row["bayesian_false_halt_rate"] <= row["rule_first_false_halt_rate"] for row in rows)
     production_unchanged = all(row["production_gate_changed"] is False for row in rows)
     profile_counts_complete = all(row["profile_counts_complete"] for row in rows)
     ready = all(
