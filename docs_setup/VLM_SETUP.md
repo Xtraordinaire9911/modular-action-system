@@ -76,26 +76,35 @@ against the model:
 python scripts/eval_model_value.py --reps 5
 ```
 
-**Intent** — five requests phrased to avoid the fallback's keywords while meaning
-the same thing:
+**Intent** — fifteen requests in three groups. The first nine are phrased to
+avoid the fallback's keywords while meaning the same thing; the rest exist so a
+model that simply says yes to everything scores badly:
 
 | group | rules | model |
 | --- | --- | --- |
-| needs interpretation | **0/5** | **4/5** |
+| needs interpretation | **0/9** | **9/9** |
 | rules already handle (regression check) | 2/2 | 2/2 |
-| out of scope (must refuse) | 2/2 | 2/2 |
+| out of scope (must refuse) | 4/4 | 4/4 |
 
-**Vision** — against `invisible_confirmation`, a fault that leaves the
-confirmation text in the DOM and paints over the region, so every text oracle in
-this project passes while a person sees nothing:
+**Vision** — against three faults that leave the confirmation in the DOM and
+make it unreadable on screen (`invisible_confirmation` paints over it,
+`transparent_text` renders it in zero-alpha ink, `offscreen_confirmation` moves
+it out of the region), so every text oracle in this project passes while a
+person sees nothing:
 
 | metric | value |
 | --- | --- |
-| detection (DOM wrong, n=5) | **100%** |
-| false alarm (DOM right, n=10) | **0%** |
+| detection (DOM wrong, n=12) | **100%** |
+| false alarm (DOM right, n=8) | **0%** |
 | accuracy on graded trials | 100% |
+| stability (same condition, same answer) | 1.00 |
 | mean confidence, clear conditions | 1.00 |
 | mean confidence, region cut off mid-word | 0.90 |
+
+Ambiguous trials are excluded from accuracy and detection rather than graded
+against an invented label, and detection is defined as the DOM and the truth
+disagreeing — not as the fault's name, which would score the fault list instead
+of the model.
 
 **The confidence number is nearly useless as a gate, and that is measured.** The
 model reports 1.00 on everything it can read and 0.90 when the text is literally
@@ -114,6 +123,11 @@ model correctly reported "the image is blank and shows no content" at confidence
 prompt telling it to be unsure whenever it "could not see the relevant area" — a
 description a blank region satisfies. "I cannot tell" and "I can see plainly, and
 it is not there" are different, and the prompt now separates them.
+
+To watch the same contrast rather than read it, `scripts/run_llm_demo.py` runs
+four narrated scenes that put the rule-based path beside the model path on the
+same sentence, ending with a page whose confirmation only the vision model
+catches. It costs at most four vision calls per run.
 
 ## 3. Getting a key — step by step
 

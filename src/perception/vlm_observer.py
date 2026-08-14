@@ -107,6 +107,7 @@ class VisualJudgement:
     latency_ms: float = 0.0
     source: str = "unavailable"  # vlm | low_confidence | unavailable | error
     error: str = ""
+    raw_response: str = ""  # exactly what came back, before any parsing
     retries: int = 0  # how many attempts were needed, so flakiness stays visible
 
     @property
@@ -160,11 +161,22 @@ class VisualJudgement:
         )
 
 
+def _record_usage(client: Any, usage: Any) -> None:
+    """Store what the provider said this call cost, under one name for both SDKs."""
+    client.last_usage = {
+        "input": int(getattr(usage, "input_tokens", 0) or getattr(usage, "prompt_tokens", 0) or 0),
+        "output": int(getattr(usage, "output_tokens", 0) or getattr(usage, "completion_tokens", 0) or 0),
+    }
+
+
 class AnthropicVisionClient:
     """Claude with an image block, using the SDK already declared in pyproject."""
 
     def __init__(self, *, model: str = "claude-sonnet-5", api_key: str | None = None) -> None:
         self.name = model
+        # Token counts as the provider reported them for the most recent call,
+        # so a cost figure can be measured rather than estimated from pixels.
+        self.last_usage: dict[str, int] = {}
         self._key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         if not self._key:
             raise RuntimeError("ANTHROPIC_API_KEY is not set")
@@ -194,6 +206,7 @@ class AnthropicVisionClient:
                 }
             ],
         )
+        _record_usage(self, getattr(message, "usage", None))
         parts: list[str] = []
         for block in message.content:
             candidate: Any = block
@@ -207,6 +220,7 @@ class OpenAIVisionClient:
 
     def __init__(self, *, model: str = "gpt-4o-mini", api_key: str | None = None, base_url: str | None = None) -> None:
         self.name = model
+        self.last_usage: dict[str, int] = {}
         self._key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self._base_url = base_url
         if not self._key:
@@ -231,6 +245,7 @@ class OpenAIVisionClient:
                 },
             ],
         )
+        _record_usage(self, getattr(response, "usage", None))
         return response.choices[0].message.content or ""
 
 
@@ -349,6 +364,9 @@ class VlmObserver:
         for attempt in range(2):
             try:
                 raw = self.client.describe(_SYSTEM_PROMPT, question, image_png)
+                # Kept verbatim: a demo or a review can then read what the model
+                # actually said, rather than only the fields we chose to parse.
+                base.raw_response = raw
                 payload = _extract_json(raw)
                 base.answer = bool(payload.get("answer"))
                 base.confidence = max(0.0, min(1.0, float(payload.get("confidence", 0.0) or 0.0)))

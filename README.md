@@ -555,6 +555,53 @@ scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
 of which states the division performed behind every figure, so a number can be
 checked rather than trusted.
 
+## The same loop, with and without a model
+
+The narrated loop above is deterministic end to end, so watching it does not
+show what a model contributes. This one is built around exactly that question,
+and it answers with evidence rather than narration — a caption saying "sent to a
+language model" looks the same whether a model ran or not.
+
+On screen, for every scene, at the same time:
+
+| where | what is shown |
+| --- | --- |
+| left column | the rules running on the sentence: all twelve patterns, which matched, and the verdict |
+| right column | the request sent and the model's **raw reply**, revealed line by line, with latency and provider-reported token counts |
+| middle | what the text oracle concluded, pinned so it stays visible when it is contradicted |
+| below | the **image** the vision model was given — the exact bytes, rendered in the page — the question, and its own words back |
+| footer | running totals: calls, tokens in and out, model time, and the score of each path |
+
+```bash
+python scripts/run_llm_demo.py                                       # headed, ~2min
+python scripts/run_llm_demo.py --headless --pace 0.12 --hold 0.3     # fast check, ~40s
+python scripts/run_llm_demo.py --pace 1.5 --type-delay 0.12 --hold 3 --record
+```
+
+| scene | what is said | rules | model |
+| --- | --- | --- | --- |
+| 1 | "add the wireless headphones to my cart" | `item_in_cart` | `item_in_cart` |
+| 2 | "grab me those wireless headphones, I need them for my commute" | no pattern matched | `item_in_cart` |
+| 3 | "order me the mechanical keyboard" | no pattern matched | `item_in_cart` |
+| 4 | "I'll take one of those 4K monitors", with the confirmation painted over | no pattern matched | `item_in_cart` |
+
+Scene 1 is the control: a sentence written to match a keyword pattern, where the
+model earns nothing. Scene 4 is the decisive one — the confirmation is in the
+DOM and covered on screen, so every text-based check in this repository passes,
+including the one the agent normally trusts. The vision model is shown a crop of
+the same region, answers that it is blank, and the false success becomes a
+conflict instead of a success.
+
+Measured on the last recorded run: rules 1/4, model 4/4, one false success
+caught by looking, 7 model calls and about 2,800 tokens for the whole demo. The
+intent model is `qwen-plus` and the vision model `qwen-vl-plus`. Repeating a
+question about identical pixels is answered from cache and the panel says so, so
+the spend guards are visible rather than claimed. With no key configured the run
+still completes and says at every step that no model was available, rather than
+falling back to the rules and presenting the result as the model's. Whether
+either model earns its place is measured separately, over 15 utterances and 20
+vision trials, by `scripts/eval_model_value.py` — see `docs_setup/VLM_SETUP.md`.
+
 ## Running the demos
 
 Demos live across several scripts and `src.pipeline` flags. One command lists

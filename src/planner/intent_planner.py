@@ -128,11 +128,23 @@ class GoalPlan:
         }
 
 
+# Token counts as the provider reported them for the most recent call. Kept on
+# the client because that is the only place they exist: the callers deal in text.
+# Reported rather than estimated, so what a demo or a cost table shows is the
+# billed quantity and not a guess from string length.
+def _record_usage(client: Any, usage: Any) -> None:
+    client.last_usage = {
+        "input": int(getattr(usage, "input_tokens", 0) or getattr(usage, "prompt_tokens", 0) or 0),
+        "output": int(getattr(usage, "output_tokens", 0) or getattr(usage, "completion_tokens", 0) or 0),
+    }
+
+
 class AnthropicClient:
     """Claude via the SDK already declared in pyproject."""
 
     def __init__(self, *, model: str = "claude-sonnet-5", api_key: str | None = None) -> None:
         self.name = model
+        self.last_usage: dict[str, int] = {}
         self._key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         if not self._key:
             raise RuntimeError("ANTHROPIC_API_KEY is not set")
@@ -147,6 +159,7 @@ class AnthropicClient:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        _record_usage(self, getattr(message, "usage", None))
         # A reply is a list of blocks of several kinds; only text blocks carry
         # the answer. Checked with getattr on a widened value so the SDK can add
         # block types without this failing to type-check.
@@ -163,6 +176,7 @@ class OpenAIClient:
 
     def __init__(self, *, model: str = "gpt-4o-mini", api_key: str | None = None, base_url: str | None = None) -> None:
         self.name = model
+        self.last_usage: dict[str, int] = {}
         self._key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self._base_url = base_url
         if not self._key:
@@ -177,6 +191,7 @@ class OpenAIClient:
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
             max_tokens=800,
         )
+        _record_usage(self, getattr(response, "usage", None))
         return response.choices[0].message.content or ""
 
 
@@ -258,6 +273,20 @@ _KEYWORD_GOALS: list[tuple[str, str]] = [
     (r"\bupvote\b", "post_upvoted"),
     (r"\bprepare\b.*\broom\b", "room_prepared"),
 ]
+
+
+def rule_trace(intent: str) -> list[tuple[str, bool]]:
+    """Every pattern the fallback tries on this sentence, and which ones match.
+
+    Reads the same three tables :func:`rule_fallback` reads, so what a demo shows
+    cannot drift from what actually runs. Exposed because "the rules could not
+    interpret this" is worth showing rather than asserting.
+    """
+    text = intent.lower()
+    patterns = [pattern for pattern, _, _ in _RULES]
+    patterns += [pattern for pattern, _ in _KEYWORD_GOALS]
+    patterns += [pattern for pattern, _ in _SUBJECT_RULES]
+    return [(pattern, bool(re.search(pattern, text))) for pattern in patterns]
 
 
 def rule_fallback(intent: str) -> GoalPlan:
@@ -346,6 +375,10 @@ class IntentPlanner:
         plan.model = getattr(self.client, "name", "")
         self._log(intent, plan, prompt=user)
         return plan
+
+    def system_prompt_size(self) -> int:
+        """Characters in the system prompt actually sent, for showing a real figure."""
+        return len(_SYSTEM_PROMPT.format(states=", ".join(KNOWN_GOAL_STATES)))
 
     def _to_plan(self, intent: str, payload: dict[str, Any], raw: str) -> GoalPlan:
         state = str(payload.get("goal_state", "")).strip()

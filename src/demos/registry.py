@@ -138,6 +138,17 @@ DEMOS: list[Demo] = [
         duration_hint="~5min",
     ),
     Demo(
+        name="llm-loop",
+        title="The same loop, with and without a model",
+        summary="Four scenes that put the rule-based path beside the model path on the same "
+        "sentence, ending with a page whose confirmation is in the DOM and painted over on "
+        "screen, which only the vision model catches. Needs a configured API key.",
+        command=("scripts/run_llm_demo.py",),
+        requires=("browser",),
+        headed_args=(),  # headed is the default here; --headless is the opt-out
+        duration_hint="~2min",
+    ),
+    Demo(
         name="intent-runtime",
         title="An utterance drives the production runtime",
         summary="A sentence becomes a GoalSpec and is executed by RuntimeEpisodeRunner and the "
