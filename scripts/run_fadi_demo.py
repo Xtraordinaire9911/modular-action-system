@@ -92,7 +92,7 @@ class DemoRun:
     screenshot_paths: list[str]
 
 
-def build_goal(room: str = "A", time_slot: str = "14:00") -> GoalSpec:
+def build_goal(room: str = "C", time_slot: str = "15:30") -> GoalSpec:
     """The only task input used by the demo."""
 
     return GoalSpec(
@@ -386,14 +386,14 @@ async def run_live_demo(args: argparse.Namespace, paths: DemoPaths) -> DemoRun:
     )
 
 
-async def run_dry_demo(paths: DemoPaths, *, room: str = "A", time_slot: str = "14:00") -> DemoRun:
+async def run_dry_demo(paths: DemoPaths, *, room: str = "C", time_slot: str = "15:30") -> DemoRun:
     """Rehearse the same runtime contracts without external services."""
 
     goal = build_goal(room, time_slot)
     selection = select_skill(goal)
     _print_goal_and_skill(goal, selection)
 
-    observations = _dry_observations()
+    observations = _dry_observations(room, time_slot)
     provider = _DryObservationProvider(observations)
     isolation_events: list[str] = []
     browser = _DryBrowser(isolation_events)
@@ -543,13 +543,15 @@ class _DryExecutor:
         )
 
 
-def _dry_observations() -> list[LiveRuntimeObservation]:
+def _dry_observations(room: str, time_slot: str) -> list[LiveRuntimeObservation]:
     return [
-        _dry_booking_observation(confirmed=False),
-        _dry_booking_observation(confirmed=False, room="A"),
+        # Match the dashboard's visible starting values. The goal deliberately
+        # uses different defaults so the audience can see both fill actions.
         _dry_booking_observation(confirmed=False, room="A", time_slot="14:00"),
+        _dry_booking_observation(confirmed=False, room=room, time_slot="14:00"),
+        _dry_booking_observation(confirmed=False, room=room, time_slot=time_slot),
         # The simulated operator completed the final button before RESUME.
-        _dry_booking_observation(confirmed=True, room="A", time_slot="14:00"),
+        _dry_booking_observation(confirmed=True, room=room, time_slot=time_slot),
     ]
 
 
@@ -694,8 +696,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run a deterministic in-memory rehearsal without Docker or Chromium",
     )
-    parser.add_argument("--room", default="A")
-    parser.add_argument("--time", default="14:00")
+    parser.add_argument("--room", default="C")
+    parser.add_argument("--time", default="15:30")
     parser.add_argument(
         "--step-delay",
         type=float,

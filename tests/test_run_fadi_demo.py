@@ -7,6 +7,8 @@ from src.demos.registry import build_argv, find
 
 
 def test_demo_goal_names_the_catalog_skill_and_structured_parameters() -> None:
+    assert build_goal().parameters == {"room": "C", "time": "15:30"}
+
     goal = build_goal("B", "15:30")
 
     assert goal.goal_id == "confirm_booking"
@@ -33,7 +35,7 @@ def test_dry_run_emits_one_compact_end_to_end_evidence_artifact(tmp_path) -> Non
     assert evidence["title"] == DEMO_TITLE
     assert evidence["goal_spec"]["goal_id"] == "confirm_booking"
     assert evidence["selected_skill"]["skill_id"] == "confirm_booking"
-    assert evidence["instantiated_skill_call"]["params"] == {"room": "A", "time": "14:00"}
+    assert evidence["instantiated_skill_call"]["params"] == {"room": "C", "time": "15:30"}
     assert evidence["runtime_skill_selection"]["skill_id"] == "confirm_booking"
     assert evidence["runtime_skill_selection"]["validation_status"] == "passed"
     assert evidence["runtime_evidence_trace"][0]["event"] == "goal_skill_selection"

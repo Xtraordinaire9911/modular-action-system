@@ -492,7 +492,9 @@ docker compose -f env/docker-compose.yml up --build -d
 At the terminal prompt choose `t`, click **Book Room** in Chromium, then press
 Enter. The runtime re-observes the page, sees that the human already completed
 the goal, and does not repeat the click. Live actions pause for 1.2 seconds by
-default. Use `--step-delay 2` if you want a slower presentation.
+default. Use `--step-delay 2` if you want a slower presentation. The dashboard
+starts at Room A / 14:00, while the demo requests Room C / 15:30, so both agent
+fill actions are visible.
 
 For a quick rehearsal without Docker:
 

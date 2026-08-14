@@ -15,7 +15,9 @@ docker compose -f env/docker-compose.yml up --build -d
 ```
 
 `--step-delay 2` leaves two seconds after each browser action, which makes the
-room and time changes easier to explain while everyone watches.
+room and time changes easier to explain while everyone watches. The dashboard
+opens with Room A / 14:00; the demo goal is Room C / 15:30, so the audience can
+see the agent change both fields.
 
 Keep this fallback command ready. It shows the same action-system flow without
 Docker or a browser:
