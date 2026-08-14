@@ -20,9 +20,11 @@ https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
 
 ### What the language model actually changes
 
-[![Open the model-versus-rules demo](artifacts/llm_demo/preview.png)](artifacts/llm_demo/llm-vs-rules.mp4)
 
-- [Open the video directly](artifacts/llm_demo/llm-vs-rules.mp4) (1 min 51 s)
+https://github.com/user-attachments/assets/eff94dd4-661b-41b8-b6ea-c3c39c89e9c7
+
+
+- [Open the same file from the repository](artifacts/llm_demo/llm-vs-rules.mp4) (1 min 51 s)
 - [Inspect the run report](artifacts/llm_demo/run-report.json)
 - [Inspect every vision call this recording made](artifacts/llm_demo/vision-calls.jsonl), and [every intent call](artifacts/llm_demo/intent-calls.jsonl) — model, latency, raw reply, screenshot digest
 - [Inspect the evaluation behind the claims](artifacts/model_value/model_value_report.json)
