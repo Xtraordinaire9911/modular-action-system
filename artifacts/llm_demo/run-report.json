@@ -1,0 +1,84 @@
+{
+  "at": "2026-08-14T06:58:00",
+  "scenes": [
+    {
+      "title": "SCENE 1/4 - phrased the way the rules expect",
+      "utterance": "add the wireless headphones to my cart",
+      "rules_goal": "item_in_cart",
+      "model_goal": "item_in_cart",
+      "model_source": "llm",
+      "model_latency_ms": 6072.0,
+      "model_tokens": {
+        "input": 370,
+        "output": 96
+      },
+      "dom_says_met": true,
+      "vision_answer": true,
+      "vision_confidence": 1.0,
+      "vision_evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+      "vision_source": "vlm",
+      "vision_latency_ms": 1376.6,
+      "caught_false_success": false
+    },
+    {
+      "title": "SCENE 2/4 - phrased the way a person speaks",
+      "utterance": "grab me those wireless headphones, I need them for my commute",
+      "rules_goal": "",
+      "model_goal": "item_in_cart",
+      "model_source": "llm",
+      "model_latency_ms": 2677.8,
+      "model_tokens": {
+        "input": 375,
+        "output": 98
+      },
+      "dom_says_met": true,
+      "vision_answer": true,
+      "vision_confidence": 1.0,
+      "vision_evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+      "vision_source": "vlm",
+      "vision_latency_ms": 1376.6,
+      "caught_false_success": false
+    },
+    {
+      "title": "SCENE 3/4 - two independent sources agree",
+      "utterance": "order me the mechanical keyboard",
+      "rules_goal": "",
+      "model_goal": "item_in_cart",
+      "model_source": "llm",
+      "model_latency_ms": 2518.6,
+      "model_tokens": {
+        "input": 368,
+        "output": 94
+      },
+      "dom_says_met": true,
+      "vision_answer": true,
+      "vision_confidence": 1.0,
+      "vision_evidence": "The text 'Mechanical Keyboard x1' is visible in the image.",
+      "vision_source": "vlm",
+      "vision_latency_ms": 1157.8,
+      "caught_false_success": false
+    },
+    {
+      "title": "SCENE 4/4 - the page lies, and only looking catches it",
+      "utterance": "I'll take one of those 4K monitors",
+      "rules_goal": "",
+      "model_goal": "item_in_cart",
+      "model_source": "llm",
+      "model_latency_ms": 2577.1,
+      "model_tokens": {
+        "input": 373,
+        "output": 83
+      },
+      "dom_says_met": true,
+      "vision_answer": false,
+      "vision_confidence": 1.0,
+      "vision_evidence": "The image is completely blank with no text or entries visible.",
+      "vision_source": "vlm",
+      "vision_latency_ms": 1137.4,
+      "caught_false_success": true
+    }
+  ],
+  "rules_solved": 1,
+  "model_solved": 4,
+  "false_successes_caught": 1
+}

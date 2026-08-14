@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 
-from src.perception.vlm_observer import VlmObserver
+from src.perception.vlm_observer import MIN_USABLE_CONFIDENCE, VlmObserver
 
 
 class _Client:
@@ -70,7 +70,8 @@ def test_the_judgement_identifies_which_image_it_came_from(tmp_path):
 
 
 def test_a_confident_answer_becomes_a_visual_assertion_with_the_model_s_confidence(tmp_path):
-    observer = _observer(_Client(_reply(True, 0.82)), tmp_path)
+    confident = 0.98  # above the calibrated threshold; see MIN_USABLE_CONFIDENCE
+    observer = _observer(_Client(_reply(True, confident)), tmp_path)
 
     judgement = observer.look(b"png", "Is the cart non-empty?", region="#cart-items")
     assertion = judgement.as_assertion("cart", "holds_item")
@@ -79,7 +80,7 @@ def test_a_confident_answer_becomes_a_visual_assertion_with_the_model_s_confiden
     assert assertion is not None
     assert assertion.source == "visual"
     assert assertion.value is True
-    assert assertion.confidence == 0.82, "the model's confidence, not 1.0"
+    assert assertion.confidence == confident, "the model's confidence, not 1.0"
     assert assertion.provenance["model"] == "fake-vision-1"
     assert assertion.provenance["screenshot_sha256"] == judgement.screenshot_sha256
     assert assertion.provenance["is_model_derived"] is True
@@ -87,7 +88,7 @@ def test_a_confident_answer_becomes_a_visual_assertion_with_the_model_s_confiden
 
 def test_confidence_is_never_rounded_up_to_certainty(tmp_path):
     """The state-tree channel stamps 1.0 on everything, which is why it is not used."""
-    observer = _observer(_Client(_reply(True, 0.6)), tmp_path)
+    observer = _observer(_Client(_reply(True, 0.97)), tmp_path)
 
     assertion = observer.look(b"png", "q").as_assertion("cart", "holds_item")
 
@@ -166,3 +167,101 @@ def test_the_threshold_is_configurable_and_reported(tmp_path):
     observer = _observer(_Client(_reply(True, 0.4)), tmp_path, min_confidence=0.3)
 
     assert observer.look(b"png", "q").is_model_derived is True
+
+
+# --- spend guards ------------------------------------------------------------------
+
+
+def test_the_same_screenshot_and_question_is_never_paid_for_twice(tmp_path):
+    """The runtime observes repeatedly; the pixels and the question do not change."""
+    client = _Client(_reply(True, 0.9))
+    observer = _observer(client, tmp_path, max_calls=5)
+
+    first = observer.look(b"png", "Is the cart non-empty?")
+    second = observer.look(b"png", "Is the cart non-empty?")
+
+    assert len(client.images) == 1, "the second look was billed"
+    assert observer.billed_calls == 1
+    assert second is first
+
+
+def test_a_different_screenshot_is_a_new_question(tmp_path):
+    client = _Client(_reply(True, 0.9))
+    observer = _observer(client, tmp_path, max_calls=5)
+
+    observer.look(b"before", "q")
+    observer.look(b"after", "q")
+
+    assert len(client.images) == 2
+
+
+def test_the_ceiling_stops_a_runaway_loop_from_spending(tmp_path):
+    """A recovery loop must not be able to bill once per attempt."""
+    client = _Client(_reply(True, 0.9))
+    observer = _observer(client, tmp_path, max_calls=2)
+
+    judgements = [observer.look(f"png-{n}".encode(), "q") for n in range(5)]
+
+    assert len(client.images) == 2, "the ceiling did not hold"
+    assert [j.source for j in judgements[2:]] == ["budget_exhausted"] * 3
+    assert all(j.as_assertion("cart", "holds_item") is None for j in judgements[2:])
+
+
+def test_an_exhausted_budget_is_reported_not_silently_skipped(tmp_path):
+    observer = _observer(_Client(_reply(True, 0.9)), tmp_path, max_calls=0)
+
+    judgement = observer.look(b"png", "q")
+
+    assert judgement.source == "budget_exhausted"
+    assert "ceiling of 0" in judgement.error
+
+
+# --- provider precedence -------------------------------------------------------------
+
+
+def test_providers_are_ordered_cheapest_first_and_exclude_text_only_vendors(monkeypatch):
+    """DeepSeek is absent on purpose: its API takes text, so it cannot answer this."""
+    from src.perception.vlm_observer import VISION_PROVIDERS
+
+    names = [model for _, model, _ in VISION_PROVIDERS]
+
+    assert names[0] == "qwen-vl-plus", "the cheapest configured option should win"
+    assert not any("deepseek" in name for name in names)
+
+
+def test_an_explicit_endpoint_overrides_the_table(monkeypatch, tmp_path):
+    from src.perception.vlm_observer import available_vision_client
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DASHSCOPE_API_KEY", "cheap")
+    monkeypatch.setenv("VLM_API_KEY", "explicit")
+    monkeypatch.setenv("VLM_MODEL", "some-other-vl")
+
+    assert available_vision_client().name == "some-other-vl"
+
+
+def test_nothing_configured_means_no_client(monkeypatch, tmp_path):
+    """Run from a directory with no .env.local, or the developer's own key answers."""
+    from src.perception.vlm_observer import available_vision_client
+
+    monkeypatch.chdir(tmp_path)
+    for var in ("VLM_API_KEY", "DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+
+    assert available_vision_client() is None
+
+
+def test_the_threshold_sits_inside_the_range_the_model_actually_uses(tmp_path):
+    """A gate no answer ever approaches is not a gate.
+
+    The first value here was 0.55, and the measured range for qwen-vl-plus is
+    1.00 on clear evidence and 0.90 on a region cut off mid-word - so nothing
+    ever fell below it and the abstention path could not fire. These two pin the
+    calibrated boundary in both directions.
+    """
+    clear = _observer(_Client(_reply(True, 1.0)), tmp_path).look(b"a", "q")
+    murky = _observer(_Client(_reply(True, 0.90)), tmp_path).look(b"b", "q")
+
+    assert 0.9 < MIN_USABLE_CONFIDENCE <= 1.0, "the gate must sit inside the range the model uses"
+    assert clear.usable, "a plainly readable region must count as evidence"
+    assert not murky.usable, "a region cut off mid-word must not"

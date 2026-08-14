@@ -285,26 +285,86 @@ def test_a_real_screenshot_reaches_the_vision_model(tmp_path):
 
 
 def test_the_model_answer_is_recorded_with_its_own_confidence(tmp_path):
-    episode = _intent_episode(_FakeVision(True, 0.83), tmp_path)
+    # Inside the calibrated range: qwen-vl-plus reports 1.00 on clear evidence
+    # and 0.90 when the text is cut off, so the gate sits at 0.95. A fake below
+    # that is correctly treated as an abstention rather than as evidence.
+    confident = 0.98
+    episode = _intent_episode(_FakeVision(True, confident), tmp_path)
     used = [j for j in episode.visual_evidence if j["is_model_derived"]]
 
     assert used, "a confident answer was not treated as evidence"
-    assert used[0]["confidence"] == 0.83, "the model's confidence, not 1.0"
+    assert used[0]["confidence"] == confident, "the model's confidence, not 1.0"
     assert used[0]["model"] == "fake-vision-1"
     assert used[0]["screenshot_sha256"]
 
 
 def test_an_unsure_model_abstains_and_the_run_still_verifies_from_the_dom(tmp_path):
     """A hesitant model must not be able to break a goal the DOM confirms."""
-    episode = _intent_episode(_FakeVision(True, 0.2), tmp_path)
+    episode = _intent_episode(_FakeVision(True, 0.90), tmp_path)
 
     assert episode.visual_evidence and not any(j["is_model_derived"] for j in episode.visual_evidence)
     assert episode.reached, "the DOM evidence alone should still carry the episode"
 
 
-def test_no_model_configured_is_reported_rather_than_assumed(tmp_path):
+def test_no_model_configured_is_reported_rather_than_assumed(tmp_path, monkeypatch):
+    """Passing no client is not enough: a real key on the machine would answer.
+
+    The point of this test is the unavailable path, so the keys have to actually
+    be absent - otherwise it silently becomes a second test of the happy path on
+    any machine where a key is configured, which is where it started failing.
+    """
+    for var in ("VLM_API_KEY", "DASHSCOPE_API_KEY", "ZHIPU_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    # Both entry points load the file, and the text path runs first - patching
+    # only the vision one let it put the key back before the vision client was
+    # asked for.
+    for module in ("src.perception.vlm_observer", "src.planner.intent_planner"):
+        monkeypatch.setattr(f"{module}.load_local_env", lambda *a, **k: [])
+
     episode = _intent_episode(None, tmp_path)
 
     assert episode.visual_evidence
     assert episode.visual_evidence[0]["source"] == "unavailable"
-    assert episode.reached
+    assert episode.reached, "the DOM evidence alone should still carry the episode"
+
+
+def test_the_vision_check_catches_a_false_success_the_dom_confirms(session):
+    """The one claim that justifies paying for a second modality at all.
+
+    Needs a configured vision model, so it skips rather than fails without one -
+    but when a key is present this is the test that would catch the regression
+    that mattered most: an earlier prompt told the model to report low confidence
+    when it "could not see the relevant area", and a blank region satisfies that
+    description, so the model's correct "nothing is there" was thrown away as an
+    abstention and the detection rate was zero.
+    """
+    from src.demos.realistic_faults import FAULTS
+    from src.perception.vlm_observer import VlmObserver, available_vision_client
+    from src.planner.environment_binding import binding_for
+
+    client = available_vision_client()
+    if client is None:
+        pytest.skip("no vision model configured")
+
+    session.click("button.add-cart-btn[data-id='headphones']")
+    dom_text = (session.text_content("#cart-items") or "").lower()
+    assert "headphones" in dom_text, "the DOM oracle should pass before the fault"
+
+    assert FAULTS["invisible_confirmation"].apply(session, "#cart-items")
+    assert "headphones" in (session.text_content("#cart-items") or "").lower(), (
+        "the fault must leave the text in the DOM - hiding it would make both checks agree "
+        "and the experiment would prove nothing"
+    )
+
+    binding = binding_for("item_in_cart")
+    parameters = {"item": "wireless headphones"}
+    observer = VlmObserver(client=client, max_calls=1)
+    judgement = observer.look(
+        session.screenshot_element("#cart-items") or session.screenshot(),
+        binding.visual_question(parameters),
+        region="#cart-items",
+    )
+
+    assert judgement.usable, f"a confident negative must not be discarded as an abstention: {judgement.to_dict()}"
+    assert judgement.answer is False, "the region is painted over, so the model should not see the item"
+    assert judgement.as_assertion("cart", "holds_item") is not None, "the disagreement must reach the fusion"

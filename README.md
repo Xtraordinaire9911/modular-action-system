@@ -18,6 +18,31 @@ and failure-injection evaluation.
 
 https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
 
+### What the language model actually changes
+
+[![Open the model-versus-rules demo](artifacts/llm_demo/preview.png)](artifacts/llm_demo/llm-vs-rules.mp4)
+
+- [Open the video directly](artifacts/llm_demo/llm-vs-rules.mp4) (1 min 51 s)
+- [Inspect the run report](artifacts/llm_demo/run-report.json)
+- [Inspect every vision call this recording made](artifacts/llm_demo/vision-calls.jsonl), and [every intent call](artifacts/llm_demo/intent-calls.jsonl) — model, latency, raw reply, screenshot digest
+- [Inspect the evaluation behind the claims](artifacts/model_value/model_value_report.json)
+
+Four scenes, each running the rule-based path and the model path **on the same
+sentence, at the same time**, because a caption saying "sent to a language
+model" looks identical whether a model ran or not. On screen: all twelve
+fallback patterns and which matched; the request sent and the model's raw reply,
+revealed line by line, with latency and provider-reported token counts; the
+exact image bytes handed to the vision model, rendered in the page, beside its
+answer in its own words; and running totals for calls, tokens and model time.
+
+Scene 1 is the control — a sentence written to match a keyword pattern, where
+the model earns nothing. Scene 4 is the decisive one: the confirmation is in the
+DOM and painted over on screen, so every text-based check in this repository
+passes, and only looking catches it. Result of the recorded run: **rules 1/4,
+model 4/4, one false success caught**, on 7 model calls and about 2,800 tokens.
+`qwen-plus` for intent, `qwen-vl-plus` for vision. Run it with
+`python scripts/run_llm_demo.py`.
+
 ### Five-family Runtime recovery contract demo
 
 [![Open the five-family Runtime recovery demo](artifacts/runtime_recovery_demo/preview.png)](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
@@ -51,11 +76,12 @@ matching its code.
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
 | Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. |
 | Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Unlike the intent layer above, this one is still consumed only by the narrated demo — the runtime picks affordances through its own action context. |
-| A model actually running | **VLM path implemented; external-provider run not evidenced** | `src/perception/vlm_observer.py` sends real PNG screenshot bytes to the configured vision client and preserves model confidence/provenance before fusion. CI exercises this contract with a fake vision client. No checked-in artifact proves that an external model provider was configured and run, and intent/mark selection still uses labelled fallbacks when no model client is supplied. |
-| Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
+| A model actually running | **Running, and measured** | Both layers run against a real endpoint (`qwen-plus`, `qwen-vl-plus`), and `scripts/eval_model_value.py` asks whether they earn their place. **Intent** — on nine requests phrased to avoid the fallback's keywords the rules score **0/9** and the model **9/9**, with no regression on the two the rules already handled and 4/4 correct refusals including "delete my account". **Vision** — against three separate ways a page can be right in the DOM and wrong on screen (painted over, rendered in the background colour, laid out off-screen): detection **100%** over 12 trials where the DOM is wrong, false alarm **0%** over 8 where it is right, and the model never changed its mind between repetitions. Evidence in `artifacts/model_value/`. |
+| Verification independent of the executor | **Implemented, two modalities** | The page or device is re-read; a backend reporting success is not treated as task success. A vision model independently judges the region the goal names, and its answer enters the arbiter as a `source="visual"` assertion, so a goal is confirmed by two sources or a disagreement becomes a conflict. That catches the one class of false success a text oracle cannot see: a confirmation present in the DOM and absent from the screen. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
 | Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
+| Model confidence as a safety gate | **Weak, and calibrated rather than assumed** | `qwen-vl-plus` reports 1.00 on every clear observation and 0.90 on a region cut off mid-word; that is its whole range. The abstention threshold was 0.55 — a value no answer ever came near, so the gate could not fire. It is now 0.95, set from the measurement, and it is model-specific: another model needs `scripts/eval_model_value.py` re-run. **A confident wrong answer still passes the gate.** What makes a wrong answer safe is the arbiter turning a disagreement into a conflict, which does not consult confidence. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
 | Live behaviour is tested | **Implemented** | `pytest -m live` opens a real Chromium and asserts the claims in this table against a real page (selector uniqueness, measured geometry, episode isolation, region-scoped verification, the probes). CI runs it as its own job. The fast suite excludes it and cannot corroborate any live claim on its own. |
 | Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is the narration surface and is honest about what it runs, but it is a second loop. `scripts/run_intent_episode.py` is the one that drives the integrated runtime; the demo has not been migrated onto it. |
@@ -598,6 +624,53 @@ Artifacts land in `eval_outputs/agent_loop/<timestamp>/`: a screenshot per
 scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
 of which states the division performed behind every figure, so a number can be
 checked rather than trusted.
+
+## The same loop, with and without a model
+
+The narrated loop above is deterministic end to end, so watching it does not
+show what a model contributes. This one is built around exactly that question,
+and it answers with evidence rather than narration — a caption saying "sent to a
+language model" looks the same whether a model ran or not.
+
+On screen, for every scene, at the same time:
+
+| where | what is shown |
+| --- | --- |
+| left column | the rules running on the sentence: all twelve patterns, which matched, and the verdict |
+| right column | the request sent and the model's **raw reply**, revealed line by line, with latency and provider-reported token counts |
+| middle | what the text oracle concluded, pinned so it stays visible when it is contradicted |
+| below | the **image** the vision model was given — the exact bytes, rendered in the page — the question, and its own words back |
+| footer | running totals: calls, tokens in and out, model time, and the score of each path |
+
+```bash
+python scripts/run_llm_demo.py                                       # headed, ~2min
+python scripts/run_llm_demo.py --headless --pace 0.12 --hold 0.3     # fast check, ~40s
+python scripts/run_llm_demo.py --pace 1.5 --type-delay 0.12 --hold 3 --record
+```
+
+| scene | what is said | rules | model |
+| --- | --- | --- | --- |
+| 1 | "add the wireless headphones to my cart" | `item_in_cart` | `item_in_cart` |
+| 2 | "grab me those wireless headphones, I need them for my commute" | no pattern matched | `item_in_cart` |
+| 3 | "order me the mechanical keyboard" | no pattern matched | `item_in_cart` |
+| 4 | "I'll take one of those 4K monitors", with the confirmation painted over | no pattern matched | `item_in_cart` |
+
+Scene 1 is the control: a sentence written to match a keyword pattern, where the
+model earns nothing. Scene 4 is the decisive one — the confirmation is in the
+DOM and covered on screen, so every text-based check in this repository passes,
+including the one the agent normally trusts. The vision model is shown a crop of
+the same region, answers that it is blank, and the false success becomes a
+conflict instead of a success.
+
+Measured on the last recorded run: rules 1/4, model 4/4, one false success
+caught by looking, 7 model calls and about 2,800 tokens for the whole demo. The
+intent model is `qwen-plus` and the vision model `qwen-vl-plus`. Repeating a
+question about identical pixels is answered from cache and the panel says so, so
+the spend guards are visible rather than claimed. With no key configured the run
+still completes and says at every step that no model was available, rather than
+falling back to the rules and presenting the result as the model's. Whether
+either model earns its place is measured separately, over 15 utterances and 20
+vision trials, by `scripts/eval_model_value.py` — see `docs_setup/VLM_SETUP.md`.
 
 ## Running the demos
 

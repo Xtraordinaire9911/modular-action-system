@@ -1,0 +1,485 @@
+{
+  "at": "2026-08-14T00:56:47",
+  "intent": {
+    "cases": [
+      {
+        "utterance": "I need the over-ear ones for my commute, grab them for me",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "could you get me that laptop with the i7 in it",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "the big 4k screen, I'll take one",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "give the browser automation thread a thumbs up",
+        "group": "needs_interpretation",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "the top thread deserves some recognition",
+        "group": "needs_interpretation",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "I'll take one of those mechanical keyboards",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "show the first discussion some appreciation",
+        "group": "needs_interpretation",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "order me the noise cancelling ones",
+        "group": "needs_interpretation",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "that automation post is good, give it a point",
+        "group": "needs_interpretation",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "add the wireless headphones to my cart",
+        "group": "rules_already_handle",
+        "expected_goal": "item_in_cart",
+        "rules_goal": "item_in_cart",
+        "model_goal": "item_in_cart",
+        "model_source": "llm",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "upvote the top post",
+        "group": "rules_already_handle",
+        "expected_goal": "post_upvoted",
+        "rules_goal": "post_upvoted",
+        "model_goal": "post_upvoted",
+        "model_source": "llm",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "make me a sandwich",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "book me a flight to Lisbon next Tuesday",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "what is the weather like in Munich",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "delete my account and everything in it",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      }
+    ],
+    "summary": {
+      "needs_interpretation": {
+        "cases": 9,
+        "rules_correct": 0,
+        "model_correct": 9
+      },
+      "rules_already_handle": {
+        "cases": 2,
+        "rules_correct": 2,
+        "model_correct": 2
+      },
+      "out_of_scope": {
+        "cases": 4,
+        "rules_correct": 4,
+        "model_correct": 4
+      }
+    }
+  },
+  "vision": {
+    "trials": [
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "clean",
+        "dom_says_met": true,
+        "model_says_met": true,
+        "confidence": 1.0,
+        "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
+        "source": "vlm",
+        "expected_answer": true,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "invisible_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible content.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "transparent_text",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible text or entries.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "transparent_text",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible text or entries.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "transparent_text",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible text or entries.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "transparent_text",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image is completely blank with no visible text or entries.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "offscreen_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "offscreen_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "offscreen_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "offscreen_confirmation",
+        "dom_says_met": true,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": false
+      },
+      {
+        "condition": "wrong_item",
+        "dom_says_met": false,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows an entry for a Pro Laptop, not wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "wrong_item",
+        "dom_says_met": false,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows an entry for a Pro Laptop, not wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "wrong_item",
+        "dom_says_met": false,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows an entry for a Pro Laptop, not wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "wrong_item",
+        "dom_says_met": false,
+        "model_says_met": false,
+        "confidence": 1.0,
+        "evidence": "The image shows an entry for a Pro Laptop, not wireless headphones.",
+        "source": "vlm",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": true,
+        "agrees": true
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is visible in the image.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is visible in the image.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is visible in the image.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
+      },
+      {
+        "condition": "clipped_view",
+        "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.9,
+        "evidence": "The text 'Wireless He' is visible in the image.",
+        "source": "low_confidence",
+        "expected_answer": false,
+        "ambiguous": true,
+        "model_correct": null,
+        "agrees": null
+      }
+    ],
+    "summary": {
+      "trials": 24,
+      "accuracy": 1.0,
+      "detection_rate": 1.0,
+      "false_alarm_rate": 0.0,
+      "dom_wrong_trials": 12,
+      "dom_right_trials": 8,
+      "mean_confidence_clear": 1.0,
+      "mean_confidence_ambiguous": 0.9,
+      "no_answer": 4,
+      "transport_errors": 0,
+      "stability": {
+        "clean": 1.0,
+        "invisible_confirmation": 1.0,
+        "transparent_text": 1.0,
+        "offscreen_confirmation": 1.0,
+        "wrong_item": 1.0
+      }
+    }
+  }
+}
