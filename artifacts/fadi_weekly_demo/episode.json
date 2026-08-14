@@ -2,7 +2,7 @@
   "agent_executor_calls": [
     {
       "params": {
-        "affordance_id": "dom_room",
+        "affordance_id": "dom_input_1",
         "expected_effect": "room == 'A'",
         "primitive_action": "type",
         "room": "A",
@@ -16,7 +16,7 @@
     },
     {
       "params": {
-        "affordance_id": "dom_time",
+        "affordance_id": "dom_input_2",
         "expected_effect": "time == '14:00'",
         "primitive_action": "type",
         "room": "A",
@@ -33,19 +33,19 @@
   "generated_primitive_plan": [
     {
       "action": "type",
-      "affordance_id": "dom_room",
+      "affordance_id": "dom_input_1",
       "expected_effect": "room == 'A'",
       "value": "A"
     },
     {
       "action": "type",
-      "affordance_id": "dom_time",
+      "affordance_id": "dom_input_2",
       "expected_effect": "time == '14:00'",
       "value": "14:00"
     },
     {
       "action": "click",
-      "affordance_id": "dom_confirm",
+      "affordance_id": "dom_button_1",
       "expected_effect": "booking.confirmed == true",
       "value": null
     }
@@ -71,23 +71,23 @@
       "actor": "fadi",
       "correction_applied": true,
       "decision": "resume",
-      "episode_id": "episode-6d7a528e147a",
-      "intervention_id": "intervention-0248929532db",
+      "episode_id": "episode-4527bde9b9e1",
+      "intervention_id": "intervention-1bd586c8cf39",
       "kind": "safety_confirmation",
-      "latency_ms": 0,
+      "latency_ms": 36129,
       "metadata": {
-        "affordance_id": "dom_confirm",
+        "affordance_id": "dom_button_1",
         "recovery_tier": 4
       },
-      "note": "Dry-run human completed Book Room",
-      "pending_action_fingerprint": "{\"params\": {\"affordance_id\": \"dom_confirm\", \"expected_effect\": \"booking.confirmed == true\", \"primitive_action\": \"click\", \"room\": \"A\", \"time\": \"14:00\", \"value\": null}, \"skill_id\": \"confirm_booking\"}",
+      "note": "Human completed Book Room in the visible browser",
+      "pending_action_fingerprint": "{\"params\": {\"affordance_id\": \"dom_button_1\", \"expected_effect\": \"booking.confirmed == true\", \"primitive_action\": \"click\", \"room\": \"A\", \"time\": \"14:00\", \"value\": null}, \"skill_id\": \"confirm_booking\"}",
       "reason": "high-risk action requires confirmation",
       "reobserved": true,
       "replanned": true,
-      "requested_at_ms": 1786693848605,
-      "resolved_at_ms": 1786693848605,
-      "state_id": "state-bf168ae8128e33c3",
-      "task_id": "fadi-confirm-booking-dry-run"
+      "requested_at_ms": 1786695404778,
+      "resolved_at_ms": 1786695440907,
+      "state_id": "state-c12898a213c69878",
+      "task_id": "fadi-confirm-booking"
     }
   ],
   "instantiated_skill_call": {
@@ -109,44 +109,58 @@
   },
   "isolation": {
     "browser_context_generation": 1,
-    "events": [
-      "wot:acquire",
-      "browser:recreate",
-      "wot:restore",
-      "browser:stop",
-      "wot:release"
-    ],
+    "events": [],
     "provider_active_after_run": false,
     "room_state_after": {
-      "faults": {
-        "thermostat": {
-          "type": "timeout"
-        }
-      },
+      "faults": {},
       "state": {
+        "blinds": {
+          "position": 100
+        },
+        "lights": {
+          "brightness": 100
+        },
+        "occupancy": {
+          "occupied": false,
+          "peopleCount": 0
+        },
+        "projector": {
+          "power": "off"
+        },
         "thermostat": {
-          "targetTemperature": 19
+          "currentTemperature": 19,
+          "targetTemperature": 20
         }
       }
     },
     "room_state_before": {
-      "faults": {
-        "thermostat": {
-          "type": "timeout"
-        }
-      },
+      "faults": {},
       "state": {
+        "blinds": {
+          "position": 100
+        },
+        "lights": {
+          "brightness": 100
+        },
+        "occupancy": {
+          "occupied": false,
+          "peopleCount": 0
+        },
+        "projector": {
+          "power": "off"
+        },
         "thermostat": {
-          "targetTemperature": 19
+          "currentTemperature": 19,
+          "targetTemperature": 20
         }
       }
     },
     "room_state_restored": true
   },
-  "mode": "dry_run_simulated_takeover",
+  "mode": "live_interactive",
   "result": {
     "attempts": 2,
-    "episode_id": "episode-6d7a528e147a",
+    "episode_id": "episode-4527bde9b9e1",
     "failure_type": "",
     "final_outcome_verified": true,
     "intervention_replan_count": 1,
@@ -156,7 +170,7 @@
   },
   "runtime_evidence_trace": [
     {
-      "episode_id": "episode-6d7a528e147a",
+      "episode_id": "episode-4527bde9b9e1",
       "event": "goal_skill_selection",
       "goal_id": "confirm_booking",
       "parameters": {
@@ -174,8 +188,8 @@
       ],
       "skill_id": "confirm_booking",
       "transition_ids": [
-        "episode-6d7a528e147a:transition-0001",
-        "episode-6d7a528e147a:transition-0002"
+        "episode-4527bde9b9e1:transition-0001",
+        "episode-4527bde9b9e1:transition-0002"
       ],
       "validation_status": "passed"
     }
@@ -199,7 +213,12 @@
     "validation_status": "passed"
   },
   "scope_note": "Project-level browser/WoT isolation; not the UFO2 Windows RDP child desktop",
-  "screenshots": [],
+  "screenshots": [
+    "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/artifacts/fadi_weekly_demo/screenshots/fadi-confirm-booking/episode-4527bde9b9e1/001_episode_start.png",
+    "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/artifacts/fadi_weekly_demo/screenshots/fadi-confirm-booking/episode-4527bde9b9e1/002_post_action_verification.png",
+    "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/artifacts/fadi_weekly_demo/screenshots/fadi-confirm-booking/episode-4527bde9b9e1/003_post_action_verification.png",
+    "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/artifacts/fadi_weekly_demo/screenshots/fadi-confirm-booking/episode-4527bde9b9e1/004_human_intervention_resume.png"
+  ],
   "selected_skill": {
     "allowed_backends": [
       "dom",
@@ -239,13 +258,16 @@
       "affordance_key": "dom:booking.room",
       "attempt": 1,
       "backend": "dom",
-      "episode_id": "episode-6d7a528e147a",
+      "episode_id": "episode-4527bde9b9e1",
       "execution_success": true,
       "failure_reason": "",
-      "latency_ms": 1.0,
-      "observation_delta": {},
+      "latency_ms": 7.762,
+      "observation_delta": {
+        "selector": "[data-testid='room-input']",
+        "typed": "A"
+      },
       "params": {
-        "affordance_id": "dom_room",
+        "affordance_id": "dom_input_1",
         "expected_effect": "room == 'A'",
         "primitive_action": "type",
         "room": "A",
@@ -258,25 +280,28 @@
       "recovery_tier": null,
       "reversible_result": null,
       "skill_id": "confirm_booking",
-      "state_id_after": "state-ebd929e969dcc685",
-      "state_id_before": "state-808abe31009bf733",
+      "state_id_after": "state-c12898a213c69878",
+      "state_id_before": "state-c12898a213c69878",
       "step": 1,
       "success": true,
-      "task_id": "fadi-confirm-booking-dry-run",
-      "timestamp_ms": 1786693848604,
-      "transition_id": "episode-6d7a528e147a:transition-0001"
+      "task_id": "fadi-confirm-booking",
+      "timestamp_ms": 1786695404726,
+      "transition_id": "episode-4527bde9b9e1:transition-0001"
     },
     {
       "affordance_key": "dom:booking.time",
       "attempt": 2,
       "backend": "dom",
-      "episode_id": "episode-6d7a528e147a",
+      "episode_id": "episode-4527bde9b9e1",
       "execution_success": true,
       "failure_reason": "",
-      "latency_ms": 1.0,
-      "observation_delta": {},
+      "latency_ms": 3.53,
+      "observation_delta": {
+        "selector": "[data-testid='time-input']",
+        "typed": "14:00"
+      },
       "params": {
-        "affordance_id": "dom_time",
+        "affordance_id": "dom_input_2",
         "expected_effect": "time == '14:00'",
         "primitive_action": "type",
         "room": "A",
@@ -289,13 +314,13 @@
       "recovery_tier": null,
       "reversible_result": null,
       "skill_id": "confirm_booking",
-      "state_id_after": "state-bf168ae8128e33c3",
-      "state_id_before": "state-ebd929e969dcc685",
+      "state_id_after": "state-c12898a213c69878",
+      "state_id_before": "state-c12898a213c69878",
       "step": 2,
       "success": true,
-      "task_id": "fadi-confirm-booking-dry-run",
-      "timestamp_ms": 1786693848604,
-      "transition_id": "episode-6d7a528e147a:transition-0002"
+      "task_id": "fadi-confirm-booking",
+      "timestamp_ms": 1786695404777,
+      "transition_id": "episode-4527bde9b9e1:transition-0002"
     }
   ]
 }

@@ -2,12 +2,12 @@
   "metadata": {
     "data_source": "live",
     "episode_ids": [
-      "episode-5f262c973ca1",
-      "episode-69e31a5a1221",
-      "episode-8d58ef434d7d",
-      "episode-d9fe5eff4c10",
-      "episode-db4c148e7056",
-      "episode-eec434cd0517"
+      "episode-0f1b4c8d5f84",
+      "episode-4059fda07329",
+      "episode-6f78e8e62d3e",
+      "episode-b02af275eb97",
+      "episode-c6611563c896",
+      "episode-c9862813a413"
     ]
   },
   "values": {
@@ -25,7 +25,7 @@
     "FalseSuccessDetectionRate": 0.0,
     "HeldOutGain": 0.0,
     "ImprovementEfficiency": 0.0,
-    "MTL": 70.0126666667,
+    "MTL": 76.3196666667,
     "MeanTimeToRecovery": 0.0,
     "OSR": 0.0,
     "PCR": 0.0,
