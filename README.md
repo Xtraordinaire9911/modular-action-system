@@ -40,8 +40,21 @@ the model earns nothing. Scene 4 is the decisive one: the confirmation is in the
 DOM and painted over on screen, so every text-based check in this repository
 passes, and only looking catches it. Result of the recorded run: **rules 1/4,
 model 4/4, one false success caught**, on 7 model calls and about 2,800 tokens.
-`qwen-plus` for intent, `qwen-vl-plus` for vision. Run it with
-`python scripts/run_llm_demo.py`.
+`qwen-plus` for intent, `qwen-vl-plus` for vision.
+
+```bash
+python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5
+```
+
+The browser is visible by default; add `--headless` for a dry run with no
+window. Timed on this machine against the real endpoints, headed, no flag
+invented: **1 minute 39 seconds**, against **1:53** at the library defaults —
+both under the two-minute mark, this one with about 20 real seconds of margin
+for a slower network on the day. `--pace` scales every beat by the same
+factor, so the beats the code already weights heavier (a verdict, a caught
+false success get up to 2.4×; a transition gets 0.4–0.6×) stay proportionally
+longer than the ones that exist to move the story along, not to be read
+carefully.
 
 ### The narrated agent loop, with no model in it
 
@@ -145,594 +158,102 @@ and both are still not it on their own:
 The module formerly called `pip_console` is now `narration_console`, for the
 same reason.
 
-## Current Release State
+## Branch Discipline
 
-`main` contains the integrated **Week-8** release.
+`main` is a verified release of `develop`, kept content-identical after each
+release merge. Feature branches merge into `develop`; `develop` is where
+cross-member integration and CI happen; `main` only moves forward from a
+`develop` state that has already passed the full suite, including the `live`
+and `smartroom` markers.
 
-| Branch group | What it adds |
-|---|---|
-| B-101 – B-108 (Week 6) | DOM/WoT/Visual perception, System-1 effectors, cost-aware router, backend eval, browser-session retry |
-| B-109 (Week 7-8) | External CUA benchmark environments: MiniWoB++ plus three WebArena-style local mock envs (shopping, email, forum), and a cross-environment runner reporting per-environment task success. Solvers are scripted, so the figures measure the suite, not the agent. |
-| B-111 to B-117 (Week 9-11) | Perception hardened against demo-overlay contamination; browser and WoT episode isolation with verified rollback; visual marks measured in the live browser instead of read from fixtures; a demo registry; and the intent and Set-of-Marks planning layers, each recording whether a model or a deterministic fallback produced its answer |
+## Commands
 
-Branch discipline:
+Trimmed hard on purpose: dozens of `src.pipeline` evaluation flags from
+earlier weeks (fusion calibration, Bayesian holdouts, open-web randomized
+suites) used to live here and are now in
+[`YIXIN_RUNTIME_RECOVERY_DOSSIER.md`](YIXIN_RUNTIME_RECOVERY_DOSSIER.md),
+which is where anyone still running them should be looking anyway. What is
+left is the current demo, the full test suite, and the handful of commands
+this project actually reaches for.
 
-- feature branches merge into `develop`;
-- `develop` is the integration branch for cross-member testing;
-- `main` is only updated from a verified `develop` release.
+### The demo
 
-## Quick Start
+Same command as under the recording at the top of this file:
 
-### 0. From a clean clone, in one command
+```bash
+python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5
+```
 
-On a machine that has only Python 3.11+ and `git`:
+Measured headed against the real endpoints: **1:39**. See the paragraph under
+the first video above for what the parameters do and why.
+
+### Clean clone to running demo, one command
 
 ```bash
 git clone <repo-url> && cd A-Modular-Action-System-Architecture
 python scripts/bootstrap.py --demo --headed
 ```
 
-That installs the project and dev dependencies, downloads the one browser the
-demos need, runs the full test suite, and then runs the visual demo. It uses the
-standard library only, so it works before any dependency is installed, and it
-echoes every command it runs so a failure points at something you can repeat by
-hand.
+Installs, downloads the one browser the demos need, runs the full test suite,
+then runs the visual demo. Standard library only, so it works before any
+dependency is installed. `--check` reports the environment and stops;
+`--skip-install --demo` re-runs it on a machine already set up.
 
-| Invocation | Does |
-|---|---|
-| `python scripts/bootstrap.py --check` | reports the environment and stops |
-| `python scripts/bootstrap.py` | install + test |
-| `python scripts/bootstrap.py --demo` | install + test + demo (headless) |
-| `python scripts/bootstrap.py --demo --headed` | same, with a visible browser |
-| `python scripts/bootstrap.py --skip-install --demo` | re-run on an already-set-up machine |
-
-Notes:
-
-- The MiniWoB++ clone is optional. Without it the demo runs the local mock
-  environments only and says so; see step 3 to add it.
-- **No fixed ports.** Every local server binds to `127.0.0.1:0`, so the OS picks
-  a free port at run time. This avoids the Windows reserved-port ranges that
-  Docker/Hyper-V claim (which surface as `WinError 10013`) and makes concurrent
-  runs safe. The only fixed ports in the project belong to the optional Docker
-  smart-room environment (3000, 8080, 8081), listed in step 4.
-
-The sections below are the individual pieces, for when you want to run just one.
-
-### 1. Python verification
-
-Use `uv` if available:
+### Full test suite
 
 ```bash
-uv run --with pytest pytest
+uv run --with pytest pytest        # fast: contracts, perception, effectors,
+                                    # router, recovery, runtime — a few seconds
+uv run --with pytest pytest -m live       # + 14 tests against a real Chromium
+uv run --with pytest pytest -m smartroom  # + 6 tests against the running servient
 ```
 
-Or use a regular virtual environment:
+The fast suite never opens a browser or a socket, so it cannot corroborate a
+live claim on its own — that is what the other two markers are for. `smartroom`
+needs the Docker services below running first.
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e ".[dev]"
-pytest
-```
-
-Expected result: all tests pass. The current suite covers contracts,
-DOM/WoT/SoM perception, System-1 effectors, VAM adapter, router, recovery cascade,
-backend evaluation, runtime smoke path, and external CUA benchmark controllers.
-
-### 2. Deterministic offline demo
-
-This does not require Docker or a browser. It writes presentation artifacts:
-
-```bash
-python run_demo.py
-```
-
-Outputs:
-
-- `artifacts/demo_trace_normal.json`
-- `artifacts/demo_trace_recovery.json`
-- `artifacts/recovery_metrics.json`
-
-Use this path when the meeting room cannot run Docker. It still demonstrates the
-runtime trace shape, postcondition verification, conflict detection, and recovery
-metrics.
-
-### 3. External CUA benchmark demo (no Docker)
-
-Two demo entry points, both in a visible Chromium window with a periwinkle arrow
-cursor, glowing trail, and per-action element highlight:
-
-**Prerequisites (one-time):**
-
-```powershell
-uv run playwright install chromium
-# Only needed for the MiniWoB++ tasks:
-git clone https://github.com/Farama-Foundation/miniwob-plusplus.git .external_envs/miniwob-plusplus
-uv pip install miniwob
-```
-
-**Full cross-environment fancy demo** (MiniWoB++ academic + WebArena-style mock envs):
-
-```powershell
-uv run python scripts/run_fancy_demo.py --headed --step-delay 1.3
-```
-
-Runs 3 MiniWoB++ tasks (login-user, click-dialog, click-link) plus 6 mock-env
-tasks across shopping, email, and forum surfaces, then prints a colour-coded M1
-cross-environment generalisation score table and saves per-task screenshots to
-`eval_outputs/external_runs/`. Add `--skip-miniwob` to demo the mock envs only
-(no MiniWoB++ clone required).
-
-**MiniWoB++ only:**
-
-```powershell
-uv run python scripts/run_miniwob_demo.py --step-delay 1.4 --pause-between --headed
-```
-
-For full install/troubleshooting details see `env/RUNBOOK_external_envs.md` § A2.
-
-### 4. Live smart-room environment (Docker)
-
-Start the React dashboard and node-wot servient:
+### Start the smart room
 
 ```bash
 docker compose -f env/docker-compose.yml up --build
 ```
 
-Open:
+Dashboard on `:3000`; Thing Descriptions and the Thing Directory on `:8080`;
+the failure control plane on `:8081`. `python run_demo.py --probe-env` checks
+all of it is reachable and reports `environment.all_ok`.
 
-- Dashboard: http://localhost:3000
-- WoT thermostat TD: http://localhost:8080/thermostat
-- WoT lights TD: http://localhost:8080/lights
-- WoT projector TD: http://localhost:8080/projector
-- Failure control plane: http://localhost:8081/state
-
-In another terminal, verify the environment and write demo artifacts:
+### Drive it from one sentence
 
 ```bash
-python run_demo.py --probe-env
+python scripts/run_intent_episode.py --utterance "add the wireless headphones to my cart"
+python scripts/run_intent_episode.py --suite    # 7 utterances, 2 environments, the M1 table
 ```
 
-The `environment.all_ok` field should be `true` when Docker services are up.
+The sentence goes through `IntentPlanner`, the resulting `GoalSpec` into
+`RuntimeEpisodeRunner` on a live page, and a vision model verifies the region
+the goal names. `--suite` also prints which utterances the rule fallback could
+not have handled.
 
-### 5. Live runtime-control tracer bullet
-
-With the smart-room services running, execute the complete observe-plan-act-
-verify-recover loop through one entry point:
+### Prepare the room from one sentence
 
 ```bash
-uv run python -m src.pipeline --live-demo
+python scripts/run_room_prepared.py
+python scripts/run_room_prepared.py --utterance "get the room ready, lights at 15"
+python scripts/run_room_prepared.py --ignore lights.brightness   # drop one write on purpose
 ```
 
-The command runs a normal structured goal, transient WoT timeout recovery,
-postcondition-mismatch rollback, DOM/WoT conflict resolution, and a repeated
-System-1 grounding-cache episode. It writes live screenshots, transition and
-failure JSONL ledgers, a recovery report, and episode-derived metrics under
-`artifacts/live_runtime_demo/`. The System-1 repeat case includes a
-`system1_latency_report` that links the warm-up and repeat episode ids and
-reports cache-hit rate, routing latency, total transition latency, and
-amortized latency from the same transition ledger.
+Resolves against whatever the Thing Directory actually reports — no device
+endpoint is named anywhere in the code — writes each property, and reads every
+one back before calling the goal met. `--ignore` reproduces the servient
+answering 204 to a write that changed nothing, which is exactly the failure
+the read-back step exists to catch.
 
-Run the same seeded normal/timeout episodes under full, no-recovery, DOM-only,
-and WoT-only modes:
+### What else is runnable, and why something isn't
 
 ```bash
-uv run python -m src.pipeline --live-ablation
+python scripts/demo.py list      # every registered demo and its status
+python scripts/demo.py doctor    # why one is not runnable on this machine, and the fix
 ```
-
-Calibrate the current rule-first fusion threshold over labeled live clean,
-DOM-fault, WoT-timeout/offline, and postcondition-mismatch scenarios:
-
-```bash
-uv run python -m src.pipeline --fusion-calibration
-```
-
-Generate the next-stage repeated fusion/recovery campaign plan without starting
-the long live run:
-
-```bash
-uv run python -m src.pipeline --fusion-campaign-dry-run --repetitions 30
-```
-
-Run the live repeated campaign when the smart-room environment is available:
-
-```bash
-uv run python -m src.pipeline --fusion-campaign --repetitions 30
-```
-
-After a full campaign is saved, create a locked calibration/holdout report:
-
-```bash
-uv run python -m src.pipeline --fusion-holdout \
-  --campaign-summary artifacts/live_fusion_campaign_full/fusion_campaign_summary.json \
-  --calibration-repetitions 20 \
-  --holdout-repetitions 10
-```
-
-Compare an experimental Bayesian posterior model against the locked rule-first
-holdout. This is a comparator report only; it does not replace the production
-fusion gate:
-
-```bash
-uv run python -m src.pipeline --bayesian-fusion-comparator \
-  --holdout-report artifacts/live_fusion_holdout/fusion_holdout_report.json
-```
-
-Run synthetic ambiguous/noisy fusion stress cases to see whether the Bayesian
-comparator has a plausible role before designing live ambiguous cases:
-
-```bash
-uv run python -m src.pipeline --noisy-fusion-stress --repetitions 30
-```
-
-Generate the controlled open-web mock failure suite. This writes oracle-labeled
-local fixtures and a coverage report for open-web-style failure modes such as
-overlay obstruction, session expiry, async validation mutation, DOM/visual
-disagreement, optimistic UI/backend mismatch, and visible-but-ineffective
-affordances. It is controlled mock evidence, not real open-web evidence:
-
-```bash
-uv run python -m src.pipeline --open-web-mock-failure-suite
-```
-
-Run those controlled mock cases through the same runtime episode envelope. This
-uses an in-memory mock executor plus fresh oracle re-observation to verify that
-executor success is not treated as task success:
-
-```bash
-uv run python -m src.pipeline --open-web-mock-runtime-suite
-```
-
-Run the same local fixtures through real Playwright Chromium execution before
-the runtime verifies the fresh oracle state:
-
-```bash
-uv run python -m src.pipeline --open-web-playwright-fixture-suite
-```
-
-Run seeded behavioral variants for all six families with a locked holdout.
-The plan is written before execution, dev/holdout parameter signatures are
-checked for leakage, and both splits are verified from fresh page oracle state:
-
-```bash
-uv run python -m src.pipeline --open-web-randomized-holdout \
-  --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
-```
-
-This remains controlled local-browser evidence, not real open-web evidence.
-
-Run the five-family Runtime/Planner boundary check on randomized dev and
-locked-holdout capability variants. Fresh observations expose generic relations
-(`remediates`, `restores`, `compensates`, `observes`, or `equivalent_to`) through
-`PlannerPort`; the default controller intentionally does not select one:
-
-```bash
-uv run python -m src.pipeline --generalized-browser-recovery \
-  --open-web-dev-repetitions 3 --open-web-holdout-repetitions 3
-```
-
-Evidence is written under `artifacts/generalized_browser_recovery/`. Without an
-externally supplied Planner implementation, each episode must stop after the
-typed handoff instead of using a hidden Runtime policy. Autocomplete is excluded
-from recovery scope. See `YIXIN_RUNTIME_RECOVERY_DOSSIER.md` for the ownership
-and integration matrix.
-
-The single successful obstruction-repair holdout evidence map is packaged under
-`artifacts/friday_generalized_recovery/`:
-
-- `artifacts/friday_generalized_recovery/evidence/generalized_browser_recovery_report.json`
-- `artifacts/friday_generalized_recovery/evidence/transition_ledger.jsonl`
-- `artifacts/friday_generalized_recovery/evidence/screenshots/`
-- `artifacts/friday_generalized_recovery/contact_sheet.png`
-- `artifacts/friday_generalized_recovery/generalized_browser_recovery_holdout.mp4`
-
-Plan or smoke-test live ambiguous profiles mapped onto the current smart-room
-fault API:
-
-```bash
-uv run python -m src.pipeline --live-ambiguous-fusion-dry-run --repetitions 30
-uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 1
-uv run python -m src.pipeline --live-ambiguous-fusion --repetitions 30
-```
-
-The live ambiguous profiles use fine-grained smart-room fault controls such as
-`stale_offset`, `read_delay_ms`, `drop_probability`, and
-`source_reliability`; these are evaluation hooks, not changes to the production
-fusion gate.
-
-The runtime arbiter can also be constructed with
-`EpistemicArbiter(fusion_strategy="bayesian_gate")` for gated evaluation. This
-uses the Bayesian posterior to decide `allow_system1` / active perception while
-keeping the existing fused-state selection logic. The default remains
-`rule_first`.
-
-Build a locked holdout from the live ambiguous campaign and compare the
-production rule-first gate against the Bayesian strategy in shadow mode:
-
-```bash
-uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
-  --live-ambiguous-summary artifacts/live_ambiguous_fusion_full/live_ambiguous_fusion_summary.json \
-  --calibration-repetitions 20 \
-  --holdout-repetitions 10
-
-uv run python -m src.pipeline --fusion-ablation-report \
-  --holdout-report artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json
-
-uv run python -m src.pipeline --live-ambiguous-fusion \
-  --repetitions 30 \
-  --seed-start 5300 \
-  --output-dir artifacts/live_ambiguous_fusion_rerun
-
-uv run python -m src.pipeline --live-ambiguous-fusion \
-  --fusion-strategy bayesian_gate \
-  --repetitions 30 \
-  --seed-start 7300 \
-  --output-dir artifacts/live_ambiguous_fusion_bayesian_gate_full
-
-uv run python -m src.pipeline --live-ambiguous-fusion-holdout \
-  --live-ambiguous-summary artifacts/live_ambiguous_fusion_rerun/live_ambiguous_fusion_summary.json \
-  --output-dir artifacts/live_ambiguous_fusion_rerun_holdout \
-  --calibration-repetitions 20 \
-  --holdout-repetitions 10
-
-uv run python -m src.pipeline --bayesian-shadow-stability \
-  --holdout-reports \
-    artifacts/live_ambiguous_fusion_holdout/live_ambiguous_fusion_holdout_report.json \
-    artifacts/live_ambiguous_fusion_rerun_holdout/live_ambiguous_fusion_holdout_report.json
-```
-
-Review promotion/impact/open-web coverage artifacts after the gate-enabled
-runs:
-
-```bash
-uv run python - <<'PY'
-from evaluation.bayesian_gate_promotion_review import write_bayesian_gate_promotion_review
-from evaluation.gate_enabled_recovery_impact import write_gate_enabled_recovery_impact_report
-from evaluation.open_web_failure_coverage import write_open_web_failure_coverage_report
-
-write_bayesian_gate_promotion_review(
-    "artifacts/live_ambiguous_fusion_bayesian_gate_full/live_ambiguous_fusion_summary.json",
-    "artifacts/bayesian_shadow_stability/bayesian_shadow_stability_report.json",
-    "artifacts/bayesian_gate_promotion_review",
-)
-write_gate_enabled_recovery_impact_report(
-    "artifacts/live_runtime_demo_y_runtime_evidence/measured_metrics.json",
-    "artifacts/live_runtime_demo_bayesian_gate/measured_metrics.json",
-    "artifacts/gate_enabled_recovery_impact",
-)
-write_open_web_failure_coverage_report("artifacts/open_web_failure_coverage")
-PY
-```
-
-Use `--dashboard-url`, `--thing-directory-url`, `--wot-base-url`, and
-`--control-url` when Docker is mapped to non-default host ports. These are live
-measurements; `python -m src.pipeline --demo` remains the deterministic synthetic
-white-box path.
-
-### 6. Project PiP MVP: isolated task sessions
-
-The first PiP milestone is implemented as a cross-platform task-session boundary.
-Call `ContinuousInteractionManager.run_isolated_goal()` or
-`run_isolated_skill()` with a `BrowserWotIsolationProvider`. The runtime then:
-
-1. saves the exact smart-room state and faults;
-2. resets the room and creates a fresh Playwright browser context before the
-   first observation;
-3. pauses at Tier 4 while an `InterventionBroker` waits for Approve, Reject,
-   Resume, or Cancel;
-4. re-observes and replans after a human takeover; and
-5. restores the saved room state and closes the browser context in `finally`.
-
-The mock WoT server has one global room, so a server-held episode lease
-deliberately serializes isolated episodes, even when separate managers create
-separate providers. It is not the Windows RDP child desktop from the UFO2 paper:
-independent Windows input queues, application processes, and a visible nested
-desktop remain a later Windows-specific provider.
-
-## Demo
-
-1. Open http://localhost:3000.
-   Show the concrete DOM surface: booking inputs, Book Room button, thermostat,
-   lighting, projector, and readiness panels.
-
-2. Open http://localhost:8080/thermostat.
-   Show that the device surface is a runtime Thing Description with `forms`,
-   `href`, `htv:methodName`, `securityDefinitions`, and schemas.
-
-3. Run:
-
-   ```bash
-   python run_demo.py --probe-env
-   ```
-
-   Explain that this proves the environment endpoints are reachable and that the
-   agent-side demo artifacts are regenerated.
-
-4. Run:
-
-   ```bash
-   uv run --with pytest pytest tests/test_dom_transducer.py tests/test_td_parser.py tests/test_som_parser.py
-   ```
-
-   Explain perception:
-
-   - DOM is stripped of noise and converted to stable selectors and labels.
-   - WoT TDs are parsed dynamically, including security and rate limits.
-   - Visual regions become SoM marks with bbox/center metadata.
-
-5. Run:
-
-   ```bash
-   uv run --with pytest pytest tests/test_system1_executors.py tests/test_backend_router.py tests/test_backend_eval.py
-   ```
-
-   Explain action:
-
-   - System 1 executes cached DOM/WoT/Visual affordances.
-   - Router uses cost, reliability, and latency.
-   - VAM is a System-2 fallback, not the default path.
-   - Backend evaluation produces B1-B5 style tables.
-
-6. Show failure injection:
-
-   ```bash
-   curl -X POST http://localhost:8081/failure ^
-     -H "Content-Type: application/json" ^
-     -d "{\"thing\":\"thermostat\",\"type\":\"postcondition_mismatch\"}"
-   curl -X POST http://localhost:8081/reset
-   ```
-
-   DOM-side faults can be shown by opening:
-
-   ```text
-   http://localhost:3000/?fault=layout_shift,selector_mutation
-   ```
-
-## The narrated agent loop
-
-One command, one browser window, roughly five minutes:
-
-```bash
-python scripts/run_agent_loop_demo.py
-```
-
-A side panel narrates every step — which phase of the loop it is, what is
-happening in plain language, why the step exists, and the source that is
-executing, with the highlight following the interpreter's real path through it.
-The running counts the metrics are computed from sit along the bottom.
-
-Seven scenes across a shop, a forum and a WoT device. Six inject a different
-fault taken from things that break real automation, ordered easy to hard, and
-each says on screen why that fault happens in practice:
-
-| scene | fault | what the agent has to work out |
-| --- | --- | --- |
-| shop | layout shift (CLS) | the click missed; look again — tier 1 |
-| forum | consent banner | present and enabled, but something else took the click — tier 2 |
-| shop | unmet precondition | it refuses input; satisfy what it depends on — tier 3 |
-| shop | optimistic rollback | accepted, then undone; retrying is provably useless — tier 4 |
-| forum | session expiry | the page is gone; no route remains — tier 4 |
-| shop | none | a clean run, for contrast |
-| smart room | silent device write | 204 with no state change, caught only by reading back — tier 4 |
-
-Nothing tells the recovery code which fault was injected. It measures the page
-after the failure — what is really at the click point, whether the target
-accepts input, what covers it, whether the region changed — and those
-measurements pick the tier. The expected answers live in the scene definition,
-which the diagnosis never sees.
-
-```bash
-python scripts/run_agent_loop_demo.py --headless --pace 0.05 --hold 0   # fast check, ~20s
-python scripts/run_agent_loop_demo.py --repeat 30                       # 210 episodes, the campaign metrics
-python scripts/run_agent_loop_demo.py --pace 1.5 --trace-delay 0.3 --record   # the recording settings
-python scripts/run_agent_loop_demo.py --scene forum.html                # one surface
-```
-
-The recording at the top of this file is one of these runs, so the loop can be
-watched without installing a browser.
-
-The run takes about two and a half minutes. The first scene is narrated at full
-length because it teaches the loop; from the second scene on, the beats
-explaining a phase already shown are shortened and the ones carrying new
-information - which fault, what was measured, which tier and why - keep their
-timing. Nothing is skipped, and `--pace` scales all of it.
-
-Artifacts land in `eval_outputs/agent_loop/<timestamp>/`: a screenshot per
-scene, `trajectory.json`, `campaign.json` and `metric_ledger.json` — the last
-of which states the division performed behind every figure, so a number can be
-checked rather than trusted.
-
-## The same loop, with and without a model
-
-The narrated loop above is deterministic end to end, so watching it does not
-show what a model contributes. This one is built around exactly that question,
-and it answers with evidence rather than narration — a caption saying "sent to a
-language model" looks the same whether a model ran or not.
-
-On screen, for every scene, at the same time:
-
-| where | what is shown |
-| --- | --- |
-| left column | the rules running on the sentence: all twelve patterns, which matched, and the verdict |
-| right column | the request sent and the model's **raw reply**, revealed line by line, with latency and provider-reported token counts |
-| middle | what the text oracle concluded, pinned so it stays visible when it is contradicted |
-| below | the **image** the vision model was given — the exact bytes, rendered in the page — the question, and its own words back |
-| footer | running totals: calls, tokens in and out, model time, and the score of each path |
-
-```bash
-python scripts/run_llm_demo.py                                       # headed, ~2min
-python scripts/run_llm_demo.py --headless --pace 0.12 --hold 0.3     # fast check, ~40s
-python scripts/run_llm_demo.py --pace 1.5 --type-delay 0.12 --hold 3 --record
-```
-
-| scene | what is said | rules | model |
-| --- | --- | --- | --- |
-| 1 | "add the wireless headphones to my cart" | `item_in_cart` | `item_in_cart` |
-| 2 | "grab me those wireless headphones, I need them for my commute" | no pattern matched | `item_in_cart` |
-| 3 | "order me the mechanical keyboard" | no pattern matched | `item_in_cart` |
-| 4 | "I'll take one of those 4K monitors", with the confirmation painted over | no pattern matched | `item_in_cart` |
-
-Scene 1 is the control: a sentence written to match a keyword pattern, where the
-model earns nothing. Scene 4 is the decisive one — the confirmation is in the
-DOM and covered on screen, so every text-based check in this repository passes,
-including the one the agent normally trusts. The vision model is shown a crop of
-the same region, answers that it is blank, and the false success becomes a
-conflict instead of a success.
-
-Measured on the last recorded run: rules 1/4, model 4/4, one false success
-caught by looking, 7 model calls and about 2,800 tokens for the whole demo. The
-intent model is `qwen-plus` and the vision model `qwen-vl-plus`. Repeating a
-question about identical pixels is answered from cache and the panel says so, so
-the spend guards are visible rather than claimed. With no key configured the run
-still completes and says at every step that no model was available, rather than
-falling back to the rules and presenting the result as the model's. Whether
-either model earns its place is measured separately, over 15 utterances and 20
-vision trials, by `scripts/eval_model_value.py` — see `docs_setup/VLM_SETUP.md`.
-
-## Running the demos
-
-Demos live across several scripts and `src.pipeline` flags. One command lists
-them all and says which are runnable on this machine:
-
-```bash
-python scripts/demo.py list
-python scripts/demo.py doctor          # why something is not runnable, and the fix
-python scripts/demo.py run cross-env --headed
-python scripts/demo.py run --all       # every currently runnable demo
-```
-
-```text
-DEMO               STATUS       TIME     TITLE
-------------------------------------------------------------------------------
-offline            ready        ~5s      Deterministic offline trace
-visual-grounding   ready        ~15s     Visual grounding smoke trace
-mock-envs          ready        ~1min    WebArena-style mock environments
-cross-env          ready        ~2min    Cross-environment suite (academic + industrial)
-miniwob            ready        ~1min    MiniWoB++ curated suite
-live-runtime       needs setup  ~2min    Live runtime tracer bullet
-adaptation         ready        ~10s     Adaptation and policy proposal
-```
-
-`offline` needs no browser, no clone and no Docker, so there is always something
-to show. The individual scripts are unchanged and still run directly; the
-registry only discovers them.
-
-**Adding a demo** is one entry in `src/demos/registry.py` — no runner change:
-
-```python
-Demo(
-    name="my-demo",
-    title="What it shows",
-    summary="One line for the listing.",
-    command=("scripts/run_my_demo.py",),
-    requires=("browser",),          # browser | miniwob | smart_room
-    headed_args=("--headed",),
-    duration_hint="~30s",
-)
-```
-
-A demo whose script is not in the current checkout is listed as `not here`
-rather than raising, so the registry stays valid while a feature is in review.
 
 ## Architecture Map
 
