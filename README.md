@@ -491,7 +491,10 @@ docker compose -f env/docker-compose.yml up --build -d
 
 At the terminal prompt choose `t`, click **Book Room** in Chromium, then press
 Enter. The runtime re-observes the page, sees that the human already completed
-the goal, and does not repeat the click. For a quick rehearsal without Docker:
+the goal, and does not repeat the click. Live actions pause for 1.2 seconds by
+default. Use `--step-delay 2` if you want a slower presentation.
+
+For a quick rehearsal without Docker:
 
 ```bash
 .venv/bin/python scripts/run_fadi_demo.py --dry-run

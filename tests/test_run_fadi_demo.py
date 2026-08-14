@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from scripts.run_fadi_demo import DEMO_TITLE, booking_bindings, build_goal, main, select_skill
+from scripts.run_fadi_demo import DEMO_TITLE, booking_bindings, build_goal, build_parser, main, select_skill
 from src.demos.registry import build_argv, find
 
 
@@ -84,3 +84,9 @@ def test_demo_registry_exposes_rehearsal_and_visible_walkthrough() -> None:
     assert live is not None
     assert live.requires == ("browser", "smart_room")
     assert build_argv(live, headed=True)[-1] == "--headed"
+
+
+def test_live_demo_has_an_adjustable_presentation_delay() -> None:
+    assert build_parser().parse_args([]).step_delay == 1.2
+    assert build_parser().parse_args(["--step-delay", "2.5"]).step_delay == 2.5
+    assert main(["--dry-run", "--step-delay", "-1"]) == 2

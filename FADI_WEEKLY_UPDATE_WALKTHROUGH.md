@@ -11,8 +11,11 @@ dashboard opens:
 
 ```bash
 docker compose -f env/docker-compose.yml up --build -d
-.venv/bin/python scripts/run_fadi_demo.py --headed
+.venv/bin/python scripts/run_fadi_demo.py --headed --step-delay 2
 ```
+
+`--step-delay 2` leaves two seconds after each browser action, which makes the
+room and time changes easier to explain while everyone watches.
 
 Keep this fallback command ready. It shows the same action-system flow without
 Docker or a browser:

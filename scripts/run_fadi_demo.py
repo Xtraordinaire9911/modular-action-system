@@ -324,7 +324,10 @@ async def run_live_demo(args: argparse.Namespace, paths: DemoPaths) -> DemoRun:
         include_wot_state=False,
         allowed_affordance_sources={"DOM"},
     )
-    dom_executor = _RecordingExecutor(RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(session)))
+    dom_executor = _RecordingExecutor(
+        RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(session)),
+        delay_s=args.step_delay,
+    )
     transitions = TransitionLedger(paths.transitions)
     interventions = InterventionLedger(paths.interventions)
     failures = TraceLedger()
@@ -449,13 +452,17 @@ async def run_dry_demo(paths: DemoPaths, *, room: str = "A", time_slot: str = "1
 
 
 class _RecordingExecutor:
-    def __init__(self, delegate: RuntimeAffordanceExecutor) -> None:
+    def __init__(self, delegate: RuntimeAffordanceExecutor, *, delay_s: float = 0.0) -> None:
         self.delegate = delegate
+        self.delay_s = delay_s
         self.calls: list[SkillCall] = []
 
     async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
         self.calls.append(skill_call)
-        return await self.delegate.execute(skill_call, observation)
+        result = await self.delegate.execute(skill_call, observation)
+        if self.delay_s:
+            await asyncio.sleep(self.delay_s)
+        return result
 
 
 class _DryBrowser:
@@ -689,6 +696,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--room", default="A")
     parser.add_argument("--time", default="14:00")
+    parser.add_argument(
+        "--step-delay",
+        type=float,
+        default=1.2,
+        help="Seconds to pause after each live browser action (default: 1.2)",
+    )
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--dashboard-url", default="http://127.0.0.1:3000")
     parser.add_argument("--thing-directory-url", default="http://127.0.0.1:8082/things")
@@ -701,6 +714,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.dry_run and args.auto_approve:
         print("--dry-run already uses a simulated takeover; do not combine it with --auto-approve", file=sys.stderr)
+        return 2
+    if args.step_delay < 0:
+        print("--step-delay must be zero or greater", file=sys.stderr)
         return 2
     paths = _prepare_paths(args.output)
     try:
