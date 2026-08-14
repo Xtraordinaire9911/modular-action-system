@@ -173,9 +173,13 @@ DEMOS: list[Demo] = [
         title="Do the models earn their place?",
         summary="Measures whether the intent model understands what the rules cannot, and whether the vision "
         "model catches a false success the DOM confirms. Needs a configured API key.",
-        command=("scripts/eval_model_value.py", "--reps", "3"),
+        # Four repetitions, because that is the sample size the numbers quoted in
+        # the README and in docs_setup/VLM_SETUP.md come from. Running the demo
+        # at a different --reps would produce a table nobody could match to the
+        # documented one.
+        command=("scripts/eval_model_value.py", "--reps", "4"),
         requires=("browser",),
-        duration_hint="~2min",
+        duration_hint="~3min",
     ),
     Demo(
         name="offline",
