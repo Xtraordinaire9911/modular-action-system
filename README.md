@@ -16,8 +16,6 @@ recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
 
-https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
-
 ### What the language model actually changes
 
 
@@ -45,11 +43,26 @@ model 4/4, one false success caught**, on 7 model calls and about 2,800 tokens.
 `qwen-plus` for intent, `qwen-vl-plus` for vision. Run it with
 `python scripts/run_llm_demo.py`.
 
+### The narrated agent loop, with no model in it
+
+
+https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
+
+
+Seven scenes over a shop, a forum and a WoT device. Six inject a different
+real-world fault; the agent measures the page after each failure and picks a
+recovery tier from what it measured, without being told which fault was
+injected. Entirely deterministic — no model is involved anywhere in it, which is
+the reason the recording above exists as a separate demo. Run it with
+`python scripts/run_agent_loop_demo.py`.
+
 ### Five-family Runtime recovery contract demo
 
-[![Open the five-family Runtime recovery demo](artifacts/runtime_recovery_demo/preview.png)](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
 
-- [Open the final video directly](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
+https://github.com/user-attachments/assets/ee7b469a-8176-44da-81bd-c7f6ff4945e7
+
+
+- [Open the same file from the repository](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
 - [Open the full-size visual preview](artifacts/runtime_recovery_demo/preview.png)
 - [Inspect the Runtime run report](artifacts/runtime_recovery_demo/runtime-report.json)
 - [Inspect the transition ledger](artifacts/runtime_recovery_demo/transition_ledger.jsonl)
