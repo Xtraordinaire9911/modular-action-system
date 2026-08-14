@@ -17,6 +17,7 @@ from src.adaptation.trace_ledger import EpisodeFailureEvent, TraceLedger
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
 from src.effectors.system1_reflex_library import System1ReflexLibrary
 from src.isolation.episode import EpisodeIsolationProvider, EpisodeIsolationSession
+from src.planner.goal_skill_selector import GoalSkillSelectionError, GoalSkillSelector
 from src.recovery.recovery_cascade import RecoveryAction, RecoveryCascade, RecoveryDecisionStep
 from src.runtime.action_context import AttemptedAction, FailureContext, PlannerHandoff, build_action_context
 from src.runtime.affordance_controller import AffordanceController
@@ -51,6 +52,7 @@ from src.runtime.state_machine import RuntimeOutcome, RuntimeState
 from src.runtime.system2_planner import System2Planner
 from src.runtime.task_planner import primitive_for_affordance
 from src.safety.unsafe_action_detector import UnsafeActionDetector
+from src.skill_library.library import SkillLibrary
 from src.verification.active_perception import ActivePerceptionResolver
 from src.verification.conflict_detector import EpistemicArbiter
 from src.verification.postcondition_checker import PostconditionChecker
@@ -91,6 +93,8 @@ class RuntimeStepResult:
     system1_cache_hit: bool = False
     system1_fast_path: bool = False
     system1_routing_latency_ms: float = 0.0
+    goal_skill_selection: dict[str, object] = field(default_factory=dict)
+    evidence_trace: list[dict[str, object]] = field(default_factory=list)
 
     @property
     def outcome(self) -> RuntimeOutcome:
@@ -878,13 +882,11 @@ class ContinuousInteractionManager:
         goal_spec: GoalSpec | None = None,
         _episode: EpisodeContext | None = None,
     ) -> RuntimeStepResult:
-        """Run a bounded no-durable-skill goal over current affordances.
+        """Run a structured goal over current affordances.
 
-        This is the action-system zero-shot path: an upstream component has
-        already provided a structured goal. The runtime scans the environment,
-        builds an ActionContext, plans typed primitive actions over affordance
-        IDs, validates the plan, executes through existing backend executors,
-        and verifies the declared goal state.
+        When ``goal_id`` names a durable Skill, the Skill Library validates and
+        binds the parameters before the existing primitive planner runs. Goals
+        without a matching Skill keep the previous zero-shot behavior.
         """
 
         if goal_spec is not None:
@@ -905,7 +907,50 @@ class ContinuousInteractionManager:
                 )
 
         observation = observation or Observation()
-        goal_call = SkillCall(goal_id, dict(parameters or {}))
+        bound_parameters = dict(parameters or {})
+        goal_call = SkillCall(goal_id, bound_parameters)
+        skill_selection_evidence: dict[str, object] = {}
+        durable_skill = self._lookup_skill(goal_id)
+        if durable_skill is not None:
+            selection_goal = goal_spec or GoalSpec(
+                goal_id=goal_id,
+                goal_state=goal_state,
+                parameters=bound_parameters,
+                source="manual",
+            )
+            try:
+                selection = GoalSkillSelector(SkillLibrary([durable_skill])).select(selection_goal)
+            except GoalSkillSelectionError as exc:
+                skill_selection_evidence = _goal_skill_selection_evidence(
+                    goal_id,
+                    durable_skill,
+                    bound_parameters,
+                    validation_status="failed",
+                    validation_error=str(exc),
+                )
+                self.state = RuntimeState.ESCALATED
+                return _attach_goal_skill_evidence(
+                    RuntimeStepResult(
+                        self.state,
+                        None,
+                        recovery_tier=4,
+                        reason=str(exc),
+                        failure_boundary="skill_spec_insufficient",
+                        failure_type="invalid_skill_parameters",
+                        plan_validation_errors=[str(exc)],
+                        user_action_required=True,
+                    ),
+                    skill_selection_evidence,
+                )
+            goal_call = selection.skill_call
+            bound_parameters = dict(selection.skill_call.params)
+            skill_selection_evidence = _goal_skill_selection_evidence(
+                goal_id,
+                selection.skill_tuple,
+                bound_parameters,
+                validation_status="passed",
+            )
+
         episode = _episode or self._new_episode()
         self.cognitive_map.set_current_skill(goal_call)
         self.cognitive_map.update_from_observation(observation)
@@ -933,19 +978,20 @@ class ContinuousInteractionManager:
                     goal_spec=goal_spec,
                     _episode=episode,
                 )
-            return gate
+            return _attach_goal_skill_evidence(gate, skill_selection_evidence)
 
         safety_constraints = ["do not use raw selectors", "do not bypass unresolved sensory conflicts"]
         if goal_spec is not None:
             safety_constraints.extend(goal_spec.safety_constraints)
-        return await self._execute_goal_episode(
+        result = await self._execute_goal_episode(
             goal_call=goal_call,
             goal_state=goal_state,
-            parameters=dict(parameters or {}),
+            parameters=bound_parameters,
             observation=observation,
             safety_constraints=safety_constraints,
             episode=episode,
         )
+        return _attach_goal_skill_evidence(result, skill_selection_evidence)
 
     async def run_isolated_goal(
         self,
@@ -2474,6 +2520,50 @@ def _verification_failure(result: ExecutionResult, observation_failure: str | No
         transition_id=result.transition_id,
         metadata=dict(result.metadata),
     )
+
+
+def _goal_skill_selection_evidence(
+    goal_id: str,
+    skill: SkillTuple,
+    parameters: dict[str, object],
+    *,
+    validation_status: str,
+    validation_error: str = "",
+) -> dict[str, object]:
+    """Build JSON-friendly evidence for the GoalSpec-to-Skill boundary."""
+
+    evidence: dict[str, object] = {
+        "goal_id": goal_id,
+        "skill_id": skill.skill_id,
+        "parameters": dict(parameters),
+        "preconditions": [condition.predicate for condition in skill.preconditions],
+        "postconditions": [condition.predicate for condition in skill.postconditions],
+        "preferred_backends": list(skill.preferred_backends),
+        "validation_status": validation_status,
+    }
+    if validation_error:
+        evidence["validation_error"] = validation_error
+    return evidence
+
+
+def _attach_goal_skill_evidence(
+    result: RuntimeStepResult,
+    evidence: dict[str, object],
+) -> RuntimeStepResult:
+    """Attach Skill selection to the result and connect it to its transitions."""
+
+    if not evidence:
+        return result
+    result.goal_skill_selection = dict(evidence)
+    event = {
+        "event": "goal_skill_selection",
+        **evidence,
+        "episode_id": result.episode_id,
+        "transition_ids": list(result.transition_ids),
+    }
+    if event not in result.evidence_trace:
+        result.evidence_trace.insert(0, event)
+    return result
 
 
 def _primitive_skill_tuple(

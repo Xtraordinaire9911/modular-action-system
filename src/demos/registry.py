@@ -204,6 +204,24 @@ DEMOS: list[Demo] = [
         duration_hint="~1min",
     ),
     Demo(
+        name="supervised-pip-rehearsal",
+        title="GoalSpec-to-Skill and supervised takeover rehearsal",
+        summary="Runs the real action-system loop with deterministic in-memory browser/WoT adapters, "
+        "including isolation, a Tier-4 pause, human resume, fresh observation, and one evidence file.",
+        command=("scripts/run_fadi_demo.py", "--dry-run"),
+        duration_hint="~5s",
+    ),
+    Demo(
+        name="supervised-pip-live",
+        title="Visible supervised takeover toward PiP",
+        summary="Shows a headed smart-room browser: the agent types booking details, pauses before "
+        "Book Room, lets a human complete it, then re-observes without repeating the click.",
+        command=("scripts/run_fadi_demo.py",),
+        requires=("browser", "smart_room"),
+        headed_args=("--headed",),
+        duration_hint="~1min",
+    ),
+    Demo(
         name="live-runtime",
         title="Live runtime tracer bullet",
         summary="Observe-plan-act-verify-recover against the running smart-room environment.",

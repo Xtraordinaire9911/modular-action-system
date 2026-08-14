@@ -80,6 +80,7 @@ class AffordanceSemanticBinding:
     stable_key: str = ""
     idempotent: bool = False
     skill_id: str = ""
+    safety_level: Literal["low", "medium", "high"] | None = None
 
     def matches(self, affordance: Affordance) -> bool:
         if affordance.source != self.source:
@@ -368,6 +369,7 @@ class SmartRoomLiveEnvironment:
 
     def _annotate(self, affordance: Affordance) -> Affordance:
         locator = dict(affordance.locator)
+        safety_level = affordance.safety_level
         for binding in self.semantic_bindings:
             if not binding.matches(affordance):
                 continue
@@ -387,7 +389,9 @@ class SmartRoomLiveEnvironment:
                 locator["idempotent"] = True
             if binding.skill_id:
                 locator["skill_id"] = binding.skill_id
-        return replace(affordance, locator=locator)
+            if binding.safety_level is not None:
+                safety_level = binding.safety_level
+        return replace(affordance, locator=locator, safety_level=safety_level)
 
     async def _read_dom_assertions(self, captured_at_ms: int) -> list[ObservedAssertion]:
         assertions: list[ObservedAssertion] = []

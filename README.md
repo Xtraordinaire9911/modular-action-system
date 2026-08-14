@@ -230,7 +230,7 @@ For full install/troubleshooting details see `env/RUNBOOK_external_envs.md` § A
 Start the React dashboard and node-wot servient:
 
 ```bash
-docker compose -f env/docker-compose.yml up --build
+docker compose -f env/docker-compose.yml up --build -d
 ```
 
 Open:
@@ -473,6 +473,32 @@ deliberately serializes isolated episodes, even when separate managers create
 separate providers. It is not the Windows RDP child desktop from the UFO2 paper:
 independent Windows input queues, application processes, and a visible nested
 desktop remain a later Windows-specific provider.
+
+### Fadi weekly update demo
+
+The focused demo is titled **Supervised takeover / isolation toward PiP**. It
+selects `confirm_booking` from a real `GoalSpec`, lets CIM generate typed
+primitives from live affordances, pauses before the protected final click, and
+writes the goal, selected Skill, primitives, human decision, verification, and
+isolation result to one evidence file.
+
+First start the smart-room environment, then run the visible walkthrough:
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+.venv/bin/python scripts/run_fadi_demo.py --headed
+```
+
+At the terminal prompt choose `t`, click **Book Room** in Chromium, then press
+Enter. The runtime re-observes the page, sees that the human already completed
+the goal, and does not repeat the click. For a quick rehearsal without Docker:
+
+```bash
+.venv/bin/python scripts/run_fadi_demo.py --dry-run
+```
+
+Both modes write `artifacts/fadi_weekly_demo/episode.json`. The dry run is a
+deterministic contract rehearsal; the headed run is the visual evidence.
 
 ## Demo
 
