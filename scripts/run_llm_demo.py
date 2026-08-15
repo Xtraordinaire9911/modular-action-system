@@ -65,6 +65,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from scripts.run_room_prepared import reset_room  # noqa: E402
 from src.demos.model_panel import ModelPanel  # noqa: E402
 from src.demos.realistic_faults import FAULTS  # noqa: E402
 from src.effectors.wot_executor import WotExecutor  # noqa: E402
@@ -580,6 +581,13 @@ def main() -> int:
     parser.add_argument("--record", action="store_true", help="Capture the page and convert it to mp4.")
     parser.add_argument("--dashboard", default=DASHBOARD_URL, help="Smart-room dashboard URL.")
     parser.add_argument("--directory", default=DIRECTORY_URL, help="Thing Directory base URL.")
+    parser.add_argument(
+        "--no-reset",
+        dest="reset",
+        action="store_false",
+        default=True,
+        help="Keep whatever the last run left in the room instead of resetting first.",
+    )
     args = parser.parse_args()
 
     for stream in (sys.stdout, sys.stderr):
@@ -606,6 +614,13 @@ def main() -> int:
         print("  start it with:  docker compose -f env/docker-compose.yml up -d\n")
         return 2
 
+    # Without this the device scene stops proving anything on the second run: the
+    # previous run left the thermostat at 22, so a write that never arrived still
+    # reads back 22 and a broken write looks confirmed. A rehearsal followed by a
+    # live run is exactly that sequence, which makes this a demo-day problem
+    # rather than a theoretical one.
+    reset_error = reset_room() if args.reset else "skipped by --no-reset"
+
     launch: dict[str, Any] = {"headless": not args.headed}
     if args.record and "record_video_dir" in inspect.signature(BrowserSession.launch).parameters:
         launch["record_video_dir"] = str(out)
@@ -630,6 +645,7 @@ def main() -> int:
     print(f"\n{_LINE}\n  THE SAME LOOP, WITH AND WITHOUT A MODEL\n{_LINE}")
     print(f"  surface      : {url}   (the dashboard: the digital half)")
     print(f"  devices      : {room.titles()}   (from {args.directory}/things: the physical half)")
+    print(f"  room reset   : {'yes, to its initial state' if not reset_error else reset_error}")
     if room.ready and room.error:
         print(f"  note         : the TDs advertise an address the host cannot reach; rewrote {room.error}")
     elif not room.ready:
