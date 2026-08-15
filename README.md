@@ -18,43 +18,63 @@ and failure-injection evaluation.
 
 ### What the language model actually changes
 
-
-https://github.com/user-attachments/assets/eff94dd4-661b-41b8-b6ea-c3c39c89e9c7
-
-
-- [Open the same file from the repository](artifacts/llm_demo/llm-vs-rules.mp4) (1 min 51 s)
+- **[Play the current recording](artifacts/llm_demo/llm-vs-rules-smartroom.mp4)** — the
+  smart room, four scenes, 2.0 MB. *(Not embedded above: an inline player needs a
+  GitHub-hosted copy, and this recording has not been re-uploaded since the demo
+  moved into the smart room. The embedded player that used to sit here showed the
+  earlier shopping scenario, which is no longer what this section describes.)*
 - [Inspect the run report](artifacts/llm_demo/run-report.json)
 - [Inspect every vision call this recording made](artifacts/llm_demo/vision-calls.jsonl), and [every intent call](artifacts/llm_demo/intent-calls.jsonl) — model, latency, raw reply, screenshot digest
 - [Inspect the evaluation behind the claims](artifacts/model_value/model_value_report.json)
+- [The previous recording, on the shopping mock](artifacts/llm_demo/llm-vs-rules.mp4) — kept
+  because it is a real run, but it is the earlier scenario, not the use case
 
-Four scenes, each running the rule-based path and the model path **on the same
-sentence, at the same time**, because a caption saying "sent to a language
-model" looks identical whether a model ran or not. On screen: all twelve
-fallback patterns and which matched; the request sent and the model's raw reply,
-revealed line by line, with latency and provider-reported token counts; the
-exact image bytes handed to the vision model, rendered in the page, beside its
-answer in its own words; and running totals for calls, tokens and model time.
+Four scenes **in the smart room**, each running the rule-based path and the model
+path **on the same sentence, at the same time**, because a caption saying "sent
+to a language model" looks identical whether a model ran or not. On screen: all
+twelve fallback patterns and which matched; the request sent and the model's raw
+reply, revealed line by line, with latency and provider-reported token counts;
+the exact image bytes handed to the vision model, rendered in the page, beside
+its answer in its own words; and running totals for calls, tokens and model time.
 
-Scene 1 is the control — a sentence written to match a keyword pattern, where
-the model earns nothing. Scene 4 is the decisive one: the confirmation is in the
-DOM and painted over on screen, so every text-based check in this repository
-passes, and only looking catches it. Result of the recorded run: **rules 1/4,
-model 4/4, one false success caught**, on 7 model calls and about 2,800 tokens.
+The room has two halves and the run touches both, which is the point of the use
+case rather than a detail of it:
+
+| scene | what is said | surface | why it is there |
+|---|---|---|---|
+| 1 | "book room A at 14:00" | dashboard (DOM) | the control — a keyword sentence, where the model earns nothing |
+| 2 | "I need somewhere to present at 15:00, room B please" | dashboard (DOM) | same goal, no pattern matches; the model interprets it |
+| 3 | "it's too cold, put it at 22 please" | **device (WoT)** | no control on the page can do it — the target is resolved from the room's own Thing Descriptions and read back from the device |
+| 4 | "hold room C for me at 16:00" | dashboard (DOM) | the confirmation is in the DOM and painted over on screen |
+
+Scene 3 is the half an ordinary browser agent does not have: the action leaves
+the browser, and the dashboard is where it becomes visible again. Scene 4 is the
+decisive one for the vision model — every text-based check in this repository
+passes there, and only looking catches it. Result of the recorded run: **rules
+1/4, model 4/4, one false success caught**, on 8 model calls.
 `qwen-plus` for intent, `qwen-vl-plus` for vision.
 
 ```bash
 python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5
 ```
 
-The browser is visible by default; add `--headless` for a dry run with no
-window. Timed on this machine against the real endpoints, headed, no flag
-invented: **1 minute 39 seconds**, against **1:53** at the library defaults —
-both under the two-minute mark, this one with about 20 real seconds of margin
-for a slower network on the day. `--pace` scales every beat by the same
-factor, so the beats the code already weights heavier (a verdict, a caught
-false success get up to 2.4×; a transition gets 0.4–0.6×) stay proportionally
-longer than the ones that exist to move the story along, not to be read
-carefully.
+The browser is visible by default; add `--headless` for a dry run with no window,
+and `--record` to write the mp4 (which adds its own encoding time after the run,
+so time the demo without it). Needs `docker compose up` first — the room is the
+environment, not a fixture.
+
+Timed on this machine against the real endpoints, headed, no recording:
+**1 minute 50 seconds**, with about 10 real seconds of margin under two minutes
+for a slower network on the day. It is 11 seconds longer than the shopping
+version it replaced, and the extra time is scene 3 doing something that scene
+could not: resolving a device from the room's Thing Descriptions, writing to it,
+and reading the value back before the page is consulted at all.
+
+`--pace` scales every beat by the same factor, so the beats that carry new
+information — the resolved device, the read-back, the injected fault, the model's
+own words — stay proportionally longer than the ones that exist to move the scene
+along. The verdict at the end of each scene is deliberately one of the short
+ones: it is a single line, and the panel stays up while the next scene loads.
 
 ### The narrated agent loop, with no model in it
 
@@ -178,14 +198,16 @@ this project actually reaches for.
 
 ### The demo
 
-Same command as under the recording at the top of this file:
+Needs the smart room up (see below). Same command as under the recording at the
+top of this file:
 
 ```bash
+docker compose -f env/docker-compose.yml up -d
 python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5
 ```
 
-Measured headed against the real endpoints: **1:39**. See the paragraph under
-the first video above for what the parameters do and why.
+Measured headed against the real endpoints: **1:50**. See the paragraph under
+the first recording above for what the parameters do and why.
 
 ### Clean clone to running demo, one command
 
@@ -218,11 +240,12 @@ needs the Docker services below running first.
 docker compose -f env/docker-compose.yml up --build
 ```
 
-Dashboard on `:3000`; Thing Descriptions and the Thing Directory on `:8080`;
-the failure control plane on `:8081`. `python run_demo.py --probe-env` checks
-all of it is reachable and reports `environment.all_ok`.
+Dashboard on `:3000`; the Things and their Thing Descriptions on `:8080`; the
+failure control plane on `:8081`; the runtime Thing Directory on `:8082`, which
+is what the agent asks which devices exist. `python run_demo.py --probe-env`
+checks all of it is reachable and reports `environment.all_ok`.
 
-### Drive it from one sentence
+### Drive the production runtime from one sentence
 
 ```bash
 python scripts/run_intent_episode.py --utterance "add the wireless headphones to my cart"
@@ -233,6 +256,13 @@ The sentence goes through `IntentPlanner`, the resulting `GoalSpec` into
 `RuntimeEpisodeRunner` on a live page, and a vision model verifies the region
 the goal names. `--suite` also prints which utterances the rule fallback could
 not have handled.
+
+This one runs on the **local mock environments**, not the smart room: it serves
+them from its own static server, which is what lets it run with no Docker and no
+fixed port. It is the generalisation harness — the same runtime over a second
+kind of page — and it says so rather than pretending the shop is the use case. A
+goal that belongs to the dashboard is declined here by name, with the command
+that does serve it.
 
 ### Prepare the room from one sentence
 

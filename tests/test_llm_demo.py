@@ -17,8 +17,9 @@ import sys
 from pathlib import Path
 
 from src.demos.model_panel import ModelPanel
+from src.planner.device_binding import device_binding_for
 from src.planner.environment_binding import binding_for
-from src.planner.intent_planner import GoalPlan, rule_fallback, rule_trace
+from src.planner.intent_planner import KNOWN_GOAL_STATES, GoalPlan, rule_fallback, rule_trace
 from src.runtime.goal_spec import GoalSpec
 
 _PATH = Path(__file__).resolve().parents[1] / "scripts" / "run_llm_demo.py"
@@ -52,20 +53,37 @@ def test_one_scene_makes_the_page_lie_and_only_one():
     assert faulted[0].fault == "invisible_confirmation"
 
 
-def test_every_scene_names_a_product_this_shop_sells():
-    """The demo clicks the control the goal resolves to, so the subject must ground.
+def test_every_scene_asks_for_something_this_room_can_do():
+    """The demo acts on whatever the goal resolves to, so every scene must ground.
 
-    A sentence that names nothing the page sells would leave the model free to
-    invent a subject, and the demo would spend its most-watched minute reporting
-    that it could not find a button.
+    A sentence naming something the room does not have would leave the model free
+    to invent a subject, and the demo would spend its most-watched minute
+    reporting that it could not find a control.
     """
-    binding = binding_for("item_in_cart")
-    assert binding is not None
-    shop = (Path(__file__).resolve().parents[1] / "env" / "mock_envs" / "shopping.html").read_text(encoding="utf-8")
     for scene in demo.SCENES:
-        named = [phrase for phrase in binding.subject_aliases if phrase in scene.utterance.lower()]
-        assert named, f"{scene.utterance!r} names no product the binding can resolve"
-        assert f'data-id="{binding.subject_aliases[named[0]]}"' in shop
+        assert scene.expect_goal, f"{scene.title} does not say which goal it is for"
+        assert scene.expect_goal in KNOWN_GOAL_STATES, f"{scene.expect_goal} is outside the closed vocabulary"
+        served = binding_for(scene.expect_goal) is not None or device_binding_for(scene.expect_goal) is not None
+        assert served, f"nothing in this room can satisfy {scene.expect_goal}"
+
+
+def test_the_demo_touches_both_halves_of_the_use_case():
+    """The use case is a digital surface over physical devices, not a web page.
+
+    A run that only ever clicked the dashboard would be evidence for half of it,
+    and the half that is easiest to mistake for an ordinary browser agent. One
+    scene has to leave the browser and write to a Thing.
+    """
+    surfaces = {"device" if device_binding_for(s.expect_goal) else "dashboard" for s in demo.SCENES}
+    assert surfaces == {"dashboard", "device"}, f"the scenes only exercise {surfaces}"
+
+
+def test_no_goal_is_served_by_both_surfaces():
+    """The runner checks the device table first, so an overlap would make which
+    surface acts depend on that ordering rather than on the goal itself."""
+    for goal_state in KNOWN_GOAL_STATES:
+        both = binding_for(goal_state) is not None and device_binding_for(goal_state) is not None
+        assert not both, f"{goal_state} is claimed by both the dashboard and the device tables"
 
 
 # ── what the demo reports ───────────────────────────────────────────────────────

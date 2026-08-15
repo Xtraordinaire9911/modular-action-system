@@ -30,7 +30,7 @@ class EnvironmentBinding:
     """Everything the runtime needs to attempt one goal state in one environment."""
 
     goal_state: str
-    page: str  # file under env/mock_envs
+    page: str  # file under env/mock_envs, or "" when the surface is the dashboard
     completion_template: str  # selector family; {subject} filled from parameters
     # Which parameter names the thing acted on. A tuple because the intent layer
     # is free to name it: the rule fallback emits "item"/"subject", and a model
@@ -61,6 +61,12 @@ class EnvironmentBinding:
     # change is that it becomes filled. Asking about the post title against an
     # arrow got a confident False, correctly - the crop had no title in it.
     visual_claim: str = "an entry for {subject}"
+    # Which surface serves this goal. The mock environments are files a runner
+    # can serve itself; the smart-room dashboard is served by Docker on a fixed
+    # port and is the *digital half* of the declared use case, sitting over the
+    # same devices the WoT side writes to. A runner that cannot reach a surface
+    # must say so rather than fetching a 404 and reporting a missing control.
+    surface: str = "mock_env"  # "mock_env" | "dashboard"
 
     def subject_of(self, parameters: dict[str, Any]) -> str:
         """The concrete thing this goal is about, as the page names it.
@@ -140,6 +146,32 @@ class EnvironmentBinding:
 # One entry per goal state this repository can actually attempt. A goal state
 # with no entry is reported as unsupported here rather than attempted badly.
 BINDINGS: dict[str, EnvironmentBinding] = {
+    "room_booked": EnvironmentBinding(
+        goal_state="room_booked",
+        page="",  # the dashboard is served by Docker, not by the runner
+        surface="dashboard",
+        completion_template="[data-testid='book-room-button']",
+        subject_parameter="room",
+        subject_parameter_aliases=("target", "subject", "name"),
+        success_selector="[data-testid='booking-status']",
+        # Not just "booked". Before anything is clicked the same element reads
+        # "not booked", which *contains* that word, so a bare check reports the
+        # goal as already met and the episode passes without acting. Requiring
+        # the room the model named makes the proof both unambiguous and
+        # dependent on the model's own answer.
+        success_template="booked: room {subject}",
+        state_entity="room",
+        state_attribute="booked",
+        # The room and the time are typed into the form before the button is
+        # pressed, so what the model extracted is what actually gets booked. A
+        # run that clicked Book Room without filling these would book whatever
+        # the form happened to be showing and still report success.
+        parameter_controls={
+            "room": "[data-testid='room-input']",
+            "time": "[data-testid='time-input']",
+        },
+        visual_claim="a booking confirmation naming room {subject}",
+    ),
     "item_in_cart": EnvironmentBinding(
         goal_state="item_in_cart",
         page="shopping.html",
@@ -196,4 +228,84 @@ def binding_for(goal_state: str) -> EnvironmentBinding | None:
     return BINDINGS.get(goal_state)
 
 
-__all__ = ["BINDINGS", "EnvironmentBinding", "binding_for"]
+# --- the physical half -----------------------------------------------------------
+# A device goal is not completed by clicking anything on a page: the write target
+# is resolved from the Thing Descriptions the room publishes (see
+# src.planner.device_binding) and the value goes over WoT. But the dashboard is a
+# *view* of those same devices, so the effect becomes visible there a moment
+# later, and that is where a person - or a vision model - can confirm it.
+#
+# Keeping this separate from EnvironmentBinding is deliberate. The tables above
+# say which control completes a goal; there is no such control here, and giving a
+# device goal an empty completion would invite a runner to click nothing and call
+# it done. This says only where to look afterwards.
+
+
+@dataclass(frozen=True)
+class DeviceView:
+    """Where a device goal becomes visible on the smart-room dashboard."""
+
+    goal_state: str
+    region: str  # the panel to crop for the vision model
+    value_selector: str  # the element whose text carries the value
+    suffix: str = ""  # what the dashboard prints after the value, e.g. " C"
+    visual_claim: str = ""  # asked of a crop of `region`, answerable from it alone
+
+    def proof_for(self, value: Any) -> str:
+        """The text that must appear once the device really holds ``value``.
+
+        Numbers arrive from a servient as ``22`` or ``22.0`` and the dashboard
+        renders whichever it was given, so an integral float is compared as the
+        integer a person would read.
+        """
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        return f"{value}{self.suffix}"
+
+    def question_for(self, value: Any) -> str:
+        claim = (self.visual_claim or "the value {value}").format(value=self.proof_for(value))
+        return f"Does this image show {claim}? Answer from the image only."
+
+
+DEVICE_VIEWS: dict[str, DeviceView] = {
+    "temperature_set": DeviceView(
+        goal_state="temperature_set",
+        region="[data-testid='thermostat-panel']",
+        value_selector="[data-testid='target-temp']",
+        suffix=" C",
+        visual_claim="a thermostat panel whose Target reads {value}",
+    ),
+    "lighting_set": DeviceView(
+        goal_state="lighting_set",
+        region="[data-testid='lighting-panel']",
+        value_selector="[data-testid='brightness']",
+        suffix=" %",
+        visual_claim="a lighting panel whose Brightness reads {value}",
+    ),
+    "projector_on": DeviceView(
+        goal_state="projector_on",
+        region="[data-testid='projector-panel']",
+        value_selector="[data-testid='projector-power']",
+        visual_claim="a projector panel whose Power reads {value}",
+    ),
+    "projector_off": DeviceView(
+        goal_state="projector_off",
+        region="[data-testid='projector-panel']",
+        value_selector="[data-testid='projector-power']",
+        visual_claim="a projector panel whose Power reads {value}",
+    ),
+}
+
+
+def device_view_for(goal_state: str) -> DeviceView | None:
+    return DEVICE_VIEWS.get(goal_state)
+
+
+__all__ = [
+    "BINDINGS",
+    "DEVICE_VIEWS",
+    "DeviceView",
+    "EnvironmentBinding",
+    "binding_for",
+    "device_view_for",
+]

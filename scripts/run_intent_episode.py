@@ -173,6 +173,22 @@ def run_episode(
         say(f"  unsupported: no environment here can satisfy {goal.goal_state!r}")
         return Episode(utterance=utterance, outcome="unsupported_goal", goal_state=goal.goal_state, source=plan.source)
 
+    if binding.surface != "mock_env":
+        # This runner serves the mock environments from its own static server on
+        # a free port. A goal that lives on the smart-room dashboard needs the
+        # Docker services instead, so it is declined by name rather than fetched
+        # as a missing file and reported as a missing control.
+        say(f"  unsupported here: {goal.goal_state!r} lives on the {binding.surface}, which this runner does not serve")
+        say("  run it with:  python scripts/run_llm_demo.py   (smart-room dashboard, needs docker compose up)")
+        return Episode(
+            utterance=utterance,
+            outcome="unsupported_goal",
+            env=binding.surface,
+            goal_state=goal.goal_state,
+            parameters=dict(goal.parameters),
+            source=plan.source,
+        )
+
     completion = binding.completion_for(goal.parameters)
     if not completion:
         say(f"  unsupported: the goal named no {binding.subject_parameter!r} this environment offers")

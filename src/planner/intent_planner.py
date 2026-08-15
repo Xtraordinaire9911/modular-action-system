@@ -45,6 +45,7 @@ DEFAULT_LEDGER = Path("artifacts/intent_planner/calls.jsonl")
 # a closed vocabulary. Adding a capability means adding it here on purpose.
 KNOWN_GOAL_STATES = (
     "room_prepared",
+    "room_booked",
     "temperature_set",
     "lighting_set",
     "projector_on",
@@ -68,6 +69,11 @@ Reply with JSON only, no prose, using exactly these keys:
 
 What each goal_state means, so a request phrased differently still lands:
   room_prepared     get a room ready for use
+  room_booked       reserve one of the rooms this building's dashboard shows,
+                    for a time - book it, hold it, I need somewhere to meet or
+                    to present. Put the room in parameters.room and the time in
+                    parameters.time. Only rooms in this building: booking
+                    anything else is outside what this agent can reach.
   temperature_set   change what a thermostat is aiming for
   lighting_set      change how bright the lights are
   projector_on/off  switch a projector or beamer
@@ -277,6 +283,9 @@ _KEYWORD_GOALS: list[tuple[str, str]] = [
     (r"\barchive\b", "message_archived"),
     (r"\bupvote\b", "post_upvoted"),
     (r"\bprepare\b.*\broom\b", "room_prepared"),
+    # Deliberately requires both words. "book" alone would swallow "book me a
+    # flight", which this agent cannot do and must keep refusing.
+    (r"\bbook\b.*\broom\b", "room_booked"),
 ]
 
 
