@@ -1,5 +1,6 @@
 """The same loop, driven by a model, with the rules running beside it.
 
+    docker compose -f env/docker-compose.yml up -d
     python scripts/run_llm_demo.py
     python scripts/run_llm_demo.py --pace 1.5 --hold 3 --record
 
@@ -7,6 +8,17 @@ The narrated loop demo is deterministic end to end, so watching it cannot tell
 you what a model contributes. This one is built around exactly that question, and
 it answers it with evidence rather than narration - a caption saying "sent to a
 language model" looks the same whether a model ran or not.
+
+It runs in the declared use case: the smart room. That matters for what is being
+claimed, not only for consistency. The room has two halves, and an agent that
+only ever worked on one of them would be an ordinary browser agent -
+
+  the digital half   the dashboard a person actually uses, which the agent reads
+                     and clicks like any other page
+  the physical half  the thermostat, lights and projector, which no control on
+                     that page can change. The agent resolves where to write from
+                     the Thing Descriptions the room publishes, writes over WoT,
+                     and reads the property back from the device itself
 
 On screen, for every scene, at the same time:
 
@@ -21,19 +33,21 @@ On screen, for every scene, at the same time:
 
 Four scenes:
 
-  1. a request phrased the way the rules expect      both succeed - the model is
+  1. a booking phrased the way the rules expect      both succeed - the model is
                                                      earning nothing here
-  2. the same request phrased like a person          nine patterns, no match; the
-                                                     model interprets it
-  3. the goal is reached and both sources agree      confirmed by text and by
-                                                     looking, independently
-  4. the page lies: the confirmation is in the DOM   the text oracle passes and
-     and painted over on screen                      the model contradicts it
+  2. the same booking phrased like a person          twelve patterns, no match;
+                                                     the model interprets it
+  3. a goal no control on the page can reach         resolved from the room's own
+                                                     Thing Descriptions, written
+                                                     over WoT, read back
+  4. the dashboard lies: the confirmation is in      the text oracle passes and
+     the DOM and painted over on screen              the model contradicts it
 
 Scene 4 is the one no text-based check in this repository can do - all of them
 pass there. Nothing is staged: the rules really run, the model really answers,
-and the screenshot is the region of the live page. With no API key configured the
-run still completes and says at every step that no model was available.
+the write really reaches the device, and the screenshot is the region of the live
+page. With no API key configured the run still completes and says at every step
+that no model was available.
 """
 
 from __future__ import annotations
@@ -42,6 +56,8 @@ import argparse
 import json
 import sys
 import time
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -49,11 +65,19 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.run_agent_on_env import _start_static_server  # noqa: E402
+from scripts.run_room_prepared import reset_room  # noqa: E402
 from src.demos.model_panel import ModelPanel  # noqa: E402
 from src.demos.realistic_faults import FAULTS  # noqa: E402
+from src.effectors.wot_executor import WotExecutor  # noqa: E402
+from src.perception.td_affordance_parser import TdAffordanceParser  # noqa: E402
+from src.perception.thing_directory import ThingDirectoryClient, ThingDirectoryError  # noqa: E402
 from src.perception.vlm_observer import VlmObserver, available_vision_client  # noqa: E402
-from src.planner.environment_binding import binding_for  # noqa: E402
+from src.planner.device_binding import (  # noqa: E402
+    DeviceResolutionError,
+    device_binding_for,
+    resolve_device_target,
+)
+from src.planner.environment_binding import binding_for, device_view_for  # noqa: E402
 from src.planner.intent_planner import (  # noqa: E402
     KNOWN_GOAL_STATES,
     IntentPlanner,
@@ -61,6 +85,10 @@ from src.planner.intent_planner import (  # noqa: E402
     rule_fallback,
     rule_trace,
 )
+from src.runtime.device_goal import values_match  # noqa: E402
+
+DASHBOARD_URL = "http://localhost:3000"
+DIRECTORY_URL = "http://localhost:8082"
 
 _LINE = "=" * 78
 
@@ -72,6 +100,10 @@ class Scene:
     title: str
     utterance: str
     why: str
+    # Which goal this sentence is here to produce. Declared rather than inferred
+    # so the suite can check that the room can actually serve it, and that the
+    # four scenes between them touch both halves of the use case.
+    expect_goal: str
     fault: str = ""
     expect_rules_to_fail: bool = False
 
@@ -79,29 +111,55 @@ class Scene:
 SCENES: tuple[Scene, ...] = (
     Scene(
         title="SCENE 1/4 - phrased the way the rules expect",
-        utterance="add the wireless headphones to my cart",
+        utterance="book room A at 14:00",
         why="The control: on a sentence written to match a keyword pattern, the model earns nothing.",
+        expect_goal="room_booked",
     ),
     Scene(
         title="SCENE 2/4 - phrased the way a person speaks",
-        utterance="grab me those wireless headphones, I need them for my commute",
-        why="Same intent, no keyword the rules look for. Measured over nine such requests: rules 0, model 9.",
+        utterance="I need somewhere to present at 15:00, room B please",
+        why="Same intent, none of the twelve patterns match. Measured over nine such requests: rules 0, model 9.",
+        expect_goal="room_booked",
         expect_rules_to_fail=True,
     ),
     Scene(
-        title="SCENE 3/4 - two independent sources agree",
-        utterance="order me the mechanical keyboard",
-        why="The DOM says the item is there. A vision model is shown the region and asked separately.",
+        title="SCENE 3/4 - the physical half of the room",
+        utterance="it's too cold, put it at 22 please",
+        why="No control on this page can do it. The target is resolved from the Thing Descriptions "
+        "the room publishes, written over WoT, and read back from the device.",
+        expect_goal="temperature_set",
         expect_rules_to_fail=True,
     ),
     Scene(
-        title="SCENE 4/4 - the page lies, and only looking catches it",
-        utterance="I'll take one of those 4K monitors",
+        title="SCENE 4/4 - the dashboard lies, and only looking catches it",
+        utterance="hold room C for me at 16:00",
         why="The confirmation stays in the DOM and is painted over on screen. Every text check here passes.",
+        expect_goal="room_booked",
         fault="invisible_confirmation",
         expect_rules_to_fail=True,
     ),
 )
+
+
+@dataclass
+class Room:
+    """The devices the environment published, and the way to write to them.
+
+    Discovery happens once per run rather than once per scene: which Things exist
+    is a fact about the room, not about the sentence, and re-fetching it per scene
+    would make the demo look like it re-derives the endpoint each time.
+    """
+
+    models: list[Any] = field(default_factory=list)
+    executor: Any = None
+    error: str = ""
+
+    @property
+    def ready(self) -> bool:
+        return bool(self.models) and self.executor is not None
+
+    def titles(self) -> str:
+        return ", ".join(m.title or m.thing_id for m in self.models) or "nothing"
 
 
 @dataclass
@@ -111,6 +169,10 @@ class SceneRecord:
     rules_goal: str = ""
     model_goal: str = ""
     model_source: str = ""
+    # Which half of the room this scene acted on. Recorded because the use case
+    # is a digital surface over physical devices, and a run that only ever
+    # touched one of them should not be able to look like it touched both.
+    surface: str = ""
     model_latency_ms: float = 0.0
     model_tokens: dict[str, int] = field(default_factory=dict)
     dom_says_met: bool = False
@@ -128,6 +190,7 @@ class SceneRecord:
             "rules_goal": self.rules_goal,
             "model_goal": self.model_goal,
             "model_source": self.model_source,
+            "surface": self.surface,
             "model_latency_ms": round(self.model_latency_ms, 1),
             "model_tokens": self.model_tokens,
             "dom_says_met": self.dom_says_met,
@@ -185,6 +248,194 @@ def usage_of(client: Any) -> dict[str, int]:
     return dict(getattr(client, "last_usage", {}) or {})
 
 
+def await_text(session: Any, selector: str, wanted: str, *, timeout: float = 4.0) -> bool:
+    """Wait until ``selector`` reads ``wanted``, or give up and let the check fail.
+
+    Returning False rather than raising is deliberate: a value that never arrives
+    is a result the run should report through its normal oracle, not an exception
+    that ends the demo before the evidence is shown.
+    """
+    deadline = time.monotonic() + timeout
+    needle = wanted.strip().lower()
+    while time.monotonic() < deadline:
+        if needle in (session.text_content(selector) or "").lower():
+            return True
+        time.sleep(0.2)
+    return False
+
+
+def reachable(url: str, timeout: float = 2.0) -> bool:
+    """Whether something answers there, checked before the browser is launched.
+
+    A missing room should be one clear sentence naming the compose command, not a
+    Playwright timeout several seconds into a demo.
+    """
+    try:
+        with urllib.request.urlopen(url, timeout=timeout):
+            return True
+    except Exception:
+        return False
+
+
+def discover_room(directory_url: str) -> Room:
+    """Ask the directory which Things exist, and build the writer for them.
+
+    A room that cannot be discovered is reported rather than assumed: the device
+    scene then declines by name instead of writing to an address this code
+    guessed.
+    """
+    try:
+        client = ThingDirectoryClient(directory_url)
+        tds = client.discover_tds()
+        models = client.discover_models()
+    except ThingDirectoryError as exc:
+        return Room(error=str(exc))
+    if not models:
+        return Room(error=f"{directory_url} listed no Things")
+
+    # The servient advertises the address it sees itself on, which inside compose
+    # is a container IP nothing on the host can reach. Discovery looks healthy and
+    # every write times out. Rewriting is reported on screen rather than done
+    # quietly, because the environment is what needs fixing.
+    base = advertised_base(tds)
+    rewritten = ""
+    if base and not reachable(base):
+        split = urllib.parse.urlsplit(directory_url)
+        target = f"{split.scheme or 'http'}://{split.hostname}:{urllib.parse.urlsplit(base).port or 8080}"
+        tds = json.loads(json.dumps(tds).replace(base, target))
+        models = [TdAffordanceParser().parse(td) for td in tds]
+        rewritten = f"{base} -> {target}"
+    room = Room(models=models, executor=WotExecutor(tds))
+    room.error = rewritten
+    return room
+
+
+def advertised_base(tds: list[dict[str, Any]]) -> str:
+    """The scheme://host:port the Thing Descriptions tell clients to write to."""
+    for td in tds:
+        for form in td.get("forms", []) or []:
+            href = str(form.get("href", ""))
+            if href.startswith("http"):
+                split = urllib.parse.urlsplit(href)
+                return f"{split.scheme}://{split.netloc}"
+        for prop in (td.get("properties", {}) or {}).values():
+            for form in prop.get("forms", []) or []:
+                href = str(form.get("href", ""))
+                if href.startswith("http"):
+                    split = urllib.parse.urlsplit(href)
+                    return f"{split.scheme}://{split.netloc}"
+    return ""
+
+
+def act_on_page(
+    session: Any,
+    panel: ModelPanel,
+    plan: Any,
+    *,
+    pace: float,
+) -> tuple[str, str, str] | None:
+    """Do a goal the dashboard itself offers a control for.
+
+    Returns ``(region, proof, question)``, or None when this page cannot do it.
+    """
+    binding = binding_for(plan.goal.goal_state)
+    completion = binding.completion_for(plan.goal.parameters) if binding else ""
+    # The model names the subject in its own words, so the control it resolves to
+    # may not exist here. Say so and stop, rather than clicking into a timeout.
+    if binding is None or not completion or not exists(session, completion):
+        panel.conclude("Understood, but this page has no control for it.", "no")
+        time.sleep(pace * 2)
+        return None
+
+    # What the model extracted is typed in before the button is pressed. Without
+    # this the run would book whatever the form happened to be showing and still
+    # report success, which is the same class of false success this demo exists
+    # to catch - just committed by the runner instead of the page.
+    filled = binding.bindings_for(plan.goal.parameters)
+    for name, control in filled.items():
+        if exists(session, control):
+            session.fill(control, str(plan.goal.parameters[name]))
+    if filled:
+        entered = ", ".join(f"{n}={plan.goal.parameters[n]!r}" for n in filled)
+        panel.conclude(f"entered from the model's own answer: {entered}", "ok")
+        time.sleep(pace * 0.5)  # a short line, and the values are echoed on screen
+
+    session.click(completion)
+    return (
+        binding.success_region(plan.goal.parameters),
+        binding.success_for(plan.goal.parameters),
+        binding.visual_question(plan.goal.parameters),
+    )
+
+
+def act_on_device(
+    session: Any,
+    panel: ModelPanel,
+    plan: Any,
+    room: Room,
+    *,
+    pace: float,
+) -> tuple[str, str, str] | None:
+    """Do a goal no control on the page can do: write to the device itself.
+
+    The dashboard displays these properties but offers no way to change them, so
+    the action leaves the browser entirely. Where to write is resolved from the
+    Thing Descriptions the room published - nothing here names an endpoint - and
+    the value is confirmed by reading the property back from the device before
+    the page is consulted at all.
+    """
+    binding = device_binding_for(plan.goal.goal_state)
+    view = device_view_for(plan.goal.goal_state)
+    if binding is None or view is None:
+        panel.conclude("Understood, but this room has no device for it.", "no")
+        time.sleep(pace * 2)
+        return None
+    if not room.ready:
+        panel.conclude(f"The Thing Directory is not answering: {room.error}", "no")
+        time.sleep(pace * 2)
+        return None
+
+    resolved = resolve_device_target(binding, room.models, plan.goal.parameters)
+    if isinstance(resolved, DeviceResolutionError):
+        panel.conclude(f"Not attempted: {resolved.detail}", "no")
+        time.sleep(pace * 2)
+        return None
+
+    where = f"{resolved.thing_title or resolved.thing_id}.{resolved.property}"
+    panel.conclude(
+        f"discovered {room.titles()}; resolved to {where} = {resolved.value} (from the Thing Descriptions)",
+        "ok",
+    )
+    time.sleep(pace * 1.4)
+
+    try:
+        room.executor.write_state(resolved.source, resolved.value)
+        observed = room.executor.read_state(resolved.source)
+    except Exception as exc:  # a failed write is a result, not a crash
+        panel.conclude(f"the write failed: {type(exc).__name__}: {exc}", "no")
+        time.sleep(pace * 2)
+        return None
+
+    # The servient answers a write that changed nothing with a success status, so
+    # the status is not the evidence. This is the device-side equivalent of the
+    # DOM re-read below, and it happens first.
+    confirmed = values_match(resolved.value, observed)
+    panel.conclude(
+        f"read back from the device: {observed!r} "
+        f"{'- matches what was asked for' if confirmed else '- NOT what was asked for'}",
+        "ok" if confirmed else "no",
+    )
+    time.sleep(pace * 1.4)
+
+    # The dashboard polls the devices on its own schedule, so the digital half
+    # lags the physical one. Waiting for the value to appear rather than sleeping
+    # a fixed guess is both quicker in the normal case and still correct on the
+    # run where the poll happens to have just gone out.
+    proof = view.proof_for(resolved.value)
+    await_text(session, view.value_selector, proof, timeout=4.0)
+    return view.region, proof, view.question_for(resolved.value)
+
+
 def run_scene(
     session: Any,
     panel: ModelPanel,
@@ -195,6 +446,7 @@ def run_scene(
     observer: VlmObserver,
     planner: IntentPlanner,
     text_client: Any,
+    room: Room,
 ) -> SceneRecord:
     record = SceneRecord(title=scene.title, utterance=scene.utterance)
     panel.begin_scene(scene.title, scene.utterance, scene.why)
@@ -242,24 +494,26 @@ def run_scene(
         panel.conclude("The rules produced nothing here. The model produced a goal.", "ok")
         time.sleep(pace * 1.4)
 
-    binding = binding_for(plan.goal.goal_state)
-    completion = binding.completion_for(plan.goal.parameters) if binding else ""
-    # The model names the subject in its own words, so the control it resolves to
-    # may not exist here. Say so and stop, rather than clicking into a timeout.
-    if binding is None or not completion or not exists(session, completion):
-        panel.conclude("Understood, but this page has no control for it.", "no")
-        time.sleep(pace * 2)
+    # --- act ------------------------------------------------------------------
+    # Two surfaces, one goal vocabulary. A goal the dashboard has a control for is
+    # done by using that control; a goal about a device is done over WoT, because
+    # the dashboard shows those properties and offers no way to change them.
+    if device_binding_for(plan.goal.goal_state) is not None:
+        record.surface = "device (WoT)"
+        acted = act_on_device(session, panel, plan, room, pace=pace)
+    else:
+        record.surface = "dashboard (DOM)"
+        acted = act_on_page(session, panel, plan, pace=pace)
+    if acted is None:
         return record
-    region = binding.success_region(plan.goal.parameters)
+    region, proof, question = acted
 
-    # --- act, then check the page twice ---------------------------------------
-    session.click(completion)
+    # --- then check what actually happened, twice -----------------------------
     if scene.fault:
         FAULTS[scene.fault].apply(session, region)
         panel.conclude(f"fault injected: {FAULTS[scene.fault].name}", "no")
         time.sleep(pace * 1.6)
 
-    proof = binding.success_for(plan.goal.parameters)
     observed = (session.text_content(region) or "").lower()
     record.dom_says_met = bool(proof) and proof.lower() in observed
     panel.show_oracle(
@@ -269,7 +523,6 @@ def run_scene(
     time.sleep(pace * 1.6)
 
     # --- the second modality ---------------------------------------------------
-    question = binding.visual_question(plan.goal.parameters)
     image = session.screenshot_element(region) or session.screenshot()
     panel.looking(
         getattr(observer.client, "name", "") or "no vision model configured",
@@ -311,7 +564,11 @@ def run_scene(
         panel.conclude("Two independent sources agree. The goal is confirmed twice.", "ok")
     else:
         panel.conclude(f"Only one source of evidence: {judgement.source}", "no")
-    time.sleep(pace * 2.4)
+    # The verdict is one line and the panel stays up while the next scene loads,
+    # so this is the beat to shorten when the run needs room. The beats that
+    # carry new information - the fault, the read-back, the model's own words -
+    # keep their timing.
+    time.sleep(pace * 1.9)
     return record
 
 
@@ -322,6 +579,15 @@ def main() -> int:
     parser.add_argument("--hold", type=float, default=3.0, help="Seconds to stay on the final summary.")
     parser.add_argument("--headless", dest="headed", action="store_false", default=True)
     parser.add_argument("--record", action="store_true", help="Capture the page and convert it to mp4.")
+    parser.add_argument("--dashboard", default=DASHBOARD_URL, help="Smart-room dashboard URL.")
+    parser.add_argument("--directory", default=DIRECTORY_URL, help="Thing Directory base URL.")
+    parser.add_argument(
+        "--no-reset",
+        dest="reset",
+        action="store_false",
+        default=True,
+        help="Keep whatever the last run left in the room instead of resetting first.",
+    )
     args = parser.parse_args()
 
     for stream in (sys.stdout, sys.stderr):
@@ -339,8 +605,21 @@ def main() -> int:
     out = repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S")
     out.mkdir(parents=True, exist_ok=True)
 
-    httpd, port = _start_static_server(str(repo / "env" / "mock_envs"))
-    url = f"http://127.0.0.1:{port}/shopping.html"
+    # The declared use case, not a stand-in for it: the dashboard is the digital
+    # surface a person uses, and the Things behind it are the physical half. Both
+    # are served by docker compose, so this run needs the room to be up.
+    url = args.dashboard
+    if not reachable(url):
+        print(f"\n  the smart-room dashboard is not answering at {url}")
+        print("  start it with:  docker compose -f env/docker-compose.yml up -d\n")
+        return 2
+
+    # Without this the device scene stops proving anything on the second run: the
+    # previous run left the thermostat at 22, so a write that never arrived still
+    # reads back 22 and a broken write looks confirmed. A rehearsal followed by a
+    # live run is exactly that sequence, which makes this a demo-day problem
+    # rather than a theoretical one.
+    reset_error = reset_room() if args.reset else "skipped by --no-reset"
 
     launch: dict[str, Any] = {"headless": not args.headed}
     if args.record and "record_video_dir" in inspect.signature(BrowserSession.launch).parameters:
@@ -361,7 +640,16 @@ def main() -> int:
     # planner that quietly answers with the rules would compare them to themselves.
     planner = IntentPlanner(client=text, ledger_path=out / "intent-calls.jsonl", allow_fallback=False)
 
+    room = discover_room(args.directory)
+
     print(f"\n{_LINE}\n  THE SAME LOOP, WITH AND WITHOUT A MODEL\n{_LINE}")
+    print(f"  surface      : {url}   (the dashboard: the digital half)")
+    print(f"  devices      : {room.titles()}   (from {args.directory}/things: the physical half)")
+    print(f"  room reset   : {'yes, to its initial state' if not reset_error else reset_error}")
+    if room.ready and room.error:
+        print(f"  note         : the TDs advertise an address the host cannot reach; rewrote {room.error}")
+    elif not room.ready:
+        print(f"  note         : the directory is not answering ({room.error}); the device scene will decline")
     print(f"  intent model : {getattr(text, 'name', '') or 'not configured - the run will say so'}")
     print(f"  vision model : {getattr(vision, 'name', '') or 'not configured - the run will say so'}")
 
@@ -390,6 +678,7 @@ def main() -> int:
                 observer=observer,
                 planner=planner,
                 text_client=text,
+                room=room,
             )
             run.scenes.append(record)
             summary = run.to_dict()
@@ -443,7 +732,6 @@ def main() -> int:
     finally:
         panel.close()
         session.close()
-        httpd.shutdown()
 
     (out / "llm_demo.json").write_text(json.dumps(run.to_dict(), indent=2), encoding="utf-8")
     if args.record:

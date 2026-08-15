@@ -141,10 +141,12 @@ DEMOS: list[Demo] = [
         name="llm-loop",
         title="The same loop, with and without a model",
         summary="Four scenes that put the rule-based path beside the model path on the same "
-        "sentence, ending with a page whose confirmation is in the DOM and painted over on "
-        "screen, which only the vision model catches. Needs a configured API key.",
+        "sentence, in the smart room. One scene leaves the browser entirely and writes to a "
+        "device resolved from the room's own Thing Descriptions; the last one ends with a "
+        "dashboard whose confirmation is in the DOM and painted over on screen, which only the "
+        "vision model catches. Needs the smart room up and a configured API key.",
         command=("scripts/run_llm_demo.py",),
-        requires=("browser",),
+        requires=("browser", "smart_room"),
         headed_args=(),  # headed is the default here; --headless is the opt-out
         duration_hint="~2min",
     ),

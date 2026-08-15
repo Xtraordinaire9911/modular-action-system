@@ -76,9 +76,23 @@ def test_upvote_success_requires_the_post_action_voted_state():
 def test_every_binding_is_complete_enough_to_run():
     for goal_state, binding in BINDINGS.items():
         assert binding.goal_state == goal_state
-        assert binding.page.endswith(".html")
-        assert "{subject}" in binding.completion_template
         assert binding.state_entity and binding.state_attribute, f"{goal_state} has no checkable predicate"
+
+        # A mock environment is a file the runner serves itself; the smart-room
+        # dashboard is served by Docker. Naming a page file for the dashboard
+        # would send a runner looking for a file that does not exist.
+        if binding.surface == "mock_env":
+            assert binding.page.endswith(".html"), f"{goal_state} names no page a runner can serve"
+        else:
+            assert not binding.page, f"{goal_state} is served by the {binding.surface}, so a page file misleads"
+
+        # What the goal is about has to reach the environment somehow: either it
+        # picks which control completes the goal (one add-to-cart button per
+        # product), or it is typed into a control before one is pressed (one Book
+        # Room button, and the room goes in the form). A binding doing neither
+        # would act on whatever the page happened to be showing.
+        grounded = "{subject}" in binding.completion_template or bool(binding.parameter_controls)
+        assert grounded, f"{goal_state} never uses what the goal is about"
 
 
 def test_a_goal_state_with_no_environment_is_reported_not_approximated():
