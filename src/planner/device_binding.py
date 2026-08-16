@@ -38,6 +38,20 @@ class DeviceBinding:
     # so a renamed device is a one-line change here rather than a code change.
     thing_aliases: tuple[str, ...]
     property_aliases: tuple[str, ...]
+    # The property that reports what the device has actually *reached*, when the
+    # device has one. Writing a setpoint and reading it back confirms the device
+    # was told; it does not confirm the room did it, and for anything with mass
+    # those are different facts separated by real time. A goal is met only when
+    # this one arrives.
+    #
+    # Left empty where the distinction would be invented rather than modelled: a
+    # dimmer reaches its level in milliseconds, so `lighting_set` has no measured
+    # property and its write is its own confirmation.
+    measured_property_aliases: tuple[str, ...] = ()
+    # What the measurement should read once the command has taken effect, when
+    # that differs from the commanded value itself. A projector told power="on"
+    # has arrived when its lamp reads "on", not when its switch does.
+    measured_value: Any = None
     # Which goal parameter carries the value to write, and what to do when the
     # utterance did not include one.
     value_parameter: str = ""
@@ -76,6 +90,14 @@ class ResolvedDeviceTarget:
     thing_title: str = ""
     read_href: str = ""
     read_method: str = "GET"
+    # Where to read what the device has actually reached, when it reports that
+    # separately, and what that reading should say once the goal is met. Empty
+    # when the device has no such property, in which case reading the setpoint
+    # back is the whole of the available evidence and a caller should not
+    # pretend otherwise.
+    measured_source: Any = None
+    measured_property: str = ""
+    measured_value: Any = None
     # The discovered source this resolved to, kept so a caller can write and read
     # back through the executor's own API instead of re-deriving the endpoint from
     # the strings above. Two derivations of one address is one too many.
@@ -119,6 +141,10 @@ DEVICE_BINDINGS: dict[str, DeviceBinding] = {
         goal_state="temperature_set",
         thing_aliases=("thermostat", "hvac", "climate"),
         property_aliases=("targetTemperature", "setpoint", "target"),
+        # A room has mass. The setpoint is accepted at once and the temperature
+        # arrives minutes later, so this is the property the goal is actually
+        # about.
+        measured_property_aliases=("currentTemperature", "temperature", "measured"),
         value_parameter="degrees",
         state_entity="thermostat",
         state_attribute="at_target",
@@ -137,6 +163,8 @@ DEVICE_BINDINGS: dict[str, DeviceBinding] = {
         goal_state="blinds_set",
         thing_aliases=("blinds", "shades", "curtains"),
         property_aliases=("position", "openness"),
+        # A motor takes time to travel, and can stop short of where it was sent.
+        measured_property_aliases=("measuredPosition", "actualPosition"),
         value_parameter="percent",
         state_entity="blinds",
         state_attribute="at_position",
@@ -146,6 +174,11 @@ DEVICE_BINDINGS: dict[str, DeviceBinding] = {
         goal_state="projector_on",
         thing_aliases=("projector", "beamer", "display"),
         property_aliases=("power", "state"),
+        # The switch and the lamp are different facts. A lamp needs to strike and
+        # warm before the room has an image, and a dead one reports the switch
+        # thrown for as long as you care to ask.
+        measured_property_aliases=("lamp", "lampState"),
+        measured_value="on",
         default_value="on",
         state_entity="projector",
         state_attribute="powered_on",
@@ -232,6 +265,14 @@ def resolve_device_target(
                 ),
                 source,
             )
+            # What the device reports having reached, if it reports that at all.
+            # Resolved from the same discovered sources, so a Thing that does not
+            # publish one simply has no measurement and the caller can say so
+            # rather than inventing a second reading of the setpoint.
+            measured = next(
+                (s for s in sources if _match(str(getattr(s, "property", "")), binding.measured_property_aliases)),
+                None,
+            )
             return ResolvedDeviceTarget(
                 binding=binding,
                 thing_id=str(source.thing_id),
@@ -244,6 +285,9 @@ def resolve_device_target(
                 read_method="GET",
                 discovered_things=discovered,
                 source=source,
+                measured_source=measured,
+                measured_property=str(getattr(measured, "property", "")) if measured else "",
+                measured_value=binding.measured_value if binding.measured_value is not None else value,
             )
 
     if read_only_hits:
