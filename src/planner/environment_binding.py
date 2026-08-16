@@ -228,7 +228,7 @@ def binding_for(goal_state: str) -> EnvironmentBinding | None:
     return BINDINGS.get(goal_state)
 
 
-# --- the physical half -----------------------------------------------------------
+# --- the device surface ----------------------------------------------------------
 # A device goal is not completed by clicking anything on a page: the write target
 # is resolved from the Thing Descriptions the room publishes (see
 # src.planner.device_binding) and the value goes over WoT. But the dashboard is a
@@ -271,9 +271,14 @@ DEVICE_VIEWS: dict[str, DeviceView] = {
     "temperature_set": DeviceView(
         goal_state="temperature_set",
         region="[data-testid='thermostat-panel']",
-        value_selector="[data-testid='target-temp']",
+        # Current, not Target. The panel shows both, and Target changes the
+        # instant the setpoint is written - checking it would confirm that the
+        # thermostat was told, which is the claim that was already free. The
+        # goal is about the room, so the reading that settles it is the one the
+        # room takes time to produce.
+        value_selector="[data-testid='current-temp']",
         suffix=" C",
-        visual_claim="a thermostat panel whose Target reads {value}",
+        visual_claim="a thermostat panel whose Current reading has reached {value}",
     ),
     "lighting_set": DeviceView(
         goal_state="lighting_set",
