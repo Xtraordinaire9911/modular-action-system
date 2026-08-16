@@ -228,7 +228,7 @@ def binding_for(goal_state: str) -> EnvironmentBinding | None:
     return BINDINGS.get(goal_state)
 
 
-# --- the physical half -----------------------------------------------------------
+# --- the device surface ----------------------------------------------------------
 # A device goal is not completed by clicking anything on a page: the write target
 # is resolved from the Thing Descriptions the room publishes (see
 # src.planner.device_binding) and the value goes over WoT. But the dashboard is a

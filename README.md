@@ -37,8 +37,9 @@ reply, revealed line by line, with latency and provider-reported token counts;
 the exact image bytes handed to the vision model, rendered in the page, beside
 its answer in its own words; and running totals for calls, tokens and model time.
 
-The room has two halves and the run touches both, which is the point of the use
-case rather than a detail of it:
+The room has two surfaces and the run touches both, which is the point of the use
+case rather than a detail of it. **What the device layer is** is stated plainly
+below the table, because "physical" is a word worth being careful with here:
 
 | scene | what is said | surface | why it is there |
 |---|---|---|---|
@@ -47,12 +48,40 @@ case rather than a detail of it:
 | 3 | "it's too cold, put it at 22 please" | **device (WoT)** | no control on the page can do it — the target is resolved from the room's own Thing Descriptions and read back from the device |
 | 4 | "hold room C for me at 16:00" | dashboard (DOM) | the confirmation is in the DOM and painted over on screen |
 
-Scene 3 is the half an ordinary browser agent does not have: the action leaves
+Scene 3 is the surface an ordinary browser agent does not have: the action leaves
 the browser, and the dashboard is where it becomes visible again. Scene 4 is the
 decisive one for the vision model — every text-based check in this repository
 passes there, and only looking catches it. Result of the recorded run: **rules
 1/4, model 4/4, one false success caught**, on 8 model calls.
 `qwen-plus` for intent, `qwen-vl-plus` for vision.
+
+#### What the device layer actually is
+
+It is a node-wot servient: real W3C Thing Descriptions, discovered at runtime,
+with forms, methods, security schemes and `readOnly` honoured. Where to write is
+resolved from what the room publishes, never from a table in the code, and a test
+asserts no binding contains a URL or a port. That much is a faithful WoT
+environment and the agent's device path is exercised end to end.
+
+It models **timing and compliance**, which is the part that makes actuating
+something different from setting a value. A setpoint is accepted at once and the
+room arrives later: `targetTemperature` changes immediately, `currentTemperature`
+ramps; blinds have travel time; the projector lamp warms before it is on. Two
+faults produce a 2xx write, a setpoint that reads back correctly, and a room that
+never complies — a dead lamp, and a jammed motor. Nothing in the transport goes
+wrong in either.
+
+It does **not** model thermodynamics, ambient coupling, sensor noise or drift,
+physical interaction between devices, or any hardware. It runs at **30× real
+time** so a demo fits in a meeting, and `GET :8081/state` reports that scale
+alongside the real per-device rates rather than leaving a reader to infer that a
+room reaching temperature in two seconds is not a claim about rooms.
+
+So: this is a protocol-faithful and timing-faithful **stand-in** for a device
+layer. It is evidence about the agent — that it separates having commanded from
+having achieved, and that it can be shown a failure only a physical actuator
+produces. It is **not** evidence about physical systems, and no number measured
+here transfers to real hardware.
 
 ```bash
 python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5

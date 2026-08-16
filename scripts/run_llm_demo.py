@@ -10,15 +10,23 @@ it answers it with evidence rather than narration - a caption saying "sent to a
 language model" looks the same whether a model ran or not.
 
 It runs in the declared use case: the smart room. That matters for what is being
-claimed, not only for consistency. The room has two halves, and an agent that
+claimed, not only for consistency. The room has two surfaces, and an agent that
 only ever worked on one of them would be an ordinary browser agent -
 
-  the digital half   the dashboard a person actually uses, which the agent reads
-                     and clicks like any other page
-  the physical half  the thermostat, lights and projector, which no control on
-                     that page can change. The agent resolves where to write from
-                     the Thing Descriptions the room publishes, writes over WoT,
-                     and reads the property back from the device itself
+  the dashboard   the page a person actually uses, which the agent reads and
+                  clicks like any other page
+  the devices     the thermostat, blinds and projector, which no control on that
+                  page can change. The agent resolves where to write from the
+                  Thing Descriptions the room publishes, writes over WoT, and
+                  then waits for the device to report having reached it
+
+The second surface is a node-wot servient, not hardware. What it models is
+timing and compliance: a setpoint is accepted at once and the room arrives
+later, or - with a dead lamp or a jammed motor - never arrives while every
+status code stays 2xx. That is the distinction the agent has to handle and the
+one a page cannot produce. It models no thermodynamics and no hardware, and it
+runs at 30x real time; `GET :8081/state` reports the scale. See the README for
+what this is and is not evidence for.
 
 On screen, for every scene, at the same time:
 
@@ -123,7 +131,7 @@ SCENES: tuple[Scene, ...] = (
         expect_rules_to_fail=True,
     ),
     Scene(
-        title="SCENE 3/4 - the physical half of the room",
+        title="SCENE 3/4 - a goal the page cannot reach",
         utterance="it's too cold, put it at 22 please",
         why="No control on this page can do it. The target is resolved from the Thing Descriptions "
         "the room publishes, written over WoT, and read back from the device.",
@@ -645,9 +653,9 @@ def main() -> int:
     out = repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S")
     out.mkdir(parents=True, exist_ok=True)
 
-    # The declared use case, not a stand-in for it: the dashboard is the digital
-    # surface a person uses, and the Things behind it are the physical half. Both
-    # are served by docker compose, so this run needs the room to be up.
+    # The declared use case: the dashboard is the page a person uses, and the
+    # Things behind it are reached over WoT instead of by clicking. Both are
+    # served by docker compose, so this run needs the room to be up.
     url = args.dashboard
     if not reachable(url):
         print(f"\n  the smart-room dashboard is not answering at {url}")
@@ -684,7 +692,7 @@ def main() -> int:
 
     print(f"\n{_LINE}\n  THE SAME LOOP, WITH AND WITHOUT A MODEL\n{_LINE}")
     print(f"  surface      : {url}   (the dashboard: the digital half)")
-    print(f"  devices      : {room.titles()}   (from {args.directory}/things: the physical half)")
+    print(f"  devices      : {room.titles()}   (from {args.directory}/things: the WoT surface)")
     print(f"  room reset   : {'yes, to its initial state' if not reset_error else reset_error}")
     if room.ready and room.error:
         print(f"  note         : the TDs advertise an address the host cannot reach; rewrote {room.error}")
