@@ -88,12 +88,25 @@ UTTERANCES: tuple[Utterance, ...] = (
     Utterance("show the first discussion some appreciation", "needs_interpretation", "post_upvoted"),
     Utterance("order me the noise cancelling ones", "needs_interpretation", "item_in_cart"),
     Utterance("that automation post is good, give it a point", "needs_interpretation", "post_upvoted"),
+    # Booking, which is what the demo actually runs on. Measuring the model only
+    # on the shop and the forum while demonstrating it on the room would leave
+    # the demonstrated capability the one with no evidence behind it. The
+    # fallback needs both "book" and "room", so none of these reach it.
+    Utterance("I need somewhere to present at 15:00, room B please", "needs_interpretation", "room_booked"),
+    Utterance("hold room C for me at 16:00", "needs_interpretation", "room_booked"),
+    Utterance("reserve room A for two o'clock", "needs_interpretation", "room_booked"),
     # Control group: the fallback handles these, so the model must not regress.
     Utterance("add the wireless headphones to my cart", "rules_already_handle", "item_in_cart"),
     Utterance("upvote the top post", "rules_already_handle", "post_upvoted"),
+    Utterance("book room A at 14:00", "rules_already_handle", "room_booked"),
     # A model that agrees with everything is not understanding anything.
     Utterance("make me a sandwich", "out_of_scope", ""),
+    # Two booking requests this agent cannot serve. They matter more since the
+    # room_booked vocabulary was added: a model that had learned "booking words
+    # mean room_booked" would take both, and the refusal is the only thing that
+    # distinguishes understanding the capability from matching its keywords.
     Utterance("book me a flight to Lisbon next Tuesday", "out_of_scope", ""),
+    Utterance("reserve a table for dinner at eight", "out_of_scope", ""),
     Utterance("what is the weather like in Munich", "out_of_scope", ""),
     Utterance("delete my account and everything in it", "out_of_scope", ""),
 )
@@ -352,6 +365,22 @@ def run_vision_experiment(report: Report, *, reps: int, headed: bool) -> None:
         httpd.shutdown()
 
 
+def _previous_vision(path: Path) -> dict[str, Any] | None:
+    """The vision measurement already on disk, if there is a real one.
+
+    Carried forward with its own timestamp so an intent-only run does not erase
+    evidence it did not gather. A previous run that was itself intent-only has
+    nothing to carry, and says so rather than propagating an empty block.
+    """
+    try:
+        previous = json.loads(path.read_text(encoding="utf-8")).get("vision", {})
+    except (OSError, ValueError):
+        return None
+    if not previous.get("trials"):
+        return None
+    return {**previous, "carried_forward_from": "an earlier run; this run used --skip-vision"}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--reps", type=int, default=3, help="Repetitions per vision condition.")
@@ -421,8 +450,21 @@ def main() -> int:
     payload = {
         "at": datetime.now().isoformat(timespec="seconds"),
         "intent": {"cases": [row.to_dict() for row in report.intent], "summary": report.intent_summary()},
-        "vision": {"trials": [t.to_dict() for t in report.vision], "summary": report.vision_summary()},
     }
+    if args.skip_vision:
+        # Writing a zeroed vision summary here would be worse than writing
+        # nothing: the README cites this file for "detection 100%", and a reader
+        # following that citation would find 0% and no trials, with no way to
+        # tell a measurement of zero from a measurement that was never taken.
+        # An intent-only run says so, and keeps the previous measurement with the
+        # timestamp it was actually made at.
+        previous = _previous_vision(out / "model_value_report.json")
+        payload["vision"] = previous or {"not_measured": "this run used --skip-vision"}
+    else:
+        payload["vision"] = {
+            "trials": [t.to_dict() for t in report.vision],
+            "summary": report.vision_summary(),
+        }
     (out / "model_value_report.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
     print(f"\n  artifact : artifacts/model_value/model_value_report.json\n{_LINE}\n")
     return 0

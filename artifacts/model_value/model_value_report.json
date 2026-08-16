@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-14T07:42:40",
+  "at": "2026-08-16T11:33:23",
   "intent": {
     "cases": [
       {
@@ -93,6 +93,36 @@
         "model_correct": true
       },
       {
+        "utterance": "I need somewhere to present at 15:00, room B please",
+        "group": "needs_interpretation",
+        "expected_goal": "room_booked",
+        "rules_goal": "",
+        "model_goal": "room_booked",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "hold room C for me at 16:00",
+        "group": "needs_interpretation",
+        "expected_goal": "room_booked",
+        "rules_goal": "",
+        "model_goal": "room_booked",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
+        "utterance": "reserve room A for two o'clock",
+        "group": "needs_interpretation",
+        "expected_goal": "room_booked",
+        "rules_goal": "",
+        "model_goal": "room_booked",
+        "model_source": "llm",
+        "rules_correct": false,
+        "model_correct": true
+      },
+      {
         "utterance": "add the wireless headphones to my cart",
         "group": "rules_already_handle",
         "expected_goal": "item_in_cart",
@@ -113,6 +143,16 @@
         "model_correct": true
       },
       {
+        "utterance": "book room A at 14:00",
+        "group": "rules_already_handle",
+        "expected_goal": "room_booked",
+        "rules_goal": "room_booked",
+        "model_goal": "room_booked",
+        "model_source": "llm",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
         "utterance": "make me a sandwich",
         "group": "out_of_scope",
         "expected_goal": "",
@@ -124,6 +164,16 @@
       },
       {
         "utterance": "book me a flight to Lisbon next Tuesday",
+        "group": "out_of_scope",
+        "expected_goal": "",
+        "rules_goal": "",
+        "model_goal": "",
+        "model_source": "unsupported",
+        "rules_correct": true,
+        "model_correct": true
+      },
+      {
+        "utterance": "reserve a table for dinner at eight",
         "group": "out_of_scope",
         "expected_goal": "",
         "rules_goal": "",
@@ -155,19 +205,19 @@
     ],
     "summary": {
       "needs_interpretation": {
-        "cases": 9,
+        "cases": 12,
         "rules_correct": 0,
-        "model_correct": 9
+        "model_correct": 12
       },
       "rules_already_handle": {
-        "cases": 2,
-        "rules_correct": 2,
-        "model_correct": 2
+        "cases": 3,
+        "rules_correct": 3,
+        "model_correct": 3
       },
       "out_of_scope": {
-        "cases": 4,
-        "rules_correct": 4,
-        "model_correct": 4
+        "cases": 5,
+        "rules_correct": 5,
+        "model_correct": 5
       }
     }
   },
@@ -272,9 +322,21 @@
       {
         "condition": "transparent_text",
         "dom_says_met": true,
+        "model_says_met": null,
+        "confidence": 0.0,
+        "evidence": "",
+        "source": "error",
+        "expected_answer": false,
+        "ambiguous": false,
+        "model_correct": null,
+        "agrees": null
+      },
+      {
+        "condition": "transparent_text",
+        "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image is completely blank with no visible content.",
+        "evidence": "The image is completely blank with no visible text or icons.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -286,7 +348,7 @@
         "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image is completely blank with no visible content.",
+        "evidence": "The image is completely blank with no visible text or icons.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -298,19 +360,7 @@
         "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image is completely blank with no visible content.",
-        "source": "vlm",
-        "expected_answer": false,
-        "ambiguous": false,
-        "model_correct": true,
-        "agrees": false
-      },
-      {
-        "condition": "transparent_text",
-        "dom_says_met": true,
-        "model_says_met": false,
-        "confidence": 1.0,
-        "evidence": "The image is completely blank with no visible content.",
+        "evidence": "The image is completely blank with no visible text or icons.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -322,7 +372,7 @@
         "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image shows a search bar with no mention of wireless headphones.",
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -334,7 +384,7 @@
         "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image shows a search bar with no mention of wireless headphones.",
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -346,7 +396,7 @@
         "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image shows a search bar with no mention of wireless headphones.",
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -358,7 +408,7 @@
         "dom_says_met": true,
         "model_says_met": false,
         "confidence": 1.0,
-        "evidence": "The image shows a search bar with no mention of wireless headphones.",
+        "evidence": "The image shows a search bar with 'ShopEasy' text, not an entry for wireless headphones.",
         "source": "vlm",
         "expected_answer": false,
         "ambiguous": false,
@@ -467,12 +517,12 @@
       "accuracy": 1.0,
       "detection_rate": 1.0,
       "false_alarm_rate": 0.0,
-      "dom_wrong_trials": 12,
+      "dom_wrong_trials": 11,
       "dom_right_trials": 8,
       "mean_confidence_clear": 1.0,
       "mean_confidence_ambiguous": 0.9,
-      "no_answer": 4,
-      "transport_errors": 0,
+      "no_answer": 5,
+      "transport_errors": 1,
       "stability": {
         "clean": 1.0,
         "invisible_confirmation": 1.0,
