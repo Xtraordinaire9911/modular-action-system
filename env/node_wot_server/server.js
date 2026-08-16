@@ -34,23 +34,112 @@ const http = require("http");
 const { randomUUID } = require("node:crypto");
 
 // ── mutable device state ────────────────────────────────────────────────────
+// Every Thing here separates what it was *told* from what it has *reached*.
+// That distinction is the whole difference between a device and a variable: a
+// setpoint changes the instant it is written, and the room does not. An agent
+// that reads back the setpoint has confirmed that it was heard, which is not the
+// same claim as the room being at that temperature - and only one of those two
+// claims is the goal.
+//
+// Where a real device has no meaningful lag it is not given a fake one. A dimmer
+// reaches its level in milliseconds, so `lights` has a single property and this
+// file says so rather than inventing an interesting delay for it.
 const INITIAL = {
   thermostat: { targetTemperature: 20, currentTemperature: 19 },
   lights: { brightness: 100 },
-  projector: { power: "off" },
-  blinds: { position: 100 },
+  projector: { power: "off", lamp: "off" }, // lamp: off | warming | on
+  blinds: { position: 100, measuredPosition: 100 },
   occupancy: { occupied: false, peopleCount: 0 },
 };
 let state = structuredClone(INITIAL);
 let stateGeneration = 0;
 let activeLease = null;
 
+// ── physics ──────────────────────────────────────────────────────────────────
+// The room runs at TIME_SCALE times real speed so a demo fits inside a meeting.
+// The rates below are the real ones; the scaling is applied here, once, and is
+// reported by /state so nobody has to read this file to know that a room which
+// reaches temperature in two seconds is a room running thirty times too fast.
+//
+// Only devices with a real lag are modelled. Adding a delay to something that is
+// physically instant would be the same kind of invention as pretending something
+// slow is immediate.
+const TIME_SCALE = 30;
+const RAMPS = {
+  // A room changes temperature at roughly 3 C per minute with the HVAC driving.
+  thermostat: { commanded: "targetTemperature", measured: "currentTemperature", realRatePerSec: 0.05 },
+  // A blind motor takes about twenty seconds for full travel.
+  blinds: { commanded: "position", measured: "measuredPosition", realRatePerSec: 5 },
+};
+// A projector lamp needs to strike and warm before it puts out an image. Power is
+// the command; lamp is what the room can actually see.
+const LAMP_WARMUP_REAL_SEC = 30;
+const PHYSICS_TICK_MS = 200;
+
+let physicsEnabled = true;
+let lampWarmingSince = null;
+
+function settleRamp(thing, ramp) {
+  const target = state[thing]?.[ramp.commanded];
+  if (target !== undefined) state[thing][ramp.measured] = target;
+}
+
+function stepPhysics(elapsedSec) {
+  if (!physicsEnabled) return;
+
+  for (const [thing, ramp] of Object.entries(RAMPS)) {
+    // A jammed motor still accepts the command and reports the setpoint; what it
+    // stops doing is arriving. This is the failure a digital write cannot have.
+    if (faults[thing] && faults[thing].type === "motor_jam") continue;
+    const target = state[thing][ramp.commanded];
+    const measured = state[thing][ramp.measured];
+    if (typeof target !== "number" || typeof measured !== "number") continue;
+    const step = ramp.realRatePerSec * TIME_SCALE * elapsedSec;
+    const gap = target - measured;
+    if (Math.abs(gap) <= step) {
+      state[thing][ramp.measured] = target;
+    } else {
+      state[thing][ramp.measured] = measured + Math.sign(gap) * step;
+    }
+  }
+
+  // The lamp: off -> warming -> on, and a failed lamp never leaves "off" however
+  // many times it is switched on.
+  const lampFailed = faults.projector && faults.projector.type === "lamp_failure";
+  if (state.projector.power === "off") {
+    state.projector.lamp = "off";
+    lampWarmingSince = null;
+  } else if (lampFailed) {
+    state.projector.lamp = "off";
+    lampWarmingSince = null;
+  } else if (state.projector.lamp === "off") {
+    state.projector.lamp = "warming";
+    lampWarmingSince = Date.now();
+  } else if (state.projector.lamp === "warming") {
+    const warmedFor = (Date.now() - (lampWarmingSince ?? Date.now())) / 1000;
+    if (warmedFor * TIME_SCALE >= LAMP_WARMUP_REAL_SEC) state.projector.lamp = "on";
+  }
+}
+
+setInterval(() => stepPhysics(PHYSICS_TICK_MS / 1000), PHYSICS_TICK_MS).unref?.();
+
 // ── fault injection registry ─────────────────────────────────────────────────
 // faults[thing] = { type, delay_ms, read_delay_ms, drop_probability, source_reliability }
 const faults = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const FAILURE_TYPES = new Set(["timeout", "offline", "postcondition_mismatch", "malformed"]);
+// The first four are transport and protocol failures: the call does not arrive,
+// does not return, or returns nonsense. The last two are physical, and a purely
+// digital environment cannot produce them - the call succeeds, the setpoint
+// updates, every status code is 2xx, and the room still does not do it.
+const FAILURE_TYPES = new Set([
+  "timeout",
+  "offline",
+  "postcondition_mismatch",
+  "malformed",
+  "lamp_failure",
+  "motor_jam",
+]);
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -84,13 +173,18 @@ function isValidState(candidate) {
     lights.brightness >= 0 &&
     lights.brightness <= 100 &&
     isPlainObject(projector) &&
-    hasExactKeys(projector, ["power"]) &&
+    hasExactKeys(projector, ["power", "lamp"]) &&
     ["on", "off"].includes(projector.power) &&
+    ["on", "off", "warming"].includes(projector.lamp) &&
     isPlainObject(blinds) &&
-    hasExactKeys(blinds, ["position"]) &&
+    hasExactKeys(blinds, ["position", "measuredPosition"]) &&
     Number.isInteger(blinds.position) &&
     blinds.position >= 0 &&
     blinds.position <= 100 &&
+    // The measured position is mid-travel between ticks, so it is not an integer.
+    isFiniteNumber(blinds.measuredPosition) &&
+    blinds.measuredPosition >= 0 &&
+    blinds.measuredPosition <= 100 &&
     isPlainObject(occupancy) &&
     hasExactKeys(occupancy, ["occupied", "peopleCount"]) &&
     typeof occupancy.occupied === "boolean" &&
@@ -197,6 +291,16 @@ function applyWrite(thing, key, value) {
   // postcondition_mismatch: accept the call (HTTP 200) but do NOT change state.
   if (faults[thing] && faults[thing].type === "postcondition_mismatch") return;
   state[thing][key] = value;
+
+  // With physics off, a measured value has to follow its command here, because
+  // the tick that would otherwise carry it is not running. Leaving it alone
+  // freezes the room at whatever the last physical run left behind, which is
+  // neither the old instantaneous behaviour nor the new one - it is a third
+  // thing that silently fails every device verification.
+  if (physicsEnabled) return;
+  const ramp = RAMPS[thing];
+  if (ramp && ramp.commanded === key) state[thing][ramp.measured] = value;
+  if (thing === "projector" && key === "power") state.projector.lamp = value === "on" ? "on" : "off";
 }
 
 // ── thing factory ─────────────────────────────────────────────────────────────
@@ -238,8 +342,11 @@ function buildDefs() {
       writables: { targetTemperature: "targetTemperature" },
       actions: {
         setTargetTemperature: (v) => {
+          // Only the setpoint. The room reaches it on its own schedule, or does
+          // not - which is the question the agent has to actually answer. This
+          // line used to assign currentTemperature as well, which made the
+          // sensor a copy of the command and every verification trivially true.
           applyWrite("thermostat", "targetTemperature", v);
-          state.thermostat.currentTemperature = v; // physical convergence
           return undefined;
         },
       },
@@ -271,19 +378,24 @@ function buildDefs() {
     },
     {
       thing: "projector",
-      readables: { power: "power" },
+      readables: { power: "power", lamp: "lamp" },
       writables: { power: "power" },
       actions: { setPower: (v) => { applyWrite("projector", "power", v); } },
       td: {
         "@context": "https://www.w3.org/2022/wot/td/v1.1",
         title: "projector",
-        properties: { power: { type: "string", enum: ["on", "off"] } },
+        properties: {
+          power: { type: "string", enum: ["on", "off"] },
+          // What the switch was told, and what the lamp is doing, are different
+          // facts. A dead lamp reports power "on" and never leaves "off".
+          lamp: { type: "string", enum: ["on", "off", "warming"], readOnly: true, observable: true },
+        },
         actions: { setPower: { input: { type: "string", enum: ["on", "off"] } } },
       },
     },
     {
       thing: "blinds",
-      readables: { position: "position" },
+      readables: { position: "position", measuredPosition: "measuredPosition" },
       writables: { position: "position" },
       actions: { setPosition: (v) => { applyWrite("blinds", "position", v); } },
       td: {
@@ -291,7 +403,13 @@ function buildDefs() {
         title: "blinds",
         securityDefinitions: { nosec_sc: { scheme: "nosec" } },
         security: "nosec_sc",
-        properties: { position: { type: "integer", minimum: 0, maximum: 100 } },
+        properties: {
+          position: { type: "integer", minimum: 0, maximum: 100 },
+          // Where the motor has actually travelled to. Equal to `position` once
+          // it arrives, short of it while it is moving, and stuck short of it
+          // for good if the motor jams.
+          measuredPosition: { type: "number", minimum: 0, maximum: 100, readOnly: true, observable: true },
+        },
         actions: { setPosition: { input: { type: "integer", minimum: 0, maximum: 100 } } },
       },
     },
@@ -462,7 +580,49 @@ function processControlRequest(method, url, body = "", leaseId = "") {
     return { statusCode: 200, payload: { status: "ok", faults: structuredClone(faults) } };
   }
   if (method === "GET" && url === "/state") {
-    return { statusCode: 200, payload: { state: structuredClone(state), faults: structuredClone(faults) } };
+    return {
+      statusCode: 200,
+      payload: {
+        state: structuredClone(state),
+        faults: structuredClone(faults),
+        // Reported rather than left in the source: a room that reaches
+        // temperature in two seconds is running thirty times too fast, and a
+        // reader of this endpoint should not have to guess that.
+        physics: {
+          enabled: physicsEnabled,
+          time_scale: TIME_SCALE,
+          note: `measured values move at ${TIME_SCALE}x real time`,
+          ramps: Object.fromEntries(
+            Object.entries(RAMPS).map(([thing, r]) => [
+              thing,
+              { commanded: r.commanded, measured: r.measured, real_rate_per_sec: r.realRatePerSec },
+            ])
+          ),
+          lamp_warmup_real_sec: LAMP_WARMUP_REAL_SEC,
+        },
+      },
+    };
+  }
+  if (method === "POST" && url === "/physics") {
+    // An escape hatch for evaluation runs that need the old instantaneous room:
+    // physics off makes every measured value follow its command immediately.
+    let requested;
+    try {
+      requested = JSON.parse(body || "{}");
+    } catch {
+      return { statusCode: 400, payload: { error: "body must be JSON" } };
+    }
+    if (typeof requested.enabled !== "boolean") {
+      return { statusCode: 400, payload: { error: "enabled must be true or false" } };
+    }
+    physicsEnabled = requested.enabled;
+    if (!physicsEnabled) {
+      // Leaving it off mid-travel would strand the measured values wherever the
+      // last tick left them, which is neither physical nor instantaneous.
+      for (const [thing, ramp] of Object.entries(RAMPS)) settleRamp(thing, ramp);
+      state.projector.lamp = state.projector.power === "on" ? "on" : "off";
+    }
+    return { statusCode: 200, payload: { status: "ok", physics: { enabled: physicsEnabled } } };
   }
   return { statusCode: 404, payload: { error: "not found" } };
 }

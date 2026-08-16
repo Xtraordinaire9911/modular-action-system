@@ -248,6 +248,26 @@ def usage_of(client: Any) -> dict[str, int]:
     return dict(getattr(client, "last_usage", {}) or {})
 
 
+def await_measurement(room: Room, resolved: Any, *, timeout: float) -> tuple[bool, float, Any]:
+    """Wait for the device to report having reached what it was told.
+
+    Returns whether it arrived, how long that took, and the last reading - the
+    last reading because a value that stopped short is the interesting half of a
+    physical failure, and reporting only "no" would throw it away.
+    """
+    started = time.monotonic()
+    last: Any = None
+    while time.monotonic() - started < timeout:
+        try:
+            last = room.executor.read_state(resolved.measured_source)
+        except Exception:  # a read that fails is not an arrival
+            last = None
+        if last is not None and values_match(resolved.measured_value, last):
+            return True, time.monotonic() - started, last
+        time.sleep(0.15)
+    return False, time.monotonic() - started, last
+
+
 def await_text(session: Any, selector: str, wanted: str, *, timeout: float = 4.0) -> bool:
     """Wait until ``selector`` reads ``wanted``, or give up and let the check fail.
 
@@ -417,15 +437,35 @@ def act_on_device(
         return None
 
     # The servient answers a write that changed nothing with a success status, so
-    # the status is not the evidence. This is the device-side equivalent of the
-    # DOM re-read below, and it happens first.
-    confirmed = values_match(resolved.value, observed)
+    # the status is not the evidence. Reading the setpoint back says the device
+    # was told - which is a smaller claim than the goal, and the one that is
+    # available immediately.
+    accepted = values_match(resolved.value, observed)
     panel.conclude(
-        f"read back from the device: {observed!r} "
-        f"{'- matches what was asked for' if confirmed else '- NOT what was asked for'}",
-        "ok" if confirmed else "no",
+        f"setpoint read back: {observed!r} " f"{'- the device was told' if accepted else '- NOT what was asked for'}",
+        "ok" if accepted else "no",
     )
-    time.sleep(pace * 1.4)
+    time.sleep(pace * 1.2)
+
+    # And then the part a page cannot have. The room has mass: the setpoint is a
+    # fact at once and the temperature arrives later, or does not arrive at all if
+    # something physical is wrong. A goal about the room is only met by the second
+    # reading, so the run waits for it and says how long it took.
+    if resolved.measured_source is not None:
+        reached, took, last = await_measurement(room, resolved, timeout=8.0)
+        if reached:
+            panel.conclude(
+                f"the room reached it: {resolved.measured_property}={last!r} after {took:.1f}s "
+                f"(the setpoint was true {took:.1f}s earlier)",
+                "ok",
+            )
+        else:
+            panel.conclude(
+                f"the setpoint holds and the room did not follow: "
+                f"{resolved.measured_property}={last!r} after {took:.1f}s",
+                "no",
+            )
+        time.sleep(pace * 1.4)
 
     # The dashboard polls the devices on its own schedule, so the digital half
     # lags the physical one. Waiting for the value to appear rather than sleeping
