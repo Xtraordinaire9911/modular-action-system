@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-15T16:30:42",
+  "at": "2026-08-20T19:41:04",
   "scenes": [
     {
       "title": "SCENE 1/4 - phrased the way the rules expect",
@@ -8,17 +8,17 @@
       "model_goal": "room_booked",
       "model_source": "llm",
       "surface": "dashboard (DOM)",
-      "model_latency_ms": 6300.5,
+      "model_latency_ms": 7728.3,
       "model_tokens": {
         "input": 529,
-        "output": 107
+        "output": 133
       },
       "dom_says_met": true,
       "vision_answer": true,
       "vision_confidence": 1.0,
       "vision_evidence": "The text 'Room A' is clearly visible in the image.",
       "vision_source": "vlm",
-      "vision_latency_ms": 1384.2,
+      "vision_latency_ms": 1399.9,
       "caught_false_success": false
     },
     {
@@ -28,7 +28,7 @@
       "model_goal": "room_booked",
       "model_source": "llm",
       "surface": "dashboard (DOM)",
-      "model_latency_ms": 3631.6,
+      "model_latency_ms": 3366.0,
       "model_tokens": {
         "input": 535,
         "output": 136
@@ -38,27 +38,27 @@
       "vision_confidence": 1.0,
       "vision_evidence": "The text 'booked: Room B @ 15:00' is visible.",
       "vision_source": "vlm",
-      "vision_latency_ms": 1730.4,
+      "vision_latency_ms": 1202.9,
       "caught_false_success": false
     },
     {
-      "title": "SCENE 3/4 - the physical half of the room",
+      "title": "SCENE 3/4 - a goal the page cannot reach",
       "utterance": "it's too cold, put it at 22 please",
       "rules_goal": "",
       "model_goal": "temperature_set",
       "model_source": "llm",
       "surface": "device (WoT)",
-      "model_latency_ms": 3049.1,
+      "model_latency_ms": 3303.3,
       "model_tokens": {
         "input": 531,
-        "output": 122
+        "output": 116
       },
       "dom_says_met": true,
       "vision_answer": true,
       "vision_confidence": 1.0,
-      "vision_evidence": "The image shows a thermostat panel with 'Target: 22 C' clearly displayed.",
+      "vision_evidence": "The 'Current' temperature is shown as 22 C.",
       "vision_source": "vlm",
-      "vision_latency_ms": 2564.9,
+      "vision_latency_ms": 1162.4,
       "caught_false_success": false
     },
     {
@@ -68,17 +68,17 @@
       "model_goal": "room_booked",
       "model_source": "llm",
       "surface": "dashboard (DOM)",
-      "model_latency_ms": 2976.4,
+      "model_latency_ms": 3491.4,
       "model_tokens": {
         "input": 531,
-        "output": 115
+        "output": 135
       },
       "dom_says_met": true,
       "vision_answer": false,
       "vision_confidence": 1.0,
       "vision_evidence": "The image is blank and shows no text or details.",
       "vision_source": "vlm",
-      "vision_latency_ms": 1074.1,
+      "vision_latency_ms": 1056.2,
       "caught_false_success": true
     }
   ],
