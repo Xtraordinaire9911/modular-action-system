@@ -19,11 +19,14 @@ and failure-injection evaluation.
 ### What the language model actually changes
 
 - **[Play the current recording](artifacts/llm_demo/llm-vs-rules-smartroom.mp4)** — the
-  smart room, four scenes, 2.0 MB. *(Not embedded above: an inline player needs a
-  GitHub-hosted copy, and this recording has not been re-uploaded since the demo
-  moved into the smart room. The embedded player that used to sit here showed the
-  earlier shopping scenario, which is no longer what this section describes.)*
-- [Inspect the run report](artifacts/llm_demo/run-report.json)
+  smart room, four scenes, 2.1 MB. *(Not embedded above: an inline player needs a
+  GitHub-hosted copy of the file, which has to be uploaded through the web UI. The
+  repository-relative link plays after download.)*
+- [Scene 3, the one that leaves the browser](artifacts/llm_demo/scene3-device-over-wot.png) —
+  the thermostat panel after a setpoint was written over WoT and the room caught up
+- [Inspect the run report](artifacts/llm_demo/run-report.json) — carries the surface
+  each scene acted on, so a run that only touched the page cannot look like one that
+  touched a device
 - [Inspect every vision call this recording made](artifacts/llm_demo/vision-calls.jsonl), and [every intent call](artifacts/llm_demo/intent-calls.jsonl) — model, latency, raw reply, screenshot digest
 - [Inspect the evaluation behind the claims](artifacts/model_value/model_value_report.json)
 - [The previous recording, on the shopping mock](artifacts/llm_demo/llm-vs-rules.mp4) — kept
