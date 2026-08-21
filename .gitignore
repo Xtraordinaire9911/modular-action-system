@@ -20,6 +20,15 @@ htmlcov/
 results/
 logs/
 screenshots/
+!artifacts/friday_generalized_recovery/
+!artifacts/friday_generalized_recovery/**
+!artifacts/runtime_recovery_demo/
+!artifacts/runtime_recovery_demo/**
+# The model-versus-rules demo: the recording plus a frozen copy of the calls it
+# made. Kept in history on purpose - it is the only checked-in proof that an
+# external model provider was configured and actually answered.
+!artifacts/llm_demo/
+!artifacts/llm_demo/**
 # Per-run demo output (screenshots, traces): regenerated on every run.
 eval_outputs/
 # Recorded demo videos. Every run writes one and they are a few MB each, so none
@@ -34,11 +43,18 @@ demo_video/
 local_docs/
 docs/
 *.png
+!artifacts/friday_generalized_recovery/**/*.png
+!artifacts/runtime_recovery_demo/**/*.png
+!artifacts/llm_demo/**/*.png
 
 # Local report and presentation drafts. Kept out of the repository: the course
 # requires these to be written by hand, so a draft in history invites the wrong
 # thing being submitted.
 reports/
+
+# API keys live here and nowhere else. Never commit this file.
+.env.local
+.env
 
 # Runtime ledgers appended to on every run.
 artifacts/intent_planner/

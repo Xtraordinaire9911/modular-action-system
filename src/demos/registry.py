@@ -138,6 +138,19 @@ DEMOS: list[Demo] = [
         duration_hint="~5min",
     ),
     Demo(
+        name="llm-loop",
+        title="The same loop, with and without a model",
+        summary="Four scenes that put the rule-based path beside the model path on the same "
+        "sentence, in the smart room. One scene leaves the browser entirely and writes to a "
+        "device resolved from the room's own Thing Descriptions; the last one ends with a "
+        "dashboard whose confirmation is in the DOM and painted over on screen, which only the "
+        "vision model catches. Needs the smart room up and a configured API key.",
+        command=("scripts/run_llm_demo.py",),
+        requires=("browser", "smart_room"),
+        headed_args=(),  # headed is the default here; --headless is the opt-out
+        duration_hint="~2min",
+    ),
+    Demo(
         name="intent-runtime",
         title="An utterance drives the production runtime",
         summary="A sentence becomes a GoalSpec and is executed by RuntimeEpisodeRunner and the "
@@ -156,6 +169,29 @@ DEMOS: list[Demo] = [
         requires=("browser",),
         headed_args=("--headed",),
         duration_hint="~40s",
+    ),
+    Demo(
+        name="model-value",
+        title="Do the models earn their place?",
+        summary="Measures whether the intent model understands what the rules cannot, and whether the vision "
+        "model catches a false success the DOM confirms. Needs a configured API key.",
+        # Four repetitions, because that is the sample size the numbers quoted in
+        # the README and in docs_setup/VLM_SETUP.md come from. Running the demo
+        # at a different --reps would produce a table nobody could match to the
+        # documented one.
+        command=("scripts/eval_model_value.py", "--reps", "4"),
+        requires=("browser",),
+        duration_hint="~3min",
+    ),
+    Demo(
+        name="room-prepared",
+        title="One sentence prepares a room, and every property is checked",
+        summary='Discovers the Thing Descriptions at runtime, resolves "prepare the room" to four '
+        "writable properties, writes each one and reads each one back. --ignore drops a write to show "
+        "the read-back catching it.",
+        command=("scripts/run_room_prepared.py",),
+        requires=("smart_room",),
+        duration_hint="~15s",
     ),
     Demo(
         name="offline",

@@ -16,15 +16,123 @@ recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
 
+### What the language model actually changes
+
+- **[Play the current recording](artifacts/llm_demo/llm-vs-rules-smartroom.mp4)** — the
+  smart room, four scenes, 2.1 MB. *(Not embedded above: an inline player needs a
+  GitHub-hosted copy of the file, which has to be uploaded through the web UI. The
+  repository-relative link plays after download.)*
+- [Scene 3, the one that leaves the browser](artifacts/llm_demo/scene3-device-over-wot.png) —
+  the thermostat panel after a setpoint was written over WoT and the room caught up
+- [Inspect the run report](artifacts/llm_demo/run-report.json) — carries the surface
+  each scene acted on, so a run that only touched the page cannot look like one that
+  touched a device
+- [Inspect every vision call this recording made](artifacts/llm_demo/vision-calls.jsonl), and [every intent call](artifacts/llm_demo/intent-calls.jsonl) — model, latency, raw reply, screenshot digest
+- [Inspect the evaluation behind the claims](artifacts/model_value/model_value_report.json)
+- [The previous recording, on the shopping mock](artifacts/llm_demo/llm-vs-rules.mp4) — kept
+  because it is a real run, but it is the earlier scenario, not the use case
+
+Four scenes **in the smart room**, each running the rule-based path and the model
+path **on the same sentence, at the same time**, because a caption saying "sent
+to a language model" looks identical whether a model ran or not. On screen: all
+twelve fallback patterns and which matched; the request sent and the model's raw
+reply, revealed line by line, with latency and provider-reported token counts;
+the exact image bytes handed to the vision model, rendered in the page, beside
+its answer in its own words; and running totals for calls, tokens and model time.
+
+The room has two surfaces and the run touches both, which is the point of the use
+case rather than a detail of it. **What the device layer is** is stated plainly
+below the table, because "physical" is a word worth being careful with here:
+
+| scene | what is said | surface | why it is there |
+|---|---|---|---|
+| 1 | "book room A at 14:00" | dashboard (DOM) | the control — a keyword sentence, where the model earns nothing |
+| 2 | "I need somewhere to present at 15:00, room B please" | dashboard (DOM) | same goal, no pattern matches; the model interprets it |
+| 3 | "it's too cold, put it at 22 please" | **device (WoT)** | no control on the page can do it — the target is resolved from the room's own Thing Descriptions and read back from the device |
+| 4 | "hold room C for me at 16:00" | dashboard (DOM) | the confirmation is in the DOM and painted over on screen |
+
+Scene 3 is the surface an ordinary browser agent does not have: the action leaves
+the browser, and the dashboard is where it becomes visible again. Scene 4 is the
+decisive one for the vision model — every text-based check in this repository
+passes there, and only looking catches it. Result of the recorded run: **rules
+1/4, model 4/4, one false success caught**, on 8 model calls.
+`qwen-plus` for intent, `qwen-vl-plus` for vision.
+
+#### What the device layer actually is
+
+It is a node-wot servient: real W3C Thing Descriptions, discovered at runtime,
+with forms, methods, security schemes and `readOnly` honoured. Where to write is
+resolved from what the room publishes, never from a table in the code, and a test
+asserts no binding contains a URL or a port. That much is a faithful WoT
+environment and the agent's device path is exercised end to end.
+
+It models **timing and compliance**, which is the part that makes actuating
+something different from setting a value. A setpoint is accepted at once and the
+room arrives later: `targetTemperature` changes immediately, `currentTemperature`
+ramps; blinds have travel time; the projector lamp warms before it is on. Two
+faults produce a 2xx write, a setpoint that reads back correctly, and a room that
+never complies — a dead lamp, and a jammed motor. Nothing in the transport goes
+wrong in either.
+
+It does **not** model thermodynamics, ambient coupling, sensor noise or drift,
+physical interaction between devices, or any hardware. It runs at **30× real
+time** so a demo fits in a meeting, and `GET :8081/state` reports that scale
+alongside the real per-device rates rather than leaving a reader to infer that a
+room reaching temperature in two seconds is not a claim about rooms.
+
+So: this is a protocol-faithful and timing-faithful **stand-in** for a device
+layer. It is evidence about the agent — that it separates having commanded from
+having achieved, and that it can be shown a failure only a physical actuator
+produces. It is **not** evidence about physical systems, and no number measured
+here transfers to real hardware.
+
+```bash
+python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5
+```
+
+The browser is visible by default; add `--headless` for a dry run with no window,
+and `--record` to write the mp4 (which adds its own encoding time after the run,
+so time the demo without it). Needs `docker compose up` first — the room is the
+environment, not a fixture.
+
+Timed on this machine against the real endpoints, headed, no recording:
+**1 minute 50 seconds**, with about 10 real seconds of margin under two minutes
+for a slower network on the day. It is 11 seconds longer than the shopping
+version it replaced, and the extra time is scene 3 doing something that scene
+could not: resolving a device from the room's Thing Descriptions, writing to it,
+and reading the value back before the page is consulted at all.
+
+`--pace` scales every beat by the same factor, so the beats that carry new
+information — the resolved device, the read-back, the injected fault, the model's
+own words — stay proportionally longer than the ones that exist to move the scene
+along. The verdict at the end of each scene is deliberately one of the short
+ones: it is a single line, and the panel stays up while the next scene loads.
+
+### The narrated agent loop, with no model in it
+
+
 https://github.com/user-attachments/assets/534785b5-c984-429d-98cd-01703a5dd41b
+
+
+Seven scenes over a shop, a forum and a WoT device. Six inject a different
+real-world fault; the agent measures the page after each failure and picks a
+recovery tier from what it measured, without being told which fault was
+injected. Entirely deterministic — no model is involved anywhere in it, which is
+the reason the recording above exists as a separate demo. Run it with
+`python scripts/run_agent_loop_demo.py`.
 
 ### Five-family Runtime recovery contract demo
 
-[![Open the five-family Runtime recovery demo](artifacts/runtime_recovery_demo/preview.png)](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
 
-- [Open the final video directly](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
+https://github.com/user-attachments/assets/ee7b469a-8176-44da-81bd-c7f6ff4945e7
+
+
+- [Open the same file from the repository](artifacts/runtime_recovery_demo/five-family-runtime-recovery.mp4)
 - [Open the full-size visual preview](artifacts/runtime_recovery_demo/preview.png)
 - [Inspect the Runtime run report](artifacts/runtime_recovery_demo/runtime-report.json)
+- [Inspect the transition ledger](artifacts/runtime_recovery_demo/transition_ledger.jsonl)
+- [Inspect the failure ledger](artifacts/runtime_recovery_demo/failure_ledger.jsonl)
+- [Inspect the raw screenshots](artifacts/runtime_recovery_demo/screenshots/)
 - [Inspect the claim-boundary manifest](artifacts/runtime_recovery_demo/demo-manifest.json)
 
 The recording contains five controlled recovery scenes and all five finish with
@@ -48,11 +156,14 @@ matching its code.
 | Affordance contract across DOM / WoT / Visual | **Implemented** | One planner drives all three; no per-surface branching in the planning path. |
 | Intent (natural language) → GoalSpec | **Implemented, and it reaches the runtime** | `src/planner/intent_planner.py`. With an API key a model interprets; **without one a phrasing-rule fallback runs and is labelled `rule_fallback`**, never as understanding. `scripts/run_intent_episode.py` takes the resulting `GoalSpec` (stamped `source="user_intent_parser"`) into `RuntimeEpisodeRunner.run_goal_episode` and the `ContinuousInteractionManager` on a live page. |
 | Set-of-Marks target selection | **Implemented, demo path only** | `src/planner/mark_selector.py`. Same rule: a model answers with a `mark_id` when configured, otherwise deterministic scoring answers and is labelled `heuristic`. Unlike the intent layer above, this one is still consumed only by the narrated demo — the runtime picks affordances through its own action context. |
-| A model actually running | **VLM path implemented; external-provider run not evidenced** | `src/perception/vlm_observer.py` sends real PNG screenshot bytes to the configured vision client and preserves model confidence/provenance before fusion. CI exercises this contract with a fake vision client. No checked-in artifact proves that an external model provider was configured and run, and intent/mark selection still uses labelled fallbacks when no model client is supplied. |
-| Verification independent of the executor | **Implemented** | The page or device is re-read; a backend reporting success is not treated as task success. |
+| A model actually running | **Running, and measured** | Both layers run against a real endpoint (`qwen-plus`, `qwen-vl-plus`), and `scripts/eval_model_value.py` asks whether they earn their place. **Intent** — on twelve requests phrased to avoid the fallback's keywords the rules score **0/12** and the model **12/12**, with no regression on the three the rules already handled and **5/5** correct refusals. Three of the twelve are room bookings, which is what the demo runs on, so the demonstrated capability is not the one without evidence behind it. Two of the refusals are booking requests this agent cannot serve — a flight and a restaurant table — because a model that had learned "booking words mean `room_booked`" would take both, and refusing them is what separates understanding the capability from matching its keywords. **Vision** — against three separate ways a page can be right in the DOM and wrong on screen (painted over, rendered in the background colour, laid out off-screen): detection **100%** over 11 trials where the DOM is wrong, false alarm **0%** over 8 where it is right, and the model never changed its mind between repetitions. One call in this run failed in transport and is reported as such rather than dropped, which is why the DOM-wrong sample is 11 and not the 12 the conditions would otherwise give. Evidence in `artifacts/model_value/`. |
+| Verification independent of the executor | **Implemented, two modalities** | The page or device is re-read; a backend reporting success is not treated as task success. A vision model independently judges the region the goal names, and its answer enters the arbiter as a `source="visual"` assertion, so a goal is confirmed by two sources or a disagreement becomes a conflict. That catches the one class of false success a text oracle cannot see: a confirmation present in the DOM and absent from the screen. |
+| Devices resolved from discovery, not from code | **Implemented, verified against the servient** | `src/planner/device_binding.py` names a *kind* of Thing and a property; the concrete write target comes from the Thing Descriptions fetched at runtime from the directory. No binding contains a URL or a port, and a test asserts that. A Thing the directory does not offer makes the goal unsupported rather than being approximated with the nearest device. `pytest -m smartroom` asserts this against the running servient. |
+| Composite device goal (`room_prepared`) | **Implemented, verified per property** | One sentence resolves to four writable properties across four Things. Each is written and then **read back**, and the goal is met only where the value that comes back is the value asked for — the servient answers a write that changed nothing with a success status, so the status is not the evidence. A part the room does not have is reported as skipped when the declaration marks it optional and fails the goal when it does not. `scripts/run_room_prepared.py --ignore lights.brightness` drops one write on purpose and the run reports NOT PREPARED. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
 | Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
+| Model confidence as a safety gate | **Weak, and calibrated rather than assumed** | `qwen-vl-plus` reports 1.00 on every clear observation and 0.90 on a region cut off mid-word; that is its whole range. The abstention threshold was 0.55 — a value no answer ever came near, so the gate could not fire. It is now 0.95, set from the measurement, and it is model-specific: another model needs `scripts/eval_model_value.py` re-run. **A confident wrong answer still passes the gate.** What makes a wrong answer safe is the arbiter turning a disagreement into a conflict, which does not consult confidence. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
 | Live behaviour is tested | **Implemented** | `pytest -m live` opens a real Chromium and asserts the claims in this table against a real page (selector uniqueness, measured geometry, episode isolation, region-scoped verification, the probes). CI runs it as its own job. The fast suite excludes it and cannot corroborate any live claim on its own. |
 | Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is the narration surface and is honest about what it runs, but it is a second loop. `scripts/run_intent_episode.py` is the one that drives the integrated runtime; the demo has not been migrated onto it. |
@@ -99,179 +210,111 @@ and both are still not it on their own:
 The module formerly called `pip_console` is now `narration_console`, for the
 same reason.
 
-## Current Release State
+## Branch Discipline
 
-`main` contains the integrated **Week-8** release.
+`main` is a verified release of `develop`, kept content-identical after each
+release merge. Feature branches merge into `develop`; `develop` is where
+cross-member integration and CI happen; `main` only moves forward from a
+`develop` state that has already passed the full suite, including the `live`
+and `smartroom` markers.
 
-| Branch group | What it adds |
-|---|---|
-| B-101 – B-108 (Week 6) | DOM/WoT/Visual perception, System-1 effectors, cost-aware router, backend eval, browser-session retry |
-| B-109 (Week 7-8) | External CUA benchmark environments: MiniWoB++ plus three WebArena-style local mock envs (shopping, email, forum), and a cross-environment runner reporting per-environment task success. Solvers are scripted, so the figures measure the suite, not the agent. |
-| B-111 to B-117 (Week 9-11) | Perception hardened against demo-overlay contamination; browser and WoT episode isolation with verified rollback; visual marks measured in the live browser instead of read from fixtures; a demo registry; and the intent and Set-of-Marks planning layers, each recording whether a model or a deterministic fallback produced its answer |
+## Commands
 
-Branch discipline:
+Trimmed hard on purpose: dozens of `src.pipeline` evaluation flags from
+earlier weeks (fusion calibration, Bayesian holdouts, open-web randomized
+suites) used to live here and are now in
+[`YIXIN_RUNTIME_RECOVERY_DOSSIER.md`](YIXIN_RUNTIME_RECOVERY_DOSSIER.md),
+which is where anyone still running them should be looking anyway. What is
+left is the current demo, the full test suite, and the handful of commands
+this project actually reaches for.
 
-- feature branches merge into `develop`;
-- `develop` is the integration branch for cross-member testing;
-- `main` is only updated from a verified `develop` release.
+### The demo
 
-## Quick Start
+Needs the smart room up (see below). Same command as under the recording at the
+top of this file:
 
-### 0. From a clean clone, in one command
+```bash
+docker compose -f env/docker-compose.yml up -d
+python scripts/run_llm_demo.py --pace 1.25 --type-delay 0.1 --hold 2.5
+```
 
-On a machine that has only Python 3.11+ and `git`:
+Measured headed against the real endpoints: **1:50**. See the paragraph under
+the first recording above for what the parameters do and why.
+
+### Clean clone to running demo, one command
 
 ```bash
 git clone <repo-url> && cd A-Modular-Action-System-Architecture
 python scripts/bootstrap.py --demo --headed
 ```
 
-That installs the project and dev dependencies, downloads the one browser the
-demos need, runs the full test suite, and then runs the visual demo. It uses the
-standard library only, so it works before any dependency is installed, and it
-echoes every command it runs so a failure points at something you can repeat by
-hand.
+Installs, downloads the one browser the demos need, runs the full test suite,
+then runs the visual demo. Standard library only, so it works before any
+dependency is installed. `--check` reports the environment and stops;
+`--skip-install --demo` re-runs it on a machine already set up.
 
-| Invocation | Does |
-|---|---|
-| `python scripts/bootstrap.py --check` | reports the environment and stops |
-| `python scripts/bootstrap.py` | install + test |
-| `python scripts/bootstrap.py --demo` | install + test + demo (headless) |
-| `python scripts/bootstrap.py --demo --headed` | same, with a visible browser |
-| `python scripts/bootstrap.py --skip-install --demo` | re-run on an already-set-up machine |
-
-Notes:
-
-- The MiniWoB++ clone is optional. Without it the demo runs the local mock
-  environments only and says so; see step 3 to add it.
-- **No fixed ports.** Every local server binds to `127.0.0.1:0`, so the OS picks
-  a free port at run time. This avoids the Windows reserved-port ranges that
-  Docker/Hyper-V claim (which surface as `WinError 10013`) and makes concurrent
-  runs safe. The only fixed ports in the project belong to the optional Docker
-  smart-room environment (3000, 8080, 8081), listed in step 4.
-
-The sections below are the individual pieces, for when you want to run just one.
-
-### 1. Python verification
-
-Use `uv` if available:
+### Full test suite
 
 ```bash
-uv run --with pytest pytest
+uv run --with pytest pytest        # fast: contracts, perception, effectors,
+                                    # router, recovery, runtime — a few seconds
+uv run --with pytest pytest -m live       # + 14 tests against a real Chromium
+uv run --with pytest pytest -m smartroom  # + 6 tests against the running servient
 ```
 
-Or use a regular virtual environment:
+The fast suite never opens a browser or a socket, so it cannot corroborate a
+live claim on its own — that is what the other two markers are for. `smartroom`
+needs the Docker services below running first.
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e ".[dev]"
-pytest
-```
-
-Expected result: all tests pass. The current suite covers contracts,
-DOM/WoT/SoM perception, System-1 effectors, VAM adapter, router, recovery cascade,
-backend evaluation, runtime smoke path, and external CUA benchmark controllers.
-
-### 2. Deterministic offline demo
-
-This does not require Docker or a browser. It writes presentation artifacts:
-
-```bash
-python run_demo.py
-```
-
-Outputs:
-
-- `artifacts/demo_trace_normal.json`
-- `artifacts/demo_trace_recovery.json`
-- `artifacts/recovery_metrics.json`
-
-Use this path when the meeting room cannot run Docker. It still demonstrates the
-runtime trace shape, postcondition verification, conflict detection, and recovery
-metrics.
-
-### 3. External CUA benchmark demo (no Docker)
-
-Two demo entry points, both in a visible Chromium window with a periwinkle arrow
-cursor, glowing trail, and per-action element highlight:
-
-**Prerequisites (one-time):**
-
-```powershell
-uv run playwright install chromium
-# Only needed for the MiniWoB++ tasks:
-git clone https://github.com/Farama-Foundation/miniwob-plusplus.git .external_envs/miniwob-plusplus
-uv pip install miniwob
-```
-
-**Full cross-environment fancy demo** (MiniWoB++ academic + WebArena-style mock envs):
-
-```powershell
-uv run python scripts/run_fancy_demo.py --headed --step-delay 1.3
-```
-
-Runs 3 MiniWoB++ tasks (login-user, click-dialog, click-link) plus 6 mock-env
-tasks across shopping, email, and forum surfaces, then prints a colour-coded M1
-cross-environment generalisation score table and saves per-task screenshots to
-`eval_outputs/external_runs/`. Add `--skip-miniwob` to demo the mock envs only
-(no MiniWoB++ clone required).
-
-**MiniWoB++ only:**
-
-```powershell
-uv run python scripts/run_miniwob_demo.py --step-delay 1.4 --pause-between --headed
-```
-
-For full install/troubleshooting details see `env/RUNBOOK_external_envs.md` § A2.
-
-### 4. Live smart-room environment (Docker)
-
-Start the React dashboard and node-wot servient:
+### Start the smart room
 
 ```bash
 docker compose -f env/docker-compose.yml up --build -d
 ```
 
-Open:
+Dashboard on `:3000`; the Things and their Thing Descriptions on `:8080`; the
+failure control plane on `:8081`; the runtime Thing Directory on `:8082`, which
+is what the agent asks which devices exist. `python run_demo.py --probe-env`
+checks all of it is reachable and reports `environment.all_ok`.
 
-- Dashboard: http://localhost:3000
-- WoT thermostat TD: http://localhost:8080/thermostat
-- WoT lights TD: http://localhost:8080/lights
-- WoT projector TD: http://localhost:8080/projector
-- Failure control plane: http://localhost:8081/state
-
-In another terminal, verify the environment and write demo artifacts:
+### Drive the production runtime from one sentence
 
 ```bash
-python run_demo.py --probe-env
+python scripts/run_intent_episode.py --utterance "add the wireless headphones to my cart"
+python scripts/run_intent_episode.py --suite    # 7 utterances, 2 environments, the M1 table
 ```
 
-The `environment.all_ok` field should be `true` when Docker services are up.
+The sentence goes through `IntentPlanner`, the resulting `GoalSpec` into
+`RuntimeEpisodeRunner` on a live page, and a vision model verifies the region
+the goal names. `--suite` also prints which utterances the rule fallback could
+not have handled.
 
-### 5. Live runtime-control tracer bullet
+This one runs on the **local mock environments**, not the smart room: it serves
+them from its own static server, which is what lets it run with no Docker and no
+fixed port. It is the generalisation harness — the same runtime over a second
+kind of page — and it says so rather than pretending the shop is the use case. A
+goal that belongs to the dashboard is declined here by name, with the command
+that does serve it.
 
-With the smart-room services running, execute the complete observe-plan-act-
-verify-recover loop through one entry point:
+### Prepare the room from one sentence
 
 ```bash
-uv run python -m src.pipeline --live-demo
+python scripts/run_room_prepared.py
+python scripts/run_room_prepared.py --utterance "get the room ready, lights at 15"
+python scripts/run_room_prepared.py --ignore lights.brightness   # drop one write on purpose
 ```
 
-The command runs a normal structured goal, transient WoT timeout recovery,
-postcondition-mismatch rollback, DOM/WoT conflict resolution, and a repeated
-System-1 grounding-cache episode. It writes live screenshots, transition and
-failure JSONL ledgers, a recovery report, and episode-derived metrics under
-`artifacts/live_runtime_demo/`. The System-1 repeat case includes a
-`system1_latency_report` that links the warm-up and repeat episode ids and
-reports cache-hit rate, routing latency, total transition latency, and
-amortized latency from the same transition ledger.
+Resolves against whatever the Thing Directory actually reports — no device
+endpoint is named anywhere in the code — writes each property, and reads every
+one back before calling the goal met. `--ignore` reproduces the servient
+answering 204 to a write that changed nothing, which is exactly the failure
+the read-back step exists to catch.
 
-Run the same seeded normal/timeout episodes under full, no-recovery, DOM-only,
-and WoT-only modes:
+### What else is runnable, and why something isn't
 
 ```bash
-uv run python -m src.pipeline --live-ablation
+python scripts/demo.py list      # every registered demo and its status
+python scripts/demo.py doctor    # why one is not runnable on this machine, and the fix
 ```
 
 Calibrate the current rule-first fusion threshold over labeled live clean,

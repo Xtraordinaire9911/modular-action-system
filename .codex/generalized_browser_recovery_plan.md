@@ -149,6 +149,6 @@ without a fixture-keyed branch.
   obstruction-repair episode.
 - `output/playwright/friday_multifailure_demo/evidence/` — six failure-detection
   reports, screenshots, and transitions.
-- `output/playwright/friday_generalized_recovery/evidence/` — linked failed
+- `artifacts/friday_generalized_recovery/evidence/` — linked failed
   action, verified remediation, retry, and fresh final oracle for the successful
   recovery scene.

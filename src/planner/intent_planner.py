@@ -36,6 +36,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
+from src.config.secrets import load_local_env
 from src.runtime.goal_spec import GoalSpec
 
 DEFAULT_LEDGER = Path("artifacts/intent_planner/calls.jsonl")
@@ -44,6 +45,7 @@ DEFAULT_LEDGER = Path("artifacts/intent_planner/calls.jsonl")
 # a closed vocabulary. Adding a capability means adding it here on purpose.
 KNOWN_GOAL_STATES = (
     "room_prepared",
+    "room_booked",
     "temperature_set",
     "lighting_set",
     "projector_on",
@@ -65,9 +67,31 @@ Reply with JSON only, no prose, using exactly these keys:
   safety_constraints  list of limits the agent must respect, may be empty
   confidence   number between 0 and 1
 
+What each goal_state means, so a request phrased differently still lands:
+  room_prepared     get a room ready for use
+  room_booked       reserve one of the rooms this building's dashboard shows,
+                    for a time - book it, hold it, I need somewhere to meet or
+                    to present. Put the room in parameters.room and the time in
+                    parameters.time. Only rooms in this building: booking
+                    anything else is outside what this agent can reach.
+  temperature_set   change what a thermostat is aiming for
+  lighting_set      change how bright the lights are
+  projector_on/off  switch a projector or beamer
+  blinds_set        move blinds or shades
+  item_in_cart      put a product in the shopping basket - buy, order, take,
+                    grab, get me one, I'll take it
+  message_archived  file or put away a message
+  post_upvoted      express approval of a post, thread or comment - upvote,
+                    like, thumbs up, give it a point, show it some appreciation
+
 Rules:
 - Choose the single goal_state that best fits. If none fit, use "unsupported".
 - Put every concrete value in parameters; do not leave them in the description.
+- Always name the thing being acted on in parameters, under "target", in the \
+user's own words. Do this even when they point at it by position or by \
+description rather than by name - "the top post", "the first one", "the cheap \
+one" all go in as written. A goal with no target cannot be carried out, so \
+omitting it throws the request away.
 - success_evidence must be checkable by re-observing the environment, not by \
 trusting that an action ran.
 """
@@ -115,11 +139,23 @@ class GoalPlan:
         }
 
 
+# Token counts as the provider reported them for the most recent call. Kept on
+# the client because that is the only place they exist: the callers deal in text.
+# Reported rather than estimated, so what a demo or a cost table shows is the
+# billed quantity and not a guess from string length.
+def _record_usage(client: Any, usage: Any) -> None:
+    client.last_usage = {
+        "input": int(getattr(usage, "input_tokens", 0) or getattr(usage, "prompt_tokens", 0) or 0),
+        "output": int(getattr(usage, "output_tokens", 0) or getattr(usage, "completion_tokens", 0) or 0),
+    }
+
+
 class AnthropicClient:
     """Claude via the SDK already declared in pyproject."""
 
     def __init__(self, *, model: str = "claude-sonnet-5", api_key: str | None = None) -> None:
         self.name = model
+        self.last_usage: dict[str, int] = {}
         self._key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         if not self._key:
             raise RuntimeError("ANTHROPIC_API_KEY is not set")
@@ -134,6 +170,7 @@ class AnthropicClient:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        _record_usage(self, getattr(message, "usage", None))
         # A reply is a list of blocks of several kinds; only text blocks carry
         # the answer. Checked with getattr on a widened value so the SDK can add
         # block types without this failing to type-check.
@@ -150,6 +187,7 @@ class OpenAIClient:
 
     def __init__(self, *, model: str = "gpt-4o-mini", api_key: str | None = None, base_url: str | None = None) -> None:
         self.name = model
+        self.last_usage: dict[str, int] = {}
         self._key = api_key or os.environ.get("OPENAI_API_KEY", "")
         self._base_url = base_url
         if not self._key:
@@ -164,22 +202,50 @@ class OpenAIClient:
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
             max_tokens=800,
         )
+        _record_usage(self, getattr(response, "usage", None))
         return response.choices[0].message.content or ""
 
 
+# Ordered cheapest first, same table shape as the vision side. Interpreting one
+# sentence into a closed vocabulary of nine goal states is not a task that needs
+# a frontier model, and the fallback below already covers the phrasings we use.
+TEXT_PROVIDERS: tuple[tuple[str, str, str | None], ...] = (
+    ("DASHSCOPE_API_KEY", "qwen-plus", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"),
+    ("ZHIPU_API_KEY", "glm-4-flash", "https://open.bigmodel.cn/api/paas/v4"),
+    ("OPENAI_API_KEY", "gpt-4o-mini", None),
+)
+
+
 def available_client() -> LLMClient | None:
-    """The first configured client, or None when nothing is configured.
+    """The cheapest configured client, or None when nothing is configured.
+
+    Precedence is cost, not preference. ``LLM_API_KEY`` (with optional
+    ``LLM_MODEL`` and ``LLM_BASE_URL``) overrides the table for any
+    OpenAI-compatible endpoint; Anthropic is tried last as the most expensive.
 
     Returning None rather than raising is deliberate: the caller then records a
     rule_fallback result, which is a claim it can defend, instead of a model
     result it cannot.
     """
-    for factory in (AnthropicClient, OpenAIClient):
-        try:
-            return factory()  # type: ignore[abstract]
-        except Exception:
-            continue
-    return None
+    load_local_env()
+    explicit = os.environ.get("LLM_API_KEY", "")
+    if explicit:
+        return OpenAIClient(
+            model=os.environ.get("LLM_MODEL", "qwen-plus"),
+            api_key=explicit,
+            base_url=os.environ.get("LLM_BASE_URL") or None,
+        )
+    for env_var, model, base_url in TEXT_PROVIDERS:
+        key = os.environ.get(env_var, "")
+        if key:
+            try:
+                return OpenAIClient(model=model, api_key=key, base_url=base_url)
+            except Exception:
+                continue
+    try:
+        return AnthropicClient()
+    except Exception:
+        return None
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -217,7 +283,24 @@ _KEYWORD_GOALS: list[tuple[str, str]] = [
     (r"\barchive\b", "message_archived"),
     (r"\bupvote\b", "post_upvoted"),
     (r"\bprepare\b.*\broom\b", "room_prepared"),
+    # Deliberately requires both words. "book" alone would swallow "book me a
+    # flight", which this agent cannot do and must keep refusing.
+    (r"\bbook\b.*\broom\b", "room_booked"),
 ]
+
+
+def rule_trace(intent: str) -> list[tuple[str, bool]]:
+    """Every pattern the fallback tries on this sentence, and which ones match.
+
+    Reads the same three tables :func:`rule_fallback` reads, so what a demo shows
+    cannot drift from what actually runs. Exposed because "the rules could not
+    interpret this" is worth showing rather than asserting.
+    """
+    text = intent.lower()
+    patterns = [pattern for pattern, _, _ in _RULES]
+    patterns += [pattern for pattern, _ in _KEYWORD_GOALS]
+    patterns += [pattern for pattern, _ in _SUBJECT_RULES]
+    return [(pattern, bool(re.search(pattern, text))) for pattern in patterns]
 
 
 def rule_fallback(intent: str) -> GoalPlan:
@@ -306,6 +389,10 @@ class IntentPlanner:
         plan.model = getattr(self.client, "name", "")
         self._log(intent, plan, prompt=user)
         return plan
+
+    def system_prompt_size(self) -> int:
+        """Characters in the system prompt actually sent, for showing a real figure."""
+        return len(_SYSTEM_PROMPT.format(states=", ".join(KNOWN_GOAL_STATES)))
 
     def _to_plan(self, intent: str, payload: dict[str, Any], raw: str) -> GoalPlan:
         state = str(payload.get("goal_state", "")).strip()

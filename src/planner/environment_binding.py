@@ -30,9 +30,13 @@ class EnvironmentBinding:
     """Everything the runtime needs to attempt one goal state in one environment."""
 
     goal_state: str
-    page: str  # file under env/mock_envs
+    page: str  # file under env/mock_envs, or "" when the surface is the dashboard
     completion_template: str  # selector family; {subject} filled from parameters
-    subject_parameter: str  # which parameter names the thing acted on
+    # Which parameter names the thing acted on. A tuple because the intent layer
+    # is free to name it: the rule fallback emits "item"/"subject", and a model
+    # reading the same prompt may reasonably emit "target" or "post". Binding to
+    # one name made every model-derived forum goal unsupported.
+    subject_parameter: str
     success_selector: str  # the region whose text proves the goal
     success_template: str  # text that must appear there, {subject} filled the same way
     # The intent layer speaks in goal names ("item_in_cart"); the runtime checks
@@ -47,6 +51,22 @@ class EnvironmentBinding:
     # cannot point at is not actionable.
     parameter_controls: dict[str, str] = field(default_factory=dict)
     subject_aliases: dict[str, str] = field(default_factory=dict)
+    # Other names the same value may arrive under, tried in order after the
+    # primary one. Naming is the intent layer's business, not this layer's.
+    subject_parameter_aliases: tuple[str, ...] = ()
+    # What the verification region *looks like* once the goal holds, phrased so a
+    # model shown only that crop can answer it. This has to be declared per
+    # binding rather than derived from the subject: the cart region shows the
+    # item's name, while the upvote region is a 32x32 arrow whose only visible
+    # change is that it becomes filled. Asking about the post title against an
+    # arrow got a confident False, correctly - the crop had no title in it.
+    visual_claim: str = "an entry for {subject}"
+    # Which surface serves this goal. The mock environments are files a runner
+    # can serve itself; the smart-room dashboard is served by Docker on a fixed
+    # port and is the *digital half* of the declared use case, sitting over the
+    # same devices the WoT side writes to. A runner that cannot reach a surface
+    # must say so rather than fetching a 404 and reporting a missing control.
+    surface: str = "mock_env"  # "mock_env" | "dashboard"
 
     def subject_of(self, parameters: dict[str, Any]) -> str:
         """The concrete thing this goal is about, as the page names it.
@@ -56,7 +76,7 @@ class EnvironmentBinding:
         form, or a change of adjective all still resolve - and an unknown
         subject returns empty rather than a guess, so the caller can refuse.
         """
-        raw = str(parameters.get(self.subject_parameter, "")).strip().lower()
+        raw = self.raw_subject(parameters).lower()
         if not raw:
             return ""
         if raw in self.subject_aliases:
@@ -66,6 +86,20 @@ class EnvironmentBinding:
                 return hook
         tail = re.sub(r"[^a-z0-9 ]", "", raw).split()
         return tail[-1] if tail else ""
+
+    def raw_subject(self, parameters: dict[str, Any]) -> str:
+        """The subject as the person said it, under whichever name it arrived.
+
+        Kept separate from :meth:`subject_of` because the two have different
+        readers: the page wants its own hook ("monitor"), and a question put to a
+        vision model wants the words a person would use ("4K Monitor"). Asking
+        the model about the internal hook produced confident wrong answers.
+        """
+        for name in (self.subject_parameter, *self.subject_parameter_aliases):
+            value = str(parameters.get(name, "")).strip()
+            if value:
+                return value
+        return ""
 
     def completion_for(self, parameters: dict[str, Any]) -> str:
         """The selector whose use completes this goal, or empty if unresolved."""
@@ -80,6 +114,11 @@ class EnvironmentBinding:
     def success_region(self, parameters: dict[str, Any]) -> str:
         subject = self.subject_of(parameters)
         return self.success_selector.format(subject=subject) if subject else ""
+
+    def visual_question(self, parameters: dict[str, Any]) -> str:
+        """One question about the verification region, answerable from it alone."""
+        claim = self.visual_claim.format(subject=self.raw_subject(parameters) or "the expected item")
+        return f"Does this image show {claim}? Answer from the image only."
 
     def runtime_goal_state(self) -> str:
         """The goal as a predicate the runtime's condition evaluator can check."""
@@ -107,11 +146,38 @@ class EnvironmentBinding:
 # One entry per goal state this repository can actually attempt. A goal state
 # with no entry is reported as unsupported here rather than attempted badly.
 BINDINGS: dict[str, EnvironmentBinding] = {
+    "room_booked": EnvironmentBinding(
+        goal_state="room_booked",
+        page="",  # the dashboard is served by Docker, not by the runner
+        surface="dashboard",
+        completion_template="[data-testid='book-room-button']",
+        subject_parameter="room",
+        subject_parameter_aliases=("target", "subject", "name"),
+        success_selector="[data-testid='booking-status']",
+        # Not just "booked". Before anything is clicked the same element reads
+        # "not booked", which *contains* that word, so a bare check reports the
+        # goal as already met and the episode passes without acting. Requiring
+        # the room the model named makes the proof both unambiguous and
+        # dependent on the model's own answer.
+        success_template="booked: room {subject}",
+        state_entity="room",
+        state_attribute="booked",
+        # The room and the time are typed into the form before the button is
+        # pressed, so what the model extracted is what actually gets booked. A
+        # run that clicked Book Room without filling these would book whatever
+        # the form happened to be showing and still report success.
+        parameter_controls={
+            "room": "[data-testid='room-input']",
+            "time": "[data-testid='time-input']",
+        },
+        visual_claim="a booking confirmation naming room {subject}",
+    ),
     "item_in_cart": EnvironmentBinding(
         goal_state="item_in_cart",
         page="shopping.html",
         completion_template="button.add-cart-btn[data-id='{subject}']",
         subject_parameter="item",
+        subject_parameter_aliases=("target", "product", "subject"),
         # The cart, not the whole page. The product name is printed in the
         # listing before anything is added, so a body-text check reports the
         # goal as already met and the episode passes without acting.
@@ -137,6 +203,9 @@ BINDINGS: dict[str, EnvironmentBinding] = {
         page="forum.html",
         completion_template="button.upvote-btn[data-post='{subject}']",
         subject_parameter="subject",
+        subject_parameter_aliases=("target", "post", "item", "title"),
+        # The whole visible change is the button turning from outlined to filled.
+        visual_claim="a small triangular vote button that is filled in with a solid colour rather than plain or outlined",
         # A vote count is already non-empty before the action.  Scope the oracle
         # to the state-bearing class the page adds only after a successful vote;
         # otherwise an empty success string matches the initial count and the
@@ -159,4 +228,89 @@ def binding_for(goal_state: str) -> EnvironmentBinding | None:
     return BINDINGS.get(goal_state)
 
 
-__all__ = ["BINDINGS", "EnvironmentBinding", "binding_for"]
+# --- the device surface ----------------------------------------------------------
+# A device goal is not completed by clicking anything on a page: the write target
+# is resolved from the Thing Descriptions the room publishes (see
+# src.planner.device_binding) and the value goes over WoT. But the dashboard is a
+# *view* of those same devices, so the effect becomes visible there a moment
+# later, and that is where a person - or a vision model - can confirm it.
+#
+# Keeping this separate from EnvironmentBinding is deliberate. The tables above
+# say which control completes a goal; there is no such control here, and giving a
+# device goal an empty completion would invite a runner to click nothing and call
+# it done. This says only where to look afterwards.
+
+
+@dataclass(frozen=True)
+class DeviceView:
+    """Where a device goal becomes visible on the smart-room dashboard."""
+
+    goal_state: str
+    region: str  # the panel to crop for the vision model
+    value_selector: str  # the element whose text carries the value
+    suffix: str = ""  # what the dashboard prints after the value, e.g. " C"
+    visual_claim: str = ""  # asked of a crop of `region`, answerable from it alone
+
+    def proof_for(self, value: Any) -> str:
+        """The text that must appear once the device really holds ``value``.
+
+        Numbers arrive from a servient as ``22`` or ``22.0`` and the dashboard
+        renders whichever it was given, so an integral float is compared as the
+        integer a person would read.
+        """
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
+        return f"{value}{self.suffix}"
+
+    def question_for(self, value: Any) -> str:
+        claim = (self.visual_claim or "the value {value}").format(value=self.proof_for(value))
+        return f"Does this image show {claim}? Answer from the image only."
+
+
+DEVICE_VIEWS: dict[str, DeviceView] = {
+    "temperature_set": DeviceView(
+        goal_state="temperature_set",
+        region="[data-testid='thermostat-panel']",
+        # Current, not Target. The panel shows both, and Target changes the
+        # instant the setpoint is written - checking it would confirm that the
+        # thermostat was told, which is the claim that was already free. The
+        # goal is about the room, so the reading that settles it is the one the
+        # room takes time to produce.
+        value_selector="[data-testid='current-temp']",
+        suffix=" C",
+        visual_claim="a thermostat panel whose Current reading has reached {value}",
+    ),
+    "lighting_set": DeviceView(
+        goal_state="lighting_set",
+        region="[data-testid='lighting-panel']",
+        value_selector="[data-testid='brightness']",
+        suffix=" %",
+        visual_claim="a lighting panel whose Brightness reads {value}",
+    ),
+    "projector_on": DeviceView(
+        goal_state="projector_on",
+        region="[data-testid='projector-panel']",
+        value_selector="[data-testid='projector-power']",
+        visual_claim="a projector panel whose Power reads {value}",
+    ),
+    "projector_off": DeviceView(
+        goal_state="projector_off",
+        region="[data-testid='projector-panel']",
+        value_selector="[data-testid='projector-power']",
+        visual_claim="a projector panel whose Power reads {value}",
+    ),
+}
+
+
+def device_view_for(goal_state: str) -> DeviceView | None:
+    return DEVICE_VIEWS.get(goal_state)
+
+
+__all__ = [
+    "BINDINGS",
+    "DEVICE_VIEWS",
+    "DeviceView",
+    "EnvironmentBinding",
+    "binding_for",
+    "device_view_for",
+]
