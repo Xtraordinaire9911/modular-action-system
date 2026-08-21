@@ -2,15 +2,15 @@
 
 Live, visual walkthrough (requires the Docker smart-room environment):
 
-    uv run python scripts/run_fadi_demo.py --headed
+    uv run python scripts/run_supervised_session_demo.py --headed
 
 Deterministic rehearsal without Docker or Chromium:
 
-    uv run python scripts/run_fadi_demo.py --dry-run
+    uv run python scripts/run_supervised_session_demo.py --dry-run
 
 The script is intentionally only setup and operator UI. Planning, primitive
 execution, pause/resume, fresh observation, and cleanup remain owned by the
-existing ContinuousInteractionManager and Project PiP isolation provider.
+existing ContinuousInteractionManager and supervised-session isolation provider.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.adaptation.trace_ledger import TraceLedger  # noqa: E402
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall  # noqa: E402
-from src.isolation.episode import BrowserWotIsolationProvider  # noqa: E402
+from src.isolation import AgentInputGuardedExecutor, BrowserWotIsolationProvider  # noqa: E402
 from src.planner.goal_skill_selector import GoalSkillSelection, GoalSkillSelector  # noqa: E402
 from src.runtime.cognitive_map import CognitiveMap  # noqa: E402
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, RuntimeStepResult  # noqa: E402
@@ -62,8 +62,8 @@ from src.runtime.live_observation import (  # noqa: E402
 from src.skill_library import load_skill_library  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEMO_TITLE = "Supervised takeover / isolation toward PiP"
-DEFAULT_OUTPUT = REPO_ROOT / "artifacts" / "fadi_weekly_demo" / "episode.json"
+DEMO_TITLE = "Supervised session isolation and human takeover"
+DEFAULT_OUTPUT = REPO_ROOT / "artifacts" / "supervised_session_demo" / "episode.json"
 
 
 @dataclass(frozen=True)
@@ -205,7 +205,7 @@ def _print_goal_and_skill(goal: GoalSpec, selection: GoalSkillSelection) -> None
 
 async def _operator_loop(
     broker: InMemoryInterventionBroker,
-    runtime_task: asyncio.Task[RuntimeStepResult],
+    runtime_task: asyncio.Task[Any],
     *,
     mode: str,
 ) -> None:
@@ -229,7 +229,7 @@ async def _operator_loop(
             print("   Dry-run mode: simulating that the human completed the booking.\n")
             decision = InterventionDecision(
                 InterventionAction.RESUME,
-                actor="fadi",
+                actor="operator",
                 note="Dry-run human completed Book Room",
                 correction_applied=True,
             )
@@ -239,7 +239,7 @@ async def _operator_loop(
 
 
 def _print_pause(request: InterventionRequest) -> None:
-    print("\n4. TIER-4 PAUSE")
+    print("\nTIER-4 PAUSE")
     print(f"   reason            : {request.reason}")
     print(f"   pending action    : {request.pending_action_fingerprint}")
     print("   The agent is waiting. It cannot click while the human has control.")
@@ -267,7 +267,7 @@ async def _interactive_decision() -> InterventionDecision:
         if choice == "a":
             return InterventionDecision(
                 InterventionAction.APPROVE,
-                actor="fadi",
+                actor="operator",
                 note="Supervisor approved the pending booking action",
             )
         if choice == "t":
@@ -282,20 +282,20 @@ async def _interactive_decision() -> InterventionDecision:
                 )
             return InterventionDecision(
                 InterventionAction.RESUME,
-                actor="fadi",
+                actor="operator",
                 note="Human completed Book Room in the visible browser",
                 correction_applied=True,
             )
         if choice == "r":
             return InterventionDecision(
                 InterventionAction.REJECT,
-                actor="fadi",
+                actor="operator",
                 note="Supervisor rejected the protected booking action",
             )
         if choice == "c":
             return InterventionDecision(
                 InterventionAction.CANCEL,
-                actor="fadi",
+                actor="operator",
                 note="Supervisor cancelled the episode",
             )
         print("Please enter a, t, r, or c.")
@@ -324,19 +324,22 @@ async def run_live_demo(args: argparse.Namespace, paths: DemoPaths) -> DemoRun:
         include_wot_state=False,
         allowed_affordance_sources={"DOM"},
     )
-    dom_executor = _RecordingExecutor(
-        RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(session)),
-        delay_s=args.step_delay,
-    )
     transitions = TransitionLedger(paths.transitions)
     interventions = InterventionLedger(paths.interventions)
     failures = TraceLedger()
     broker = InMemoryInterventionBroker(interventions)
     isolation = BrowserWotIsolationProvider(session, control)
+    dom_executor = _RecordingExecutor(
+        AgentInputGuardedExecutor(
+            isolation,
+            RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(session)),
+        ),
+        delay_s=args.step_delay,
+    )
     manager = ContinuousInteractionManager(
         {selection.skill_tuple.skill_id: selection.skill_tuple},
         {"dom": dom_executor},
-        CognitiveMap(task_id="fadi-confirm-booking"),
+        CognitiveMap(task_id="supervised-session-confirm-booking"),
         observation_provider=environment,
         episode_policy=_episode_policy(),
         transition_ledger=transitions,
@@ -366,7 +369,7 @@ async def run_live_demo(args: argparse.Namespace, paths: DemoPaths) -> DemoRun:
 
     state_after = await control.state()
     failures.write_jsonl(paths.failures)
-    screenshot_dir = paths.evidence.parent / "screenshots" / "fadi-confirm-booking" / result.episode_id
+    screenshot_dir = paths.evidence.parent / "screenshots" / "supervised-session-confirm-booking" / result.episode_id
     screenshots = sorted(str(path) for path in screenshot_dir.glob("*.png"))
     return DemoRun(
         goal=goal,
@@ -399,16 +402,17 @@ async def run_dry_demo(paths: DemoPaths, *, room: str = "C", time_slot: str = "1
     browser = _DryBrowser(isolation_events)
     control = _DryControl(isolation_events)
     state_before = copy.deepcopy(control.state)
-    executor = _DryExecutor()
     transitions = TransitionLedger(paths.transitions)
     interventions = InterventionLedger(paths.interventions)
     failures = TraceLedger()
     broker = InMemoryInterventionBroker(interventions)
     isolation = BrowserWotIsolationProvider(browser, control)
+    dry_executor = _DryExecutor()
+    executor = AgentInputGuardedExecutor(isolation, dry_executor)
     manager = ContinuousInteractionManager(
         {selection.skill_tuple.skill_id: selection.skill_tuple},
         {"dom": executor},
-        CognitiveMap(task_id="fadi-confirm-booking-dry-run"),
+        CognitiveMap(task_id="supervised-session-confirm-booking-dry-run"),
         observation_provider=provider,
         episode_policy=_episode_policy(),
         transition_ledger=transitions,
@@ -444,7 +448,7 @@ async def run_dry_demo(paths: DemoPaths, *, room: str = "C", time_slot: str = "1
         state_after=copy.deepcopy(control.state),
         browser_context_generation=browser.context_generation,
         isolation_active_after=isolation.active_session is not None,
-        executor_calls=executor.calls,
+        executor_calls=dry_executor.calls,
         mode="dry_run_simulated_takeover",
         isolation_events=isolation_events,
         screenshot_paths=[],
@@ -452,7 +456,7 @@ async def run_dry_demo(paths: DemoPaths, *, room: str = "C", time_slot: str = "1
 
 
 class _RecordingExecutor:
-    def __init__(self, delegate: RuntimeAffordanceExecutor, *, delay_s: float = 0.0) -> None:
+    def __init__(self, delegate: Any, *, delay_s: float = 0.0) -> None:
         self.delegate = delegate
         self.delay_s = delay_s
         self.calls: list[SkillCall] = []
@@ -672,7 +676,7 @@ def _json_default(value: Any) -> Any:
 def _print_result(run: DemoRun, evidence_path: Path) -> None:
     interventions = run.interventions.for_episode(run.result.episode_id)
     primitive_names = [str(item.get("action", "")) for item in run.result.primitive_plan]
-    print("\n5. RESULT")
+    print("\nRESULT")
     print(f"   primitives        : {' -> '.join(primitive_names)}")
     print(f"   agent actions     : {len(run.executor_calls)}")
     print(f"   human decisions   : {[record.decision for record in interventions]}")

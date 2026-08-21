@@ -68,11 +68,11 @@
   },
   "human_interventions": [
     {
-      "actor": "fadi",
+      "actor": "operator",
       "correction_applied": true,
       "decision": "resume",
-      "episode_id": "episode-7671932934a6",
-      "intervention_id": "intervention-3d307b46912d",
+      "episode_id": "episode-45e94a352a46",
+      "intervention_id": "intervention-073d091a5ec2",
       "kind": "safety_confirmation",
       "latency_ms": 0,
       "metadata": {
@@ -84,10 +84,10 @@
       "reason": "high-risk action requires confirmation",
       "reobserved": true,
       "replanned": true,
-      "requested_at_ms": 1786700557581,
-      "resolved_at_ms": 1786700557581,
+      "requested_at_ms": 1787297241147,
+      "resolved_at_ms": 1787297241147,
       "state_id": "state-6299f078046982c0",
-      "task_id": "fadi-confirm-booking-dry-run"
+      "task_id": "supervised-session-confirm-booking-dry-run"
     }
   ],
   "instantiated_skill_call": {
@@ -146,7 +146,7 @@
   "mode": "dry_run_simulated_takeover",
   "result": {
     "attempts": 2,
-    "episode_id": "episode-7671932934a6",
+    "episode_id": "episode-45e94a352a46",
     "failure_type": "",
     "final_outcome_verified": true,
     "intervention_replan_count": 1,
@@ -156,9 +156,16 @@
   },
   "runtime_evidence_trace": [
     {
-      "episode_id": "episode-7671932934a6",
+      "allowed_backends": [
+        "dom",
+        "visual"
+      ],
+      "episode_id": "episode-45e94a352a46",
       "event": "goal_skill_selection",
       "goal_id": "confirm_booking",
+      "goal_states": [
+        "room_booked"
+      ],
       "parameters": {
         "room": "C",
         "time": "15:30"
@@ -172,16 +179,25 @@
       "preferred_backends": [
         "dom"
       ],
+      "safety_level": "high",
       "skill_id": "confirm_booking",
+      "timeout_ms": 5000,
       "transition_ids": [
-        "episode-7671932934a6:transition-0001",
-        "episode-7671932934a6:transition-0002"
+        "episode-45e94a352a46:transition-0001",
+        "episode-45e94a352a46:transition-0002"
       ],
       "validation_status": "passed"
     }
   ],
   "runtime_skill_selection": {
+    "allowed_backends": [
+      "dom",
+      "visual"
+    ],
     "goal_id": "confirm_booking",
+    "goal_states": [
+      "room_booked"
+    ],
     "parameters": {
       "room": "C",
       "time": "15:30"
@@ -195,7 +211,9 @@
     "preferred_backends": [
       "dom"
     ],
+    "safety_level": "high",
     "skill_id": "confirm_booking",
+    "timeout_ms": 5000,
     "validation_status": "passed"
   },
   "scope_note": "Project-level browser/WoT isolation; not the UFO2 Windows RDP child desktop",
@@ -207,6 +225,9 @@
     ],
     "description": "Confirm a room booking via the web dashboard",
     "failure_modes": {},
+    "goal_states": [
+      "room_booked"
+    ],
     "idempotent": false,
     "irreversible": false,
     "parameters_schema": {
@@ -229,17 +250,17 @@
       "dom"
     ],
     "rollback": null,
-    "safety_level": "low",
+    "safety_level": "high",
     "skill_id": "confirm_booking",
     "timeout_ms": 5000
   },
-  "title": "Supervised takeover / isolation toward PiP",
+  "title": "Supervised session isolation and human takeover",
   "transitions": [
     {
       "affordance_key": "dom:booking.room",
       "attempt": 1,
       "backend": "dom",
-      "episode_id": "episode-7671932934a6",
+      "episode_id": "episode-45e94a352a46",
       "execution_success": true,
       "failure_reason": "",
       "latency_ms": 1.0,
@@ -262,15 +283,15 @@
       "state_id_before": "state-bf168ae8128e33c3",
       "step": 1,
       "success": true,
-      "task_id": "fadi-confirm-booking-dry-run",
-      "timestamp_ms": 1786700557580,
-      "transition_id": "episode-7671932934a6:transition-0001"
+      "task_id": "supervised-session-confirm-booking-dry-run",
+      "timestamp_ms": 1787297241147,
+      "transition_id": "episode-45e94a352a46:transition-0001"
     },
     {
       "affordance_key": "dom:booking.time",
       "attempt": 2,
       "backend": "dom",
-      "episode_id": "episode-7671932934a6",
+      "episode_id": "episode-45e94a352a46",
       "execution_success": true,
       "failure_reason": "",
       "latency_ms": 1.0,
@@ -293,9 +314,9 @@
       "state_id_before": "state-7f40cf200be0f60b",
       "step": 2,
       "success": true,
-      "task_id": "fadi-confirm-booking-dry-run",
-      "timestamp_ms": 1786700557581,
-      "transition_id": "episode-7671932934a6:transition-0002"
+      "task_id": "supervised-session-confirm-booking-dry-run",
+      "timestamp_ms": 1787297241147,
+      "transition_id": "episode-45e94a352a46:transition-0002"
     }
   ]
 }

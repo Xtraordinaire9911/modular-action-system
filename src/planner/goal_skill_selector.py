@@ -1,8 +1,10 @@
 """Select and instantiate a reusable Skill from a structured goal.
 
 This is the small bridge between the intent boundary (``GoalSpec``) and the
-durable Skill Library.  It deliberately contains no task-specific branches:
-for the MVP, a goal selects the Skill with the same identifier.
+durable Skill Library.  A Skill can be selected by its exact identifier or by
+one of its declared semantic ``goal_states``.  The latter is what lets a stable
+intent such as ``room_booked`` select a reusable Skill such as
+``confirm_booking``.
 """
 
 from __future__ import annotations
@@ -28,10 +30,30 @@ class GoalSkillSelection:
 
 
 class GoalSkillSelector:
-    """Match ``GoalSpec.goal_id`` to a Skill and validate its parameters."""
+    """Match a stable goal capability to a Skill and validate parameters."""
 
     def __init__(self, skill_library: SkillLibrary) -> None:
         self.skill_library = skill_library
+
+    def match(self, goal_spec: GoalSpec) -> SkillTuple | None:
+        """Return the one Skill declaring this goal, or ``None`` if absent.
+
+        Exact Skill IDs win so existing callers keep their behavior.  Semantic
+        aliases are intentionally stored on the Skill contract rather than in
+        an intent-specific if/else table.
+        """
+
+        try:
+            return self.skill_library.get(goal_spec.goal_id)
+        except SkillLibraryError:
+            pass
+
+        semantic_keys = {goal_spec.goal_id, goal_spec.goal_state}
+        matches = [skill for skill in self.skill_library.all() if semantic_keys.intersection(skill.goal_states)]
+        if len(matches) > 1:
+            ids = ", ".join(sorted(skill.skill_id for skill in matches))
+            raise GoalSkillSelectionError(f"multiple Skills match goal {goal_spec.goal_id!r}: {ids}")
+        return matches[0] if matches else None
 
     def select(self, goal_spec: GoalSpec) -> GoalSkillSelection:
         goal_errors = goal_spec.validate()
@@ -39,15 +61,14 @@ class GoalSkillSelector:
             details = "; ".join(goal_errors)
             raise GoalSkillSelectionError(f"invalid GoalSpec: {details}")
 
-        try:
-            skill = self.skill_library.get(goal_spec.goal_id)
-        except SkillLibraryError as exc:
+        skill = self.match(goal_spec)
+        if skill is None:
             available = ", ".join(sorted(self.skill_library.ids())) or "none"
             raise GoalSkillSelectionError(
                 f"no Skill matches goal_id {goal_spec.goal_id!r}; available skills: {available}"
-            ) from exc
+            )
 
-        params = dict(goal_spec.parameters)
+        params = _bind_default_parameters(skill, goal_spec.parameters)
         _validate_parameters(skill, params)
 
         return GoalSkillSelection(
@@ -77,6 +98,21 @@ _TYPE_ALIASES: dict[str, type[object]] = {
     "bool": bool,
     "boolean": bool,
 }
+
+
+def _bind_default_parameters(skill: SkillTuple, supplied: dict[str, Any]) -> dict[str, Any]:
+    """Instantiate optional Skill defaults without changing the GoalSpec.
+
+    The GoalSpec should contain what the person actually asked for. Reusable
+    execution defaults belong to the Skill contract, so a demo runner does not
+    have to secretly rewrite the goal before handing it to the runtime.
+    """
+
+    params = dict(supplied)
+    for name, rule in skill.parameters_schema.items():
+        if name not in params and isinstance(rule, dict) and "default" in rule:
+            params[name] = rule["default"]
+    return params
 
 
 def _validate_parameters(skill: SkillTuple, params: dict[str, Any]) -> None:

@@ -18,6 +18,7 @@ by hand rather than at this script.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import shutil
 import subprocess
 import sys
@@ -54,6 +55,18 @@ def _uv() -> str | None:
     return shutil.which("uv")
 
 
+def _pip_available() -> bool:
+    """Match the command used by :func:`install`: ``python -m pip``.
+
+    A virtual environment can contain the pip module even when its ``bin``
+    directory is not on ``PATH``.  Looking only for a ``pip`` executable made a
+    usable checkout fail the preflight check even though installation would
+    work with the current interpreter.
+    """
+
+    return importlib.util.find_spec("pip") is not None
+
+
 def check() -> bool:
     """Report the environment without changing anything."""
     ok = True
@@ -74,7 +87,7 @@ def check() -> bool:
 
     if _uv():
         _say(_OK, "uv found (used for install)")
-    elif shutil.which("pip"):
+    elif _pip_available():
         _say(_OK, "uv not found; falling back to pip")
     else:
         _say(_FAIL, "neither uv nor pip is available")

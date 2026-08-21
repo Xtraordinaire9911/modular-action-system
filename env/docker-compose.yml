@@ -1,7 +1,7 @@
 # Smart-room demo environment: React dashboard + node-wot servient.
 # `docker compose -f env/docker-compose.yml up` brings up the full testbed.
-# The agent runtime attaches an isolated Playwright context (PiP isolation,
-# advisor §9.2) — see src/perception/browser_session.py.
+# The agent runtime attaches an isolated Playwright browser/session context —
+# see src/perception/browser_session.py.
 services:
   wot_server:
     build: ./node_wot_server

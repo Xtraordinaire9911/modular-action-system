@@ -1,7 +1,7 @@
-# Fadi's weekly update: supervised takeover toward PiP
+# Supervised session isolation demo walkthrough
 
 This is a simple 5–7 minute update. The safest title is **GoalSpec-to-Skill with
-supervised takeover / isolation toward PiP**. It is not the full Windows RDP PiP
+supervised session isolation and human takeover**. It is not the full Windows RDP PiP
 from the UFO2 paper.
 
 ## Before the meeting
@@ -11,7 +11,7 @@ dashboard opens:
 
 ```bash
 docker compose -f env/docker-compose.yml up --build -d
-.venv/bin/python scripts/run_fadi_demo.py --headed --step-delay 2
+.venv/bin/python scripts/run_supervised_session_demo.py --headed --step-delay 2
 ```
 
 `--step-delay 2` leaves two seconds after each browser action, which makes the
@@ -23,13 +23,13 @@ Keep this fallback command ready. It shows the same action-system flow without
 Docker or a browser:
 
 ```bash
-.venv/bin/python scripts/run_fadi_demo.py --dry-run
+.venv/bin/python scripts/run_supervised_session_demo.py --dry-run
 ```
 
 Both commands write the main evidence file to:
 
 ```text
-artifacts/fadi_weekly_demo/episode.json
+artifacts/supervised_session_demo/episode.json
 ```
 
 ## What to say and show
@@ -67,7 +67,7 @@ Do not read every line. Point at the class/function names and explain their job.
 Run:
 
 ```bash
-.venv/bin/python scripts/run_fadi_demo.py --headed
+.venv/bin/python scripts/run_supervised_session_demo.py --headed
 ```
 
 Expected flow:
@@ -90,7 +90,7 @@ isolation provider, intervention broker, planner, and ledgers still run.
 
 ### 4. Show the result (about 60 seconds)
 
-Open `artifacts/fadi_weekly_demo/episode.json` and point to:
+Open `artifacts/supervised_session_demo/episode.json` and point to:
 
 - `goal_spec` and `selected_skill`: the goal selected a real contract.
 - `generated_primitive_plan`: the runtime produced `type → type → click`.
@@ -131,9 +131,9 @@ and cleanup remain in the existing action-system components.
 of the action-system control path. The demo script is only a thin adapter around
 that path.
 
-**Is this full PiP?**  No. It is the cross-platform Project PiP MVP: browser/WoT
-isolation plus supervised takeover. The Windows RDP child desktop remains future
-work.
+**Is this full PiP?**  No. It is supervised browser/WoT session isolation plus
+human takeover and a software input gate. A separate Windows/VM/RDP desktop with
+independent physical input remains future work.
 
 **Why is the final click marked high risk?**  To demonstrate a deterministic
 human checkpoint before a committing action. Other actions remain normal.

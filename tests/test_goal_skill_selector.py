@@ -6,7 +6,12 @@ from src.runtime.goal_spec import GoalSpec
 from src.skill_library import SkillLibrary
 
 
-def _skill(skill_id: str, parameters_schema: dict[str, object]) -> SkillTuple:
+def _skill(
+    skill_id: str,
+    parameters_schema: dict[str, object],
+    *,
+    goal_states: list[str] | None = None,
+) -> SkillTuple:
     return SkillTuple(
         skill_id=skill_id,
         description="Demo skill",
@@ -20,6 +25,7 @@ def _skill(skill_id: str, parameters_schema: dict[str, object]) -> SkillTuple:
         timeout_ms=5_000,
         safety_level="medium",
         irreversible=False,
+        goal_states=list(goal_states or []),
     )
 
 
@@ -50,6 +56,30 @@ def test_convenience_function_uses_same_selection_path() -> None:
 
     assert selection.skill_tuple is skill
     assert selection.skill_call.params == {"room": "A"}
+
+
+def test_semantic_goal_state_selects_reusable_skill_with_a_different_id() -> None:
+    skill = _skill("confirm_booking", {"room": "str"}, goal_states=["room_booked"])
+    goal = GoalSpec(
+        goal_id="room_booked",
+        goal_state="booking.confirmed == true",
+        parameters={"room": "A"},
+        source="user_intent_parser",
+    )
+
+    selection = GoalSkillSelector(SkillLibrary([skill])).select(goal)
+
+    assert selection.skill_tuple.skill_id == "confirm_booking"
+    assert selection.skill_call.skill_id == "confirm_booking"
+
+
+def test_ambiguous_semantic_goal_mapping_is_rejected() -> None:
+    first = _skill("first", {}, goal_states=["room_booked"])
+    second = _skill("second", {}, goal_states=["room_booked"])
+    goal = GoalSpec(goal_id="room_booked", goal_state="booking.confirmed == true")
+
+    with pytest.raises(GoalSkillSelectionError, match="multiple Skills match"):
+        GoalSkillSelector(SkillLibrary([first, second])).select(goal)
 
 
 def test_unknown_goal_lists_available_skills() -> None:
@@ -106,6 +136,27 @@ def test_optional_json_style_schema_parameter_may_be_omitted() -> None:
     selection = GoalSkillSelector(SkillLibrary([skill])).select(_goal(room="A"))
 
     assert selection.skill_call.params == {"room": "A"}
+
+
+def test_skill_defaults_are_bound_without_rewriting_the_goal() -> None:
+    skill = _skill(
+        "prepare_room",
+        {
+            "room": "str",
+            "brightness": {"type": "int", "required": False, "default": 30},
+        },
+        goal_states=["room_prepared"],
+    )
+    goal = GoalSpec(
+        goal_id="room_prepared",
+        goal_state="room_prepared",
+        parameters={"room": "C"},
+    )
+
+    selection = GoalSkillSelector(SkillLibrary([skill])).select(goal)
+
+    assert goal.parameters == {"room": "C"}
+    assert selection.skill_call.params == {"room": "C", "brightness": 30}
 
 
 def test_unexpected_parameter_is_rejected() -> None:

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import json
 
-from scripts.run_fadi_demo import DEMO_TITLE, booking_bindings, build_goal, build_parser, main, select_skill
+from scripts.run_supervised_session_demo import (
+    DEMO_TITLE,
+    booking_bindings,
+    build_goal,
+    build_parser,
+    main,
+    select_skill,
+)
 from src.demos.registry import build_argv, find
 
 
@@ -78,8 +85,8 @@ def test_dry_run_emits_one_compact_end_to_end_evidence_artifact(tmp_path) -> Non
 
 
 def test_demo_registry_exposes_rehearsal_and_visible_walkthrough() -> None:
-    rehearsal = find("supervised-pip-rehearsal")
-    live = find("supervised-pip-live")
+    rehearsal = find("supervised-session-rehearsal")
+    live = find("supervised-session-live")
 
     assert rehearsal is not None
     assert build_argv(rehearsal)[-1] == "--dry-run"

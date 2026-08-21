@@ -107,7 +107,7 @@ def test_matching_durable_skill_is_bound_and_traced_before_primitive_execution()
 
     result = asyncio.run(manager.run_observed_goal(_live({"booking": {"confirmed": False}}), goal_spec=_goal()))
 
-    assert result.state is RuntimeState.COMPLETED
+    assert result.state is RuntimeState.COMPLETED, (result.reason, result.failure_type, result.primitive_plan)
     assert result.final_outcome_verified
     assert result.goal_skill_selection == {
         "goal_id": "confirm_booking",
@@ -115,7 +115,11 @@ def test_matching_durable_skill_is_bound_and_traced_before_primitive_execution()
         "parameters": {"room": "A"},
         "preconditions": [],
         "postconditions": ["booking.confirmed == true"],
+        "goal_states": [],
+        "allowed_backends": ["dom"],
         "preferred_backends": ["dom"],
+        "timeout_ms": 5000,
+        "safety_level": "medium",
         "validation_status": "passed",
     }
     assert result.evidence_trace[0]["event"] == "goal_skill_selection"
@@ -141,7 +145,51 @@ def test_matching_skill_rejects_invalid_parameters_before_execution() -> None:
     assert "must be str, got int" in result.reason
     assert result.goal_skill_selection["validation_status"] == "failed"
     assert result.evidence_trace[0]["transition_ids"] == []
+    assert result.episode_id.startswith("episode-")
     assert executor.calls == []
+
+
+def test_invalid_goal_spec_still_has_an_attributable_episode_id() -> None:
+    manager = ContinuousInteractionManager({}, {}, CognitiveMap(task_id="invalid-goal-spec"))
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_spec=GoalSpec(goal_id="", goal_state="", parameters={}, source="demo"),
+            observation=Observation(),
+        )
+    )
+
+    assert result.state is RuntimeState.ESCALATED
+    assert result.failure_type == "invalid_goal_spec"
+    assert result.episode_id.startswith("episode-")
+
+
+def test_ambiguous_semantic_skill_mapping_still_has_an_attributable_episode_id() -> None:
+    first = _skill("first_booking")
+    second = _skill("second_booking")
+    first.goal_states = ["room_booked"]
+    second.goal_states = ["room_booked"]
+    manager = ContinuousInteractionManager(
+        {first.skill_id: first, second.skill_id: second},
+        {},
+        CognitiveMap(task_id="ambiguous-goal-skill"),
+    )
+
+    result = asyncio.run(
+        manager.run_goal(
+            goal_spec=GoalSpec(
+                goal_id="room_booked",
+                goal_state="room_booked",
+                parameters={"room": "A"},
+                source="demo",
+            ),
+            observation=Observation(),
+        )
+    )
+
+    assert result.state is RuntimeState.ESCALATED
+    assert result.failure_type == "ambiguous_skill_selection"
+    assert result.episode_id.startswith("episode-")
 
 
 def test_goal_without_matching_skill_keeps_zero_shot_behavior_and_no_selection_claim() -> None:
@@ -167,3 +215,81 @@ def test_goal_without_matching_skill_keeps_zero_shot_behavior_and_no_selection_c
     assert result.goal_skill_selection == {}
     assert result.evidence_trace == []
     assert executor.calls[0].skill_id == "one_off_booking"
+
+
+def test_semantic_intent_goal_uses_the_declared_reusable_skill() -> None:
+    skill = _skill()
+    skill.goal_states = ["room_booked"]
+    executor = _Executor()
+    manager = ContinuousInteractionManager(
+        {skill.skill_id: skill},
+        {"dom": executor},
+        CognitiveMap(task_id="semantic-skill-bound-goal"),
+        observation_provider=_Provider(
+            [
+                {"form": {"room": "A"}, "booking": {"confirmed": False}},
+                {"booking": {"confirmed": True}},
+            ]
+        ),
+    )
+    goal = GoalSpec(
+        goal_id="room_booked",
+        goal_state="room_booked",
+        parameters={"room": "A"},
+        source="user_intent_parser",
+    )
+
+    result = asyncio.run(manager.run_observed_goal(_live({"booking": {"confirmed": False}}), goal_spec=goal))
+
+    assert result.state is RuntimeState.COMPLETED, (result.reason, result.failure_type, result.primitive_plan)
+    assert result.goal_skill_selection["skill_id"] == "confirm_booking"
+    assert goal.goal_state == "room_booked"
+    assert result.primitive_plan[-1]["expected_effect"] == "booking.confirmed == true"
+    assert executor.calls[0].skill_id == "confirm_booking"
+
+
+def test_selected_skill_precondition_is_enforced_before_any_action() -> None:
+    skill = _skill()
+    skill.goal_states = ["room_booked"]
+    skill.preconditions = [Condition("booking.confirmed == true")]
+    executor = _Executor()
+    manager = ContinuousInteractionManager(
+        {skill.skill_id: skill},
+        {"dom": executor},
+        CognitiveMap(task_id="skill-precondition"),
+    )
+    goal = GoalSpec(
+        goal_id="room_booked",
+        goal_state="booking.confirmed == true",
+        parameters={"room": "A"},
+    )
+
+    result = asyncio.run(manager.run_observed_goal(_live({"booking": {"confirmed": False}}), goal_spec=goal))
+
+    assert result.state is RuntimeState.FAILED
+    assert result.failure_type == "precondition_failed"
+    assert executor.calls == []
+
+
+def test_selected_skill_rejects_a_backend_outside_its_contract() -> None:
+    skill = _skill()
+    skill.goal_states = ["room_booked"]
+    skill.allowed_backends = ["visual"]
+    skill.preferred_backends = ["visual"]
+    executor = _Executor()
+    manager = ContinuousInteractionManager(
+        {skill.skill_id: skill},
+        {"dom": executor},
+        CognitiveMap(task_id="skill-backend-policy"),
+    )
+    goal = GoalSpec(
+        goal_id="room_booked",
+        goal_state="booking.confirmed == true",
+        parameters={"room": "A"},
+    )
+
+    result = asyncio.run(manager.run_observed_goal(_live({"booking": {"confirmed": False}}), goal_spec=goal))
+
+    assert result.state is RuntimeState.ESCALATED
+    assert result.failure_type == "backend_not_allowed_by_skill"
+    assert executor.calls == []

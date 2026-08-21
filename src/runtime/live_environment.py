@@ -70,6 +70,10 @@ class AffordanceSemanticBinding:
     source: Literal["DOM", "WOT", "VISUAL"]
     entity_id: str = ""
     state_attribute: str = ""
+    # Optional semantic identity for a separately read WoT property. Actions
+    # such as ``setBrightness`` are verified from the ``brightness`` state
+    # source, so their names need not be identical.
+    state_source_property: str = ""
     affordance_id: str = ""
     selector: str = ""
     thing_id: str = ""
@@ -445,10 +449,20 @@ class SmartRoomLiveEnvironment:
             if error is not None:
                 continue
             device_states.setdefault(source.thing_id, {})[source.property] = value
+            entity_id = source.thing_id
+            attribute = source.property
+            for binding in self.semantic_bindings:
+                if binding.source != "WOT" or binding.state_source_property != source.property:
+                    continue
+                if binding.thing_id and binding.thing_id != source.thing_id:
+                    continue
+                entity_id = binding.entity_id or entity_id
+                attribute = binding.state_attribute or attribute
+                break
             assertions.append(
                 ObservedAssertion(
-                    entity_id=source.thing_id,
-                    attribute=source.property,
+                    entity_id=entity_id,
+                    attribute=attribute,
                     value=value,
                     source="wot",
                     confidence=1.0,

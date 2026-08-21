@@ -2,9 +2,12 @@
 
 > Review basis: `Project Review - Team 2 - July 21.pdf`, 21 July 2026, Version 01.00.
 >
-> Current code basis: merge commit `1ef27f4` on `origin/develop`, 22 July 2026. PR #56 is merged with green CI, so all `[Yixin - Completed]` items in this document are now in `develop`; `main` remains on the older release.
+> Current status note: this document began from the July review snapshot. The
+> supervised-session rows below are refreshed for the current feature work on
+> top of `develop`; `STATUS.md` and `README.md` remain the authoritative current
+> claim tables.
 >
-> Planning scope for the expanded `[Yixin]` section: incremental work on the current `develop` runtime. It intentionally excludes branch synchronization, a major CIM/module decomposition, a new natural-language planner, and ownership of the VAM/PiP implementation.
+> Planning scope for the expanded `[Yixin]` section: incremental work on the current `develop` runtime. It intentionally excludes branch synchronization, a major CIM/module decomposition, and ownership of the VAM or future desktop-isolation implementation.
 
 ## Status Labels
 
@@ -20,23 +23,23 @@ The PDF summary states that the repository was a strong component library but no
 
 ### 1.1 Summary Statements That Are Now Outdated
 
-1. **“There is no planner of any kind” is outdated.** `[Yixin - Completed]` The runtime has a bounded planner over structured `GoalSpec` input and explicit affordance schemas. It is not unrestricted natural-language or LLM intent recognition.
+1. **“There is no planner of any kind” is outdated.** `[Yixin - Completed]` The runtime has a bounded planner over structured `GoalSpec` input and explicit affordance schemas. A bounded intent layer can now convert supported natural-language requests into `GoalSpec`; this is not unrestricted language understanding.
 2. **“There is no composed loop” is outdated.** `[Yixin - Completed]` CIM now runs an episode-level `observe -> map -> fuse -> plan -> act -> re-observe -> verify -> recover/replan` loop.
 3. **“Recovery is selected but never executed” is outdated.** `[Yixin - Completed]` Retry, reroute, and rollback invoke real executors and are verified from fresh observations.
 4. **“Every end-to-end demo is choreographed” is no longer accurate.** `[Yixin - Completed]` The live runtime suite goes through CIM against Docker, Playwright, DOM, Thing Directory, and WoT, with evidence derived from persisted transitions and final observations.
-5. **The collection failure has been repaired.** The current branch passes 252 tests, Ruff, Black, mypy, and GitHub CI; the fixture API exists.
+5. **The collection failure has been repaired.** The fixture API exists and the current verification commands and scope are documented in `README.md` and `STATUS.md`; fixed historical test counts are not reused as current evidence.
 
 ### 1.2 Summary Gaps That Still Hold
 
 1. **Release integrity is closed on `develop`, but not yet on `main`.** `[Team/Release]` PR #56 has merged with green CI; a reviewer who checks only `main` will still see the older state (PDF §1; §7.1).
 2. **A real VAM/VLM path is still missing.** `[Ruiyao/Fadi - To assign]` The repository still contains heuristic/text-only behavior and lacks reliable image grounding and genuine SoM marks (PDF §1; §4.3; §7.6).
-3. **Natural-language/LLM task interpretation is still absent.** `[Ruiyao/Fadi - To assign]` The action runtime starts from structured `GoalSpec`; the team must either narrow the claim or add an upstream intent-to-GoalSpec layer (PDF §1; §6; §7.7).
-4. **Full UFO2-style PiP remains unimplemented.** `[Ruiyao/Fadi - To assign]` Playwright context isolation is not a virtual desktop with independent input, complete side-effect containment, and supervised takeover (PDF §4.5).
+3. **Unrestricted natural-language task interpretation remains out of scope.** A bounded intent-to-`GoalSpec` path now handles supported smart-room requests, using labelled fallback rules or a configured model client. Unsupported language still fails explicitly; this is not a general-purpose language agent (PDF §1; §6; §7.7).
+4. **Full UFO2-style PiP remains unimplemented.** `[Team/Future]` Playwright context isolation is not a virtual desktop with independent input, complete side-effect containment, and supervised takeover (PDF §4.5).
 5. **The evaluation sample is too small for statistical claims.** `[Yixin - TODO]` Fusion calibration currently has seven labelled live scenarios, while PDF §9.5 requests at least 30 episodes per condition.
 
 ### 1.3 Corrected Summary
 
-The project is now a **structured-goal action-system runtime**, rather than only a component library. It can scan a real DOM/WoT environment, maintain one CognitiveMap, fuse source-attributed state, perform bounded planning, execute and re-observe actions, verify outcomes, run recovery, and preserve auditable transition evidence. Remaining gaps are unrestricted natural-language planning, real visual-model grounding, desktop-level PiP, release synchronization, and benchmark-scale statistical evaluation.
+The project is now a **structured-goal action-system runtime**, rather than only a component library. It can map supported natural-language smart-room requests to structured goals, scan a real DOM/WoT environment, maintain one CognitiveMap, fuse source-attributed state, perform bounded planning, execute and re-observe actions, verify outcomes, run recovery, and preserve auditable transition evidence. Remaining gaps include unrestricted natural-language planning, robust visual-model grounding, desktop-level input isolation, release synchronization, and benchmark-scale statistical evaluation.
 
 ## 2. Layered Gaps and Current Status
 
@@ -44,14 +47,14 @@ The project is now a **structured-goal action-system runtime**, rather than only
 |---|---|---|---|
 | Release and claims | Reported code absent from main; clean-clone/CI mismatch (§0; §1; §5 D1; §7.1) | PR #56 is merged into `develop` with green CI; `main` is not yet synchronized | `[Yixin - Completed]` implementation, tests, and develop merge; `[Team/Release]` clean-clone replay and main release |
 | Composition | No single planner-to-recovery execution path (§2; §7.3) | The CIM episode loop now composes the runtime path with fresh observations | `[Yixin - Completed]` |
-| Planner | No goal-to-action planner (§0; §1; §6; §7.7) | Bounded schema-driven planning exists; unrestricted NL-to-GoalSpec does not | `[Yixin - Completed]` runtime planner; `[Ruiyao/Fadi - To assign]` upstream layer or claim reduction |
+| Planner | No goal-to-action planner (§0; §1; §6; §7.7) | Bounded schema-driven planning and a supported-intent-to-`GoalSpec` path exist; unrestricted language understanding does not | `[Shared runtime - Implemented for supported intents]`; `[Team/Future]` broader intent coverage |
 | Fusion | Duplicate maps/arbiters, gate only, no fused estimate, uncalibrated parameters (§3; §5 D3-D5; §7.2/7.4; §9) | One canonical map/arbiter/router; fused state feeds verification; missing/stale source handling, clean re-observation resolution, and active perception exist; initial calibration completed | `[Yixin - Completed]` freshness lifecycle; `[Yixin - TODO]` repeated campaign and holdout evaluation |
 | Input integrity | All deltas labelled WoT; confidence fixed at 1.0 (§3.3; §5 D3-D4; §9.1) | Write-backs are source-attributed; confidence/timestamp/provenance contracts exist and default origins are explicit | `[Yixin - Completed]` runtime contract; `[Ruiyao/Fadi - To assign]` measured sensor confidence |
 | Verification | Executor success and task success must remain empirically separated (§2; §5 D2/D7; §7.3; §7.5) | Skill-level postconditions, primitive-level declared-effect verification, and final goal verification are now separated | `[Yixin - Completed]` primitive expected-effect verification and transition evidence |
 | Recovery | Tier selected but retry/reroute/rollback not executed; ambiguous states (§2; §5 D2/D6; §7.3) | Recovery actions execute and are freshly verified; failed transitions are explicitly linked to retry/reroute/rollback recovery transitions; result semantics and retry budgets are explicit | `[Yixin - Completed]` recovery evidence linkage; `[Yixin - TODO]` reroute-equivalence hardening |
 | System 1 | ReflexLibrary has no production consumer (§4.4; §5 D9; §8.5) | CIM consumes verified cache entries, invalidates failures, and records fast-path evidence | `[Yixin - Completed]`; `[Yixin - TODO]` repeated amortized-latency evidence |
 | Effectors/visual | Legacy hardcoded maps; no genuine visual marks or VLM (§4.1-4.3; §5 D8; §7.6) | Legacy paths remain and real visual grounding remains incomplete | `[Ruiyao/Fadi - To assign]` |
-| Isolation/PiP | BrowserContext presented as full PiP; no takeover; shared WoT state; overlay contamination (§4.5) | `[Fadi - Completed MVP]` Serialized task sessions now recreate the browser context, checkpoint/reset/restore WoT state, filter runtime overlays, and support audited Tier-4 pause/takeover/resume. Full Windows RDP PiP remains future work. | `[Fadi - Completed MVP]`; `[Team/Future]` Windows child desktop |
+| Supervised session isolation | Browser context was previously presented as full PiP; there was no takeover and WoT state was shared (§4.5) | The shared runner now recreates the browser context, checkpoints/resets/restores WoT state, filters runtime overlays, applies a software input lease, and supports audited Tier-4 pause/takeover/resume. The WoT lease coordinates cooperating sessions only; direct/external writers are not blocked. | `[Shared runtime - Implemented]`; `[Team/Future]` separate desktop/VM/RDP provider |
 | Metrics | Authored outcomes, RUR drift, insufficient real campaign (§1; §5 D7; §6; §7.5/7.8) | Live metrics derive from episode evidence; trigger and success rates are distinct; RTA uses an independent oracle | `[Yixin - Completed]` core corrections; `[Yixin - TODO]` fill remaining ledger-derived rows and mark unsupported metrics as not measured; `[Ruiyao/Fadi - To assign]` external benchmark campaign |
 | PAM/evolution | No cross-snapshot identity, transitions, events, or trace-based evolution (§8.1-8.3) | Abstract state identity, stable keys, transition/event linkage, and review-gated skill proposals now exist | `[Yixin - Completed]`; `[Ruiyao/Fadi - To assign]` stable perception locators |
 | Fusion v2 | Hand-set weights lack data; probability model must follow a hard gate (§9.1-9.6) | The hard gate and calibrated heuristic fallback are delivered; seven cases do not justify a Bayesian likelihood model | `[Yixin - Completed]` fallback; `[Yixin - TODO]` collect and hold out data; `[Yixin - Conditional TODO]` Bayesian comparison only after the gate |
@@ -88,8 +91,8 @@ The project is now a **structured-goal action-system runtime**, rather than only
 | P1 | Complete ledger-derived live metric rows and distinguish `not measured` from measured zero | `[Yixin - TODO]` | Live reports derive primitive/verification/recovery evidence from executed episodes and do not publish empty-denominator metrics as `0.0` | §5 D7; §6; §7.5 |
 | P1 | Build a real visual path: screenshot input, real model or honest heuristic label, Playwright bounding boxes, no fabricated marks | `[Ruiyao - To assign]` | One genuine image-in/model-out/mark-to-click smoke trace | §1 VAM/SoM; §4.3; §7.6 |
 | P1 | Remove or isolate legacy `_SKILL_TO_*` tables and use affordance contracts on live paths | `[Fadi - To assign]` | Live execution no longer depends on hardcoded skill mappings | §4.1-4.3; §5 D8 |
-| P1 | Decide the planner claim: structured GoalSpec boundary or an upstream NL/LLM-to-GoalSpec implementation | `[Ruiyao - To assign]`; `[Team/Release]` claim decision | README/report no longer conflates bounded planning with unrestricted intent understanding | §1; §6; §7.7 |
-| P1 | Complete browser/WoT episode isolation: snapshot/restore, context recreation, overlay filtering, supervised tier-4 pause/resume | `[Fadi - Completed MVP]` | Verified exact restoration, serialized cross-session isolation, and intervention records with HITL correction/re-observe/replan evidence | §4.5 recommendations 1-3 |
+| P1 | Keep the planner claim bounded: supported intent-to-`GoalSpec`, not unrestricted language understanding | `[Shared intent path - Implemented]`; `[Team/Release]` maintain precise wording | README/report distinguishes the bounded intent path from a general-purpose language agent | §1; §6; §7.7 |
+| P1 | Complete browser/WoT supervised-session isolation: snapshot/restore, context recreation, overlay filtering, software input lease, and tier-4 pause/resume | `[Shared runtime - Implemented]` | Verified restoration, cooperative cross-session coordination, and intervention records with human correction/re-observe/replan evidence; direct/external writers remain outside the WoT lease | §4.5 recommendations 1-3 |
 | P2 | Expand the existing seven-condition fusion calibration to at least 30 independent episodes per condition | `[Yixin - TODO]`, with shared environment support | At least 210 uniquely identified trials with reset evidence, deterministic seeds, per-condition counts, and independent oracle labels | §9.2; §9.5 |
 | P2 | Split fusion trials into calibration and locked holdout sets; freeze the threshold before holdout scoring | `[Yixin - TODO]` | Holdout report includes false-halt, miss, precision, balanced accuracy, and detection-latency summaries without seed leakage | §9.2; §9.5; §9.6 |
 | P2 | Measure System-1 warm-up, cache-hit rate, routing latency, and amortized episode latency over repeated live runs | `[Yixin - TODO]` | Report first-run versus repeated-run distributions and make no `<50 ms` claim unless the measurements support it | §8.5; §9.5 |
@@ -99,7 +102,7 @@ The project is now a **structured-goal action-system runtime**, rather than only
 
 ## 4.1 `[Yixin]` Detailed Incremental TODO Plan
 
-The work packages below extend the existing runtime in small reviewable changes. They do **not** require a main/develop synchronization decision, a major decomposition of CIM, a replacement planner, or implementation of the real VAM/PiP stack.
+The work packages below extend the existing runtime in small reviewable changes. They do **not** require a main/develop synchronization decision, a major decomposition of CIM, a replacement planner, or implementation of robust VAM or desktop-isolation stacks.
 
 ### Recommended execution order
 
@@ -392,4 +395,4 @@ Each PR should add focused tests and one machine-readable artifact schema change
 - `[Yixin]` next focuses on correctness evidence at the existing boundaries: primitive verification, current conflict state, recovery trace linkage, metric derivation, repeated fusion trials, holdout evaluation, and System-1 latency.
 - The plan does not require a main/develop synchronization decision or a major CIM/module decomposition.
 - Bayesian fusion is not mandatory. PDF §9.6 explicitly accepts a calibrated heuristic fallback, which remains the defensible choice until the repeated locked-holdout evidence supports something stronger.
-- Natural-language intent recognition, real visual-model grounding, and full PiP remain outside the implemented action-runtime boundary and outside this expanded `[Yixin]` TODO list.
+- A bounded natural-language intent path now exists. Unrestricted intent understanding, robust visual-model grounding, and desktop-level input isolation remain outside the implemented action-runtime boundary and outside this expanded `[Yixin]` TODO list.
