@@ -45,7 +45,7 @@ def test_broker_blocks_until_operator_resolves_and_records_latency(tmp_path):
             request.intervention_id,
             InterventionDecision(
                 InterventionAction.RESUME,
-                actor="fadi",
+                actor="operator",
                 note="fixed the room selection",
                 correction_applied=True,
                 metadata={"control_mode": "human"},
@@ -60,7 +60,7 @@ def test_broker_blocks_until_operator_resolves_and_records_latency(tmp_path):
         record = ledger.records[0]
         assert record.intervention_id == "intervention-1"
         assert record.decision == "resume"
-        assert record.actor == "fadi"
+        assert record.actor == "operator"
         assert record.latency_ms == 350
         assert record.correction_applied
         assert record.metadata == {"source": "tier-4", "control_mode": "human"}

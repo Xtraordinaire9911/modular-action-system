@@ -44,6 +44,7 @@ DEFAULT_LEDGER = Path("artifacts/intent_planner/calls.jsonl")
 # Kept explicit rather than free-form so the deliberative layer below can rely on
 # a closed vocabulary. Adding a capability means adding it here on purpose.
 KNOWN_GOAL_STATES = (
+    "room_session_prepared",
     "room_prepared",
     "room_booked",
     "temperature_set",
@@ -68,6 +69,10 @@ Reply with JSON only, no prose, using exactly these keys:
   confidence   number between 0 and 1
 
 What each goal_state means, so a request phrased differently still lands:
+  room_session_prepared
+                    reserve a room and prepare its devices in the same supervised
+                    session. Put room and time in parameters, plus brightness,
+                    power and target_temperature when the user gives them.
   room_prepared     get a room ready for use
   room_booked       reserve one of the rooms this building's dashboard shows,
                     for a time - book it, hold it, I need somewhere to meet or
@@ -87,11 +92,12 @@ What each goal_state means, so a request phrased differently still lands:
 Rules:
 - Choose the single goal_state that best fits. If none fit, use "unsupported".
 - Put every concrete value in parameters; do not leave them in the description.
-- Always name the thing being acted on in parameters, under "target", in the \
-user's own words. Do this even when they point at it by position or by \
-description rather than by name - "the top post", "the first one", "the cheap \
-one" all go in as written. A goal with no target cannot be carried out, so \
-omitting it throws the request away.
+- For room_session_prepared and room_booked, use "room" and "time" as described
+  above. Do not add a duplicate "target" parameter; the room already identifies
+  what is being acted on.
+- For goals whose object is not already named by a goal-specific parameter, put
+  that object under "target" in the user's own words (for example "the top post"
+  or "the cheap one").
 - success_evidence must be checkable by re-observing the environment, not by \
 trusting that an action ran.
 """
@@ -309,7 +315,16 @@ def rule_fallback(intent: str) -> GoalPlan:
     parameters: dict[str, Any] = {}
     goal_state = ""
 
+    # The combined smart-room use case is checked first.  It is one capability,
+    # not two unrelated demos that happen to run beside each other.
+    if re.search(r"\b(book|reserve|hold)\b.*\broom\b", text) and re.search(
+        r"\b(prepare|presentation|present|ready)\b", text
+    ):
+        goal_state = "room_session_prepared"
+
     for pattern, state, key in _RULES:
+        if goal_state:
+            break
         match = re.search(pattern, text)
         if match:
             goal_state, parameters[key] = state, int(match.group(1))
@@ -323,6 +338,10 @@ def rule_fallback(intent: str) -> GoalPlan:
     room = re.search(r"\broom\s+([a-z0-9]+)\b", text)
     if room:
         parameters["room"] = room.group(1).upper()
+
+    time_slot = re.search(r"\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b", text)
+    if time_slot:
+        parameters["time"] = f"{int(time_slot.group(1)):02d}:{time_slot.group(2)}"
 
     for pattern, key in _SUBJECT_RULES:
         match = re.search(pattern, text)
@@ -339,7 +358,7 @@ def rule_fallback(intent: str) -> GoalPlan:
         )
     return GoalPlan(
         goal=GoalSpec(
-            goal_id=f"intent_{abs(hash(intent)) % 10**8}",
+            goal_id=goal_state,
             goal_state=goal_state,
             parameters=parameters,
             description=intent.strip(),
@@ -404,11 +423,12 @@ class IntentPlanner:
                 reasoning=str(payload.get("description", "")),
                 error=f"unsupported goal_state {state!r}",
             )
+        parameters = _normalize_model_parameters(state, payload.get("parameters"))
         return GoalPlan(
             goal=GoalSpec(
-                goal_id=f"intent_{abs(hash(intent)) % 10**8}",
+                goal_id=state,
                 goal_state=state,
-                parameters=dict(payload.get("parameters") or {}),
+                parameters=parameters,
                 description=str(payload.get("description", intent)).strip(),
                 safety_constraints=list(payload.get("safety_constraints") or []),
                 success_evidence=list(payload.get("success_evidence") or []),
@@ -435,6 +455,27 @@ class IntentPlanner:
                 handle.write(json.dumps(record, ensure_ascii=False) + "\n")
         except Exception:
             pass
+
+
+def _normalize_model_parameters(state: str, raw_parameters: object) -> dict[str, Any]:
+    """Remove the generic ``target`` alias from room-booking goals.
+
+    Older prompt wording asked a model to emit both ``room`` and ``target``.
+    The reusable booking Skills intentionally accept ``room`` instead, so keep
+    the GoalSpec on that stable schema. If a model supplied only ``target`` in
+    a simple form such as ``"Room C"``, preserve the useful value as ``room``.
+    """
+
+    parameters = dict(raw_parameters) if isinstance(raw_parameters, dict) else {}
+    if state not in {"room_session_prepared", "room_booked"}:
+        return parameters
+
+    target = parameters.pop("target", None)
+    if "room" not in parameters and isinstance(target, str):
+        match = re.fullmatch(r"\s*(?:room\s+)?([a-z0-9]+)\s*", target, flags=re.IGNORECASE)
+        if match:
+            parameters["room"] = match.group(1).upper()
+    return parameters
 
 
 __all__ = [

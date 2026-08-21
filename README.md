@@ -169,46 +169,25 @@ matching its code.
 | Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is the narration surface and is honest about what it runs, but it is a second loop. `scripts/run_intent_episode.py` is the one that drives the integrated runtime; the demo has not been migrated onto it. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
-| Picture-in-Picture supervised interface | **Implemented for the web, not for Windows** | See Terminology below. `src/isolation/episode.py` and `src/runtime/intervention.py` give a serialized episode its own browser context, checkpoint/restore of WoT state, an input lease, and a supervised pause a person can take over from. That is a genuine supervised interface. What is **not** claimed is the UFO2 Windows form: no child desktop, no OS-level input or process boundary. Browser-context isolation on its own is still not PiP. |
+| Supervised session isolation | **Implemented for the shared web/WoT runtime** | `RuntimeEpisodeRunner` can provision a fresh browser/WoT episode, pause for an operator, re-observe after takeover and restore state. Guarded software executors enforce the input lease. This is not called PiP because ordinary OS mouse/keyboard input is not isolated. |
 
 Every runtime decision records whether it came from a model or a deterministic
 fallback, and both paths are written to a JSONL ledger under `artifacts/`, so
 the distinction can be audited rather than taken on trust.
 
-## Terminology: what Picture-in-Picture means here
+## Terminology: supervised sessions are not Windows PiP
 
-The review corrected this team on the term, and the correction is recorded here
-rather than only in a commit message, because the misreading had propagated into
-a module name, a docstring and a claims row.
-
-**Picture-in-Picture, in the referenced work, is a supervised interface.** The
-agent operates in a visibly separate session that a person can watch while it
-runs and take over from at any point. It is a human-oversight mechanism. It is
-not a window style, and it is not the same thing as giving each episode its own
-sandbox.
-
-Two properties in this repository were being described with that word and are
-not it:
+The UFO2 paper's PiP gives the agent a separate desktop/input session. This
+repository currently provides three smaller, useful properties:
 
 | what it is | what it gives you | what it is not |
 |---|---|---|
-| **Browser-context isolation** (`src/perception/browser_session.py`) | one episode cannot observe or disturb another: separate cookies, storage, cache | no human can watch or intervene; there is nothing to take over |
-| **Narration panel** (`src/demos/narration_console.py`) | a viewer can read what the agent is doing and why, while it happens | read-only; it displays, it does not hand control to anyone |
+| **Browser/WoT episode isolation** | fresh browser state plus checkpoint/reset/restore of the simulated room | not a separate OS desktop or security sandbox |
+| **Supervised takeover** | the runtime pauses, records the decision, then re-observes and replans | not independent physical mouse/keyboard queues |
+| **Software input lease** | guarded agent executors are blocked while the operator owns control | cooperative software enforcement; it cannot capture the OS mouse |
 
-Human oversight now exists in two places. `src/recovery/supervised_takeover.py`
-pauses a tier-4 episode, records what the supervisor decided and reports a
-correction rate. On top of that, `src/isolation/episode.py` and
-`src/runtime/intervention.py` give an episode its own browser context and WoT
-checkpoint, and hand the input lease to a person who can take over mid-episode -
-which does meet the definition above, for the web.
-
-What is still not claimed is the Windows form in the paper: a child desktop over
-RDP with an independent OS input and process boundary. Two properties in this
-repository were being described with the word "PiP" before any of that existed,
-and both are still not it on their own:
-
-The module formerly called `pip_console` is now `narration_console`, for the
-same reason.
+Accordingly, current code and demos use **supervised session isolation**. “Full
+UFO2 Windows PiP” is reserved for a future separate desktop/VM/RDP provider.
 
 ## Branch Discipline
 
@@ -258,8 +237,8 @@ dependency is installed. `--check` reports the environment and stops;
 ```bash
 uv run --with pytest pytest        # fast: contracts, perception, effectors,
                                     # router, recovery, runtime — a few seconds
-uv run --with pytest pytest -m live       # + 14 tests against a real Chromium
-uv run --with pytest pytest -m smartroom  # + 6 tests against the running servient
+uv run --with pytest pytest -m live       # + 15 tests against a real Chromium
+uv run --with pytest pytest -m smartroom  # + 16 tests against the running servient
 ```
 
 The fast suite never opens a browser or a socket, so it cannot corroborate a
@@ -269,7 +248,7 @@ needs the Docker services below running first.
 ### Start the smart room
 
 ```bash
-docker compose -f env/docker-compose.yml up --build
+docker compose -f env/docker-compose.yml up --build -d
 ```
 
 Dashboard on `:3000`; the Things and their Thing Descriptions on `:8080`; the
@@ -317,6 +296,80 @@ python scripts/demo.py list      # every registered demo and its status
 python scripts/demo.py doctor    # why one is not runnable on this machine, and the fix
 ```
 
+### Shared supervised smart-room session
+
+The primary supervised demo now uses the same `RuntimeEpisodeRunner` as the
+rest of the action system. One structured request is grounded across both room
+surfaces inside one checkpointed episode:
+
+```text
+utterance -> GoalSpec -> reusable Skill -> DOM + WoT primitives
+          -> verification -> optional takeover -> fresh replan -> restore
+```
+
+Start the room and run the visual demo:
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+.venv/bin/python scripts/run_supervised_smartroom_demo.py
+```
+
+The agent fills Room C / 15:30, sets the lights, projector and thermostat over
+WoT, then pauses before **Book Room**. Choose `t`, complete the click in the
+browser, return to the terminal and press Enter. The runtime takes a new
+observation, discards the old plan, verifies the result and restores the exact
+room state captured before the episode.
+
+For an unattended check:
+
+```bash
+.venv/bin/python scripts/run_supervised_smartroom_demo.py --auto-approve --headless --step-delay 0
+```
+
+Evidence is written to `artifacts/supervised_smartroom/`. The saved unattended
+artifact proves intent and Skill selection, DOM and WoT execution, explicit
+approval, final verification, and restoration of the original room state. Its
+intervention correctly has `reobserved: false` and `replanned: false`, because
+approval lets the agent execute the already-pending action. An interactive
+takeover with `t` is the path that proves fresh re-observation and replanning;
+that run records `resume`, `reobserved: true`, and `replanned: true`.
+
+The short weekly-meeting deck, including simple speaker notes, is at
+`output/presentations/Supervised_Smartroom_Session_Update.pptx`. The matching
+runbook and code talk track are in `SUPERVISED_SMARTROOM_WALKTHROUGH.md`.
+
+### What the isolation milestone does — and does not do
+
+`BrowserWotIsolationProvider` creates a fresh browser context, checkpoints and
+resets the simulated room before the first observation, requests a cooperative
+episode lease, and restores everything in `finally`. Other supervised sessions
+using this provider wait for that lease. A direct API client or other external
+writer does not use the lease and is not blocked by it. The canonical
+`RuntimeEpisodeRunner` activates this lifecycle whenever an isolation provider
+is configured.
+
+A typed software input lease allows guarded agent executors only while the
+agent owns control. During a pause the lease belongs to the operator; after
+cleanup it belongs to nobody. This prevents the action system's software paths
+from issuing agent actions during takeover.
+
+This is **supervised session isolation**, not UFO2 Windows PiP. It does not
+create a Windows child desktop and cannot block a physical OS mouse or keyboard
+from touching a visible browser. Genuine OS-level input/process independence
+still requires a separate desktop, VM, or remote session.
+
+### Focused component rehearsal
+
+The smaller booking-only rehearsal remains useful without Docker:
+
+```bash
+.venv/bin/python scripts/run_supervised_session_demo.py --dry-run
+```
+
+It writes `artifacts/supervised_session_demo/episode.json`. This artifact is
+synthetic contract evidence; use the shared smart-room command above for the
+live visual demonstration.
+
 ## Architecture Map
 
 | Requirement | Implementation |
@@ -326,8 +379,8 @@ python scripts/demo.py doctor    # why one is not runnable on this machine, and 
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
 | External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
 | Session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. This is browser-context isolation, **not** Picture-in-Picture — see Terminology below. |
-| Project PiP MVP | `src/isolation/episode.py` provisions a fresh browser context, checkpoints/resets/restores WoT state, serializes episodes, and transfers the input lease during human takeover. `src/runtime/intervention.py` records supervised Tier-4 decisions. |
-| Full UFO2 Windows PiP | Future Windows-specific provider; RDP child desktop and independent OS input/process isolation are not claimed by this MVP. |
+| Supervised session isolation | `RuntimeEpisodeRunner` activates `src/isolation/episode.py`, which provisions a fresh browser context, checkpoints/resets/restores WoT state, coordinates cooperating sessions through an episode lease, and transfers a software input lease during takeover. Direct or external writers are outside that lease. |
+| Full UFO2 Windows PiP | Future Windows-specific provider; RDP child desktop and independent OS input/process isolation are not claimed by the supervised-session milestone. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
 | WoT TD parsing | `src/perception/td_affordance_parser.py`, including HATEOAS forms, methods, security, rate limits, state sources. |

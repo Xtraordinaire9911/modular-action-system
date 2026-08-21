@@ -1,7 +1,7 @@
-"""Small, honest isolation boundary for the Project PiP MVP.
+"""Small, honest isolation boundary for supervised browser/WoT sessions.
 
-This provider does not pretend to be the Windows RDP desktop described by
-UFO2.  It gives the current web/WoT runtime one clean browser context and one
+This provider is not the Windows RDP desktop described by UFO2. It gives the
+current web/WoT runtime one clean browser context and one
 reversible smart-room checkpoint per episode.  Episodes are serialized because
 the demo WoT server has a single physical state; a later provider can replace
 this class with a Windows child session or a per-episode container without
@@ -13,10 +13,12 @@ from __future__ import annotations
 import asyncio
 import copy
 import time
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, AsyncIterator, Protocol
 
+from src.isolation.input_lease import InputLease, InputLeaseDenied, InputOwner
 from src.runtime.episode import EpisodeContext
 
 
@@ -52,10 +54,28 @@ class EpisodeIsolationSession:
     checkpoint: dict[str, Any]
     lease_id: str = ""
     state: IsolationState = IsolationState.PROVISIONING
-    input_owner: str = "agent"
+    input_lease: InputLease = field(default_factory=InputLease)
     provisioned_at_ms: int = field(default_factory=lambda: int(time.time() * 1000))
     restored: bool = False
     disposed: bool = False
+
+    @property
+    def input_owner(self) -> str:
+        """Backward-compatible text view of the typed software input lease."""
+
+        return self.input_lease.owner.value
+
+    def require_input(self, actor: InputOwner) -> None:
+        """Assert that ``actor`` may send a software-controlled action."""
+
+        self.input_lease.require(actor)
+
+    @asynccontextmanager
+    async def input_action(self, actor: InputOwner) -> AsyncIterator[None]:
+        """Reserve this session's input ownership for one software action."""
+
+        async with self.input_lease.input_action(actor):
+            yield
 
 
 class EpisodeIsolationProvider(Protocol):
@@ -94,6 +114,27 @@ class BrowserWotIsolationProvider:
     def active_session(self) -> EpisodeIsolationSession | None:
         return self._active
 
+    def require_input(self, actor: InputOwner) -> None:
+        """Gate an action through the currently active session's lease.
+
+        Executors are assembled before provisioning, so they can guard through
+        the provider and still fail closed before startup and after cleanup.
+        """
+
+        if self._active is None:
+            raise InputLeaseDenied(f"{actor.value} input is denied; no isolation session is active")
+        self._active.require_input(actor)
+
+    @asynccontextmanager
+    async def input_action(self, actor: InputOwner) -> AsyncIterator[None]:
+        """Reserve input through whichever episode is currently active."""
+
+        session = self._active
+        if session is None:
+            raise InputLeaseDenied(f"{actor.value} input is denied; no isolation session is active")
+        async with session.input_action(actor):
+            yield
+
     async def provision(self, episode: EpisodeContext) -> EpisodeIsolationSession:
         await self._lock.acquire()
         session: EpisodeIsolationSession | None = None
@@ -113,6 +154,7 @@ class BrowserWotIsolationProvider:
             )
             self._active = session
             await self.browser.recreate()
+            await session.input_lease.transfer_when_idle(InputOwner.AGENT)
             session.state = IsolationState.ACTIVE
             provisioned = True
             return session
@@ -138,18 +180,19 @@ class BrowserWotIsolationProvider:
 
     async def pause(self, session: EpisodeIsolationSession) -> None:
         self._require_active(session)
-        session.input_owner = "human"
+        await session.input_lease.transfer_when_idle(InputOwner.HUMAN)
         session.state = IsolationState.PAUSED
 
     async def resume(self, session: EpisodeIsolationSession) -> None:
         self._require_active(session)
-        session.input_owner = "agent"
+        await session.input_lease.transfer_when_idle(InputOwner.AGENT)
         session.state = IsolationState.ACTIVE
 
     async def restore(self, session: EpisodeIsolationSession) -> None:
         self._require_known(session)
         if session.restored:
             return
+        await session.input_lease.revoke_when_idle()
         await self.control.restore_lease()
         session.restored = True
         session.state = IsolationState.RESTORED
@@ -159,6 +202,9 @@ class BrowserWotIsolationProvider:
         primary_error: BaseException | None = None
         chained_error: BaseException | None = None
         try:
+            # Fail closed before touching browser or room state, and do not race
+            # cleanup against an already-started guarded action.
+            await session.input_lease.revoke_when_idle()
             if not session.restored:
                 try:
                     await self.restore(session)
@@ -180,7 +226,10 @@ class BrowserWotIsolationProvider:
                 else:
                     chained_error = exc
         finally:
-            session.input_owner = "none"
+            # revoke_when_idle above normally handled this. A synchronous
+            # fallback keeps cleanup fail-closed if a later operation failed.
+            if session.input_lease.active_actions == 0:
+                session.input_lease.revoke()
             session.state = IsolationState.DISPOSED
             session.disposed = True
             if self._active is session:

@@ -5,6 +5,7 @@ import pytest
 
 import src.runtime.live_environment as live_environment
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
+from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.live_environment import (
     AffordanceSemanticBinding,
     LiveEnvironmentConfig,
@@ -144,6 +145,7 @@ def test_semantic_binding_annotates_discovered_affordance_declaratively():
                 binds_parameter="room",
                 stable_key="booking.room",
                 idempotent=True,
+                safety_level="high",
             )
         ],
     )
@@ -154,6 +156,31 @@ def test_semantic_binding_annotates_discovered_affordance_declaratively():
     assert annotated.locator["binds_parameter"] == "room"
     assert annotated.locator["stable_key"] == "booking.room"
     assert annotated.locator["idempotent"] is True
+    assert annotated.safety_level == "high"
+
+    cognitive_map = CognitiveMap(task_id="semantic-risk")
+    cognitive_map.update_affordances([annotated])
+    assert cognitive_map.runtime_affordances[annotated.id].grounding["safety_level"] == "high"
+
+
+def test_semantic_binding_without_risk_override_preserves_observed_safety_level():
+    environment = SmartRoomLiveEnvironment(  # type: ignore[arg-type]
+        _UnusedSession(),
+        LiveEnvironmentConfig(),
+        semantic_bindings=[AffordanceSemanticBinding("DOM", selector="#book", completion_for="confirm_booking")],
+    )
+    affordance = Affordance(
+        "book",
+        "DOM",
+        "button",
+        "Book Room",
+        "click",
+        {"selector": "#book"},
+        0.9,
+        safety_level="medium",
+    )
+
+    assert environment._annotate(affordance).safety_level == "medium"
 
 
 def test_runtime_executor_resolves_durable_skill_to_current_live_affordance():

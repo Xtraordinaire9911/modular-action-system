@@ -17,6 +17,7 @@ from src.adaptation.trace_ledger import EpisodeFailureEvent, TraceLedger
 from src.contracts.types import Condition, ExecutionResult, Observation, SkillCall, SkillTuple
 from src.effectors.system1_reflex_library import System1ReflexLibrary
 from src.isolation.episode import EpisodeIsolationProvider, EpisodeIsolationSession
+from src.planner.goal_skill_selector import GoalSkillSelectionError, GoalSkillSelector
 from src.recovery.recovery_cascade import RecoveryAction, RecoveryCascade, RecoveryDecisionStep
 from src.runtime.action_context import AttemptedAction, FailureContext, PlannerHandoff, build_action_context
 from src.runtime.affordance_controller import AffordanceController
@@ -51,6 +52,7 @@ from src.runtime.state_machine import RuntimeOutcome, RuntimeState
 from src.runtime.system2_planner import System2Planner
 from src.runtime.task_planner import primitive_for_affordance
 from src.safety.unsafe_action_detector import UnsafeActionDetector
+from src.skill_library.library import SkillLibrary
 from src.verification.active_perception import ActivePerceptionResolver
 from src.verification.conflict_detector import EpistemicArbiter
 from src.verification.postcondition_checker import PostconditionChecker
@@ -91,6 +93,8 @@ class RuntimeStepResult:
     system1_cache_hit: bool = False
     system1_fast_path: bool = False
     system1_routing_latency_ms: float = 0.0
+    goal_skill_selection: dict[str, object] = field(default_factory=dict)
+    evidence_trace: list[dict[str, object]] = field(default_factory=list)
 
     @property
     def outcome(self) -> RuntimeOutcome:
@@ -212,6 +216,10 @@ class ContinuousInteractionManager:
         broker_ledger = getattr(intervention_broker, "ledger", None)
         self.intervention_ledger = intervention_ledger or broker_ledger or InterventionLedger()
         self._active_isolation_session: EpisodeIsolationSession | None = None
+        # A takeover RESUME keeps human ownership through fresh observation,
+        # fusion, replanning, and precondition/plan validation. The agent gets
+        # the lease back only at the final executor boundary.
+        self._agent_input_resume_pending = False
 
     def _new_episode(self) -> EpisodeContext:
         if self._cancellation_token_used:
@@ -253,6 +261,7 @@ class ContinuousInteractionManager:
             if self.isolation_provider is not None:
                 await self.isolation_provider.dispose(session)
         finally:
+            self._agent_input_resume_pending = False
             if self._active_isolation_session is session:
                 self._active_isolation_session = None
 
@@ -272,7 +281,7 @@ class ContinuousInteractionManager:
         return observed
 
     async def run_isolated_skill(self, skill_call: SkillCall) -> RuntimeStepResult:
-        """Provision a clean Project-PiP session before the first observation."""
+        """Provision a clean supervised session before the first observation."""
 
         episode = self._new_episode()
         session = await self._provision_episode(episode)
@@ -878,15 +887,17 @@ class ContinuousInteractionManager:
         goal_spec: GoalSpec | None = None,
         _episode: EpisodeContext | None = None,
     ) -> RuntimeStepResult:
-        """Run a bounded no-durable-skill goal over current affordances.
+        """Run a structured goal over current affordances.
 
-        This is the action-system zero-shot path: an upstream component has
-        already provided a structured goal. The runtime scans the environment,
-        builds an ActionContext, plans typed primitive actions over affordance
-        IDs, validates the plan, executes through existing backend executors,
-        and verifies the declared goal state.
+        When ``goal_id`` names a durable Skill, the Skill Library validates and
+        binds the parameters before the existing primitive planner runs. Goals
+        without a matching Skill keep the previous zero-shot behavior.
         """
 
+        # Allocate the episode before validating the external GoalSpec/Skill
+        # boundary. Even a rejected request belongs to a real episode so its
+        # result, metrics, and intervention evidence remain attributable.
+        episode = _episode or self._new_episode()
         if goal_spec is not None:
             validation_errors = goal_spec.validate()
             goal_id = goal_spec.goal_id
@@ -902,11 +913,71 @@ class ContinuousInteractionManager:
                     failure_boundary="skill_spec_insufficient",
                     failure_type="invalid_goal_spec",
                     plan_validation_errors=validation_errors,
+                    episode_id=episode.episode_id,
                 )
 
         observation = observation or Observation()
-        goal_call = SkillCall(goal_id, dict(parameters or {}))
-        episode = _episode or self._new_episode()
+        bound_parameters = dict(parameters or {})
+        goal_call = SkillCall(goal_id, bound_parameters)
+        skill_selection_evidence: dict[str, object] = {}
+        selection_goal = goal_spec or GoalSpec(
+            goal_id=goal_id,
+            goal_state=goal_state,
+            parameters=bound_parameters,
+            source="manual",
+        )
+        selector = GoalSkillSelector(SkillLibrary(self.skill_library.values()))
+        durable_skill: SkillTuple | None = None
+        try:
+            durable_skill = selector.match(selection_goal)
+        except GoalSkillSelectionError as exc:
+            self.state = RuntimeState.ESCALATED
+            return RuntimeStepResult(
+                self.state,
+                None,
+                recovery_tier=4,
+                reason=str(exc),
+                failure_boundary="skill_spec_insufficient",
+                failure_type="ambiguous_skill_selection",
+                plan_validation_errors=[str(exc)],
+                user_action_required=True,
+                episode_id=episode.episode_id,
+            )
+        if durable_skill is not None:
+            try:
+                selection = selector.select(selection_goal)
+            except GoalSkillSelectionError as exc:
+                skill_selection_evidence = _goal_skill_selection_evidence(
+                    goal_id,
+                    durable_skill,
+                    bound_parameters,
+                    validation_status="failed",
+                    validation_error=str(exc),
+                )
+                self.state = RuntimeState.ESCALATED
+                return _attach_goal_skill_evidence(
+                    RuntimeStepResult(
+                        self.state,
+                        None,
+                        recovery_tier=4,
+                        reason=str(exc),
+                        failure_boundary="skill_spec_insufficient",
+                        failure_type="invalid_skill_parameters",
+                        plan_validation_errors=[str(exc)],
+                        user_action_required=True,
+                        episode_id=episode.episode_id,
+                    ),
+                    skill_selection_evidence,
+                )
+            goal_call = selection.skill_call
+            bound_parameters = dict(selection.skill_call.params)
+            skill_selection_evidence = _goal_skill_selection_evidence(
+                goal_id,
+                selection.skill_tuple,
+                bound_parameters,
+                validation_status="passed",
+            )
+
         self.cognitive_map.set_current_skill(goal_call)
         self.cognitive_map.update_from_observation(observation)
         gate = await self._run_fusion_gate(observation)
@@ -933,19 +1004,38 @@ class ContinuousInteractionManager:
                     goal_spec=goal_spec,
                     _episode=episode,
                 )
-            return gate
+            return _attach_goal_skill_evidence(gate, skill_selection_evidence)
+
+        if durable_skill is not None:
+            self.state = RuntimeState.PRECHECK
+            if not self.preconditions.passes(durable_skill.preconditions, self.cognitive_map):
+                self.state = RuntimeState.FAILED
+                return _attach_goal_skill_evidence(
+                    RuntimeStepResult(
+                        self.state,
+                        None,
+                        reason="selected Skill precondition failed",
+                        failure_boundary="recoverable_execution_failure",
+                        failure_type="precondition_failed",
+                        episode_id=episode.episode_id,
+                        final_outcome_verified=False,
+                    ),
+                    skill_selection_evidence,
+                )
 
         safety_constraints = ["do not use raw selectors", "do not bypass unresolved sensory conflicts"]
         if goal_spec is not None:
             safety_constraints.extend(goal_spec.safety_constraints)
-        return await self._execute_goal_episode(
+        result = await self._execute_goal_episode(
             goal_call=goal_call,
             goal_state=goal_state,
-            parameters=dict(parameters or {}),
+            parameters=bound_parameters,
             observation=observation,
             safety_constraints=safety_constraints,
             episode=episode,
+            goal_skill=durable_skill,
         )
+        return _attach_goal_skill_evidence(result, skill_selection_evidence)
 
     async def run_isolated_goal(
         self,
@@ -981,8 +1071,16 @@ class ContinuousInteractionManager:
         observation: Observation,
         safety_constraints: list[str],
         episode: EpisodeContext,
+        goal_skill: SkillTuple | None = None,
     ) -> RuntimeStepResult:
         current_observation = observation
+        # A GoalSpec keeps a stable semantic state such as
+        # ``room_session_prepared``. The selected Skill declares the concrete
+        # predicate that this runtime can observe. Translating the two belongs
+        # here, rather than in a demo runner that rewrites the incoming goal.
+        runtime_goal_state = goal_state
+        if goal_skill is not None and len(goal_skill.postconditions) == 1:
+            runtime_goal_state = goal_skill.postconditions[0].predicate
         completed_steps: set[tuple[str, str, str]] = set()
         primitive_plan: list[dict[str, object]] = []
         recovery_trace: list[dict[str, object]] = []
@@ -998,6 +1096,7 @@ class ContinuousInteractionManager:
         pending_replan_intervention_id = ""
 
         while True:
+            recheck_skill_preconditions = False
             post_attempt_terminal = episode.post_attempt_terminal_reason()
             if post_attempt_terminal:
                 return self._episode_failure_result(
@@ -1017,7 +1116,9 @@ class ContinuousInteractionManager:
                 # already have completed it and no new primitive is needed.
                 self._mark_intervention_replanned(pending_replan_intervention_id)
                 pending_replan_intervention_id = ""
-            if goal_state and self.postconditions.passes([Condition(goal_state)], self.cognitive_map):
+                recheck_skill_preconditions = True
+            completion_conditions = goal_call.required_postconditions or ([Condition(goal_state)] if goal_state else [])
+            if completion_conditions and self.postconditions.passes(completion_conditions, self.cognitive_map):
                 for event in self.failure_ledger.events:
                     if event.episode_id == episode.episode_id:
                         event.recovery_success = True
@@ -1040,6 +1141,37 @@ class ContinuousInteractionManager:
                     recovery_succeeded=recovery_attempted,
                     final_outcome_verified=True,
                     final_verification_transition_id=transition_ids[-1] if transition_ids else "",
+                )
+
+            # A takeover can change more than the missing target. Before a new
+            # plan is allowed to act, check the selected Skill contract against
+            # the fresh post-takeover observation. If the human already
+            # completed the goal, the completion check above still wins and no
+            # further action is needed.
+            if (
+                recheck_skill_preconditions
+                and goal_skill is not None
+                and not self.preconditions.passes(goal_skill.preconditions, self.cognitive_map)
+            ):
+                self.state = RuntimeState.FAILED
+                return RuntimeStepResult(
+                    self.state,
+                    last_result,
+                    recovery_tier=4,
+                    selected_backend=selected_backend,
+                    reason="selected Skill precondition failed after takeover",
+                    failure_boundary="recoverable_execution_failure",
+                    failure_type="precondition_failed",
+                    recovery_trace=recovery_trace,
+                    fusion_decision=self._last_fusion_decision,
+                    active_perception_trace=active_perception_trace,
+                    primitive_plan=primitive_plan,
+                    episode_id=episode.episode_id,
+                    attempts=episode.step_count,
+                    transition_ids=transition_ids,
+                    recovery_attempted=recovery_attempted,
+                    final_outcome_verified=False,
+                    user_action_required=True,
                 )
 
             terminal_reason = episode.terminal_reason()
@@ -1068,7 +1200,7 @@ class ContinuousInteractionManager:
             plan = self.system2_planner.plan(
                 context,
                 goal_id=goal_call.skill_id,
-                goal_state=goal_state,
+                goal_state=runtime_goal_state,
                 parameters=parameters,
             )
             validation = self.plan_validator.validate(context, plan.actions)
@@ -1185,6 +1317,8 @@ class ContinuousInteractionManager:
                     if failure_context is not None
                     else "resume_after_replan" if recovery_parent_transition_id else ""
                 ),
+                goal_skill=goal_skill,
+                goal_state=runtime_goal_state,
             )
             current_observation = outcome.observation
             last_result = outcome.result
@@ -1262,6 +1396,8 @@ class ContinuousInteractionManager:
         episode: EpisodeContext,
         recovery_of_transition_id: str = "",
         recovery_action_label: str = "",
+        goal_skill: SkillTuple | None = None,
+        goal_state: str = "",
     ) -> _PrimitiveOutcome:
         current_action = action
         current_observation = observation
@@ -1307,17 +1443,39 @@ class ContinuousInteractionManager:
                     active_perception_trace=active_trace,
                 )
 
+            if goal_skill is not None and backend not in goal_skill.allowed_backends:
+                return _PrimitiveOutcome(
+                    False,
+                    current_observation,
+                    None,
+                    backend=backend,
+                    reason=f"backend {backend!r} is not allowed by Skill {goal_skill.skill_id!r}",
+                    failure_boundary="unsafe_governance_boundary",
+                    failure_type="backend_not_allowed_by_skill",
+                    recovery_attempted=recovery_attempted,
+                    recovery_trace=recovery_trace,
+                    transition_ids=transition_ids,
+                    active_perception_trace=active_trace,
+                )
+
+            affordance_safety = str(affordance.grounding.get("safety_level") or "low")
+            is_completion = bool(goal_state and current_action.expected_effect.strip() == goal_state.strip())
+            if goal_skill is not None and is_completion:
+                affordance_safety = _stronger_safety_level(affordance_safety, goal_skill.safety_level)
             primitive_skill = _primitive_skill_tuple(
                 goal_call.skill_id,
-                list(self.executors),
+                goal_skill.allowed_backends if goal_skill is not None else list(self.executors),
                 idempotent=(
                     current_action.action in {"type", "select", "read"} or bool(affordance.grounding.get("idempotent"))
                 ),
-                safety_level=str(affordance.grounding.get("safety_level") or "low"),
+                safety_level=affordance_safety,
                 irreversible=(
-                    affordance.grounding.get("irreversible") is not False
-                    if affordance.grounding.get("recovery_role")
-                    else bool(affordance.grounding.get("irreversible"))
+                    bool(goal_skill is not None and is_completion and goal_skill.irreversible)
+                    or (
+                        affordance.grounding.get("irreversible") is not False
+                        if affordance.grounding.get("recovery_role")
+                        else bool(affordance.grounding.get("irreversible"))
+                    )
                 ),
             )
             primitive_call = SkillCall(
@@ -1397,7 +1555,8 @@ class ContinuousInteractionManager:
                 )
 
             self.state = RuntimeState.EXECUTING
-            result = await self._execute_call(primitive_call, backend, current_observation, primitive_skill.timeout_ms)
+            timeout_ms = goal_skill.timeout_ms if goal_skill is not None else primitive_skill.timeout_ms
+            result = await self._execute_call(primitive_call, backend, current_observation, timeout_ms)
             result.attempt = attempt
             result.transition_id = transition_id
             self.cognitive_map.record_execution_result(result)
@@ -1793,17 +1952,21 @@ class ContinuousInteractionManager:
         if not any(record.intervention_id == request.intervention_id for record in self.intervention_ledger.records):
             self.intervention_ledger.record(InterventionRecord.from_resolution(request, decision))
 
-        if self.isolation_provider is not None and self._active_isolation_session is not None:
-            await self.isolation_provider.resume(self._active_isolation_session)
-
         if decision.action == InterventionAction.CANCEL:
             episode.cancellation.cancel(decision.note or "operator cancelled task")
         if not decision.allows_agent_execution:
+            # REJECT/CANCEL never return software control to the agent. The
+            # enclosing isolated episode will revoke it fully during cleanup.
             self.state = RuntimeState.ESCALATED
             return _InterventionOutcome(decision, observation, request.intervention_id)
 
         self.state = RuntimeState.RESUMING
         if not decision.requires_replan:
+            # APPROVE authorizes the exact pending action, so it may return the
+            # lease immediately. RESUME below has stronger stale-plan rules.
+            if self.isolation_provider is not None and self._active_isolation_session is not None:
+                await self.isolation_provider.resume(self._active_isolation_session)
+            self._agent_input_resume_pending = False
             return _InterventionOutcome(decision, observation, request.intervention_id)
 
         if pending_action is not None:
@@ -1815,6 +1978,9 @@ class ContinuousInteractionManager:
             reobserved=failure == "",
             replanned=False,
             correction_applied=decision.correction_applied,
+        )
+        self._agent_input_resume_pending = (
+            failure == "" and self.isolation_provider is not None and self._active_isolation_session is not None
         )
         return _InterventionOutcome(
             decision,
@@ -1871,6 +2037,11 @@ class ContinuousInteractionManager:
         timeout_ms: int,
     ) -> ExecutionResult:
         try:
+            if self._agent_input_resume_pending:
+                if self.isolation_provider is None or self._active_isolation_session is None:
+                    raise RuntimeError("cannot resume agent input without an active isolation session")
+                await self.isolation_provider.resume(self._active_isolation_session)
+                self._agent_input_resume_pending = False
             return await asyncio.wait_for(
                 self.executors[backend].execute(skill_call, observation),
                 timeout=max(timeout_ms, 1) / 1000,
@@ -2476,6 +2647,54 @@ def _verification_failure(result: ExecutionResult, observation_failure: str | No
     )
 
 
+def _goal_skill_selection_evidence(
+    goal_id: str,
+    skill: SkillTuple,
+    parameters: dict[str, object],
+    *,
+    validation_status: str,
+    validation_error: str = "",
+) -> dict[str, object]:
+    """Build JSON-friendly evidence for the GoalSpec-to-Skill boundary."""
+
+    evidence: dict[str, object] = {
+        "goal_id": goal_id,
+        "skill_id": skill.skill_id,
+        "parameters": dict(parameters),
+        "preconditions": [condition.predicate for condition in skill.preconditions],
+        "postconditions": [condition.predicate for condition in skill.postconditions],
+        "goal_states": list(skill.goal_states),
+        "allowed_backends": list(skill.allowed_backends),
+        "preferred_backends": list(skill.preferred_backends),
+        "timeout_ms": skill.timeout_ms,
+        "safety_level": skill.safety_level,
+        "validation_status": validation_status,
+    }
+    if validation_error:
+        evidence["validation_error"] = validation_error
+    return evidence
+
+
+def _attach_goal_skill_evidence(
+    result: RuntimeStepResult,
+    evidence: dict[str, object],
+) -> RuntimeStepResult:
+    """Attach Skill selection to the result and connect it to its transitions."""
+
+    if not evidence:
+        return result
+    result.goal_skill_selection = dict(evidence)
+    event = {
+        "event": "goal_skill_selection",
+        **evidence,
+        "episode_id": result.episode_id,
+        "transition_ids": list(result.transition_ids),
+    }
+    if event not in result.evidence_trace:
+        result.evidence_trace.insert(0, event)
+    return result
+
+
 def _primitive_skill_tuple(
     goal_id: str,
     allowed_backends: list[str],
@@ -2508,3 +2727,12 @@ def _normalized_safety_level(value: object) -> Literal["low", "medium", "high"]:
     if value == "medium":
         return "medium"
     return "high"
+
+
+def _stronger_safety_level(left: object, right: object) -> Literal["low", "medium", "high"]:
+    """Return the stricter of an affordance and its selected Skill contract."""
+
+    order = {"low": 0, "medium": 1, "high": 2}
+    normalized_left = _normalized_safety_level(left)
+    normalized_right = _normalized_safety_level(right)
+    return normalized_left if order[normalized_left] >= order[normalized_right] else normalized_right

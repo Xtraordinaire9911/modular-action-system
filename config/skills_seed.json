@@ -1,20 +1,43 @@
 [
   {
     "skill_id": "confirm_booking",
+    "goal_states": ["room_booked"],
     "description": "Confirm a room booking via the web dashboard",
     "parameters_schema": {"room": "str", "time": "str"},
-    "preconditions": [{"predicate": "booking_service_available == true"}],
-    "postconditions": [{"predicate": "booking_status == 'confirmed'"}],
+    "preconditions": [{"predicate": "booking.confirmed == false"}],
+    "postconditions": [{"predicate": "booking.confirmed == true"}],
     "allowed_backends": ["dom", "visual"],
     "preferred_backends": ["dom"],
     "rollback": null,
     "failure_modes": {},
     "timeout_ms": 5000,
-    "safety_level": "low",
+    "safety_level": "high",
+    "irreversible": false
+  },
+  {
+    "skill_id": "prepare_and_confirm_room",
+    "goal_states": ["room_session_prepared"],
+    "description": "Prepare smart-room devices and confirm the dashboard booking in one supervised session",
+    "parameters_schema": {
+      "room": "str",
+      "time": "str",
+      "brightness": {"type": "int", "required": false, "default": 30},
+      "power": {"type": "str", "required": false, "default": "on"},
+      "target_temperature": {"type": "int", "required": false, "default": 21}
+    },
+    "preconditions": [],
+    "postconditions": [{"predicate": "booking.confirmed == true"}],
+    "allowed_backends": ["dom", "wot"],
+    "preferred_backends": ["dom", "wot"],
+    "rollback": null,
+    "failure_modes": {},
+    "timeout_ms": 8000,
+    "safety_level": "high",
     "irreversible": false
   },
   {
     "skill_id": "turn_on_projector",
+    "goal_states": ["projector_on"],
     "description": "Power on the room projector via WoT",
     "parameters_schema": {"room": "str"},
     "preconditions": [{"predicate": "projector_service_available == true"}],
@@ -29,6 +52,7 @@
   },
   {
     "skill_id": "set_temperature",
+    "goal_states": ["temperature_set"],
     "description": "Set thermostat target temperature via WoT",
     "parameters_schema": {"room": "str", "target": "int"},
     "preconditions": [
@@ -46,6 +70,7 @@
   },
   {
     "skill_id": "set_lighting",
+    "goal_states": ["lighting_set"],
     "description": "Set room lighting brightness via WoT",
     "parameters_schema": {"room": "str", "brightness": "int"},
     "preconditions": [{"predicate": "lighting_service_available == true"}],
@@ -60,6 +85,7 @@
   },
   {
     "skill_id": "verify_readiness",
+    "goal_states": ["room_prepared"],
     "description": "Read composite readiness status from the REST checker endpoint",
     "parameters_schema": {"room": "str"},
     "preconditions": [],

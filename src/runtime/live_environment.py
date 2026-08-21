@@ -70,6 +70,10 @@ class AffordanceSemanticBinding:
     source: Literal["DOM", "WOT", "VISUAL"]
     entity_id: str = ""
     state_attribute: str = ""
+    # Optional semantic identity for a separately read WoT property. Actions
+    # such as ``setBrightness`` are verified from the ``brightness`` state
+    # source, so their names need not be identical.
+    state_source_property: str = ""
     affordance_id: str = ""
     selector: str = ""
     thing_id: str = ""
@@ -80,6 +84,7 @@ class AffordanceSemanticBinding:
     stable_key: str = ""
     idempotent: bool = False
     skill_id: str = ""
+    safety_level: Literal["low", "medium", "high"] | None = None
 
     def matches(self, affordance: Affordance) -> bool:
         if affordance.source != self.source:
@@ -368,6 +373,7 @@ class SmartRoomLiveEnvironment:
 
     def _annotate(self, affordance: Affordance) -> Affordance:
         locator = dict(affordance.locator)
+        safety_level = affordance.safety_level
         for binding in self.semantic_bindings:
             if not binding.matches(affordance):
                 continue
@@ -387,7 +393,9 @@ class SmartRoomLiveEnvironment:
                 locator["idempotent"] = True
             if binding.skill_id:
                 locator["skill_id"] = binding.skill_id
-        return replace(affordance, locator=locator)
+            if binding.safety_level is not None:
+                safety_level = binding.safety_level
+        return replace(affordance, locator=locator, safety_level=safety_level)
 
     async def _read_dom_assertions(self, captured_at_ms: int) -> list[ObservedAssertion]:
         assertions: list[ObservedAssertion] = []
@@ -441,10 +449,20 @@ class SmartRoomLiveEnvironment:
             if error is not None:
                 continue
             device_states.setdefault(source.thing_id, {})[source.property] = value
+            entity_id = source.thing_id
+            attribute = source.property
+            for binding in self.semantic_bindings:
+                if binding.source != "WOT" or binding.state_source_property != source.property:
+                    continue
+                if binding.thing_id and binding.thing_id != source.thing_id:
+                    continue
+                entity_id = binding.entity_id or entity_id
+                attribute = binding.state_attribute or attribute
+                break
             assertions.append(
                 ObservedAssertion(
-                    entity_id=source.thing_id,
-                    attribute=source.property,
+                    entity_id=entity_id,
+                    attribute=attribute,
                     value=value,
                     source="wot",
                     confidence=1.0,
