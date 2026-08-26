@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import asyncio
 
+import scripts.run_supervised_smartroom_demo as smartroom_demo
 from scripts.run_supervised_smartroom_demo import (
     DEFAULT_UTTERANCE,
     SmartRoomEpisodeAdapter,
+    build_agent_planner,
     build_runtime_goal,
     integrated_bindings,
 )
 from src.isolation import EpisodeIsolationSession, IsolationState
+from src.planner.agent_planner import AgentPlanner
 from src.runtime.episode import EpisodeContext, ObservationRequest
 from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec
 from src.runtime.live_observation import bind_live_observation_to_request, observation_from_live_sources
@@ -46,6 +49,30 @@ def test_integrated_bindings_cover_both_surfaces_and_protect_the_commit() -> Non
     commit = next(binding for binding in bindings if binding.completion_for)
     assert commit.completion_for == "prepare_and_confirm_room"
     assert commit.safety_level == "high"
+
+
+def test_formal_smartroom_entrypoint_composes_the_unified_planner(tmp_path) -> None:
+    planner = build_agent_planner(use_model=False, ledger_path=tmp_path / "agent.jsonl")
+
+    assert isinstance(planner, AgentPlanner)
+    assert planner.client is None
+    assert planner.plan_forward_with_model is False
+
+
+def test_model_mode_enables_forward_and_recovery_on_the_same_formal_planner(tmp_path, monkeypatch) -> None:
+    class _Client:
+        name = "configured-agent"
+
+        def complete(self, system: str, user: str) -> str:
+            raise AssertionError(f"not called during composition: {system!r} {user!r}")
+
+    client = _Client()
+    monkeypatch.setattr(smartroom_demo, "available_client", lambda: client)
+
+    planner = build_agent_planner(use_model=True, ledger_path=tmp_path / "agent.jsonl")
+
+    assert planner.client is client
+    assert planner.plan_forward_with_model is True
 
 
 class _ReusableIsolation:

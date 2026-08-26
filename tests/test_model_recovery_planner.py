@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 
+from src.planner.agent_planner import AgentPlanner, PlanningMode
 from src.planner.model_recovery_planner import ModelRecoveryPlanner, candidate_lines
 from src.runtime.action_context import ActionContext, AttemptedAction, FailureContext
 from src.runtime.cognitive_map import RuntimeAffordance
@@ -36,6 +37,20 @@ class _Exploding:
 
     def complete(self, system: str, user: str) -> str:
         raise RuntimeError("model unreachable")
+
+
+class _SequenceClient:
+    name = "fake-unified-agent-1"
+
+    def __init__(self, replies: list[str]) -> None:
+        self.replies = list(replies)
+        self.system_prompts: list[str] = []
+        self.prompts: list[str] = []
+
+    def complete(self, system: str, user: str) -> str:
+        self.system_prompts.append(system)
+        self.prompts.append(user)
+        return self.replies.pop(0)
 
 
 def _affordance(identifier: str, **grounding: object) -> RuntimeAffordance:
@@ -107,6 +122,24 @@ def test_the_model_is_offered_ids_and_declared_relations_only(tmp_path):
     assert any("accept_cookies" in line and "remediates=confirm_plan" in line for line in lines)
     joined = "\n".join(lines)
     assert "href" not in joined and "selector" not in joined and "css" not in joined
+
+
+def test_candidate_lines_include_safe_human_labels_and_recovery_postconditions():
+    context = _context(
+        affordances=[
+            _affordance(
+                "dynamic_button_7",
+                label="Renew room session",
+                remediates="failed-action",
+                recovery_postcondition="session.valid == true",
+            )
+        ]
+    )
+
+    line = candidate_lines(context)[0]
+
+    assert 'label="Renew room session"' in line
+    assert "recovery_postcondition=session.valid == true" in line
 
 
 def test_every_offered_affordance_reaches_the_prompt(tmp_path):
@@ -227,6 +260,8 @@ def test_a_context_with_no_failure_costs_nothing(tmp_path):
 
     assert client.prompts == [], "the model was asked to plan work that had not failed"
     assert planner.last_choice.source == "deterministic"
+    assert planner.last_choice.mode is PlanningMode.FORWARD
+    assert planner.last_choice.offered == ["accept_cookies", "confirm_plan"]
 
 
 def test_an_observation_offering_nothing_is_reported_not_guessed(tmp_path):
@@ -371,3 +406,126 @@ def test_with_no_model_the_port_escalates_exactly_as_it_does_today(tmp_path):
     recoveries = planner.recovery_choices()
     assert recoveries and all(not choice.is_model_derived for choice in recoveries)
     assert recoveries[0].reason == "no model configured"
+
+
+# ── unified forward + recovery authority ────────────────────────────────────────
+
+
+def test_agent_planner_uses_a_distinct_forward_mode_over_safe_affordance_semantics(tmp_path):
+    input_affordance = RuntimeAffordance(
+        id="temperature-input",
+        source="dom",
+        entity_id="thermostat",
+        action_name="input",
+        action_type="input",
+        confidence=0.95,
+        grounding={"binds_parameter": "target_temperature", "selector": "#must-not-leak"},
+    )
+    client = _SequenceClient(
+        [
+            _reply(
+                affordance_id="temperature-input",
+                action="type",
+                value=24,
+                expected_effect="target_temperature == 24",
+                reason="the affordance binds the requested target_temperature",
+            )
+        ]
+    )
+    planner = AgentPlanner(client=client, ledger_path=tmp_path / "agent.jsonl")
+
+    plan = planner.plan(
+        _context(failure=False, affordances=[input_affordance]),
+        goal_id="set_temperature",
+        goal_state="thermostat.target_temperature == 24",
+        parameters={"target_temperature": 24},
+    )
+
+    assert plan.actions[0].action == "type"
+    assert plan.actions[0].value == 24
+    assert planner.last_choice.mode is PlanningMode.FORWARD
+    assert planner.last_choice.is_model_derived
+    assert "mode: forward" in client.prompts[0]
+    assert "binds_parameter=target_temperature" in client.prompts[0]
+    assert "must-not-leak" not in client.prompts[0]
+    assert "next atomic action" in client.system_prompts[0]
+
+
+def test_unsupported_forward_model_output_records_and_uses_deterministic_fallback(tmp_path):
+    completion = RuntimeAffordance(
+        id="finish",
+        source="dom",
+        entity_id="oracle",
+        action_name="click",
+        action_type="button",
+        confidence=0.95,
+        grounding={"completion_for": "generic_goal", "achieves": "oracle.done == true"},
+    )
+    planner = AgentPlanner(
+        client=_Client(_reply(affordance_id="invented")),
+        ledger_path=tmp_path / "agent.jsonl",
+    )
+
+    plan = planner.plan(
+        _context(failure=False, affordances=[completion]),
+        goal_id="generic_goal",
+        goal_state="oracle.done == true",
+    )
+
+    assert [action.affordance_id for action in plan.actions] == ["finish"]
+    assert planner.last_choice.mode is PlanningMode.FORWARD
+    assert planner.last_choice.source == "unsupported"
+    assert planner.last_choice.fallback_used is True
+    entry = json.loads((tmp_path / "agent.jsonl").read_text(encoding="utf-8"))
+    assert entry["mode"] == "forward"
+    assert entry["fallback_used"] is True
+
+
+def test_one_agent_planner_drives_forward_recovery_and_resumed_forward_actions(tmp_path):
+    import asyncio
+
+    from src.runtime.episode import TransitionLedger
+    from src.runtime.state_machine import RuntimeState
+    from tests.test_precondition_repair import _live_observation, _RecoveryExecutor
+
+    client = _SequenceClient(
+        [
+            _reply(
+                affordance_id="observed-target",
+                expected_effect="oracle.done == true",
+                reason="the target declares completion of the goal",
+            ),
+            _reply(
+                affordance_id="freshly-observed-repair",
+                expected_effect="interaction_obstruction.present == false",
+                reason="the affordance remediates the failed target",
+            ),
+            _reply(
+                affordance_id="observed-target",
+                expected_effect="oracle.done == true",
+                reason="the obstruction is cleared so the goal can resume",
+            ),
+        ]
+    )
+    planner = AgentPlanner(client=client, ledger_path=tmp_path / "agent.jsonl")
+    runtime = _runtime_with(planner, TransitionLedger())
+    executor = runtime.executors["dom"]
+
+    result = asyncio.run(
+        runtime.run_observed_goal(
+            _live_observation(done=False, obstruction=False, include_repair=False),
+            goal_id="generic_goal",
+            goal_state="oracle.done == true",
+        )
+    )
+
+    assert isinstance(executor, _RecoveryExecutor)
+    assert result.state is RuntimeState.COMPLETED
+    assert result.final_outcome_verified
+    assert executor.calls == ["observed-target", "freshly-observed-repair", "observed-target"]
+    assert [choice.mode for choice in planner.choices] == [
+        PlanningMode.FORWARD,
+        PlanningMode.RECOVERY,
+        PlanningMode.FORWARD,
+    ]
+    assert all(choice.is_model_derived for choice in planner.choices)

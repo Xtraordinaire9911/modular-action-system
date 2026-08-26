@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scripts.run_supervised_session_demo import _operator_loop, booking_probes  # noqa: E402
 from src.effectors.wot_executor import WotExecutor  # noqa: E402
 from src.isolation import BrowserWotIsolationProvider  # noqa: E402
+from src.planner.agent_planner import AgentPlanner  # noqa: E402
 from src.planner.goal_skill_selector import GoalSkillSelector  # noqa: E402
 from src.planner.intent_planner import IntentPlanner, available_client  # noqa: E402
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger  # noqa: E402
@@ -172,6 +173,16 @@ def build_runtime_goal(utterance: str, *, use_model: bool) -> tuple[Any, Any, An
     return plan, plan.goal, selection
 
 
+def build_agent_planner(*, use_model: bool, ledger_path: Path) -> AgentPlanner:
+    """Compose the one forward/recovery planner used by the runtime episode."""
+
+    return AgentPlanner(
+        client=available_client() if use_model else None,
+        ledger_path=ledger_path,
+        plan_forward_with_model=use_model,
+    )
+
+
 async def run(args: argparse.Namespace) -> int:
     plan, goal, selection = build_runtime_goal(args.utterance, use_model=args.use_model)
     output = Path(args.evidence).resolve()
@@ -179,7 +190,8 @@ async def run(args: argparse.Namespace) -> int:
     transitions_path = output.with_name("transition_ledger.jsonl")
     interventions_path = output.with_name("intervention_ledger.jsonl")
     failures_path = output.with_name("failure_ledger.jsonl")
-    for generated in (transitions_path, interventions_path, failures_path):
+    planner_path = output.with_name("agent_planner_calls.jsonl")
+    for generated in (transitions_path, interventions_path, failures_path, planner_path):
         generated.unlink(missing_ok=True)
 
     config = LiveEnvironmentConfig(
@@ -216,6 +228,7 @@ async def run(args: argparse.Namespace) -> int:
     interventions = InterventionLedger(interventions_path)
     broker = InMemoryInterventionBroker(interventions)
     library = load_skill_library(REPO_ROOT / "config" / "skills_seed.json")
+    agent_planner = build_agent_planner(use_model=args.use_model, ledger_path=planner_path)
     runner = RuntimeEpisodeRunner(
         skill_library={skill.skill_id: skill for skill in library.all()},
         episode_policy=EpisodePolicy(
@@ -229,6 +242,7 @@ async def run(args: argparse.Namespace) -> int:
         isolation_provider=isolation,
         intervention_broker=broker,
         intervention_ledger=interventions,
+        system2_planner=agent_planner,
     )
 
     before = await control.state()
@@ -237,7 +251,11 @@ async def run(args: argparse.Namespace) -> int:
     print(f"1. Request          : {args.utterance}")
     print(f"2. Intent source    : {plan.source}")
     print(f"3. Reusable Skill   : {selection.skill_tuple.skill_id}")
-    print("4. Planned surfaces : dashboard (DOM) + devices (WoT)")
+    planner_source = (
+        "model forward + recovery" if args.use_model and agent_planner.client is not None else "deterministic forward"
+    )
+    print(f"4. Agent planner    : {planner_source}")
+    print("   Planned surfaces : dashboard (DOM) + devices (WoT)")
     print("5. Isolation        : fresh browser + room checkpoint/restore")
 
     runtime_task = asyncio.create_task(
@@ -274,6 +292,13 @@ async def run(args: argparse.Namespace) -> int:
         "intent": plan.to_dict(),
         "goal": asdict(goal),
         "selected_skill": selection.skill_tuple.skill_id,
+        "agent_planner": {
+            "type": type(agent_planner).__name__,
+            "model_forward_enabled": agent_planner.plan_forward_with_model,
+            "model_configured": agent_planner.client is not None,
+            "decisions": [choice.to_dict() for choice in agent_planner.choices],
+            "ledger": str(planner_path),
+        },
         "result": {
             "state": outcome.result.state.value,
             "reason": outcome.result.reason,
@@ -307,7 +332,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--utterance", default=DEFAULT_UTTERANCE)
     parser.add_argument(
-        "--use-model", action="store_true", help="Use a configured LLM instead of the labelled rule fallback."
+        "--use-model",
+        action="store_true",
+        help="Use a configured LLM for intent plus unified forward/recovery action planning.",
     )
     parser.add_argument("--headless", dest="headed", action="store_false", default=True)
     parser.add_argument("--auto-approve", action="store_true")
