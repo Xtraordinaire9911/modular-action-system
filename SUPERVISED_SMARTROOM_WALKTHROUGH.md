@@ -132,12 +132,20 @@ Show only these files:
    - A stable semantic goal such as `room_session_prepared` selects the reusable
      `prepare_and_confirm_room` Skill.
 
-4. `scripts/run_supervised_smartroom_demo.py`
+4. `src/planner/agent_planner.py`
+   - One `PlannerPort` owns typed forward and recovery decisions.
+   - It sees safe affordance semantics, never raw selectors or endpoints.
+   - `--use-model` enables model action selection in both modes; otherwise the
+     forward controller is deterministic and unsupported recovery fails closed.
+
+5. `scripts/run_supervised_smartroom_demo.py`
    - This file only connects the real environment and prints the demo.
+   - It injects the unified planner into `RuntimeEpisodeRunner` at the formal
+     composition boundary.
    - Planning, safety, intervention, verification and cleanup remain in the
      shared action-system modules.
 
-5. `tests/test_runtime_episode_runner.py` and `tests/test_input_lease.py`
+6. `tests/test_runtime_episode_runner.py` and `tests/test_input_lease.py`
    - These prove lifecycle ordering, cleanup after failure and input ownership.
 
 ## Difference from UFO2 Windows PiP

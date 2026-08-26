@@ -30,6 +30,7 @@ _SAFE_GROUNDING_KEYS = frozenset(
         "text",
         "mark_id",
         "thing_id",
+        "state_attribute",
         "parameter",
         "binds_parameter",
         "binds_parameters",

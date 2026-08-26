@@ -161,7 +161,7 @@ matching its code.
 | Devices resolved from discovery, not from code | **Implemented, verified against the servient** | `src/planner/device_binding.py` names a *kind* of Thing and a property; the concrete write target comes from the Thing Descriptions fetched at runtime from the directory. No binding contains a URL or a port, and a test asserts that. A Thing the directory does not offer makes the goal unsupported rather than being approximated with the nearest device. `pytest -m smartroom` asserts this against the running servient. |
 | Composite device goal (`room_prepared`) | **Implemented, verified per property** | One sentence resolves to four writable properties across four Things. Each is written and then **read back**, and the goal is met only where the value that comes back is the value asked for — the servient answers a write that changed nothing with a success status, so the status is not the evidence. A part the room does not have is reported as skipped when the declaration marks it optional and fails the goal when it does not. `scripts/run_room_prepared.py --ignore lights.brightness` drops one write on purpose and the run reports NOT PREPARED. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
-| Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
+| Recovery | **Unified PlannerPort integration implemented** | `AgentPlanner` is the one action-selection authority for typed `forward` and `recovery` modes. Runtime returns `FailureContext` plus fresh observed capabilities, validates the selected primitive, executes it, re-observes, verifies the recovery effect, and resumes the original goal. The supervised smart-room composition injects this planner; `--use-model` enables model decisions in both modes, while an unavailable or disabled model is recorded with the effective deterministic primitive. A completion affordance is withheld until fresh state proves every effective required/default parameter binding. VLM/DOM/WoT remain perception sources and Runtime retains execution authority. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
 | Model confidence as a safety gate | **Weak, and calibrated rather than assumed** | `qwen-vl-plus` reports 1.00 on every clear observation and 0.90 on a region cut off mid-word; that is its whole range. The abstention threshold was 0.55 — a value no answer ever came near, so the gate could not fire. It is now 0.95, set from the measurement, and it is model-specific: another model needs `scripts/eval_model_value.py` re-run. **A confident wrong answer still passes the gate.** What makes a wrong answer safe is the arbiter turning a disagreement into a conflict, which does not consult confidence. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
@@ -267,6 +267,18 @@ The sentence goes through `IntentPlanner`, the resulting `GoalSpec` into
 `RuntimeEpisodeRunner` on a live page, and a vision model verifies the region
 the goal names. `--suite` also prints which utterances the rule fallback could
 not have handled.
+
+The supervised smart-room entrypoint composes the unified action planner:
+
+```bash
+python scripts/run_supervised_smartroom_demo.py --auto-approve
+python scripts/run_supervised_smartroom_demo.py --auto-approve --use-model
+```
+
+Without `--use-model`, the same `AgentPlanner` owns both modes but delegates
+forward selection to the deterministic affordance controller and escalates when
+recovery has no model decision. With `--use-model`, one planner chooses one
+validated primitive per observe/act cycle in both forward and recovery modes.
 
 This one runs on the **local mock environments**, not the smart room: it serves
 them from its own static server, which is what lets it run with no Docker and no

@@ -84,6 +84,33 @@ def test_action_context_excludes_runtime_and_demo_overlay_affordances():
     assert [affordance.id for affordance in context.affordances] == ["dom_real_action"]
 
 
+def test_action_context_preserves_state_attribute_but_not_executor_handles():
+    cmap = CognitiveMap(task_id="task_safe_effect_binding")
+    cmap.add_affordance(
+        RuntimeAffordance(
+            id="wot_temperature",
+            source="wot",
+            entity_id="thermostat",
+            action_name="set_target",
+            action_type="invoke",
+            confidence=0.95,
+            grounding={
+                "binds_parameter": "target_temperature",
+                "state_attribute": "targetTemperature",
+                "href": "http://executor-only.invalid/target",
+            },
+        )
+    )
+
+    context = build_action_context(cmap, request_type="goal_spec")
+
+    assert context.affordances[0].grounding == {
+        "binds_parameter": "target_temperature",
+        "state_attribute": "targetTemperature",
+        "label": "set_target",
+    }
+
+
 def test_affordance_controller_builds_typed_plan_without_durable_skill():
     cmap = CognitiveMap(task_id="task_no_skill_controller")
     for affordance in [
