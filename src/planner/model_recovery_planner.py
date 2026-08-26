@@ -33,13 +33,14 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
 from typing import Any, Protocol, cast, get_args
 
 from src.runtime.action_context import ActionContext
 from src.runtime.affordance_controller import AffordanceController, PrimitivePlan
+from src.runtime.cognitive_map import RuntimeAffordance, canonical_state_name
 from src.runtime.primitive_action import PrimitiveAction, PrimitiveActionType
 
 # The action names the runtime can actually execute, read from the type itself so
@@ -98,6 +99,8 @@ runtime currently offers. Reply with JSON only, no prose:
 Rules:
 - Choose only from the affordance ids given. Never invent one.
 - Use declared parameter bindings and goal-completion semantics when present.
+- Completion affordances are withheld until fresh state proves every declared
+  parameter binding has its requested value.
 - Choose one action only. The runtime will execute it, re-observe, and call you again.
 - Do not repeat an already successful action unless fresh state shows its effect is absent.
 - If no offered affordance advances the goal, reply with affordance_id "" and say why.
@@ -167,6 +170,7 @@ RecoveryChoice = AgentChoice
 
 
 PLANNING_SEMANTICS = (
+    "state_attribute",
     "binds_parameter",
     "binds_parameters",
     "accepts_parameter",
@@ -187,6 +191,114 @@ def _semantics_of(affordance: Any) -> dict[str, Any]:
     """Planner-safe forward and recovery semantics declared by an affordance."""
     grounding = getattr(affordance, "grounding", {}) or {}
     return {name: grounding[name] for name in PLANNING_SEMANTICS if grounding.get(name)}
+
+
+def _as_string_set(*values: Any) -> set[str]:
+    strings: set[str] = set()
+    for value in values:
+        if isinstance(value, str):
+            strings.add(value)
+        elif isinstance(value, list | tuple | set):
+            strings.update(item for item in value if isinstance(item, str))
+    return strings
+
+
+def _bound_parameters(affordance: RuntimeAffordance) -> set[str]:
+    grounding = affordance.grounding
+    return _as_string_set(
+        grounding.get("binds_parameter"),
+        grounding.get("binds_parameters"),
+        grounding.get("parameter"),
+        grounding.get("parameters"),
+        grounding.get("accepts_parameter"),
+        grounding.get("accepts_parameters"),
+    )
+
+
+def _declares_completion(affordance: RuntimeAffordance) -> bool:
+    grounding = affordance.grounding
+    return bool(
+        _as_string_set(
+            grounding.get("completion_for"),
+            grounding.get("goal_id"),
+            grounding.get("goal_ids"),
+            grounding.get("achieves"),
+            grounding.get("achieves_goal"),
+            grounding.get("effects"),
+        )
+    )
+
+
+def _completes_goal(affordance: RuntimeAffordance, goal_id: str, goal_state: str) -> bool:
+    grounding = affordance.grounding
+    declared = _as_string_set(
+        grounding.get("completion_for"),
+        grounding.get("goal_id"),
+        grounding.get("goal_ids"),
+        grounding.get("achieves"),
+        grounding.get("achieves_goal"),
+        grounding.get("effects"),
+    )
+    return goal_id in declared or goal_state in declared
+
+
+def _observed_parameter_effect(
+    context: ActionContext,
+    affordance: RuntimeAffordance,
+    parameter: str,
+    expected: Any,
+) -> bool:
+    """Whether fresh planner-visible state proves one parameter binding."""
+
+    declared_attribute = str(affordance.grounding.get("state_attribute") or parameter).strip()
+    attributes = {
+        declared_attribute,
+        canonical_state_name(declared_attribute),
+        parameter,
+        canonical_state_name(parameter),
+    }
+    for source_state in context.state.values():
+        if not isinstance(source_state, dict):
+            continue
+        entity_state = source_state.get(affordance.entity_id)
+        if not isinstance(entity_state, dict):
+            continue
+        for attribute in attributes:
+            if attribute in entity_state and entity_state[attribute] == expected:
+                return True
+    return False
+
+
+def _unfinished_parameter_bindings(
+    context: ActionContext,
+    parameters: dict[str, Any],
+) -> set[str]:
+    unfinished: set[str] = set()
+    for parameter, expected in parameters.items():
+        bindings = [affordance for affordance in context.affordances if parameter in _bound_parameters(affordance)]
+        if not bindings or not any(
+            _observed_parameter_effect(context, affordance, parameter, expected) for affordance in bindings
+        ):
+            unfinished.add(parameter)
+    return unfinished
+
+
+def _effective_forward_context(
+    context: ActionContext,
+    *,
+    goal_id: str,
+    goal_state: str,
+    parameters: dict[str, Any],
+) -> ActionContext:
+    """Withhold completion until every effective parameter value is observed."""
+
+    unfinished = _unfinished_parameter_bindings(context, parameters)
+    affordances = [
+        affordance
+        for affordance in context.affordances
+        if not _declares_completion(affordance) or (_completes_goal(affordance, goal_id, goal_state) and not unfinished)
+    ]
+    return replace(context, affordances=affordances)
 
 
 def candidate_lines(context: ActionContext) -> list[str]:
@@ -257,46 +369,62 @@ class AgentPlanner:
     ) -> PrimitivePlan:
         parameters = parameters or {}
         mode = PlanningMode.RECOVERY if context.failure is not None else PlanningMode.FORWARD
-        deterministic = lambda: self.controller.plan(  # noqa: E731 - one call, three sites
-            context, goal_id=goal_id, goal_state=goal_state, parameters=parameters
+        planning_context = (
+            _effective_forward_context(
+                context,
+                goal_id=goal_id,
+                goal_state=goal_state,
+                parameters=parameters,
+            )
+            if mode is PlanningMode.FORWARD
+            else context
         )
 
         if mode is PlanningMode.FORWARD and not self.plan_forward_with_model:
-            self._remember(
-                AgentChoice(
+            return self._deterministic_decision(
+                planning_context,
+                record_context=context,
+                goal_id=goal_id,
+                goal_state=goal_state,
+                parameters=parameters,
+                choice=AgentChoice(
                     mode=mode,
                     source="deterministic",
                     reason="forward model planning is disabled",
-                    offered=[affordance.id for affordance in context.affordances],
-                )
+                    offered=[affordance.id for affordance in planning_context.affordances],
+                ),
             )
-            self._record(context, goal_state)
-            return deterministic()
 
         if self.client is None:
-            self._remember(
-                AgentChoice(
+            return self._deterministic_decision(
+                planning_context,
+                record_context=context,
+                goal_id=goal_id,
+                goal_state=goal_state,
+                parameters=parameters,
+                choice=AgentChoice(
                     mode=mode,
                     source="deterministic",
                     reason="no model configured",
-                    offered=[affordance.id for affordance in context.affordances],
-                )
+                    offered=[affordance.id for affordance in planning_context.affordances],
+                ),
             )
-            self._record(context, goal_state)
-            return deterministic()
 
-        choice = self._ask(self.client, context, goal_id, goal_state, parameters, mode)
+        choice = self._ask(self.client, planning_context, goal_id, goal_state, parameters, mode)
         if not choice.is_model_derived:
             # The model attempt remains attributable as unsupported, while this
             # flag makes the effective deterministic fallback explicit.
             choice.fallback_used = True
-        self._remember(choice)
-        self._record(context, goal_state)
+            return self._deterministic_decision(
+                planning_context,
+                record_context=context,
+                goal_id=goal_id,
+                goal_state=goal_state,
+                parameters=parameters,
+                choice=choice,
+            )
 
-        if not choice.is_model_derived:
-            return deterministic()
-
-        return PrimitivePlan(
+        plan = PrimitivePlan(
             actions=[
                 PrimitiveAction(
                     action=cast(PrimitiveActionType, choice.action),
@@ -307,6 +435,63 @@ class AgentPlanner:
             ],
             reason=f"model {mode.value}: {choice.reason}",
         )
+        self._remember(choice)
+        self._record(context, goal_state)
+        return plan
+
+    def _deterministic_decision(
+        self,
+        context: ActionContext,
+        *,
+        record_context: ActionContext,
+        goal_id: str,
+        goal_state: str,
+        parameters: dict[str, Any],
+        choice: AgentChoice,
+    ) -> PrimitivePlan:
+        """Return and record the one controller primitive effective now."""
+
+        controller_plan = self.controller.plan(
+            context,
+            goal_id=goal_id,
+            goal_state=goal_state,
+            parameters=parameters,
+        )
+        plan = self._effective_controller_plan(controller_plan, context, parameters)
+        if plan.actions:
+            action = plan.actions[0]
+            choice.affordance_id = action.affordance_id
+            choice.action = action.action
+            choice.value = action.value
+            choice.expected_effect = action.expected_effect
+        self._remember(choice)
+        self._record(record_context, goal_state)
+        return plan
+
+    @staticmethod
+    def _effective_controller_plan(
+        plan: PrimitivePlan,
+        context: ActionContext,
+        parameters: dict[str, Any],
+    ) -> PrimitivePlan:
+        """Normalize the controller output to the primitive Runtime will receive."""
+
+        if plan.requires_escalation:
+            action = next((candidate for candidate in plan.actions if candidate.action == "ask_user"), None)
+            return replace(plan, actions=[action] if action is not None else plan.actions[:1])
+
+        affordances = {affordance.id: affordance for affordance in context.affordances}
+        for action in plan.actions:
+            affordance = affordances.get(action.affordance_id)
+            if affordance is not None:
+                bound = _bound_parameters(affordance) & set(parameters)
+                if bound and all(
+                    _observed_parameter_effect(context, affordance, parameter, parameters[parameter])
+                    for parameter in bound
+                ):
+                    continue
+            return replace(plan, actions=[action])
+        return replace(plan, actions=[])
 
     def _remember(self, choice: AgentChoice) -> None:
         self.last_choice = choice
