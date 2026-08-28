@@ -29,6 +29,7 @@ from urllib.parse import urlsplit, urlunsplit
 import httpx
 
 from src.contracts.types import Affordance, ExecutionResult, Observation, ObservedAssertion, SkillCall
+from src.perception.browser_obstruction import BrowserObstructionObservation, observe_browser_obstruction
 from src.perception.browser_session import BrowserSession
 from src.perception.td_affordance_parser import ThingAffordanceModel, parse_things
 from src.runtime.episode import ObservationRequest
@@ -131,10 +132,18 @@ class LiveEnvironmentError(RuntimeError):
 class ThreadedBrowserSession:
     """Serialize every sync Playwright operation on one dedicated thread."""
 
-    def __init__(self, url: str, *, headless: bool = True, action_timeout_ms: int = 8000) -> None:
+    def __init__(
+        self,
+        url: str,
+        *,
+        headless: bool = True,
+        action_timeout_ms: int = 8000,
+        record_video_dir: str | None = None,
+    ) -> None:
         self.url = url
         self.headless = headless
         self.action_timeout_ms = action_timeout_ms
+        self.record_video_dir = record_video_dir
         self._worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="live-browser")
         self._session: BrowserSession | None = None
         self._closed = False
@@ -147,11 +156,13 @@ class ThreadedBrowserSession:
             return
 
         def launch() -> BrowserSession:
-            return BrowserSession.launch(
-                self.url,
-                headless=self.headless,
-                action_timeout_ms=self.action_timeout_ms,
-            )
+            options: dict[str, Any] = {
+                "headless": self.headless,
+                "action_timeout_ms": self.action_timeout_ms,
+            }
+            if self.record_video_dir is not None:
+                options["record_video_dir"] = self.record_video_dir
+            return BrowserSession.launch(self.url, **options)
 
         self._session = await self._submit(launch)
         self.context_generation += 1
@@ -262,6 +273,7 @@ class SmartRoomLiveEnvironment:
         self.latest_affordances: dict[str, Affordance] = {}
         self._observation_index = 0
         self._episode_id = "preflight"
+        self._blocked_target: tuple[str, str] | None = None
 
     def begin_episode(self, episode_id: str) -> None:
         """Clear per-episode perception caches after a new context is provisioned."""
@@ -269,6 +281,7 @@ class SmartRoomLiveEnvironment:
         self._episode_id = episode_id
         self.latest_affordances.clear()
         self._observation_index = 0
+        self._blocked_target = None
 
     async def initialize(self) -> None:
         """Discover live TDs and rewrite container-local forms for the host runtime."""
@@ -295,6 +308,14 @@ class SmartRoomLiveEnvironment:
         if request.previous_result is not None and self.config.settle_after_action_s > 0:
             await asyncio.sleep(self.config.settle_after_action_s)
 
+        previous = request.previous_result
+        if self._blocked_target is None and previous is not None and not previous.success:
+            failed_id = str(previous.metadata.get("affordance_id") or "")
+            failed = self.latest_affordances.get(failed_id)
+            selector = str(failed.locator.get("selector") or "") if failed is not None else ""
+            if failed_id and selector:
+                self._blocked_target = (failed_id, selector)
+
         self._observation_index += 1
         captured_at_ms = int(time.time() * 1000)
         page = await self.session.state(page_id=request.task_id, captured_at_ms=captured_at_ms)
@@ -303,6 +324,11 @@ class SmartRoomLiveEnvironment:
             self._annotate(affordance) for model in self.thing_models for affordance in model.affordances
         ]
         affordances = [*page_affordances, *wot_affordances]
+        obstruction: BrowserObstructionObservation | None = None
+        if self._blocked_target is not None:
+            blocked_id, blocked_selector = self._blocked_target
+            obstruction = await observe_browser_obstruction(self.session, target_selector=blocked_selector)
+            affordances.extend(obstruction.recovery_affordances(target_affordance_id=blocked_id))
         if self.allowed_affordance_sources is not None:
             affordances = [
                 affordance for affordance in affordances if affordance.source in self.allowed_affordance_sources
@@ -316,6 +342,10 @@ class SmartRoomLiveEnvironment:
         screenshot = await self.session.screenshot(str(screenshot_path))
 
         assertions = await self._read_dom_assertions(captured_at_ms)
+        if obstruction is not None:
+            assertions.append(obstruction.assertion(timestamp_ms=captured_at_ms))
+            if obstruction.target_exists and not obstruction.blocked:
+                self._blocked_target = None
         device_states: dict[str, Any] = {}
         if self.include_wot_state:
             wot_assertions, device_states = await self._read_wot_assertions(captured_at_ms)

@@ -3,11 +3,43 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { guard, isValidCheckpoint, processControlRequest } = require("./server");
+const { applyWrite, guard, isValidCheckpoint, processControlRequest } = require("./server");
+
+function checkpointOf(controlState) {
+  return { state: controlState.state, faults: controlState.faults };
+}
+
+test("delayed rollback is one-shot and cannot leak across a reset generation", async () => {
+  processControlRequest("POST", "/reset");
+  assert.equal(
+    processControlRequest(
+      "POST",
+      "/failure",
+      JSON.stringify({ thing: "projector", type: "delayed_rollback", delay_ms: 20 }),
+    ).statusCode,
+    200,
+  );
+
+  applyWrite("projector", "power", "on");
+  assert.equal(processControlRequest("GET", "/state").payload.state.projector.power, "on");
+  assert.deepEqual(processControlRequest("GET", "/state").payload.faults, {});
+  await new Promise((resolve) => setTimeout(resolve, 35));
+  assert.equal(processControlRequest("GET", "/state").payload.state.projector.power, "off");
+
+  processControlRequest(
+    "POST",
+    "/failure",
+    JSON.stringify({ thing: "projector", type: "delayed_rollback", delay_ms: 20 }),
+  );
+  applyWrite("projector", "power", "on");
+  processControlRequest("POST", "/reset");
+  await new Promise((resolve) => setTimeout(resolve, 35));
+  assert.equal(processControlRequest("GET", "/state").payload.state.projector.power, "off");
+});
 
 test("control plane restores a validated checkpoint without accepting malformed state", async () => {
   assert.equal(processControlRequest("POST", "/reset").statusCode, 200);
-  const baseline = processControlRequest("GET", "/state").payload;
+  const baseline = checkpointOf(processControlRequest("GET", "/state").payload);
   const checkpoint = structuredClone(baseline);
   checkpoint.state.thermostat.targetTemperature = 23.5;
   checkpoint.state.thermostat.currentTemperature = 23.5;
@@ -20,20 +52,20 @@ test("control plane restores a validated checkpoint without accepting malformed 
   const restored = restoredResponse.payload;
   assert.equal(restored.status, "restored");
   assert.deepEqual({ state: restored.state, faults: restored.faults }, checkpoint);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, checkpoint);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), checkpoint);
 
   const malformed = structuredClone(checkpoint);
   delete malformed.state.occupancy;
   assert.equal(isValidCheckpoint(malformed), false);
   const rejectedResponse = processControlRequest("POST", "/restore", JSON.stringify(malformed));
   assert.equal(rejectedResponse.statusCode, 400);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, checkpoint);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), checkpoint);
 
   const invalidFault = structuredClone(checkpoint);
   invalidFault.faults.thermostat.type = "unknown";
   assert.equal(processControlRequest("POST", "/restore", JSON.stringify(invalidFault)).statusCode, 400);
   assert.equal(processControlRequest("POST", "/restore", "not-json").statusCode, 400);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, checkpoint);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), checkpoint);
 
   const cleanCheckpoint = processControlRequest("POST", "/reset").payload;
   const cleanState = { state: cleanCheckpoint.state, faults: {} };
@@ -41,7 +73,7 @@ test("control plane restores a validated checkpoint without accepting malformed 
   const delayedInteraction = guard("thermostat");
   assert.equal(processControlRequest("POST", "/restore", JSON.stringify(cleanState)).statusCode, 200);
   await assert.rejects(delayedInteraction, /interaction invalidated/);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, cleanState);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), cleanState);
 });
 
 test("episode lease atomically resets and restores while rejecting competing control clients", async () => {
@@ -54,7 +86,7 @@ test("episode lease atomically resets and restores while rejecting competing con
     ).statusCode,
     200,
   );
-  const baseline = processControlRequest("GET", "/state").payload;
+  const baseline = checkpointOf(processControlRequest("GET", "/state").payload);
 
   for (const invalid of [
     { thing: "unknown", type: "offline" },
@@ -65,7 +97,7 @@ test("episode lease atomically resets and restores while rejecting competing con
   ]) {
     assert.equal(processControlRequest("POST", "/failure", JSON.stringify(invalid)).statusCode, 400);
   }
-  assert.deepEqual(processControlRequest("GET", "/state").payload, baseline);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), baseline);
 
   const acquired = processControlRequest("POST", "/lease/acquire", JSON.stringify({ episode_id: "episode-a" }));
   assert.equal(acquired.statusCode, 200);
@@ -90,15 +122,15 @@ test("episode lease atomically resets and restores while rejecting competing con
   await assert.doesNotReject(guard("projector"));
 
   assert.equal(processControlRequest("POST", "/lease/restore", "", leaseA).statusCode, 200);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, baseline);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), baseline);
   assert.equal(processControlRequest("POST", "/reset").statusCode, 423);
 
   assert.equal(processControlRequest("POST", "/lease/release", "", leaseA).statusCode, 200);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, baseline);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), baseline);
   assert.equal(processControlRequest("POST", "/reset", "", leaseA).statusCode, 409);
 
   const acquiredB = processControlRequest("POST", "/lease/acquire", JSON.stringify({ episode_id: "episode-b" }));
   assert.equal(acquiredB.statusCode, 200);
   assert.equal(processControlRequest("POST", "/lease/release", "", acquiredB.payload.lease_id).statusCode, 200);
-  assert.deepEqual(processControlRequest("GET", "/state").payload, baseline);
+  assert.deepEqual(checkpointOf(processControlRequest("GET", "/state").payload), baseline);
 });

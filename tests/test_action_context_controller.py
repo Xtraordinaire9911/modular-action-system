@@ -7,6 +7,10 @@ from src.runtime.primitive_action import PrimitiveAction
 
 def test_action_context_sanitizes_cognitive_map_for_planning():
     cmap = CognitiveMap(task_id="task_action_context")
+    cmap.page_state["page"] = {
+        "url": "https://room.test/presentation?fault=session_expiry#control",
+        "title": "Presentation room",
+    }
     cmap.add_state_assertion(StateAssertion("booking", "service_available", True, "dom"))
     cmap.add_affordance(
         RuntimeAffordance(
@@ -40,6 +44,10 @@ def test_action_context_sanitizes_cognitive_map_for_planning():
     assert context.task_id == "task_action_context"
     assert context.request_type == "goal_spec"
     assert context.state["dom"]["booking"]["service_available"] is True
+    assert context.state["dom"]["page"] == {
+        "url": "https://room.test/presentation",
+        "title": "Presentation room",
+    }
     assert context.affordances[0].id == "dom_room_input"
     assert context.affordances[0].grounding == {"label": "Room"}
     assert context.unresolved_conflicts[0].id == "booking.status"

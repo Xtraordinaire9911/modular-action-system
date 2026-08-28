@@ -143,6 +143,23 @@ VLM feedback used by the DOM/visual scene are explicitly simulated; this video
 does not claim a production Planner, production VLM, or unrestricted open-web
 run.
 
+### Five-scene live Smart Room recovery demo
+
+The runnable counterpart uses the real React dashboard, Eclipse Thingweb
+node-wot devices, Playwright/WoT executors and production Runtime/CIM. It injects
+overlay obstruction, session expiry, optimistic rollback, DOM/WoT disagreement
+and an ineffective UI affordance, then verifies recovery and the original goal
+against fresh environment state.
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+python scripts/run_smart_room_five_recovery_demo.py
+```
+
+See [the five-scene runbook](SMART_ROOM_FIVE_RECOVERY_DEMO.md) for the exact
+pipeline, evidence files and claim boundary. This is source and a reproducible
+live run, not an uploaded recording.
+
 
 ## What is implemented, and what is not
 
