@@ -566,6 +566,39 @@ def test_forward_completion_is_offered_after_all_parameter_effects_are_observed(
     assert planner.last_choice.is_model_derived
 
 
+def test_parameter_binding_that_also_achieves_goal_remains_available_until_observed(tmp_path):
+    target = RuntimeAffordance(
+        id="thermostat-target",
+        source="wot",
+        entity_id="thermostat",
+        action_name="write_property",
+        action_type="property",
+        confidence=0.95,
+        grounding={
+            "binds_parameter": "target",
+            "state_attribute": "target_temperature",
+            "achieves": "thermostat.target_temperature == 22",
+        },
+    )
+    planner = AgentPlanner(client=None, ledger_path=tmp_path / "agent.jsonl", plan_forward_with_model=False)
+
+    plan = planner.plan(
+        _context(
+            failure=False,
+            affordances=[target],
+            state={"wot": {"thermostat": {"target_temperature": 20}}},
+        ),
+        goal_id="set_temperature",
+        goal_state="thermostat.target_temperature == 22",
+        parameters={"target": 22},
+    )
+
+    assert plan.actions == [
+        PrimitiveAction("invoke", affordance_id="thermostat-target", value=22, expected_effect="target == 22")
+    ]
+    assert planner.last_choice.affordance_id == "thermostat-target"
+
+
 def test_no_model_ledger_records_the_effective_controller_action(tmp_path):
     room = RuntimeAffordance(
         id="room-input",

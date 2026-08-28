@@ -296,7 +296,13 @@ def _effective_forward_context(
     affordances = [
         affordance
         for affordance in context.affordances
-        if not _declares_completion(affordance) or (_completes_goal(affordance, goal_id, goal_state) and not unfinished)
+        if not _declares_completion(affordance)
+        # A primitive may both bind a parameter and declare the resulting goal
+        # effect (for example a writable WoT property). It must remain offered
+        # while that parameter is unfinished; otherwise completion gating
+        # removes the only action capable of establishing its own prerequisite.
+        or bool(_bound_parameters(affordance) & unfinished)
+        or (_completes_goal(affordance, goal_id, goal_state) and not unfinished)
     ]
     return replace(context, affordances=affordances)
 

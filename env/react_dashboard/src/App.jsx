@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const WOT = "http://localhost:8080";
+const WOT = new URLSearchParams(window.location.search).get("wot_base") || "http://localhost:8080";
 
 function useFaults() {
   const [faults, setFaults] = useState(() => {
@@ -32,6 +32,19 @@ async function readProp(thing, prop) {
     return r.ok ? await r.json() : null;
   } catch {
     return null;
+  }
+}
+
+async function writeProp(thing, prop, value) {
+  try {
+    const r = await fetch(`${WOT}/${thing}/properties/${prop}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "X-API-Key": "demo" },
+      body: JSON.stringify(value),
+    });
+    return r.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -124,8 +137,13 @@ export default function App() {
     currentTemperature: 19,
     brightness: 100,
     power: "off",
+    lamp: "off",
   });
   const [pointer, setPointer] = useState({ visible: false, x: 120, y: 120, label: "" });
+  const [sessionValid, setSessionValid] = useState(!faults.has("session_expiry"));
+  const [presentationStatus, setPresentationStatus] = useState("Idle — projector is off.");
+  const [presentationAttempted, setPresentationAttempted] = useState(false);
+  const [obstructionPresent, setObstructionPresent] = useState(faults.has("overlay_obstruction"));
 
   useEffect(() => {
     window.__demoPointTo = (selector, label = "") => {
@@ -149,11 +167,12 @@ export default function App() {
   useEffect(() => {
     let alive = true;
     const poll = async () => {
-      const [tt, ct, br, pw] = await Promise.all([
+      const [tt, ct, br, pw, lamp] = await Promise.all([
         readProp("thermostat", "targetTemperature"),
         readProp("thermostat", "currentTemperature"),
         readProp("lights", "brightness"),
         readProp("projector", "power"),
+        readProp("projector", "lamp"),
       ]);
       if (alive) {
         setDevice((d) => ({
@@ -161,6 +180,7 @@ export default function App() {
           currentTemperature: ct ?? d.currentTemperature,
           brightness: br ?? d.brightness,
           power: pw ?? d.power,
+          lamp: lamp ?? d.lamp,
         }));
       }
     };
@@ -184,6 +204,46 @@ export default function App() {
     [booked, device]
   );
 
+  useEffect(() => {
+    if (!presentationAttempted) return;
+    if (device.lamp === "on") {
+      setPresentationStatus("VERIFIED — the projector lamp is on.");
+    } else if (faults.has("optimistic_rollback") && device.power === "off") {
+      setPresentationStatus("ROLLED BACK — the dashboard acknowledgement did not persist.");
+    }
+  }, [device.lamp, device.power, faults, presentationAttempted]);
+
+  const preparePresentation = async () => {
+    setPresentationAttempted(true);
+    if (!sessionValid) {
+      setPresentationStatus("SESSION EXPIRED — command was not sent.");
+      return;
+    }
+    if (faults.has("ineffective_affordance")) {
+      setPresentationStatus("ACCEPTED — but the projector is still off.");
+      return;
+    }
+    if (faults.has("optimistic_rollback")) {
+      setPresentationStatus("OPTIMISTIC UI — projector reported on, awaiting device confirmation.");
+    } else {
+      setPresentationStatus("Command sent — waiting for the physical lamp.");
+    }
+    const accepted = await writeProp("projector", "power", "on");
+    if (!accepted) setPresentationStatus("COMMAND FAILED — the device endpoint rejected the write.");
+  };
+
+  const renewSession = () => {
+    setSessionValid(true);
+    setPresentationStatus("SESSION RENEWED — the original goal can resume.");
+  };
+
+  const useDirectProjectorControl = async () => {
+    setPresentationAttempted(true);
+    setPresentationStatus("DIRECT DEVICE CONTROL — waiting for the physical lamp.");
+    const accepted = await writeProp("projector", "power", "on");
+    if (!accepted) setPresentationStatus("DIRECT CONTROL FAILED — the device endpoint rejected the write.");
+  };
+
   return (
     <main style={{ fontFamily: "system-ui, sans-serif", maxWidth: 720, margin: "0 auto" }}>
       <style>{`
@@ -205,6 +265,35 @@ export default function App() {
       `}</style>
       <DemoPointer pointer={pointer} />
       <h1 style={{ fontSize: 22 }}>Smart-Room Dashboard</h1>
+
+      {obstructionPresent ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          data-testid="room-policy-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9000,
+            background: "rgba(15, 23, 42, .72)",
+            display: "grid",
+            placeItems: "center",
+          }}
+        >
+          <section style={{ width: 420, background: "white", borderRadius: 12, padding: 24 }}>
+            <h2>Room policy update</h2>
+            <p>Accept the updated room policy before using presentation controls.</p>
+            <button
+              type="button"
+              data-testid="accept-room-policy"
+              data-dismiss="dialog"
+              onClick={() => setObstructionPresent(false)}
+            >
+              Accept and continue
+            </button>
+          </section>
+        </div>
+      ) : null}
 
       <Panel title="Booking" testid="booking-panel">
         <label>
@@ -245,6 +334,29 @@ export default function App() {
         <div>
           Power: <Value testid="projector-power" value={device.power} />
         </div>
+        <div>
+          Physical lamp: <Value testid="projector-lamp" value={device.lamp} />
+        </div>
+      </Panel>
+
+      <Panel title="Presentation mode" testid="presentation-panel">
+        <div>
+          Session: <Value testid="session-state" value={sessionValid ? "valid" : "expired"} />
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <button data-testid="presentation-mode-button" onClick={preparePresentation}>
+            Enable presentation mode
+          </button>{" "}
+          {!sessionValid ? (
+            <button data-testid="renew-room-session" onClick={renewSession}>
+              Renew room session
+            </button>
+          ) : null}
+          <button data-testid="direct-projector-control" onClick={useDirectProjectorControl}>
+            Direct projector control
+          </button>
+        </div>
+        <p data-testid="presentation-status">{presentationStatus}</p>
       </Panel>
 
       <Panel title="Readiness" testid="readiness-panel">
