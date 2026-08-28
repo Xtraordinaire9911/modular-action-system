@@ -212,9 +212,7 @@ def test_missing_failed_target_expires_obstruction_tracking_for_the_next_failure
     environment.thing_models = [ThingAffordanceModel("room", "room", [], [], None, None)]
     environment._blocked_target = ("old-action", "#removed-target")
 
-    asyncio.run(
-        environment.observe(ObservationRequest(task_id="task", episode_id="episode", reason="refresh", step=1))
-    )
+    asyncio.run(environment.observe(ObservationRequest(task_id="task", episode_id="episode", reason="refresh", step=1)))
 
     assert observed_selectors == ["#removed-target"]
     assert environment._blocked_target is None
