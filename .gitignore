@@ -38,6 +38,9 @@ eval_outputs/
 # which a repository-relative link does not.
 demo_video/
 *.webm
+# Talk GIFs: 10 MB of frames cut from an mp4 that is already in history.
+# scripts/make_talk_gifs.py regenerates them in about a minute.
+artifacts/talk_gifs/*.gif
 .external_envs/
 
 # Local paper / presentation artifacts
