@@ -309,11 +309,14 @@ class SmartRoomLiveEnvironment:
             await asyncio.sleep(self.config.settle_after_action_s)
 
         previous = request.previous_result
-        if self._blocked_target is None and previous is not None and not previous.success:
+        if previous is not None and not previous.success:
             failed_id = str(previous.metadata.get("affordance_id") or "")
             failed = self.latest_affordances.get(failed_id)
             selector = str(failed.locator.get("selector") or "") if failed is not None else ""
             if failed_id and selector:
+                # The current failed result is newer than any retained probe.
+                # Replace the old target now so this observation can discover
+                # recovery affordances for the new failure without replaying it.
                 self._blocked_target = (failed_id, selector)
 
         self._observation_index += 1

@@ -5,7 +5,7 @@ import pytest
 
 import src.runtime.live_environment as live_environment
 from src.contracts.types import Affordance, ExecutionResult, Observation, SkillCall
-from src.perception.browser_obstruction import BrowserObstructionObservation
+from src.perception.browser_obstruction import BrowserObstructionObservation, ObstructionControl
 from src.perception.page_affordance_model import PageAffordanceModel
 from src.perception.td_affordance_parser import ThingAffordanceModel
 from src.runtime.cognitive_map import CognitiveMap
@@ -248,6 +248,66 @@ def test_missing_failed_target_expires_obstruction_tracking_for_the_next_failure
     )
 
     assert observed_selectors == ["#removed-target", "#new-target"]
+
+
+def test_new_failed_target_replaces_stale_tracking_in_the_same_observation(monkeypatch, tmp_path):
+    observed_selectors = []
+
+    async def observe_target(session, *, target_selector):
+        _ = session
+        observed_selectors.append(target_selector)
+        if target_selector == "#removed-target":
+            return BrowserObstructionObservation(target_exists=False, blocked=False)
+        return BrowserObstructionObservation(
+            target_exists=True,
+            blocked=True,
+            controls=[ObstructionControl("#dismiss-new-blocker", "Dismiss", confidence=0.99)],
+        )
+
+    monkeypatch.setattr(live_environment, "observe_browser_obstruction", observe_target)
+    environment = SmartRoomLiveEnvironment(
+        _ObservationSession(),  # type: ignore[arg-type]
+        LiveEnvironmentConfig(output_dir=tmp_path),
+        include_wot_state=False,
+    )
+    environment.thing_models = [ThingAffordanceModel("room", "room", [], [], None, None)]
+    environment._blocked_target = ("old-action", "#removed-target")
+    replacement = Affordance(
+        "new-action",
+        "DOM",
+        "button",
+        "New target",
+        "click",
+        {"selector": "#new-target"},
+        1.0,
+    )
+    environment.latest_affordances = {replacement.id: replacement}
+    failed = ExecutionResult(
+        "goal",
+        "dom",
+        False,
+        1.0,
+        1.0,
+        metadata={"affordance_id": replacement.id},
+    )
+
+    observation = asyncio.run(
+        environment.observe(
+            ObservationRequest(
+                task_id="task",
+                episode_id="episode",
+                reason="replacement_failure",
+                step=1,
+                previous_result=failed,
+            )
+        )
+    )
+
+    assert observed_selectors == ["#new-target"]
+    assert environment._blocked_target == ("new-action", "#new-target")
+    recovery = [affordance for affordance in observation.affordances if affordance.id.startswith("dom_recovery_")]
+    assert len(recovery) == 1
+    assert recovery[0].locator["remediates"] == "new-action"
 
 
 def test_runtime_executor_resolves_durable_skill_to_current_live_affordance():
