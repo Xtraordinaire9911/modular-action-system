@@ -344,7 +344,10 @@ class SmartRoomLiveEnvironment:
         assertions = await self._read_dom_assertions(captured_at_ms)
         if obstruction is not None:
             assertions.append(obstruction.assertion(timestamp_ms=captured_at_ms))
-            if obstruction.target_exists and not obstruction.blocked:
+            # A missing target ends this probe just as conclusively as an
+            # unblocked target. Retaining its selector would prevent the next
+            # failed DOM action from becoming the tracked obstruction target.
+            if not obstruction.target_exists or not obstruction.blocked:
                 self._blocked_target = None
         device_states: dict[str, Any] = {}
         if self.include_wot_state:

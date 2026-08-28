@@ -144,6 +144,16 @@ export default function App() {
   const [presentationStatus, setPresentationStatus] = useState("Idle — projector is off.");
   const [presentationAttempted, setPresentationAttempted] = useState(false);
   const [obstructionPresent, setObstructionPresent] = useState(faults.has("overlay_obstruction"));
+  const sessionExpiryInjected = faults.has("session_expiry");
+  const overlayObstructionInjected = faults.has("overlay_obstruction");
+
+  useEffect(() => {
+    setSessionValid(!sessionExpiryInjected);
+  }, [sessionExpiryInjected]);
+
+  useEffect(() => {
+    setObstructionPresent(overlayObstructionInjected);
+  }, [overlayObstructionInjected]);
 
   useEffect(() => {
     window.__demoPointTo = (selector, label = "") => {
