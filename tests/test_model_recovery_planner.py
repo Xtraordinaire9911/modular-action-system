@@ -257,6 +257,58 @@ def test_no_model_configured_is_never_reported_as_a_model_decision(tmp_path):
     assert not planner.last_choice.is_model_derived
 
 
+def test_no_model_uses_only_declared_safe_recovery_affordance(tmp_path):
+    safe = _affordance(
+        "dismiss_obstruction",
+        remediates="confirm_plan",
+        recovery_safe=True,
+        irreversible=False,
+        recovery_postcondition="interaction_obstruction.present == false",
+    )
+    planner = ModelRecoveryPlanner(
+        client=None,
+        ledger_path=tmp_path / "l.jsonl",
+        allow_deterministic_recovery=True,
+    )
+
+    plan = planner.plan(_context(affordances=[safe]), goal_state="plan.confirmed == true")
+
+    assert plan.actions == [
+        PrimitiveAction(
+            "click",
+            affordance_id="dismiss_obstruction",
+            expected_effect="interaction_obstruction.present == false",
+        )
+    ]
+    assert planner.last_choice.source == "deterministic"
+    assert planner.last_choice.affordance_id == "dismiss_obstruction"
+    assert "safe recovery relation" in planner.last_choice.reason
+
+
+def test_no_model_refuses_unrelated_or_unsafe_recovery_affordances(tmp_path):
+    unsafe = _affordance(
+        "dangerous_control",
+        remediates="confirm_plan",
+        recovery_safe=False,
+        irreversible=True,
+    )
+    unrelated = _affordance(
+        "other_control",
+        remediates="different_action",
+        recovery_safe=True,
+        irreversible=False,
+    )
+    planner = ModelRecoveryPlanner(client=None, ledger_path=tmp_path / "l.jsonl")
+
+    plan = planner.plan(
+        _context(affordances=[unsafe, unrelated]),
+        goal_state="plan.confirmed == true",
+    )
+
+    assert plan.requires_escalation
+    assert plan.actions == [PrimitiveAction("ask_user", expected_effect="provide an Agent recovery proposal")]
+
+
 def test_a_context_with_no_failure_costs_nothing(tmp_path):
     """Forward planning is the controller's job; a model call there is waste."""
     client = _Client(_reply())

@@ -15,6 +15,23 @@ Around that contract sits a complete loop — observe, plan, act, verify,
 recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
+### Final presentation demo
+
+The presentation-grade runner combines the canonical smart-room request with
+bounded Runtime/System-1, five-family recovery, model/VLM, Set-of-Marks, and
+adaptation chapters. It validates outcomes and writes one evidence manifest:
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+.venv/bin/python scripts/run_final_presentation_demo.py --profile complete --model-mode recorded --check
+.venv/bin/python scripts/run_final_presentation_demo.py --profile complete --model-mode recorded --headless --auto-approve --fast
+```
+
+Use `--profile presentation --pause-between-chapters` for the headed team run.
+See [FINAL_PRESENTATION_DEMO.md](FINAL_PRESENTATION_DEMO.md) for the ten-minute
+three-presenter cut, exact operator choices, model setup, evidence contract,
+recording strategy, and truthful claim boundaries.
+
 
 ### What the language model actually changes
 

@@ -63,6 +63,7 @@ reports/
 # Runtime ledgers appended to on every run.
 artifacts/intent_planner/
 artifacts/vlm_observer/
+artifacts/final_presentation_demo/
 
 # B-113 Development artifacts - added to ignore list
 B113_Development_Summary_CN_EN.md

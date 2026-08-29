@@ -312,7 +312,17 @@ class SmartRoomLiveEnvironment:
         if previous is not None and not previous.success:
             failed_id = str(previous.metadata.get("affordance_id") or "")
             failed = self.latest_affordances.get(failed_id)
-            selector = str(failed.locator.get("selector") or "") if failed is not None else ""
+            # DOM transducers may use an ordinal selector for an otherwise
+            # anonymous element.  A newly mounted modal can change those
+            # ordinals before the recovery observation, causing the probe to
+            # measure the modal button instead of the action that was blocked.
+            # Prefer the declarative selector from a matched semantic binding;
+            # it is runtime-owned grounding and is stripped at ActionContext.
+            selector = (
+                str(failed.locator.get("stable_selector") or failed.locator.get("selector") or "")
+                if failed is not None
+                else ""
+            )
             if failed_id and selector:
                 # The current failed result is newer than any retained probe.
                 # Replace the old target now so this observation can discover
@@ -417,6 +427,8 @@ class SmartRoomLiveEnvironment:
                 locator["entity_id"] = binding.entity_id
             if binding.state_attribute:
                 locator["state_attribute"] = binding.state_attribute
+            if binding.source == "DOM" and binding.selector:
+                locator["stable_selector"] = binding.selector
             if binding.binds_parameter:
                 locator["binds_parameter"] = binding.binds_parameter
             if binding.completion_for:

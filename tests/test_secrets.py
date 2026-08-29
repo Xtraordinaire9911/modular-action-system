@@ -81,6 +81,18 @@ def test_the_allowlist_covers_every_provider_the_code_can_use():
         assert expected in KNOWN_KEYS
 
 
+def test_the_allowlist_covers_documented_text_and_vision_overrides():
+    for expected in (
+        "LLM_API_KEY",
+        "LLM_MODEL",
+        "LLM_BASE_URL",
+        "VLM_API_KEY",
+        "VLM_MODEL",
+        "VLM_BASE_URL",
+    ):
+        assert expected in KNOWN_KEYS
+
+
 # --- the diagnostic ------------------------------------------------------------------
 
 

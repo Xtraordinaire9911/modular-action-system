@@ -1428,6 +1428,14 @@ class ContinuousInteractionManager:
                     active_perception_trace=active_trace,
                 )
             backend = affordance.source
+            # Capture identity before execution.  A fresh DOM observation can
+            # legitimately reuse an ordinal affordance id after a modal mounts;
+            # transition evidence must still name the capability that was
+            # actually attempted, not whichever node owns that id afterwards.
+            attempted_affordance_key = stable_affordance_key(
+                self.cognitive_map,
+                current_action.affordance_id,
+            )
             if backend not in self.executors:
                 return _PrimitiveOutcome(
                     False,
@@ -1580,7 +1588,7 @@ class ContinuousInteractionManager:
                     postcondition_passed=False,
                     recovery_action=transition_recovery_action,
                     recovery_tier=transition_recovery_tier,
-                    affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
+                    affordance_key=attempted_affordance_key,
                     recovery_of_transition_id=recovering_transition_id,
                 )
                 transition_ids.append(transition_id)
@@ -1649,7 +1657,7 @@ class ContinuousInteractionManager:
                     postcondition_passed=postcondition_passed,
                     recovery_action=selected_recovery_action,
                     recovery_tier=recovery_tier,
-                    affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
+                    affordance_key=attempted_affordance_key,
                     recovery_of_transition_id=recovering_transition_id,
                 )
                 transition_ids.append(transition_id)
@@ -1740,7 +1748,7 @@ class ContinuousInteractionManager:
                 recovery_action=transition_recovery_action,
                 recovery_tier=transition_recovery_tier,
                 verification_failure_reason=failure.failure_reason or "",
-                affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
+                affordance_key=attempted_affordance_key,
                 recovery_of_transition_id=recovering_transition_id,
             )
             transition_ids.append(transition_id)
@@ -1753,7 +1761,7 @@ class ContinuousInteractionManager:
                     state_before=state_before,
                     transition_id=transition_id,
                     recovery_action=trace.selected_action,
-                    affordance_key=stable_affordance_key(self.cognitive_map, current_action.affordance_id),
+                    affordance_key=attempted_affordance_key,
                 )
             )
 
@@ -2054,6 +2062,10 @@ class ContinuousInteractionManager:
                 latency_ms=float(timeout_ms),
                 confidence=0.0,
                 failure_reason="timeout",
+                metadata={
+                    "affordance_id": str(skill_call.params.get("affordance_id") or ""),
+                    "timeout_boundary": "runtime",
+                },
             )
         except Exception as exc:
             return ExecutionResult(
@@ -2063,7 +2075,10 @@ class ContinuousInteractionManager:
                 latency_ms=0.0,
                 confidence=0.0,
                 failure_reason=f"executor_exception:{type(exc).__name__}",
-                metadata={"exception_message": str(exc)},
+                metadata={
+                    "affordance_id": str(skill_call.params.get("affordance_id") or ""),
+                    "exception_message": str(exc),
+                },
             )
 
     async def _refresh_observation(

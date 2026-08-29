@@ -42,6 +42,7 @@ from src.runtime.action_context import ActionContext
 from src.runtime.affordance_controller import AffordanceController, PrimitivePlan
 from src.runtime.cognitive_map import RuntimeAffordance, canonical_state_name
 from src.runtime.primitive_action import PrimitiveAction, PrimitiveActionType
+from src.runtime.task_planner import primitive_for_affordance
 
 # The action names the runtime can actually execute, read from the type itself so
 # this cannot drift from it. `allowed_actions` on a context is a per-episode
@@ -135,6 +136,7 @@ class AgentChoice:
     confidence: float = 0.0
     model: str = ""
     latency_ms: float = 0.0
+    prompt: str = ""
     raw_response: str = ""
     error: str = ""
     offered: list[str] = field(default_factory=list)
@@ -156,6 +158,8 @@ class AgentChoice:
             "confidence": round(self.confidence, 3),
             "model": self.model,
             "latency_ms": round(self.latency_ms, 1),
+            "prompt": self.prompt,
+            "raw_response": self.raw_response,
             "is_model_derived": self.is_model_derived,
             "offered": list(self.offered),
             "error": self.error,
@@ -357,6 +361,10 @@ class AgentPlanner:
     # False retains a deterministic forward path while keeping one decision
     # authority. The formal Agent entrypoint enables this when model mode is on.
     plan_forward_with_model: bool = True
+    # Opt-in for controlled demos and deployments whose policy permits the
+    # planner to use explicit, observed, low-risk recovery relations without a
+    # model.  The default preserves the conservative hand-off behavior.
+    allow_deterministic_recovery: bool = False
     last_choice: AgentChoice = field(default_factory=AgentChoice)
     # Every decision this planner made, in order. `last_choice` alone is not
     # enough to read a finished episode: the runtime calls the port again after a
@@ -457,12 +465,16 @@ class AgentPlanner:
     ) -> PrimitivePlan:
         """Return and record the one controller primitive effective now."""
 
-        controller_plan = self.controller.plan(
+        recovery_plan = self._declared_safe_recovery(context) if self.allow_deterministic_recovery else None
+        controller_plan = recovery_plan or self.controller.plan(
             context,
             goal_id=goal_id,
             goal_state=goal_state,
             parameters=parameters,
         )
+        if recovery_plan is not None:
+            prefix = f"{choice.reason}; " if choice.reason else ""
+            choice.reason = prefix + "selected an observed affordance that declares a safe recovery relation"
         plan = self._effective_controller_plan(controller_plan, context, parameters)
         if plan.actions:
             action = plan.actions[0]
@@ -473,6 +485,59 @@ class AgentPlanner:
         self._remember(choice)
         self._record(record_context, goal_state)
         return plan
+
+    @staticmethod
+    def _declared_safe_recovery(context: ActionContext) -> PrimitivePlan | None:
+        """Choose only an explicitly related, low-risk observed remediation.
+
+        This is the deterministic fallback *inside* the injected AgentPlanner,
+        not a Runtime recovery policy.  Runtime still validates the returned
+        primitive against the same fresh ActionContext, executes it through its
+        normal effector, and verifies the declared postcondition.  Ambiguous,
+        unrelated, irreversible, or unmarked capabilities remain escalations.
+        """
+
+        failure = context.failure
+        if failure is None:
+            return None
+
+        failed_ids = {failure.failed_affordance_id, failure.transition_id}
+        candidates: list[RuntimeAffordance] = []
+        for affordance in context.affordances:
+            grounding = affordance.grounding
+            related = _as_string_set(
+                grounding.get("remediates"),
+                grounding.get("compensates"),
+                grounding.get("restores"),
+                grounding.get("equivalent_to"),
+            )
+            action = primitive_for_affordance(affordance)
+            if (
+                related & failed_ids
+                and grounding.get("recovery_safe") is True
+                and grounding.get("irreversible") is not True
+                and action in context.allowed_actions
+            ):
+                candidates.append(affordance)
+
+        if not candidates:
+            return None
+
+        chosen = sorted(candidates, key=lambda item: (-item.confidence, item.id))[0]
+        expected_effect = str(
+            chosen.grounding.get("recovery_postcondition")
+            or f"recover from {failure.failed_affordance_id}"
+        )
+        return PrimitivePlan(
+            actions=[
+                PrimitiveAction(
+                    primitive_for_affordance(chosen),
+                    affordance_id=chosen.id,
+                    expected_effect=expected_effect,
+                )
+            ],
+            reason="deterministic semantic recovery from a fresh observed affordance",
+        )
 
     @staticmethod
     def _effective_controller_plan(
@@ -544,6 +609,7 @@ class AgentPlanner:
         prompt = _RECOVERY_SYSTEM_PROMPT if mode is PlanningMode.RECOVERY else _FORWARD_SYSTEM_PROMPT
         system = prompt.format(actions=", ".join(context.allowed_actions))
         user = self._describe(context, goal_id, goal_state, parameters, mode)
+        choice.prompt = user
 
         started = time.monotonic()
         try:

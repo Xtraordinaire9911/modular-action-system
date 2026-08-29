@@ -96,6 +96,57 @@ class PacedExecutor:
         return result
 
 
+class ControlledBookingObstructionExecutor:
+    """Inject one visible modal immediately before the protected booking click.
+
+    The fault is presentation control, not planner input.  Runtime and
+    ``AgentPlanner`` only learn about it from the failed executor result and the
+    subsequent fresh browser observation.  This keeps the recovery scene tied
+    to an action occurrence instead of a timing race.
+    """
+
+    def __init__(
+        self,
+        executor: Any,
+        environment: SmartRoomLiveEnvironment,
+        *,
+        settle_s: float = 0.15,
+    ) -> None:
+        self.executor = executor
+        self.environment = environment
+        self.settle_s = max(0.0, settle_s)
+        self.injected = False
+        self.target_affordance_id = ""
+
+    async def execute(self, skill_call: Any, observation: Any):
+        affordance_id = str(getattr(skill_call, "params", {}).get("affordance_id", ""))
+        affordance = self.environment.find_affordance(affordance_id) if affordance_id else None
+        stable_key = str(affordance.locator.get("stable_key", "")) if affordance is not None else ""
+        if not self.injected and stable_key == "booking.confirm":
+            injected = await self.environment.session.evaluate(
+                "fault => { window.__injectFault && window.__injectFault(fault); return true; }",
+                "overlay_obstruction",
+            )
+            if not injected:
+                raise RuntimeError("the dashboard does not expose its controlled fault hook")
+            self.injected = True
+            self.target_affordance_id = affordance_id
+            if self.settle_s:
+                await asyncio.sleep(self.settle_s)
+            print("\nCONTROLLED FAULT")
+            print("   A room-policy modal now obstructs the approved Book Room action.")
+            print("   Runtime was not told the fault label; it must detect and recover from observation.\n")
+
+        result = await self.executor.execute(skill_call, observation)
+        if self.injected and affordance_id == self.target_affordance_id:
+            result.metadata = {
+                **result.metadata,
+                "controlled_fault_injected": "booking_obstruction",
+                "fault_visible_to_planner": False,
+            }
+        return result
+
+
 def integrated_bindings() -> list[AffordanceSemanticBinding]:
     """Attach stable goal meaning to discovered DOM and WoT affordances."""
 
@@ -173,17 +224,27 @@ def build_runtime_goal(utterance: str, *, use_model: bool) -> tuple[Any, Any, An
     return plan, plan.goal, selection
 
 
-def build_agent_planner(*, use_model: bool, ledger_path: Path) -> AgentPlanner:
+def build_agent_planner(
+    *,
+    use_model: bool,
+    ledger_path: Path,
+    allow_deterministic_recovery: bool = False,
+) -> AgentPlanner:
     """Compose the one forward/recovery planner used by the runtime episode."""
 
     return AgentPlanner(
         client=available_client() if use_model else None,
         ledger_path=ledger_path,
         plan_forward_with_model=use_model,
+        allow_deterministic_recovery=allow_deterministic_recovery,
     )
 
 
 async def run(args: argparse.Namespace) -> int:
+    # Keep programmatic callers that construct the pre-presentation Namespace
+    # source-compatible; the CLI parser always supplies both new fields.
+    inject_booking_obstruction = bool(getattr(args, "inject_booking_obstruction", False))
+    fault_settle_delay = float(getattr(args, "fault_settle_delay", 0.15))
     plan, goal, selection = build_runtime_goal(args.utterance, use_model=args.use_model)
     output = Path(args.evidence).resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -214,7 +275,15 @@ async def run(args: argparse.Namespace) -> int:
     )
     isolation = BrowserWotIsolationProvider(browser, control)
 
-    dom = RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(browser))
+    dom: Any = RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(browser))
+    obstruction: ControlledBookingObstructionExecutor | None = None
+    if inject_booking_obstruction:
+        obstruction = ControlledBookingObstructionExecutor(
+            dom,
+            environment,
+            settle_s=fault_settle_delay,
+        )
+        dom = obstruction
     wot = RuntimeAffordanceExecutor("wot", environment, WotExecutor())
     executors = {
         # These stay plain here on purpose. RuntimeEpisodeRunner applies the
@@ -228,7 +297,11 @@ async def run(args: argparse.Namespace) -> int:
     interventions = InterventionLedger(interventions_path)
     broker = InMemoryInterventionBroker(interventions)
     library = load_skill_library(REPO_ROOT / "config" / "skills_seed.json")
-    agent_planner = build_agent_planner(use_model=args.use_model, ledger_path=planner_path)
+    agent_planner = build_agent_planner(
+        use_model=args.use_model,
+        ledger_path=planner_path,
+        allow_deterministic_recovery=inject_booking_obstruction,
+    )
     runner = RuntimeEpisodeRunner(
         skill_library={skill.skill_id: skill for skill in library.all()},
         episode_policy=EpisodePolicy(
@@ -257,6 +330,8 @@ async def run(args: argparse.Namespace) -> int:
     print(f"4. Agent planner    : {planner_source}")
     print("   Planned surfaces : dashboard (DOM) + devices (WoT)")
     print("5. Isolation        : fresh browser + room checkpoint/restore")
+    if inject_booking_obstruction:
+        print("   Controlled fault : one modal, injected on the first approved booking click")
 
     runtime_task = asyncio.create_task(
         runner.run_goal_episode(
@@ -314,6 +389,14 @@ async def run(args: argparse.Namespace) -> int:
         "room_state_before": before,
         "room_state_after": after,
         "room_state_restored": before == after,
+        "controlled_fault": {
+            "requested": inject_booking_obstruction,
+            "type": "booking_obstruction" if inject_booking_obstruction else "",
+            "phase": "before_first_booking_confirm_execution" if inject_booking_obstruction else "",
+            "applied": bool(obstruction is not None and obstruction.injected),
+            "target_affordance_id": obstruction.target_affordance_id if obstruction is not None else "",
+            "hidden_from_planner": True if inject_booking_obstruction else None,
+        },
         "software_input_gate": "agent executors require the active agent lease",
         "os_input_isolation": False,
     }
@@ -340,6 +423,17 @@ def main() -> int:
     parser.add_argument("--auto-approve", action="store_true")
     parser.add_argument("--step-delay", type=float, default=0.8)
     parser.add_argument("--settle-delay", type=float, default=0.25)
+    parser.add_argument(
+        "--inject-booking-obstruction",
+        action="store_true",
+        help="Inject one modal immediately before the first approved Book Room click so Runtime must recover.",
+    )
+    parser.add_argument(
+        "--fault-settle-delay",
+        type=float,
+        default=0.15,
+        help="Seconds to let the controlled modal render before the attempted click.",
+    )
     parser.add_argument("--dashboard-url", default="http://127.0.0.1:3000")
     parser.add_argument("--thing-directory-url", default="http://127.0.0.1:8082/things")
     parser.add_argument("--wot-base-url", default="http://127.0.0.1:8080")
