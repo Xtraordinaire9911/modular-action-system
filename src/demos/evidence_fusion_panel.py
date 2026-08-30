@@ -172,8 +172,12 @@ class EvidenceFusionPanel:
             self.episode_id = episode_id
 
     async def show_observation(self, observed: LiveRuntimeObservation | Observation, reason: str) -> None:
-        live = observed if isinstance(observed, LiveRuntimeObservation) else None
-        observation = live.observation if live is not None else observed
+        if isinstance(observed, LiveRuntimeObservation):
+            live = observed
+            observation = observed.observation
+        else:
+            live = None
+            observation = observed
         self.phase = "OBSERVE"
         self.dom, self.visual, self.wot = _evidence_rows(observation, live)
         self._event("OBSERVE", f"fresh snapshot · {reason}")
@@ -383,13 +387,17 @@ def _evidence_rows(
                 "discovered at runtime",
             ),
         )
-    visual.insert(
-        0,
-        EvidenceRow(
+    if observation.screenshot is None:
+        screenshot_row = EvidenceRow(
+            "screenshot unavailable",
+            "no rendered frame attached",
+        )
+    else:
+        screenshot_row = EvidenceRow(
             f"screenshot {len(observation.screenshot)} bytes",
             "exact rendered frame retained",
-        ),
-    )
+        )
+    visual.insert(0, screenshot_row)
     return dom[:3], visual[:3], wot[:3]
 
 
