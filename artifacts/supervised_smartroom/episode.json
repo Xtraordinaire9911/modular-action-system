@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-21T09:42:34",
+  "at": "2026-08-30T10:31:13",
   "mode": "live_interactive",
   "utterance": "book room C at 15:30 and prepare it for my presentation",
   "intent": {
@@ -27,11 +27,218 @@
     "success_evidence": []
   },
   "selected_skill": "prepare_and_confirm_room",
+  "agent_planner": {
+    "type": "AgentPlanner",
+    "model_forward_enabled": false,
+    "model_configured": false,
+    "decisions": [
+      {
+        "mode": "forward",
+        "source": "deterministic",
+        "affordance_id": "dom_input_1",
+        "action": "type",
+        "value": "C",
+        "expected_effect": "room == 'C'",
+        "reason": "forward model planning is disabled",
+        "confidence": 0.0,
+        "model": "",
+        "latency_ms": 0.0,
+        "prompt": "",
+        "raw_response": "",
+        "is_model_derived": false,
+        "offered": [
+          "dom_label_1",
+          "dom_input_1",
+          "dom_label_2",
+          "dom_input_2",
+          "dom_button_2",
+          "dom_button_3",
+          "wot_thermostat_targetTemperature",
+          "wot_thermostat_setTargetTemperature",
+          "wot_lights_brightness",
+          "wot_lights_setBrightness",
+          "wot_projector_power",
+          "wot_projector_setPower",
+          "wot_blinds_position",
+          "wot_blinds_setPosition"
+        ],
+        "error": "",
+        "fallback_used": false
+      },
+      {
+        "mode": "forward",
+        "source": "deterministic",
+        "affordance_id": "dom_input_2",
+        "action": "type",
+        "value": "15:30",
+        "expected_effect": "time == '15:30'",
+        "reason": "forward model planning is disabled",
+        "confidence": 0.0,
+        "model": "",
+        "latency_ms": 0.0,
+        "prompt": "",
+        "raw_response": "",
+        "is_model_derived": false,
+        "offered": [
+          "dom_label_1",
+          "dom_input_1",
+          "dom_label_2",
+          "dom_input_2",
+          "dom_button_2",
+          "dom_button_3",
+          "wot_thermostat_targetTemperature",
+          "wot_thermostat_setTargetTemperature",
+          "wot_lights_brightness",
+          "wot_lights_setBrightness",
+          "wot_projector_power",
+          "wot_projector_setPower",
+          "wot_blinds_position",
+          "wot_blinds_setPosition"
+        ],
+        "error": "",
+        "fallback_used": false
+      },
+      {
+        "mode": "forward",
+        "source": "deterministic",
+        "affordance_id": "wot_lights_setBrightness",
+        "action": "invoke",
+        "value": 30,
+        "expected_effect": "brightness == 30",
+        "reason": "forward model planning is disabled",
+        "confidence": 0.0,
+        "model": "",
+        "latency_ms": 0.0,
+        "prompt": "",
+        "raw_response": "",
+        "is_model_derived": false,
+        "offered": [
+          "dom_label_1",
+          "dom_input_1",
+          "dom_label_2",
+          "dom_input_2",
+          "dom_button_2",
+          "dom_button_3",
+          "wot_thermostat_targetTemperature",
+          "wot_thermostat_setTargetTemperature",
+          "wot_lights_brightness",
+          "wot_lights_setBrightness",
+          "wot_projector_power",
+          "wot_projector_setPower",
+          "wot_blinds_position",
+          "wot_blinds_setPosition"
+        ],
+        "error": "",
+        "fallback_used": false
+      },
+      {
+        "mode": "forward",
+        "source": "deterministic",
+        "affordance_id": "wot_projector_setPower",
+        "action": "invoke",
+        "value": "on",
+        "expected_effect": "power == 'on'",
+        "reason": "forward model planning is disabled",
+        "confidence": 0.0,
+        "model": "",
+        "latency_ms": 0.0,
+        "prompt": "",
+        "raw_response": "",
+        "is_model_derived": false,
+        "offered": [
+          "dom_label_1",
+          "dom_input_1",
+          "dom_label_2",
+          "dom_input_2",
+          "dom_button_2",
+          "dom_button_3",
+          "wot_thermostat_targetTemperature",
+          "wot_thermostat_setTargetTemperature",
+          "wot_lights_brightness",
+          "wot_lights_setBrightness",
+          "wot_projector_power",
+          "wot_projector_setPower",
+          "wot_blinds_position",
+          "wot_blinds_setPosition"
+        ],
+        "error": "",
+        "fallback_used": false
+      },
+      {
+        "mode": "forward",
+        "source": "deterministic",
+        "affordance_id": "wot_thermostat_setTargetTemperature",
+        "action": "invoke",
+        "value": 21,
+        "expected_effect": "target_temperature == 21",
+        "reason": "forward model planning is disabled",
+        "confidence": 0.0,
+        "model": "",
+        "latency_ms": 0.0,
+        "prompt": "",
+        "raw_response": "",
+        "is_model_derived": false,
+        "offered": [
+          "dom_label_1",
+          "dom_input_1",
+          "dom_label_2",
+          "dom_input_2",
+          "dom_button_2",
+          "dom_button_3",
+          "wot_thermostat_targetTemperature",
+          "wot_thermostat_setTargetTemperature",
+          "wot_lights_brightness",
+          "wot_lights_setBrightness",
+          "wot_projector_power",
+          "wot_projector_setPower",
+          "wot_blinds_position",
+          "wot_blinds_setPosition"
+        ],
+        "error": "",
+        "fallback_used": false
+      },
+      {
+        "mode": "forward",
+        "source": "deterministic",
+        "affordance_id": "dom_button_1",
+        "action": "click",
+        "value": null,
+        "expected_effect": "booking.confirmed == true",
+        "reason": "forward model planning is disabled",
+        "confidence": 0.0,
+        "model": "",
+        "latency_ms": 0.0,
+        "prompt": "",
+        "raw_response": "",
+        "is_model_derived": false,
+        "offered": [
+          "dom_label_1",
+          "dom_input_1",
+          "dom_label_2",
+          "dom_input_2",
+          "dom_button_1",
+          "dom_button_2",
+          "dom_button_3",
+          "wot_thermostat_targetTemperature",
+          "wot_thermostat_setTargetTemperature",
+          "wot_lights_brightness",
+          "wot_lights_setBrightness",
+          "wot_projector_power",
+          "wot_projector_setPower",
+          "wot_blinds_position",
+          "wot_blinds_setPosition"
+        ],
+        "error": "",
+        "fallback_used": false
+      }
+    ],
+    "ledger": "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/artifacts/supervised_smartroom/agent_planner_calls.jsonl"
+  },
   "result": {
     "state": "completed",
     "reason": "goal completed",
     "verified": true,
-    "episode_id": "episode-2352b4cda3bd",
+    "episode_id": "episode-3e3486a0812f",
     "primitive_plan": [
       {
         "action": "type",
@@ -71,11 +278,12 @@
       }
     ],
     "transition_ids": [
-      "episode-2352b4cda3bd:transition-0001",
-      "episode-2352b4cda3bd:transition-0002",
-      "episode-2352b4cda3bd:transition-0003",
-      "episode-2352b4cda3bd:transition-0004",
-      "episode-2352b4cda3bd:transition-0005"
+      "episode-3e3486a0812f:transition-0001",
+      "episode-3e3486a0812f:transition-0002",
+      "episode-3e3486a0812f:transition-0003",
+      "episode-3e3486a0812f:transition-0004",
+      "episode-3e3486a0812f:transition-0005",
+      "episode-3e3486a0812f:transition-0006"
     ],
     "goal_skill_selection": {
       "goal_id": "room_session_prepared",
@@ -114,11 +322,11 @@
   "transitions": [
     {
       "task_id": "supervised-smartroom-session",
-      "episode_id": "episode-2352b4cda3bd",
-      "transition_id": "episode-2352b4cda3bd:transition-0001",
+      "episode_id": "episode-3e3486a0812f",
+      "transition_id": "episode-3e3486a0812f:transition-0001",
       "step": 1,
-      "state_id_before": "state-c0b24b0cf94edb3b",
-      "state_id_after": "state-4a9d0271e169894c",
+      "state_id_before": "state-351fdea249768d82",
+      "state_id_after": "state-9983f1ac4bc26396",
       "skill_id": "prepare_and_confirm_room",
       "affordance_key": "dom:booking.room",
       "backend": "dom",
@@ -136,7 +344,7 @@
       "success": true,
       "execution_success": true,
       "postcondition_passed": true,
-      "latency_ms": 8.09,
+      "latency_ms": 16.114,
       "attempt": 1,
       "observation_delta": {
         "selector": "[data-testid='room-input']",
@@ -147,15 +355,15 @@
       "recovery_of_transition_id": "",
       "failure_reason": "",
       "reversible_result": null,
-      "timestamp_ms": 1787298093265
+      "timestamp_ms": 1788078662647
     },
     {
       "task_id": "supervised-smartroom-session",
-      "episode_id": "episode-2352b4cda3bd",
-      "transition_id": "episode-2352b4cda3bd:transition-0002",
+      "episode_id": "episode-3e3486a0812f",
+      "transition_id": "episode-3e3486a0812f:transition-0002",
       "step": 2,
-      "state_id_before": "state-4a9d0271e169894c",
-      "state_id_after": "state-a58c20fcab6b75f1",
+      "state_id_before": "state-9983f1ac4bc26396",
+      "state_id_after": "state-8da1f7fcc0016ae5",
       "skill_id": "prepare_and_confirm_room",
       "affordance_key": "dom:booking.time",
       "backend": "dom",
@@ -173,7 +381,7 @@
       "success": true,
       "execution_success": true,
       "postcondition_passed": true,
-      "latency_ms": 3.693,
+      "latency_ms": 6.611,
       "attempt": 2,
       "observation_delta": {
         "selector": "[data-testid='time-input']",
@@ -184,15 +392,15 @@
       "recovery_of_transition_id": "",
       "failure_reason": "",
       "reversible_result": null,
-      "timestamp_ms": 1787298098643
+      "timestamp_ms": 1788078663845
     },
     {
       "task_id": "supervised-smartroom-session",
-      "episode_id": "episode-2352b4cda3bd",
-      "transition_id": "episode-2352b4cda3bd:transition-0003",
+      "episode_id": "episode-3e3486a0812f",
+      "transition_id": "episode-3e3486a0812f:transition-0003",
       "step": 3,
-      "state_id_before": "state-a58c20fcab6b75f1",
-      "state_id_after": "state-1e2465596bf9195c",
+      "state_id_before": "state-8da1f7fcc0016ae5",
+      "state_id_after": "state-0620e0ebf3c52e24",
       "skill_id": "prepare_and_confirm_room",
       "affordance_key": "wot:lights.brightness",
       "backend": "wot",
@@ -210,7 +418,7 @@
       "success": true,
       "execution_success": true,
       "postcondition_passed": true,
-      "latency_ms": 6.869,
+      "latency_ms": 7.289,
       "attempt": 1,
       "observation_delta": {
         "thing_id": "lights",
@@ -223,15 +431,15 @@
       "recovery_of_transition_id": "",
       "failure_reason": "",
       "reversible_result": null,
-      "timestamp_ms": 1787298104032
+      "timestamp_ms": 1788078665034
     },
     {
       "task_id": "supervised-smartroom-session",
-      "episode_id": "episode-2352b4cda3bd",
-      "transition_id": "episode-2352b4cda3bd:transition-0004",
+      "episode_id": "episode-3e3486a0812f",
+      "transition_id": "episode-3e3486a0812f:transition-0004",
       "step": 4,
-      "state_id_before": "state-1e2465596bf9195c",
-      "state_id_after": "state-294ec06dd73a09ae",
+      "state_id_before": "state-0620e0ebf3c52e24",
+      "state_id_after": "state-5a74d99254b7be8b",
       "skill_id": "prepare_and_confirm_room",
       "affordance_key": "wot:projector.power",
       "backend": "wot",
@@ -249,7 +457,7 @@
       "success": true,
       "execution_success": true,
       "postcondition_passed": true,
-      "latency_ms": 6.235,
+      "latency_ms": 6.226,
       "attempt": 2,
       "observation_delta": {
         "thing_id": "projector",
@@ -262,15 +470,15 @@
       "recovery_of_transition_id": "",
       "failure_reason": "",
       "reversible_result": null,
-      "timestamp_ms": 1787298109404
+      "timestamp_ms": 1788078666232
     },
     {
       "task_id": "supervised-smartroom-session",
-      "episode_id": "episode-2352b4cda3bd",
-      "transition_id": "episode-2352b4cda3bd:transition-0005",
+      "episode_id": "episode-3e3486a0812f",
+      "transition_id": "episode-3e3486a0812f:transition-0005",
       "step": 5,
-      "state_id_before": "state-294ec06dd73a09ae",
-      "state_id_after": "state-f896f0a9244d1754",
+      "state_id_before": "state-5a74d99254b7be8b",
+      "state_id_after": "state-52fd88f76222cf8b",
       "skill_id": "prepare_and_confirm_room",
       "affordance_key": "wot:thermostat.target_temperature",
       "backend": "wot",
@@ -288,7 +496,7 @@
       "success": true,
       "execution_success": true,
       "postcondition_passed": true,
-      "latency_ms": 5.818,
+      "latency_ms": 6.23,
       "attempt": 3,
       "observation_delta": {
         "thing_id": "thermostat",
@@ -301,27 +509,64 @@
       "recovery_of_transition_id": "",
       "failure_reason": "",
       "reversible_result": null,
-      "timestamp_ms": 1787298114795
+      "timestamp_ms": 1788078667415
+    },
+    {
+      "task_id": "supervised-smartroom-session",
+      "episode_id": "episode-3e3486a0812f",
+      "transition_id": "episode-3e3486a0812f:transition-0006",
+      "step": 6,
+      "state_id_before": "state-52fd88f76222cf8b",
+      "state_id_after": "state-7a15efe6c266777b",
+      "skill_id": "prepare_and_confirm_room",
+      "affordance_key": "dom:booking.confirm",
+      "backend": "dom",
+      "params": {
+        "primitive_action": "click",
+        "affordance_id": "dom_button_1",
+        "value": null,
+        "expected_effect": "booking.confirmed == true",
+        "room": "C",
+        "time": "15:30",
+        "brightness": 30,
+        "power": "on",
+        "target_temperature": 21
+      },
+      "success": true,
+      "execution_success": true,
+      "postcondition_passed": true,
+      "latency_ms": 97.051,
+      "attempt": 3,
+      "observation_delta": {
+        "selector": "[data-testid='book-room-button']",
+        "clicked": true
+      },
+      "recovery_action": "",
+      "recovery_tier": null,
+      "recovery_of_transition_id": "",
+      "failure_reason": "",
+      "reversible_result": null,
+      "timestamp_ms": 1788078672860
     }
   ],
   "interventions": [
     {
-      "episode_id": "episode-2352b4cda3bd",
-      "intervention_id": "intervention-68fc53d05a9c",
+      "episode_id": "episode-3e3486a0812f",
+      "intervention_id": "intervention-2b752c337427",
       "kind": "safety_confirmation",
       "reason": "high-risk action requires confirmation",
-      "decision": "resume",
+      "decision": "approve",
       "actor": "operator",
-      "requested_at_ms": 1787298114796,
-      "resolved_at_ms": 1787298153703,
-      "latency_ms": 38907,
+      "requested_at_ms": 1788078667416,
+      "resolved_at_ms": 1788078671585,
+      "latency_ms": 4169,
       "task_id": "supervised-smartroom-session",
-      "state_id": "state-f896f0a9244d1754",
+      "state_id": "state-52fd88f76222cf8b",
       "pending_action_fingerprint": "{\"params\": {\"affordance_id\": \"dom_button_1\", \"brightness\": 30, \"expected_effect\": \"booking.confirmed == true\", \"power\": \"on\", \"primitive_action\": \"click\", \"room\": \"C\", \"target_temperature\": 21, \"time\": \"15:30\", \"value\": null}, \"skill_id\": \"prepare_and_confirm_room\"}",
-      "note": "Human completed Book Room in the visible browser",
-      "correction_applied": true,
-      "reobserved": true,
-      "replanned": true,
+      "note": "Supervisor approved the pending booking action",
+      "correction_applied": false,
+      "reobserved": false,
+      "replanned": false,
       "metadata": {
         "affordance_id": "dom_button_1",
         "recovery_tier": 4
@@ -331,19 +576,19 @@
   "room_state_before": {
     "state": {
       "thermostat": {
-        "targetTemperature": 21,
-        "currentTemperature": 21
+        "targetTemperature": 20,
+        "currentTemperature": 20
       },
       "lights": {
         "brightness": 100
       },
       "projector": {
-        "power": "on",
-        "lamp": "on"
+        "power": "off",
+        "lamp": "off"
       },
       "blinds": {
-        "position": 45,
-        "measuredPosition": 45
+        "position": 100,
+        "measuredPosition": 100
       },
       "occupancy": {
         "occupied": false,
@@ -373,19 +618,19 @@
   "room_state_after": {
     "state": {
       "thermostat": {
-        "targetTemperature": 21,
-        "currentTemperature": 21
+        "targetTemperature": 20,
+        "currentTemperature": 20
       },
       "lights": {
         "brightness": 100
       },
       "projector": {
-        "power": "on",
-        "lamp": "on"
+        "power": "off",
+        "lamp": "off"
       },
       "blinds": {
-        "position": 45,
-        "measuredPosition": 45
+        "position": 100,
+        "measuredPosition": 100
       },
       "occupancy": {
         "occupied": false,
@@ -413,6 +658,14 @@
     }
   },
   "room_state_restored": true,
+  "controlled_fault": {
+    "requested": false,
+    "type": "",
+    "phase": "",
+    "applied": false,
+    "target_affordance_id": "",
+    "hidden_from_planner": null
+  },
   "software_input_gate": "agent executors require the active agent lease",
   "os_input_isolation": false
 }

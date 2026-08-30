@@ -1,0 +1,146 @@
+{
+  "episode_id": "episode-c4874abee397",
+  "intent": "book room C at 15:30 and prepare it for my presentation",
+  "events": [
+    {
+      "at_ms": 1788078358350,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 episode_start"
+    },
+    {
+      "at_ms": 1788078358355,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078358357,
+      "phase": "CHOOSE",
+      "message": "prepare_and_confirm_room"
+    },
+    {
+      "at_ms": 1788078358390,
+      "phase": "EXECUTE",
+      "message": "dom accepted \u00b7 awaiting fresh verification"
+    },
+    {
+      "at_ms": 1788078359594,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 post_action_verification"
+    },
+    {
+      "at_ms": 1788078359597,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078359600,
+      "phase": "CHOOSE",
+      "message": "prepare_and_confirm_room"
+    },
+    {
+      "at_ms": 1788078359613,
+      "phase": "EXECUTE",
+      "message": "dom accepted \u00b7 awaiting fresh verification"
+    },
+    {
+      "at_ms": 1788078360813,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 post_action_verification"
+    },
+    {
+      "at_ms": 1788078360816,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078360818,
+      "phase": "CHOOSE",
+      "message": "prepare_and_confirm_room"
+    },
+    {
+      "at_ms": 1788078360831,
+      "phase": "EXECUTE",
+      "message": "wot accepted \u00b7 awaiting fresh verification"
+    },
+    {
+      "at_ms": 1788078362018,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 post_action_verification"
+    },
+    {
+      "at_ms": 1788078362020,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078362022,
+      "phase": "CHOOSE",
+      "message": "prepare_and_confirm_room"
+    },
+    {
+      "at_ms": 1788078362034,
+      "phase": "EXECUTE",
+      "message": "wot accepted \u00b7 awaiting fresh verification"
+    },
+    {
+      "at_ms": 1788078363225,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 post_action_verification"
+    },
+    {
+      "at_ms": 1788078363229,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078363232,
+      "phase": "CHOOSE",
+      "message": "prepare_and_confirm_room"
+    },
+    {
+      "at_ms": 1788078363244,
+      "phase": "EXECUTE",
+      "message": "wot accepted \u00b7 awaiting fresh verification"
+    },
+    {
+      "at_ms": 1788078364433,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 post_action_verification"
+    },
+    {
+      "at_ms": 1788078364436,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078433003,
+      "phase": "CHOOSE",
+      "message": "prepare_and_confirm_room"
+    },
+    {
+      "at_ms": 1788078433049,
+      "phase": "EXECUTE",
+      "message": "dom accepted \u00b7 awaiting fresh verification"
+    },
+    {
+      "at_ms": 1788078434219,
+      "phase": "OBSERVE",
+      "message": "fresh snapshot \u00b7 post_action_verification"
+    },
+    {
+      "at_ms": 1788078434221,
+      "phase": "FUSE",
+      "message": "FUSED \u00b7 no blocking contradiction"
+    },
+    {
+      "at_ms": 1788078434424,
+      "phase": "VERIFY",
+      "message": "TERMINAL ORACLE \u00b7 VERIFIED"
+    }
+  ],
+  "terminal": {
+    "verdict": "TERMINAL ORACLE \u00b7 VERIFIED",
+    "detail": "fresh terminal evidence \u00b7 state=completed \u00b7 backends=dom,wot",
+    "next_primitive": "episode complete"
+  }
+}
