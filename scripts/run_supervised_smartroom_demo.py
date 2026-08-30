@@ -18,6 +18,7 @@ import argparse
 import asyncio
 import json
 import sys
+import urllib.parse
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +27,10 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_supervised_session_demo import _operator_loop, booking_probes  # noqa: E402
+from src.demos.evidence_fusion_panel import (  # noqa: E402
+    EvidenceFusionPanel,
+    PresentationEpistemicArbiter,
+)
 from src.effectors.wot_executor import WotExecutor  # noqa: E402
 from src.isolation import BrowserWotIsolationProvider  # noqa: E402
 from src.planner.agent_planner import AgentPlanner  # noqa: E402
@@ -36,6 +41,8 @@ from src.runtime.episode_runner import RuntimeEpisodeRunner, RuntimeEpisodeSpec 
 from src.runtime.intervention import InMemoryInterventionBroker, InterventionLedger  # noqa: E402
 from src.runtime.live_environment import (  # noqa: E402
     AffordanceSemanticBinding,
+    DomStateProbe,
+    LiveActivePerceptionProbe,
     LiveEnvironmentConfig,
     RuntimeAffordanceExecutor,
     SmartRoomControlClient,
@@ -44,10 +51,25 @@ from src.runtime.live_environment import (  # noqa: E402
     ThreadedDomEffector,
 )
 from src.skill_library import load_skill_library  # noqa: E402
+from src.verification.active_perception import ActivePerceptionResolver  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = REPO_ROOT / "artifacts" / "supervised_smartroom" / "episode.json"
 DEFAULT_UTTERANCE = "book room C at 15:30 and prepare it for my presentation"
+
+
+def integrated_state_probes() -> list[DomStateProbe]:
+    """Read the dashboard projection needed for real DOM/WoT arbitration."""
+
+    return [
+        *booking_probes(),
+        DomStateProbe(
+            "[data-testid='target-temp']",
+            "thermostat",
+            "targetTemperature",
+            value_type="number",
+        ),
+    ]
 
 
 class SmartRoomEpisodeAdapter:
@@ -58,10 +80,12 @@ class SmartRoomEpisodeAdapter:
         environment: SmartRoomLiveEnvironment,
         control: SmartRoomControlClient,
         executors: dict[str, Any],
+        panel: EvidenceFusionPanel | None = None,
     ) -> None:
         self.environment = environment
         self.control = control
         self._executors = executors
+        self.panel = panel
 
     async def reset(self, spec: RuntimeEpisodeSpec) -> None:
         # This is only used by a non-isolated caller.  The shared isolated path
@@ -71,12 +95,18 @@ class SmartRoomEpisodeAdapter:
         self.environment.begin_episode(f"reset:{spec.task_id}")
 
     async def observe(self, request: ObservationRequest):
-        return await self.environment.observe(request)
+        observed = await self.environment.observe(request)
+        if self.panel is not None:
+            self.panel.begin_episode(request.episode_id)
+            await self.panel.show_observation(observed, request.reason)
+        return observed
 
     def begin_episode(self, episode_id: str) -> None:
         """Forward the canonical runner's episode boundary to perception."""
 
         self.environment.begin_episode(episode_id)
+        if self.panel is not None:
+            self.panel.begin_episode(episode_id)
 
     def executors(self) -> dict[str, Any]:
         return self._executors
@@ -94,6 +124,29 @@ class PacedExecutor:
         if self.delay_s:
             await asyncio.sleep(self.delay_s)
         return result
+
+
+class PresentationExecutor:
+    """Project the real primitive and executor result without owning either."""
+
+    def __init__(self, executor: Any, panel: EvidenceFusionPanel) -> None:
+        self.executor = executor
+        self.panel = panel
+
+    async def execute(self, skill_call: Any, observation: Any):
+        await self.panel.show_action(skill_call)
+        result = await self.executor.execute(skill_call, observation)
+        await self.panel.show_execution(result)
+        return result
+
+
+def _with_fault(url: str, fault: str) -> str:
+    if not fault.strip():
+        return url
+    parts = urllib.parse.urlsplit(url)
+    query = urllib.parse.parse_qs(parts.query, keep_blank_values=True)
+    query["fault"] = [fault.strip()]
+    return urllib.parse.urlunsplit((*parts[:3], urllib.parse.urlencode(query, doseq=True), parts.fragment))
 
 
 def integrated_bindings() -> list[AffordanceSemanticBinding]:
@@ -194,36 +247,52 @@ async def run(args: argparse.Namespace) -> int:
     for generated in (transitions_path, interventions_path, failures_path, planner_path):
         generated.unlink(missing_ok=True)
 
+    dashboard_url = _with_fault(args.dashboard_url, args.fault)
     config = LiveEnvironmentConfig(
-        dashboard_url=args.dashboard_url,
+        dashboard_url=dashboard_url,
         thing_directory_url=args.thing_directory_url,
         wot_public_base_url=args.wot_base_url,
         control_url=args.control_url,
         settle_after_action_s=args.settle_delay,
         output_dir=output.parent,
     )
-    browser = ThreadedBrowserSession(config.dashboard_url, headless=not args.headed)
+    record_dir = output.parent / "raw_video" if args.record else None
+    if record_dir is not None:
+        record_dir.mkdir(parents=True, exist_ok=True)
+    browser = ThreadedBrowserSession(
+        config.dashboard_url,
+        headless=not args.headed,
+        record_video_dir=str(record_dir) if record_dir is not None else None,
+    )
+    panel = EvidenceFusionPanel(browser, args.utterance) if args.evidence_panel else None
     control = SmartRoomControlClient(config.control_url)
     environment = SmartRoomLiveEnvironment(
         browser,
         config,
-        dom_state_probes=booking_probes(),
+        dom_state_probes=integrated_state_probes(),
         semantic_bindings=integrated_bindings(),
         include_wot_state=True,
         allowed_affordance_sources={"DOM", "WOT"},
     )
+    active_perception = ActivePerceptionResolver(
+        LiveActivePerceptionProbe(environment, clear_dom_faults=True, settle_s=0.65),
+        max_attempts=2,
+    )
     isolation = BrowserWotIsolationProvider(browser, control)
 
-    dom = RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(browser))
-    wot = RuntimeAffordanceExecutor("wot", environment, WotExecutor())
+    dom_executor: Any = RuntimeAffordanceExecutor("dom", environment, ThreadedDomEffector(browser))
+    wot_executor: Any = RuntimeAffordanceExecutor("wot", environment, WotExecutor())
+    if panel is not None:
+        dom_executor = PresentationExecutor(dom_executor, panel)
+        wot_executor = PresentationExecutor(wot_executor, panel)
     executors = {
         # These stay plain here on purpose. RuntimeEpisodeRunner applies the
         # isolation provider's input guard to every executor at the shared
         # boundary, so other callers receive the same protection automatically.
-        "dom": PacedExecutor(dom, args.step_delay),
-        "wot": PacedExecutor(wot, args.step_delay),
+        "dom": PacedExecutor(dom_executor, args.step_delay),
+        "wot": PacedExecutor(wot_executor, args.step_delay),
     }
-    adapter = SmartRoomEpisodeAdapter(environment, control, executors)
+    adapter = SmartRoomEpisodeAdapter(environment, control, executors, panel)
     transitions = TransitionLedger(transitions_path)
     interventions = InterventionLedger(interventions_path)
     broker = InMemoryInterventionBroker(interventions)
@@ -243,6 +312,8 @@ async def run(args: argparse.Namespace) -> int:
         intervention_broker=broker,
         intervention_ledger=interventions,
         system2_planner=agent_planner,
+        epistemic_arbiter=PresentationEpistemicArbiter(panel) if panel is not None else None,
+        active_perception_resolver=active_perception,
     )
 
     before = await control.state()
@@ -276,11 +347,26 @@ async def run(args: argparse.Namespace) -> int:
     )
     try:
         outcome = await runtime_task
-    finally:
         await operator_task
+        after = await control.state()
+        if panel is not None:
+            await panel.flush()
+            await panel.show_final(
+                verified=outcome.result.final_outcome_verified,
+                detail=(
+                    f"fresh terminal evidence · state={outcome.result.state.value} · "
+                    f"backends={','.join(sorted({record.backend for record in outcome.transition_ledger.records if record.backend})) or 'none'}"
+                ),
+            )
+            panel.write_trace(output.with_name("evidence_panel_trace.json"))
+            await asyncio.sleep(max(0.0, args.hold))
+    finally:
+        if not operator_task.done():
+            await operator_task
+        if panel is not None:
+            await panel.close()
         await browser.close()
 
-    after = await control.state()
     failures = runner.failure_ledger
     failures.write_jsonl(failures_path)
     records = [asdict(record) for record in outcome.transition_ledger.records]
@@ -316,6 +402,12 @@ async def run(args: argparse.Namespace) -> int:
         "room_state_restored": before == after,
         "software_input_gate": "agent executors require the active agent lease",
         "os_input_isolation": False,
+        "presentation": {
+            "evidence_panel": panel is not None,
+            "fault": args.fault,
+            "panel_trace": str(output.with_name("evidence_panel_trace.json")) if panel is not None else "",
+            "raw_video_dir": str(record_dir or ""),
+        },
     }
     output.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
 
@@ -340,6 +432,14 @@ def main() -> int:
     parser.add_argument("--auto-approve", action="store_true")
     parser.add_argument("--step-delay", type=float, default=0.8)
     parser.add_argument("--settle-delay", type=float, default=0.25)
+    parser.add_argument("--hold", type=float, default=4.0, help="Seconds to hold the terminal oracle on screen.")
+    parser.add_argument("--record", action="store_true", help="Record the browser context to artifacts.")
+    parser.add_argument(
+        "--fault",
+        default="",
+        help="Dashboard fault query, for example overlay_obstruction or stale_temperature.",
+    )
+    parser.add_argument("--no-evidence-panel", dest="evidence_panel", action="store_false", default=True)
     parser.add_argument("--dashboard-url", default="http://127.0.0.1:3000")
     parser.add_argument("--thing-directory-url", default="http://127.0.0.1:8082/things")
     parser.add_argument("--wot-base-url", default="http://127.0.0.1:8080")
