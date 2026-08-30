@@ -128,6 +128,23 @@ def capability_report() -> dict[str, tuple[bool, str]]:
 
 DEMOS: list[Demo] = [
     Demo(
+        name="final-presentation",
+        title="Final presentation: complete evidence-backed smart-room demo",
+        summary="Runs the canonical room request, live Runtime/System-1 laboratory, five recovery "
+        "families, recorded model evidence, live Set-of-Marks execution and review-gated adaptation "
+        "under one validated manifest. See FINAL_PRESENTATION_DEMO.md for the 10-minute cut.",
+        command=(
+            "scripts/run_final_presentation_demo.py",
+            "--profile",
+            "complete",
+            "--model-mode",
+            "recorded",
+            "--pause-between-chapters",
+        ),
+        requires=("browser", "smart_room"),
+        duration_hint="~8min plus presenter pauses",
+    ),
+    Demo(
         name="agent-loop",
         title="The narrated agent loop, with realistic faults",
         summary="Seven scenes over shop, forum and a WoT device; six inject a different real-world "

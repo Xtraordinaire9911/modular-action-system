@@ -167,6 +167,7 @@ def test_semantic_binding_annotates_discovered_affordance_declaratively():
 
     assert annotated.locator["binds_parameter"] == "room"
     assert annotated.locator["stable_key"] == "booking.room"
+    assert annotated.locator["stable_selector"] == "#room"
     assert annotated.locator["idempotent"] is True
     assert annotated.safety_level == "high"
 
@@ -308,6 +309,58 @@ def test_new_failed_target_replaces_stale_tracking_in_the_same_observation(monke
     recovery = [affordance for affordance in observation.affordances if affordance.id.startswith("dom_recovery_")]
     assert len(recovery) == 1
     assert recovery[0].locator["remediates"] == "new-action"
+
+
+def test_failed_dom_target_prefers_declarative_stable_selector(monkeypatch, tmp_path):
+    observed_selectors = []
+
+    async def observe_target(session, *, target_selector):
+        _ = session
+        observed_selectors.append(target_selector)
+        return BrowserObstructionObservation(target_exists=True, blocked=False)
+
+    monkeypatch.setattr(live_environment, "observe_browser_obstruction", observe_target)
+    environment = SmartRoomLiveEnvironment(
+        _ObservationSession(),  # type: ignore[arg-type]
+        LiveEnvironmentConfig(output_dir=tmp_path),
+        include_wot_state=False,
+    )
+    environment.thing_models = [ThingAffordanceModel("room", "room", [], [], None, None)]
+    failed_target = Affordance(
+        "ordinal-button",
+        "DOM",
+        "button",
+        "Book Room",
+        "click",
+        {
+            "selector": "main > button:nth-of-type(1)",
+            "stable_selector": "[data-testid='book-room-button']",
+        },
+        1.0,
+    )
+    environment.latest_affordances = {failed_target.id: failed_target}
+    failed = ExecutionResult(
+        "goal",
+        "dom",
+        False,
+        1.0,
+        1.0,
+        metadata={"affordance_id": failed_target.id},
+    )
+
+    asyncio.run(
+        environment.observe(
+            ObservationRequest(
+                task_id="task",
+                episode_id="episode",
+                reason="failed_ordinal_target",
+                step=1,
+                previous_result=failed,
+            )
+        )
+    )
+
+    assert observed_selectors == ["[data-testid='book-room-button']"]
 
 
 def test_runtime_executor_resolves_durable_skill_to_current_live_affordance():

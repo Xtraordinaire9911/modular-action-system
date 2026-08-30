@@ -1,0 +1,435 @@
+{
+  "scenarios": [
+    {
+      "active_perception_trace": [],
+      "attempts": 0,
+      "conflict_ids": [
+        "thermostat_A.target_temperature"
+      ],
+      "episode_id": "episode-fbf610bd16b5",
+      "execution_result": null,
+      "failure_boundary": "recoverable_execution_failure",
+      "failure_type": "sensory_conflict",
+      "final_outcome_verified": false,
+      "fusion_decision": {
+        "active_perception_required": true,
+        "allow_system1": false,
+        "conflicts": [
+          {
+            "attribute": "target_temperature",
+            "conflict_mass": 4.0,
+            "conflict_type": "target_temperature_mismatch",
+            "decision": null,
+            "description": "Conflicting target_temperature assertions for thermostat_A: {'wot': 24, 'dom': 20}; support={'24': 1.0, '20': 0.8}",
+            "entity_id": "thermostat_A",
+            "id": "thermostat_A.target_temperature",
+            "resolved": false,
+            "severity": "high",
+            "sources": [
+              "wot",
+              "dom"
+            ],
+            "values": {
+              "dom": 20,
+              "wot": 24
+            }
+          }
+        ],
+        "fused_states": [
+          {
+            "attribute": "target_temperature",
+            "confidence": 0.5555555555555556,
+            "entity_id": "thermostat_A",
+            "selected_support": 1.0,
+            "sources": [
+              "wot"
+            ],
+            "support": {
+              "20": 0.8,
+              "24": 1.0
+            },
+            "value": 24
+          }
+        ],
+        "reason": "blocking sensory conflict requires active perception or escalation"
+      },
+      "llm_failure_boundary": "",
+      "llm_failure_type": "",
+      "llm_judge_evidence": [],
+      "name": "sensory_conflict_blocks_system1",
+      "plan_validation_errors": [],
+      "primitive_plan": [],
+      "reason": "sensory conflict detected: Conflicting target_temperature assertions for thermostat_A: {'wot': 24, 'dom': 20}; support={'24': 1.0, '20': 0.8}",
+      "recovery_attempted": false,
+      "recovery_succeeded": false,
+      "recovery_tier": 4,
+      "recovery_trace": [],
+      "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
+      "selected_backend": "",
+      "state": "escalated",
+      "transition_ids": []
+    },
+    {
+      "active_perception_trace": [
+        {
+          "action": "active_perception_probe",
+          "attempt": 1,
+          "reason": "fresh observation removed blocking conflict",
+          "resolved": true
+        }
+      ],
+      "attempts": 1,
+      "conflict_ids": [],
+      "episode_id": "episode-57b44d5801a7",
+      "execution_result": {
+        "attempt": 1,
+        "backend_used": "wot",
+        "confidence": 1.0,
+        "failure_reason": null,
+        "latency_ms": 10.0,
+        "metadata": {},
+        "observation_source": null,
+        "raw_observation_delta": {
+          "thermostat_A": {
+            "targetTemperature": 22
+          }
+        },
+        "skill_id": "set_temperature",
+        "success": true,
+        "transition_id": "episode-57b44d5801a7:transition-0001"
+      },
+      "failure_boundary": "",
+      "failure_type": "",
+      "final_outcome_verified": true,
+      "fusion_decision": {
+        "active_perception_required": false,
+        "allow_system1": true,
+        "conflicts": [],
+        "fused_states": [
+          {
+            "attribute": "target_temperature",
+            "confidence": 1.0,
+            "entity_id": "thermostat_A",
+            "selected_support": 1.8,
+            "sources": [
+              "wot",
+              "dom"
+            ],
+            "support": {
+              "22": 1.8
+            },
+            "value": 22
+          }
+        ],
+        "reason": "no blocking sensory conflict"
+      },
+      "llm_failure_boundary": "",
+      "llm_failure_type": "",
+      "llm_judge_evidence": [],
+      "name": "sensory_conflict_resolved_by_active_perception",
+      "plan_validation_errors": [],
+      "primitive_plan": [],
+      "reason": "skill completed",
+      "recovery_attempted": false,
+      "recovery_succeeded": false,
+      "recovery_tier": null,
+      "recovery_trace": [],
+      "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
+      "selected_backend": "wot",
+      "state": "completed",
+      "transition_ids": [
+        "episode-57b44d5801a7:transition-0001"
+      ]
+    },
+    {
+      "active_perception_trace": [],
+      "attempts": 3,
+      "conflict_ids": [],
+      "episode_id": "episode-81051b3f7c28",
+      "execution_result": {
+        "attempt": 3,
+        "backend_used": "dom",
+        "confidence": 1.0,
+        "failure_reason": null,
+        "latency_ms": 12.0,
+        "metadata": {},
+        "observation_source": null,
+        "raw_observation_delta": {
+          "booking": {
+            "confirmed": true
+          }
+        },
+        "skill_id": "reserve_room_goal",
+        "success": true,
+        "transition_id": "episode-81051b3f7c28:transition-0003"
+      },
+      "failure_boundary": "",
+      "failure_type": "",
+      "final_outcome_verified": true,
+      "fusion_decision": {
+        "active_perception_required": false,
+        "allow_system1": true,
+        "conflicts": [],
+        "fused_states": [
+          {
+            "attribute": "confirmed",
+            "confidence": 1.0,
+            "entity_id": "booking",
+            "selected_support": 0.8,
+            "sources": [
+              "dom"
+            ],
+            "support": {
+              "True": 0.8
+            },
+            "value": true
+          },
+          {
+            "attribute": "room",
+            "confidence": 1.0,
+            "entity_id": "booking_form",
+            "selected_support": 0.8,
+            "sources": [
+              "dom"
+            ],
+            "support": {
+              "'A'": 0.8
+            },
+            "value": "A"
+          },
+          {
+            "attribute": "time",
+            "confidence": 1.0,
+            "entity_id": "booking_form",
+            "selected_support": 0.8,
+            "sources": [
+              "dom"
+            ],
+            "support": {
+              "'14:00'": 0.8
+            },
+            "value": "14:00"
+          }
+        ],
+        "reason": "no blocking sensory conflict"
+      },
+      "llm_failure_boundary": "",
+      "llm_failure_type": "",
+      "llm_judge_evidence": [],
+      "name": "bounded_goal_executes_without_durable_skill",
+      "plan_validation_errors": [],
+      "primitive_plan": [
+        {
+          "action": "type",
+          "affordance_id": "dom_room_input",
+          "expected_effect": "room == 'A'",
+          "value": "A"
+        },
+        {
+          "action": "type",
+          "affordance_id": "dom_time_input",
+          "expected_effect": "time == '14:00'",
+          "value": "14:00"
+        },
+        {
+          "action": "click",
+          "affordance_id": "dom_confirm_booking",
+          "expected_effect": "booking.confirmed == true",
+          "value": null
+        }
+      ],
+      "reason": "goal completed",
+      "recovery_attempted": false,
+      "recovery_succeeded": false,
+      "recovery_tier": null,
+      "recovery_trace": [],
+      "runtime_entrypoint": "RuntimeEpisodeRunner.run_goal_episode",
+      "selected_backend": "dom",
+      "state": "completed",
+      "transition_ids": [
+        "episode-81051b3f7c28:transition-0001",
+        "episode-81051b3f7c28:transition-0002",
+        "episode-81051b3f7c28:transition-0003"
+      ]
+    },
+    {
+      "active_perception_trace": [],
+      "attempts": 2,
+      "conflict_ids": [],
+      "episode_id": "episode-c747164eb0d6",
+      "execution_result": {
+        "attempt": 1,
+        "backend_used": "dom",
+        "confidence": 1.0,
+        "failure_reason": null,
+        "latency_ms": 10.0,
+        "metadata": {},
+        "observation_source": null,
+        "raw_observation_delta": {
+          "thermostat_A": {
+            "targetTemperature": 22
+          }
+        },
+        "skill_id": "set_temperature",
+        "success": true,
+        "transition_id": "episode-c747164eb0d6:transition-0002"
+      },
+      "failure_boundary": "immediate_runtime_error",
+      "failure_type": "timeout",
+      "final_outcome_verified": true,
+      "fusion_decision": {
+        "active_perception_required": false,
+        "allow_system1": true,
+        "conflicts": [],
+        "fused_states": [
+          {
+            "attribute": "target_temperature",
+            "confidence": 1.0,
+            "entity_id": "thermostat_A",
+            "selected_support": 0.8,
+            "sources": [
+              "dom"
+            ],
+            "support": {
+              "22": 0.8
+            },
+            "value": 22
+          }
+        ],
+        "reason": "no blocking sensory conflict"
+      },
+      "llm_failure_boundary": "",
+      "llm_failure_type": "",
+      "llm_judge_evidence": [],
+      "name": "executor_timeout_reroutes_with_trace",
+      "plan_validation_errors": [],
+      "primitive_plan": [],
+      "reason": "skill completed after recovery",
+      "recovery_attempted": true,
+      "recovery_succeeded": true,
+      "recovery_tier": 2,
+      "recovery_trace": [
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "transient failure but skill is not declared idempotent",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "reroute",
+          "tier": 1
+        },
+        {
+          "attempt": 1,
+          "backend": "dom",
+          "considered": true,
+          "policy": "reroute",
+          "reason": "rerouted to preferred backend dom",
+          "recovery_of_transition_id": "episode-c747164eb0d6:transition-0001",
+          "selected": true,
+          "selected_action": "reroute",
+          "tier": 2
+        }
+      ],
+      "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
+      "selected_backend": "dom",
+      "state": "completed",
+      "transition_ids": [
+        "episode-c747164eb0d6:transition-0001",
+        "episode-c747164eb0d6:transition-0002"
+      ]
+    },
+    {
+      "active_perception_trace": [],
+      "attempts": 2,
+      "conflict_ids": [],
+      "episode_id": "episode-2b1e2df03ca2",
+      "execution_result": {
+        "attempt": 1,
+        "backend_used": "visual",
+        "confidence": 1.0,
+        "failure_reason": null,
+        "latency_ms": 10.0,
+        "metadata": {},
+        "observation_source": null,
+        "raw_observation_delta": {
+          "thermostat_A": {
+            "targetTemperature": 22
+          }
+        },
+        "skill_id": "confirm_booking",
+        "success": true,
+        "transition_id": "episode-2b1e2df03ca2:transition-0002"
+      },
+      "failure_boundary": "recoverable_execution_failure",
+      "failure_type": "ambiguous_false_success",
+      "final_outcome_verified": true,
+      "fusion_decision": {
+        "active_perception_required": false,
+        "allow_system1": true,
+        "conflicts": [],
+        "fused_states": [
+          {
+            "attribute": "target_temperature",
+            "confidence": 1.0,
+            "entity_id": "thermostat_A",
+            "selected_support": 0.6,
+            "sources": [
+              "visual"
+            ],
+            "support": {
+              "22": 0.6
+            },
+            "value": 22
+          }
+        ],
+        "reason": "no blocking sensory conflict"
+      },
+      "llm_failure_boundary": "skill_spec_insufficient",
+      "llm_failure_type": "weak_postcondition",
+      "llm_judge_evidence": [
+        "demo LLM advisory: success signal is ambiguous",
+        "schema_validated_llm_judge"
+      ],
+      "name": "optional_llm_advisory_judgment",
+      "plan_validation_errors": [],
+      "primitive_plan": [],
+      "reason": "skill completed after recovery",
+      "recovery_attempted": true,
+      "recovery_succeeded": true,
+      "recovery_tier": 2,
+      "recovery_trace": [
+        {
+          "attempt": 1,
+          "backend": "",
+          "considered": true,
+          "policy": "retry",
+          "reason": "retry not applicable",
+          "recovery_of_transition_id": "",
+          "selected": false,
+          "selected_action": "reroute",
+          "tier": 1
+        },
+        {
+          "attempt": 1,
+          "backend": "visual",
+          "considered": true,
+          "policy": "reroute",
+          "reason": "rerouted to preferred backend visual",
+          "recovery_of_transition_id": "episode-2b1e2df03ca2:transition-0001",
+          "selected": true,
+          "selected_action": "reroute",
+          "tier": 2
+        }
+      ],
+      "runtime_entrypoint": "RuntimeEpisodeRunner.run_skill_episode",
+      "selected_backend": "visual",
+      "state": "completed",
+      "transition_ids": [
+        "episode-2b1e2df03ca2:transition-0001",
+        "episode-2b1e2df03ca2:transition-0002"
+      ]
+    }
+  ]
+}

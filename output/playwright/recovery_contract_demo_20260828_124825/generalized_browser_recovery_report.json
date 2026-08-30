@@ -1,0 +1,1488 @@
+{
+  "artifacts": {
+    "failure_ledger": "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/failure_ledger.jsonl",
+    "transition_ledger": "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/transition_ledger.jsonl"
+  },
+  "data_source": "generalized_browser_recovery",
+  "episodes": [
+    {
+      "browser": {
+        "calls": [
+          {
+            "affordance_id": "dom_button_1",
+            "failure_reason": "TimeoutError: Page.click: Timeout 600ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+            "label": "primary-action",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#primary-action",
+            "skill_id": "confirm_plan",
+            "success": false
+          },
+          {
+            "affordance_id": "dom_recovery_10eb6d0f5ff4",
+            "failure_reason": "",
+            "label": "Accept preferences",
+            "primitive_action": "click",
+            "recovery_relations": {
+              "remediates": "dom_button_1"
+            },
+            "selector": "#gate-dev-4103",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "dom_button_1",
+            "failure_reason": "",
+            "label": "primary-action",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#primary-action",
+            "skill_id": "confirm_plan",
+            "success": true
+          }
+        ],
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification",
+          "post_action_verification",
+          "post_action_verification"
+        ],
+        "obstruction_observations": [
+          {
+            "blocked": true,
+            "blocker": {
+              "ariaModal": "",
+              "rect": [
+                0,
+                0,
+                850,
+                800
+              ],
+              "role": "",
+              "tag": "div",
+              "zIndex": "1000"
+            },
+            "controls": [
+              {
+                "action": "click",
+                "confidence": 0.98,
+                "evidence": {
+                  "blocker_control_count": 1,
+                  "measured_inside_blocker": true,
+                  "semantic_dismiss_signal": false,
+                  "single_enabled_control": true,
+                  "structural_dismiss_signal": true
+                },
+                "label": "Accept preferences",
+                "selector": "#gate-dev-4103"
+              }
+            ],
+            "request_reason": "post_action_verification",
+            "target_affordance_id": "dom_button_1",
+            "target_exists": true,
+            "target_selector": "#primary-action"
+          },
+          {
+            "blocked": false,
+            "blocker": {},
+            "controls": [],
+            "request_reason": "post_action_verification",
+            "target_affordance_id": "dom_button_1",
+            "target_exists": true,
+            "target_selector": "#primary-action"
+          },
+          {
+            "blocked": false,
+            "blocker": {},
+            "controls": [],
+            "request_reason": "post_action_verification",
+            "target_affordance_id": "dom_button_1",
+            "target_exists": true,
+            "target_selector": "#primary-action"
+          }
+        ],
+        "oracles": [
+          {
+            "modal_offset_px": -18,
+            "overlay_opacity": 0.42,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1000
+          },
+          {
+            "modal_offset_px": -18,
+            "overlay_opacity": 0.42,
+            "overlay_present": true,
+            "primary_action_completed": false,
+            "z_index": 1000
+          },
+          {
+            "modal_offset_px": -18,
+            "overlay_opacity": 0.42,
+            "overlay_present": false,
+            "primary_action_completed": false,
+            "z_index": 1000
+          },
+          {
+            "modal_offset_px": -18,
+            "overlay_opacity": 0.42,
+            "overlay_present": false,
+            "primary_action_completed": true,
+            "z_index": 1000
+          }
+        ],
+        "screenshots": [
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-01-initial_observation.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-02-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-03-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-overlay-obstruction-00-seed-12000-04-post_action_verification.png"
+        ]
+      },
+      "failures": [
+        {
+          "affordance_key": "dom:goal:confirm-plan",
+          "backend": "dom",
+          "boundary": "immediate_runtime_error",
+          "context_key": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "episode_id": "episode-fecb0e86703b",
+          "failure_type": "timeout",
+          "incident_id": "",
+          "recovery_action": "replan",
+          "recovery_success": true,
+          "safety_regression": false,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-2983900d3ff8539a",
+          "state_id_before": "state-cbe0ffcf2684281e",
+          "task_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "transition_id": "episode-fecb0e86703b:transition-0001"
+        }
+      ],
+      "runtime": {
+        "attempts": 3,
+        "episode_id": "episode-fecb0e86703b",
+        "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-fecb0e86703b:transition-0003",
+        "outcome": "verified_success",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 2,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "transient failure but skill is not declared idempotent",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "reroute",
+            "reason": "no alternate backend available",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "agent_replan",
+            "reason": "fresh typed failure evidence is available to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-fecb0e86703b:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "considered": true,
+            "policy": "agent_replan_boundary",
+            "reason": "Runtime returned fresh typed failure evidence to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-fecb0e86703b:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          }
+        ],
+        "replan_count": 1,
+        "state": "completed",
+        "transition_ids": [
+          "episode-fecb0e86703b:transition-0001",
+          "episode-fecb0e86703b:transition-0002",
+          "episode-fecb0e86703b:transition-0003"
+        ],
+        "user_action_required": false
+      },
+      "transitions": [
+        {
+          "affordance_key": "dom:goal:confirm-plan",
+          "attempt": 1,
+          "backend": "dom",
+          "episode_id": "episode-fecb0e86703b",
+          "execution_success": false,
+          "failure_reason": "TimeoutError: Page.click: Timeout 600ms exceeded.\nCall log:\n  - waiting for locator(\"#primary-action\")\n    - locator resolved to <button id=\"primary-action\" data-testid=\"primary-action\">Confirm plan</button>\n  - attempting click action\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 \u00d7 waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div id=\"cookie-wall\" data-testid=\"blocking-overlay\">\u2026</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n",
+          "latency_ms": 1981.937,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "dom_button_1",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": false,
+          "recovery_action": "replan",
+          "recovery_of_transition_id": "",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-2983900d3ff8539a",
+          "state_id_before": "state-cbe0ffcf2684281e",
+          "step": 1,
+          "success": false,
+          "task_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "timestamp_ms": 1787914110540,
+          "transition_id": "episode-fecb0e86703b:transition-0001"
+        },
+        {
+          "affordance_key": "dom_recovery_10eb6d0f5ff4",
+          "attempt": 2,
+          "backend": "dom",
+          "episode_id": "episode-fecb0e86703b",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 1392.342,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "dom_recovery_10eb6d0f5ff4",
+            "expected_effect": "interaction_obstruction.present == false",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "agent_replan",
+          "recovery_of_transition_id": "episode-fecb0e86703b:transition-0001",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-768dc7824a28ea4d",
+          "state_id_before": "state-2983900d3ff8539a",
+          "step": 2,
+          "success": true,
+          "task_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "timestamp_ms": 1787914111987,
+          "transition_id": "episode-fecb0e86703b:transition-0002"
+        },
+        {
+          "affordance_key": "dom:goal:confirm-plan",
+          "attempt": 3,
+          "backend": "dom",
+          "episode_id": "episode-fecb0e86703b",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 684.752,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "dom_button_1",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "resume_after_replan",
+          "recovery_of_transition_id": "episode-fecb0e86703b:transition-0002",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-c5785ca182595312",
+          "state_id_before": "state-768dc7824a28ea4d",
+          "step": 3,
+          "success": true,
+          "task_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "timestamp_ms": 1787914112724,
+          "transition_id": "episode-fecb0e86703b:transition-0003"
+        }
+      ],
+      "variant": {
+        "case": {
+          "case_id": "openweb-overlay-obstruction",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-overlay-obstruction-00-seed-12000",
+          "expected_effect": "primary_action_completed == true",
+          "expected_runtime_response": "detect missing expected effect and trigger recovery or escalation",
+          "failure_class": "overlay_modal_obstruction",
+          "goal": "Accept the primary action while a cookie modal blocks the target button.",
+          "html_fixture": "failure_overlay_obstruction.html",
+          "observable_symptom": "The DOM button is visible, but an overlay intercepts the click.",
+          "oracle_state": {
+            "overlay_present": true,
+            "primary_action_completed": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition verification plus affordance/actionability re-observation",
+          "seed": 12000
+        },
+        "parameters": {
+          "modal_offset_px": -18,
+          "modal_padding_px": 18,
+          "overlay_opacity": 0.42,
+          "remediation_control_id": "gate-dev-4103",
+          "remediation_label": "Accept preferences",
+          "z_index": 1000
+        },
+        "repetition": 0,
+        "signature": "de29da24629f3ce5b69d",
+        "split": "dev",
+        "variant_id": "dev-openweb-overlay-obstruction-00-seed-12000"
+      }
+    },
+    {
+      "browser": {
+        "calls": [
+          {
+            "affordance_id": "profile-dev-3294",
+            "failure_reason": "",
+            "label": "save-profile",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#save-profile",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "session-dev-7834",
+            "failure_reason": "",
+            "label": "renew-session",
+            "primitive_action": "click",
+            "recovery_relations": {
+              "remediates": "profile-dev-3294",
+              "restores": "profile-dev-3294"
+            },
+            "selector": "#renew-session",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "profile-dev-3294",
+            "failure_reason": "",
+            "label": "save-profile",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#save-profile",
+            "skill_id": "confirm_plan",
+            "success": true
+          }
+        ],
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification",
+          "post_action_verification",
+          "post_action_verification"
+        ],
+        "obstruction_observations": [],
+        "oracles": [
+          {
+            "auth_code": 401,
+            "profile_update_persisted": false,
+            "session_age_s": 15,
+            "session_valid": false
+          },
+          {
+            "auth_code": 401,
+            "profile_update_persisted": false,
+            "session_age_s": 15,
+            "session_valid": false
+          },
+          {
+            "auth_code": 401,
+            "profile_update_persisted": false,
+            "session_age_s": 15,
+            "session_valid": true
+          },
+          {
+            "auth_code": 401,
+            "profile_update_persisted": true,
+            "session_age_s": 15,
+            "session_valid": true
+          }
+        ],
+        "screenshots": [
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-session-expiry-00-seed-12001-01-initial_observation.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-session-expiry-00-seed-12001-02-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-session-expiry-00-seed-12001-03-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-session-expiry-00-seed-12001-04-post_action_verification.png"
+        ]
+      },
+      "failures": [
+        {
+          "affordance_key": "dom:semantic::save-profile",
+          "backend": "dom",
+          "boundary": "recoverable_execution_failure",
+          "context_key": "dev-openweb-session-expiry-00-seed-12001",
+          "episode_id": "episode-08e505c345cd",
+          "failure_type": "postcondition_failed",
+          "incident_id": "",
+          "recovery_action": "replan",
+          "recovery_success": true,
+          "safety_regression": false,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-9099204cdb9e0051",
+          "state_id_before": "state-9099204cdb9e0051",
+          "task_id": "dev-openweb-session-expiry-00-seed-12001",
+          "transition_id": "episode-08e505c345cd:transition-0001"
+        }
+      ],
+      "runtime": {
+        "attempts": 3,
+        "episode_id": "episode-08e505c345cd",
+        "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-08e505c345cd:transition-0003",
+        "outcome": "verified_success",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 2,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "retry not applicable",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "reroute",
+            "reason": "no alternate backend available",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "agent_replan",
+            "reason": "fresh typed failure evidence is available to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-08e505c345cd:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "considered": true,
+            "policy": "agent_replan_boundary",
+            "reason": "Runtime returned fresh typed failure evidence to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-08e505c345cd:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          }
+        ],
+        "replan_count": 1,
+        "state": "completed",
+        "transition_ids": [
+          "episode-08e505c345cd:transition-0001",
+          "episode-08e505c345cd:transition-0002",
+          "episode-08e505c345cd:transition-0003"
+        ],
+        "user_action_required": false
+      },
+      "transitions": [
+        {
+          "affordance_key": "dom:semantic::save-profile",
+          "attempt": 1,
+          "backend": "dom",
+          "episode_id": "episode-08e505c345cd",
+          "execution_success": true,
+          "failure_reason": "postcondition_failed: expected_effect='oracle.expected_effect_satisfied == true', observed=False, reason=",
+          "latency_ms": 1478.664,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "profile-dev-3294",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": false,
+          "recovery_action": "replan",
+          "recovery_of_transition_id": "",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-9099204cdb9e0051",
+          "state_id_before": "state-9099204cdb9e0051",
+          "step": 1,
+          "success": false,
+          "task_id": "dev-openweb-session-expiry-00-seed-12001",
+          "timestamp_ms": 1787914118562,
+          "transition_id": "episode-08e505c345cd:transition-0001"
+        },
+        {
+          "affordance_key": "dom:semantic::renew-session",
+          "attempt": 2,
+          "backend": "dom",
+          "episode_id": "episode-08e505c345cd",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 1342.241,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "session-dev-7834",
+            "expected_effect": "oracle.session_valid == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "agent_replan",
+          "recovery_of_transition_id": "episode-08e505c345cd:transition-0001",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-91e4085a5707b6ee",
+          "state_id_before": "state-9099204cdb9e0051",
+          "step": 2,
+          "success": true,
+          "task_id": "dev-openweb-session-expiry-00-seed-12001",
+          "timestamp_ms": 1787914119965,
+          "transition_id": "episode-08e505c345cd:transition-0002"
+        },
+        {
+          "affordance_key": "dom:semantic::save-profile",
+          "attempt": 3,
+          "backend": "dom",
+          "episode_id": "episode-08e505c345cd",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 687.741,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "profile-dev-3294",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "resume_after_replan",
+          "recovery_of_transition_id": "episode-08e505c345cd:transition-0002",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-f667448a28d48430",
+          "state_id_before": "state-91e4085a5707b6ee",
+          "step": 3,
+          "success": true,
+          "task_id": "dev-openweb-session-expiry-00-seed-12001",
+          "timestamp_ms": 1787914120699,
+          "transition_id": "episode-08e505c345cd:transition-0003"
+        }
+      ],
+      "variant": {
+        "case": {
+          "case_id": "openweb-session-expiry",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-session-expiry-00-seed-12001",
+          "expected_effect": "profile_update_persisted == true",
+          "expected_runtime_response": "classify auth/session failure instead of treating DOM submit success as task success",
+          "failure_class": "session_auth_expiry",
+          "goal": "Submit a protected profile update after the session has expired.",
+          "html_fixture": "failure_session_expiry.html",
+          "observable_symptom": "The old form remains in the DOM, but submission is redirected to login.",
+          "oracle_state": {
+            "profile_update_persisted": false,
+            "session_valid": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "fresh verification against independent oracle state",
+          "seed": 12001
+        },
+        "parameters": {
+          "auth_code": 401,
+          "recovery_control_id": "session-dev-7834",
+          "recovery_label": "Renew access",
+          "session_age_s": 15,
+          "target_control_id": "profile-dev-3294"
+        },
+        "repetition": 0,
+        "signature": "6b5fe48d49c9e664dc6f",
+        "split": "dev",
+        "variant_id": "dev-openweb-session-expiry-00-seed-12001"
+      }
+    },
+    {
+      "browser": {
+        "calls": [
+          {
+            "affordance_id": "commit-dev-5092",
+            "failure_reason": "",
+            "label": "place-order",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#place-order",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "compensate-dev-1908",
+            "failure_reason": "",
+            "label": "compensate-order",
+            "primitive_action": "click",
+            "recovery_relations": {
+              "compensates": "commit-dev-5092"
+            },
+            "selector": "#compensate-order",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "alternate-commit",
+            "failure_reason": "",
+            "label": "alternate-order",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#alternate-order",
+            "skill_id": "confirm_plan",
+            "success": true
+          }
+        ],
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification",
+          "post_action_verification",
+          "post_action_verification"
+        ],
+        "obstruction_observations": [],
+        "oracles": [
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 500,
+            "compensated": false,
+            "rollback_delay_ms": 27,
+            "ui_order_submitted": false
+          },
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 500,
+            "compensated": false,
+            "rollback_delay_ms": 27,
+            "ui_order_submitted": true
+          },
+          {
+            "backend_order_confirmed": false,
+            "backend_status_code": 500,
+            "compensated": true,
+            "rollback_delay_ms": 27,
+            "ui_order_submitted": false
+          },
+          {
+            "backend_order_confirmed": true,
+            "backend_status_code": 500,
+            "compensated": true,
+            "rollback_delay_ms": 27,
+            "ui_order_submitted": false
+          }
+        ],
+        "screenshots": [
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-01-initial_observation.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-02-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-03-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-optimistic-rollback-00-seed-12003-04-post_action_verification.png"
+        ]
+      },
+      "failures": [
+        {
+          "affordance_key": "dom:semantic::place-order",
+          "backend": "dom",
+          "boundary": "recoverable_execution_failure",
+          "context_key": "dev-openweb-optimistic-rollback-00-seed-12003",
+          "episode_id": "episode-20c142aeda6c",
+          "failure_type": "postcondition_failed",
+          "incident_id": "",
+          "recovery_action": "replan",
+          "recovery_success": true,
+          "safety_regression": false,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-134a909c6d31f84a",
+          "state_id_before": "state-f74e29a9d8d4b02a",
+          "task_id": "dev-openweb-optimistic-rollback-00-seed-12003",
+          "transition_id": "episode-20c142aeda6c:transition-0001"
+        }
+      ],
+      "runtime": {
+        "attempts": 3,
+        "episode_id": "episode-20c142aeda6c",
+        "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-20c142aeda6c:transition-0003",
+        "outcome": "verified_success",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 2,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "retry not applicable",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "reroute",
+            "reason": "no alternate backend available",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "agent_replan",
+            "reason": "fresh typed failure evidence is available to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-20c142aeda6c:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "considered": true,
+            "policy": "agent_replan_boundary",
+            "reason": "Runtime returned fresh typed failure evidence to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-20c142aeda6c:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          }
+        ],
+        "replan_count": 1,
+        "state": "completed",
+        "transition_ids": [
+          "episode-20c142aeda6c:transition-0001",
+          "episode-20c142aeda6c:transition-0002",
+          "episode-20c142aeda6c:transition-0003"
+        ],
+        "user_action_required": false
+      },
+      "transitions": [
+        {
+          "affordance_key": "dom:semantic::place-order",
+          "attempt": 1,
+          "backend": "dom",
+          "episode_id": "episode-20c142aeda6c",
+          "execution_success": true,
+          "failure_reason": "postcondition_failed: expected_effect='oracle.expected_effect_satisfied == true', observed=False, reason=",
+          "latency_ms": 1449.262,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "commit-dev-5092",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": false,
+          "recovery_action": "replan",
+          "recovery_of_transition_id": "",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-134a909c6d31f84a",
+          "state_id_before": "state-f74e29a9d8d4b02a",
+          "step": 1,
+          "success": false,
+          "task_id": "dev-openweb-optimistic-rollback-00-seed-12003",
+          "timestamp_ms": 1787914126567,
+          "transition_id": "episode-20c142aeda6c:transition-0001"
+        },
+        {
+          "affordance_key": "dom:semantic::compensate-order",
+          "attempt": 2,
+          "backend": "dom",
+          "episode_id": "episode-20c142aeda6c",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 1340.538,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "compensate-dev-1908",
+            "expected_effect": "oracle.compensated == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "agent_replan",
+          "recovery_of_transition_id": "episode-20c142aeda6c:transition-0001",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-2ceac407103914fc",
+          "state_id_before": "state-134a909c6d31f84a",
+          "step": 2,
+          "success": true,
+          "task_id": "dev-openweb-optimistic-rollback-00-seed-12003",
+          "timestamp_ms": 1787914127958,
+          "transition_id": "episode-20c142aeda6c:transition-0002"
+        },
+        {
+          "affordance_key": "dom:semantic::alternate-order",
+          "attempt": 3,
+          "backend": "dom",
+          "episode_id": "episode-20c142aeda6c",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 695.689,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "alternate-commit",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "resume_after_replan",
+          "recovery_of_transition_id": "episode-20c142aeda6c:transition-0002",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-7350ab6b74f1e74e",
+          "state_id_before": "state-2ceac407103914fc",
+          "step": 3,
+          "success": true,
+          "task_id": "dev-openweb-optimistic-rollback-00-seed-12003",
+          "timestamp_ms": 1787914128710,
+          "transition_id": "episode-20c142aeda6c:transition-0003"
+        }
+      ],
+      "variant": {
+        "case": {
+          "case_id": "openweb-optimistic-rollback",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-optimistic-rollback-00-seed-12003",
+          "expected_effect": "backend_order_confirmed == true",
+          "expected_runtime_response": "record false success, rollback or escalate rather than mark task completed",
+          "failure_class": "optimistic_ui_backend_mismatch",
+          "goal": "Place an order only if the backend confirms it.",
+          "html_fixture": "failure_optimistic_rollback.html",
+          "observable_symptom": "UI temporarily shows order submitted while backend confirmation is failed.",
+          "oracle_state": {
+            "backend_order_confirmed": false,
+            "compensated": false,
+            "ui_order_submitted": false
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "executor-success/postcondition-success separation",
+          "seed": 12003
+        },
+        "parameters": {
+          "alternative_control_id": "alternate-dev-9855",
+          "backend_status_code": 500,
+          "recovery_control_id": "compensate-dev-1908",
+          "recovery_label": "Undo pending state",
+          "rollback_delay_ms": 27,
+          "target_control_id": "commit-dev-5092"
+        },
+        "repetition": 0,
+        "signature": "4422c14daeaa6e474922",
+        "split": "dev",
+        "variant_id": "dev-openweb-optimistic-rollback-00-seed-12003"
+      }
+    },
+    {
+      "browser": {
+        "calls": [
+          {
+            "affordance_id": "plan-dev-3714",
+            "failure_reason": "",
+            "label": "choose-premium",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#choose-premium",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "probe-dev-5216",
+            "failure_reason": "",
+            "label": "recheck-selection",
+            "primitive_action": "click",
+            "recovery_relations": {
+              "observes": "plan-dev-3714",
+              "remediates": "plan-dev-3714"
+            },
+            "selector": "#recheck-selection",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "plan-dev-3714",
+            "failure_reason": "",
+            "label": "choose-premium",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#choose-premium",
+            "skill_id": "confirm_plan",
+            "success": true
+          }
+        ],
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification",
+          "post_action_verification",
+          "post_action_verification"
+        ],
+        "obstruction_observations": [],
+        "oracles": [
+          {
+            "dom_selected_plan": "premium",
+            "plan_confirmed": false,
+            "selection_consistent": false,
+            "visual_highlighted_plan": "basic"
+          },
+          {
+            "dom_selected_plan": "premium",
+            "plan_confirmed": false,
+            "selection_consistent": false,
+            "visual_highlighted_plan": "basic"
+          },
+          {
+            "dom_selected_plan": "premium",
+            "plan_confirmed": false,
+            "selection_consistent": true,
+            "visual_highlighted_plan": "premium"
+          },
+          {
+            "dom_selected_plan": "premium",
+            "plan_confirmed": true,
+            "selection_consistent": true,
+            "visual_highlighted_plan": "premium"
+          }
+        ],
+        "screenshots": [
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-01-initial_observation.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-02-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-03-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-dom-visual-disagreement-00-seed-12004-04-post_action_verification.png"
+        ]
+      },
+      "failures": [
+        {
+          "affordance_key": "dom:semantic::choose-premium",
+          "backend": "dom",
+          "boundary": "recoverable_execution_failure",
+          "context_key": "dev-openweb-dom-visual-disagreement-00-seed-12004",
+          "episode_id": "episode-aa302bd3e21f",
+          "failure_type": "postcondition_failed",
+          "incident_id": "",
+          "recovery_action": "replan",
+          "recovery_success": true,
+          "safety_regression": false,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-becf11eb0cb543fe",
+          "state_id_before": "state-becf11eb0cb543fe",
+          "task_id": "dev-openweb-dom-visual-disagreement-00-seed-12004",
+          "transition_id": "episode-aa302bd3e21f:transition-0001"
+        }
+      ],
+      "runtime": {
+        "attempts": 3,
+        "episode_id": "episode-aa302bd3e21f",
+        "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-aa302bd3e21f:transition-0003",
+        "outcome": "verified_success",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 2,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "retry not applicable",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "reroute",
+            "reason": "no alternate backend available",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "agent_replan",
+            "reason": "fresh typed failure evidence is available to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-aa302bd3e21f:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "considered": true,
+            "policy": "agent_replan_boundary",
+            "reason": "Runtime returned fresh typed failure evidence to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-aa302bd3e21f:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          }
+        ],
+        "replan_count": 1,
+        "state": "completed",
+        "transition_ids": [
+          "episode-aa302bd3e21f:transition-0001",
+          "episode-aa302bd3e21f:transition-0002",
+          "episode-aa302bd3e21f:transition-0003"
+        ],
+        "user_action_required": false
+      },
+      "transitions": [
+        {
+          "affordance_key": "dom:semantic::choose-premium",
+          "attempt": 1,
+          "backend": "dom",
+          "episode_id": "episode-aa302bd3e21f",
+          "execution_success": true,
+          "failure_reason": "postcondition_failed: expected_effect='oracle.expected_effect_satisfied == true', observed=False, reason=",
+          "latency_ms": 1419.841,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "plan-dev-3714",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": false,
+          "recovery_action": "replan",
+          "recovery_of_transition_id": "",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-becf11eb0cb543fe",
+          "state_id_before": "state-becf11eb0cb543fe",
+          "step": 1,
+          "success": false,
+          "task_id": "dev-openweb-dom-visual-disagreement-00-seed-12004",
+          "timestamp_ms": 1787914134693,
+          "transition_id": "episode-aa302bd3e21f:transition-0001"
+        },
+        {
+          "affordance_key": "dom:semantic::recheck-selection",
+          "attempt": 2,
+          "backend": "dom",
+          "episode_id": "episode-aa302bd3e21f",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 1999.026,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "probe-dev-5216",
+            "expected_effect": "oracle.selection_consistent == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "agent_replan",
+          "recovery_of_transition_id": "episode-aa302bd3e21f:transition-0001",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-2dee38990333301b",
+          "state_id_before": "state-becf11eb0cb543fe",
+          "step": 2,
+          "success": true,
+          "task_id": "dev-openweb-dom-visual-disagreement-00-seed-12004",
+          "timestamp_ms": 1787914136724,
+          "transition_id": "episode-aa302bd3e21f:transition-0002"
+        },
+        {
+          "affordance_key": "dom:semantic::choose-premium",
+          "attempt": 3,
+          "backend": "dom",
+          "episode_id": "episode-aa302bd3e21f",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 675.359,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "plan-dev-3714",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "resume_after_replan",
+          "recovery_of_transition_id": "episode-aa302bd3e21f:transition-0002",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-f7fe99d14e61f43b",
+          "state_id_before": "state-2dee38990333301b",
+          "step": 3,
+          "success": true,
+          "task_id": "dev-openweb-dom-visual-disagreement-00-seed-12004",
+          "timestamp_ms": 1787914137438,
+          "transition_id": "episode-aa302bd3e21f:transition-0003"
+        }
+      ],
+      "variant": {
+        "case": {
+          "case_id": "openweb-dom-visual-disagreement",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-dom-visual-disagreement-00-seed-12004",
+          "expected_effect": "selected_plan == visual_highlighted_plan",
+          "expected_runtime_response": "block fast path and require active perception or human escalation",
+          "failure_class": "dom_vs_visual_disagreement",
+          "goal": "Choose the visually highlighted active plan.",
+          "html_fixture": "failure_dom_visual_disagreement.html",
+          "observable_symptom": "DOM marks the premium plan as selected while the visible highlight is on basic.",
+          "oracle_state": {
+            "dom_selected_plan": "premium",
+            "plan_confirmed": false,
+            "selection_consistent": false,
+            "visual_highlighted_plan": "basic"
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "multi-source fusion/active perception when DOM and visual evidence disagree",
+          "seed": 12004
+        },
+        "parameters": {
+          "dom_selected_plan": "premium",
+          "highlight_hue": 271,
+          "highlight_width_px": 3,
+          "recovery_control_id": "probe-dev-5216",
+          "recovery_label": "Recheck evidence",
+          "target_control_id": "plan-dev-3714",
+          "visual_highlighted_plan": "basic"
+        },
+        "repetition": 0,
+        "signature": "71086df7904489e84724",
+        "split": "dev",
+        "variant_id": "dev-openweb-dom-visual-disagreement-00-seed-12004"
+      }
+    },
+    {
+      "browser": {
+        "calls": [
+          {
+            "affordance_id": "toggle-dev-3418",
+            "failure_reason": "",
+            "label": "notification-toggle",
+            "primitive_action": "click",
+            "recovery_relations": {},
+            "selector": "#notification-toggle",
+            "skill_id": "confirm_plan",
+            "success": true
+          },
+          {
+            "affordance_id": "equivalent-dev-2424",
+            "failure_reason": "",
+            "label": "notification-alternative",
+            "primitive_action": "click",
+            "recovery_relations": {
+              "equivalent_to": "toggle-dev-3418"
+            },
+            "selector": "#notification-alternative",
+            "skill_id": "confirm_plan",
+            "success": true
+          }
+        ],
+        "observation_requests": [
+          "initial_observation",
+          "post_action_verification",
+          "post_action_verification"
+        ],
+        "obstruction_observations": [],
+        "oracles": [
+          {
+            "ack_code": "ACK-110-0",
+            "control_revision": "dev-toggle-776",
+            "notifications_enabled": false,
+            "reported_clicks": 1,
+            "toggle_clicked": true
+          },
+          {
+            "ack_code": "ACK-110-0",
+            "control_revision": "dev-toggle-776",
+            "notifications_enabled": false,
+            "reported_clicks": 1,
+            "toggle_clicked": true
+          },
+          {
+            "ack_code": "ACK-110-0",
+            "control_revision": "dev-toggle-776",
+            "notifications_enabled": true,
+            "reported_clicks": 1,
+            "toggle_clicked": true
+          }
+        ],
+        "screenshots": [
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-01-initial_observation.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-02-post_action_verification.png",
+          "/Users/fadiferjani/Documents/study/master praktikum/A-Modular-Action-System-Architecture/output/playwright/recovery_contract_demo_20260828_124825/screenshots/dev-openweb-visible-ineffective-affordance-00-seed-12005-03-post_action_verification.png"
+        ]
+      },
+      "failures": [
+        {
+          "affordance_key": "dom:semantic::notification-toggle",
+          "backend": "dom",
+          "boundary": "recoverable_execution_failure",
+          "context_key": "dev-openweb-visible-ineffective-affordance-00-seed-12005",
+          "episode_id": "episode-873565983d33",
+          "failure_type": "postcondition_failed",
+          "incident_id": "",
+          "recovery_action": "replan",
+          "recovery_success": true,
+          "safety_regression": false,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-731a09f4b0b0e739",
+          "state_id_before": "state-731a09f4b0b0e739",
+          "task_id": "dev-openweb-visible-ineffective-affordance-00-seed-12005",
+          "transition_id": "episode-873565983d33:transition-0001"
+        }
+      ],
+      "runtime": {
+        "attempts": 2,
+        "episode_id": "episode-873565983d33",
+        "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-873565983d33:transition-0002",
+        "outcome": "verified_success",
+        "recovery_attempted": true,
+        "recovery_succeeded": true,
+        "recovery_tier": 2,
+        "recovery_trace": [
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "retry",
+            "reason": "retry not applicable",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 1
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "reroute",
+            "reason": "no alternate backend available",
+            "recovery_of_transition_id": "",
+            "selected": false,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "backend": "",
+            "considered": true,
+            "policy": "agent_replan",
+            "reason": "fresh typed failure evidence is available to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-873565983d33:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          },
+          {
+            "attempt": 1,
+            "considered": true,
+            "policy": "agent_replan_boundary",
+            "reason": "Runtime returned fresh typed failure evidence to the existing Agent/Planner",
+            "recovery_of_transition_id": "episode-873565983d33:transition-0001",
+            "selected": true,
+            "selected_action": "replan",
+            "tier": 2
+          }
+        ],
+        "replan_count": 1,
+        "state": "completed",
+        "transition_ids": [
+          "episode-873565983d33:transition-0001",
+          "episode-873565983d33:transition-0002"
+        ],
+        "user_action_required": false
+      },
+      "transitions": [
+        {
+          "affordance_key": "dom:semantic::notification-toggle",
+          "attempt": 1,
+          "backend": "dom",
+          "episode_id": "episode-873565983d33",
+          "execution_success": true,
+          "failure_reason": "postcondition_failed: expected_effect='oracle.expected_effect_satisfied == true', observed=False, reason=",
+          "latency_ms": 1473.978,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "toggle-dev-3418",
+            "expected_effect": "oracle.expected_effect_satisfied == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": false,
+          "recovery_action": "replan",
+          "recovery_of_transition_id": "",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-731a09f4b0b0e739",
+          "state_id_before": "state-731a09f4b0b0e739",
+          "step": 1,
+          "success": false,
+          "task_id": "dev-openweb-visible-ineffective-affordance-00-seed-12005",
+          "timestamp_ms": 1787914143419,
+          "transition_id": "episode-873565983d33:transition-0001"
+        },
+        {
+          "affordance_key": "dom:semantic::notification-alternative",
+          "attempt": 2,
+          "backend": "dom",
+          "episode_id": "episode-873565983d33",
+          "execution_success": true,
+          "failure_reason": "",
+          "latency_ms": 1333.409,
+          "observation_delta": {},
+          "params": {
+            "affordance_id": "equivalent-dev-2424",
+            "expected_effect": "oracle.notifications_enabled == true",
+            "primitive_action": "click",
+            "value": null
+          },
+          "postcondition_passed": true,
+          "recovery_action": "agent_replan",
+          "recovery_of_transition_id": "episode-873565983d33:transition-0001",
+          "recovery_tier": 2,
+          "reversible_result": null,
+          "skill_id": "confirm_plan",
+          "state_id_after": "state-d849a4f655df4d78",
+          "state_id_before": "state-731a09f4b0b0e739",
+          "step": 2,
+          "success": true,
+          "task_id": "dev-openweb-visible-ineffective-affordance-00-seed-12005",
+          "timestamp_ms": 1787914144800,
+          "transition_id": "episode-873565983d33:transition-0002"
+        }
+      ],
+      "variant": {
+        "case": {
+          "case_id": "openweb-visible-ineffective-affordance",
+          "coverage_level": "controlled_randomized_dev_evidence",
+          "environment_surface": "local_mock_web_fixture",
+          "episode_id": "dev-openweb-visible-ineffective-affordance-00-seed-12005",
+          "expected_effect": "notifications_enabled == true",
+          "expected_runtime_response": "treat click as ineffective and attempt alternate route or escalate",
+          "failure_class": "visible_but_ineffective_affordance",
+          "goal": "Enable notification settings with the visible toggle.",
+          "html_fixture": "failure_visible_ineffective_affordance.html",
+          "observable_symptom": "The toggle is clickable and visible, but its state never changes.",
+          "oracle_state": {
+            "notifications_enabled": false,
+            "toggle_clicked": true
+          },
+          "real_open_web": false,
+          "runtime_mechanism": "postcondition failure and recovery ledger",
+          "seed": 12005
+        },
+        "parameters": {
+          "ack_code": "ACK-110-0",
+          "alternative_control_id": "equivalent-dev-2424",
+          "control_revision": "dev-toggle-776",
+          "recovery_label": "Use settings API",
+          "reported_clicks": 1,
+          "target_control_id": "toggle-dev-3418"
+        },
+        "repetition": 0,
+        "signature": "ed3420620c5d88f90fcc",
+        "split": "dev",
+        "variant_id": "dev-openweb-visible-ineffective-affordance-00-seed-12005"
+      }
+    }
+  ],
+  "protocol": {
+    "browser_execution": true,
+    "canonical_cim_execution": true,
+    "claim_boundary": "controlled local-browser Runtime recovery evidence with an injected Planner; no production Planner, production VLM, or open-web claim",
+    "planner_boundary": "externally injected PlannerPort implementation used for this controlled run",
+    "planner_handoff_payload": [
+      "fresh typed failure context",
+      "observed generic recovery-capability relation",
+      "declared reversibility and idempotency metadata",
+      "fresh capability postcondition",
+      "fresh original-goal oracle"
+    ],
+    "planner_implementation": "DemoPlannerStub",
+    "runtime_entrypoint": "RuntimeEpisodeRunner.run_goal_episode",
+    "runtime_forbidden_inputs": [
+      "fixture family",
+      "case id",
+      "known overlay selector",
+      "known remediation selector",
+      "product or button text"
+    ]
+  },
+  "summary": {
+    "all_recovered_and_verified": true,
+    "dev_count": 5,
+    "episode_count": 5,
+    "failure_family_count": 5,
+    "final_verified_count": 5,
+    "holdout_count": 0,
+    "per_family": {
+      "dom_vs_visual_disagreement": {
+        "episodes": 1,
+        "verified": 1
+      },
+      "optimistic_ui_backend_mismatch": {
+        "episodes": 1,
+        "verified": 1
+      },
+      "overlay_modal_obstruction": {
+        "episodes": 1,
+        "verified": 1
+      },
+      "session_auth_expiry": {
+        "episodes": 1,
+        "verified": 1
+      },
+      "visible_but_ineffective_affordance": {
+        "episodes": 1,
+        "verified": 1
+      }
+    },
+    "recovery_success_count": 5
+  }
+}
