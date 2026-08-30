@@ -941,8 +941,26 @@ def git_snapshot() -> dict[str, Any]:
         )
         return completed.stdout.strip() if completed.returncode == 0 else ""
 
-    status = command("status", "--short")
-    return {"commit": command("rev-parse", "HEAD"), "dirty": bool(status), "status": status.splitlines()}
+    try:
+        status = command("status", "--short")
+        commit = command("rev-parse", "HEAD")
+    except OSError:
+        return {
+            "available": False,
+            "commit": "",
+            "dirty": False,
+            "status": [],
+            "reason": "git command unavailable",
+        }
+
+    available = bool(commit)
+    return {
+        "available": available,
+        "commit": commit,
+        "dirty": bool(status),
+        "status": status.splitlines(),
+        "reason": "" if available else "repository metadata unavailable",
+    }
 
 
 def coverage_report(chapters: Iterable[ChapterSpec], results: Iterable[ChapterResult]) -> list[dict[str, Any]]:

@@ -236,3 +236,18 @@ def test_manifest_survives_and_reports_review_gated_adaptation_only_run(tmp_path
     )
     assert next(item for item in coverage if item["component_id"] == "release_gate")["status"] == "passed"
     assert next(item for item in coverage if item["component_id"] == "intent")["status"] == "not_run"
+
+
+def test_git_snapshot_reports_unavailable_when_git_is_not_installed(monkeypatch) -> None:
+    def missing_git(*args, **kwargs):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(final_demo.subprocess, "run", missing_git)
+
+    assert final_demo.git_snapshot() == {
+        "available": False,
+        "commit": "",
+        "dirty": False,
+        "status": [],
+        "reason": "git command unavailable",
+    }
