@@ -100,14 +100,18 @@ jobs:
 
       - name: Build production image
         run: docker build --target runner -t action-system:${{ github.sha }} .
+
+      # Building is the CI gate. Publishing the large image is a best-effort
+      # convenience for main and must not make develop fail when storage is full.
       - name: Export and archive image
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: docker save action-system:${{ github.sha }} | gzip > artifact.tar.gz
 
       - name: Archive artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        uses: actions/upload-artifact@v6
         with:
           name: action-system-${{ github.sha }}
           path: artifact.tar.gz
-          retention-days: 14
+          retention-days: 1

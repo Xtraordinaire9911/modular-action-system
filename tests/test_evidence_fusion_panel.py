@@ -45,6 +45,19 @@ def test_panel_renders_source_labelled_live_evidence() -> None:
     asyncio.run(scenario())
 
 
+def test_panel_renders_an_observation_without_a_screenshot() -> None:
+    async def scenario() -> None:
+        session = FakeSession()
+        panel = EvidenceFusionPanel(session, "prepare the room")
+
+        await panel.show_observation(Observation(), "state_refresh")
+
+        assert "screenshot unavailable" in session.html
+        assert "no rendered frame attached" in session.html
+
+    asyncio.run(scenario())
+
+
 def test_panel_projects_the_authoritative_arbiter_decision() -> None:
     async def scenario() -> None:
         session = FakeSession()
