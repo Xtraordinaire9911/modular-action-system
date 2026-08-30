@@ -218,13 +218,7 @@ def test_manifest_survives_and_reports_review_gated_adaptation_only_run(tmp_path
             json.dumps({"summary": {"policy_proposals": 1}}), encoding="utf-8"
         )
         (spec.output_dir / "policy_proposals.json").write_text(
-            json.dumps(
-                {
-                    "proposals": [
-                        {"safe_to_auto_apply": False, "release_gate": {"approved": False}}
-                    ]
-                }
-            ),
+            json.dumps({"proposals": [{"safe_to_auto_apply": False, "release_gate": {"approved": False}}]}),
             encoding="utf-8",
         )
         return 0, ""

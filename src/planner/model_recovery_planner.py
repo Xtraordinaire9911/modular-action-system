@@ -525,8 +525,7 @@ class AgentPlanner:
 
         chosen = sorted(candidates, key=lambda item: (-item.confidence, item.id))[0]
         expected_effect = str(
-            chosen.grounding.get("recovery_postcondition")
-            or f"recover from {failure.failed_affordance_id}"
+            chosen.grounding.get("recovery_postcondition") or f"recover from {failure.failed_affordance_id}"
         )
         return PrimitivePlan(
             actions=[
