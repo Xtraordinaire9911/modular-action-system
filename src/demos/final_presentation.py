@@ -129,37 +129,254 @@ class CoverageItem:
 
 
 COVERAGE: tuple[CoverageItem, ...] = (
-    CoverageItem("intent", "Intent planner and provenance", "src/planner/intent_planner.py", "canonical", "direct", "Utterance becomes a typed GoalSpec with its actual source recorded."),
-    CoverageItem("goal_skill", "Goal-to-Skill selection", "src/planner/goal_skill_selector.py", "canonical", "direct", "The composite prepare_and_confirm_room Skill is selected from the library."),
-    CoverageItem("skill_library", "Declarative Skill library", "src/skill_library/library.py", "canonical", "direct", "Defaults, backends, safety, timeout and postconditions come from the Skill contract."),
-    CoverageItem("agent_planner", "Unified forward/recovery AgentPlanner", "src/planner/agent_planner.py", "canonical", "direct", "One PlannerPort selects both forward and recovery primitives."),
-    CoverageItem("plan_validator", "Primitive plan validator", "src/runtime/plan_validator.py", "canonical", "direct", "Planner output is checked against fresh offered affordances and allowed actions."),
-    CoverageItem("dom_perception", "DOM transducer and PAM", "src/perception/dom_transducer.py", "canonical", "direct", "Live HTML is reduced to normalized DOM affordances."),
-    CoverageItem("td_discovery", "Thing Directory and TD parsing", "src/runtime/live_environment.py + src/perception/td_affordance_parser.py", "canonical", "direct", "Live TDs, affordances and forms are fetched and parsed at runtime."),
-    CoverageItem("cognitive_map", "Cognitive map", "src/runtime/cognitive_map.py", "canonical", "direct", "Fresh source-attributed assertions form the planner-visible state."),
-    CoverageItem("backend_router", "Runtime backend routing", "src/runtime/backend_router.py", "canonical", "direct", "Each primitive is routed to an eligible DOM or WoT executor."),
-    CoverageItem("dom_executor", "DOM executor", "src/effectors/dom_executor.py", "canonical", "direct", "Booking fields and the protected commit use resolved DOM affordances."),
-    CoverageItem("wot_executor", "WoT executor", "src/effectors/wot_executor.py", "canonical", "direct", "Lights, projector and thermostat are changed through TD forms and read back."),
-    CoverageItem("cim", "Continuous Interaction Manager", "src/runtime/continuous_interaction_manager.py", "canonical", "direct", "The canonical observe-plan-act-verify-recover loop owns execution state."),
-    CoverageItem("verification", "Fresh postcondition verification", "src/verification/postcondition_checker.py", "canonical", "direct", "Executor success is never accepted without a fresh observation."),
-    CoverageItem("safety", "Safety and human confirmation", "src/safety/unsafe_action_detector.py", "canonical", "direct", "The high-safety final booking action pauses for operator authority."),
-    CoverageItem("intervention", "Intervention broker and ledger", "src/runtime/intervention.py", "canonical", "direct", "Approval/takeover decisions and re-observation are auditable."),
-    CoverageItem("isolation", "Browser/WoT episode isolation", "src/isolation/episode.py", "canonical", "direct", "A fresh session and room checkpoint are restored in finally."),
-    CoverageItem("input_lease", "Cooperative software input lease", "src/isolation/input_lease.py", "canonical", "direct", "Agent executors require the agent lease; OS input isolation is not claimed."),
-    CoverageItem("typed_recovery", "Typed failure and recovery handoff", "src/runtime/action_context.py", "canonical", "direct", "The injected booking obstruction is inferred from failed execution plus fresh observation."),
-    CoverageItem("recovery_cascade", "Four-tier recovery cascade", "src/recovery/recovery_cascade.py", "recovery", "direct", "Five controlled live scenes cover replan, active perception, rollback and safe handling."),
-    CoverageItem("fusion", "Epistemic fusion and conflict handling", "src/verification/conflict_detector.py", "recovery", "direct", "A dashboard/device disagreement triggers an active-perception resolution."),
-    CoverageItem("active_perception", "Active perception", "src/verification/active_perception.py", "recovery", "direct", "Runtime requests a bounded fresh scan when sources conflict."),
-    CoverageItem("system1", "System-1 reflex cache", "src/effectors/system1_reflex_library.py", "runtime_lab", "direct", "The complete profile includes a warm-up and verified cache-hit repeat."),
-    CoverageItem("intent_model", "Text-model value", "src/planner/intent_planner.py", "models", "model_or_recorded", "Rules and the configured model are compared on the same smart-room requests."),
-    CoverageItem("vlm", "Vision verification", "src/perception/vlm_observer.py", "models", "model_or_recorded", "A screenshot contradicts a DOM false success with explicit model provenance."),
-    CoverageItem("visual_geometry", "Measured visual geometry", "src/perception/visual_geometry.py", "visual", "direct", "Bounding boxes are measured in the live browser, not authored in fixtures."),
-    CoverageItem("som", "Set-of-Marks", "src/perception/som_parser.py", "visual", "direct", "Measured boxes become numbered marks."),
-    CoverageItem("mark_selector", "Mark selection", "src/planner/mark_selector.py", "visual", "direct", "The selector returns a current mark ID and records whether it was model or heuristic."),
-    CoverageItem("visual_executor", "Visual executor", "src/effectors/visual_executor.py", "visual", "direct", "The click is executed at the selected mark center without a selector."),
-    CoverageItem("adaptation", "Trace-driven adaptation", "src/adaptation/pattern_miner.py", "adaptation", "synthetic_white_box", "Repeated labelled failures produce a candidate proposal."),
-    CoverageItem("release_gate", "Human review release gate", "src/adaptation/release_gate.py", "adaptation", "synthetic_white_box", "The proposal remains unapproved, non-auto-applied, and review-gated."),
-    CoverageItem("vam_boundary", "End-to-end VAM adapter", "src/vam/vam_adapter.py", "visual", "prototype_boundary", "The visual chapter proves SoM-to-execution plumbing, not a canonical end-to-end VAM replacement."),
+    CoverageItem(
+        "intent",
+        "Intent planner and provenance",
+        "src/planner/intent_planner.py",
+        "canonical",
+        "direct",
+        "Utterance becomes a typed GoalSpec with its actual source recorded.",
+    ),
+    CoverageItem(
+        "goal_skill",
+        "Goal-to-Skill selection",
+        "src/planner/goal_skill_selector.py",
+        "canonical",
+        "direct",
+        "The composite prepare_and_confirm_room Skill is selected from the library.",
+    ),
+    CoverageItem(
+        "skill_library",
+        "Declarative Skill library",
+        "src/skill_library/library.py",
+        "canonical",
+        "direct",
+        "Defaults, backends, safety, timeout and postconditions come from the Skill contract.",
+    ),
+    CoverageItem(
+        "agent_planner",
+        "Unified forward/recovery AgentPlanner",
+        "src/planner/agent_planner.py",
+        "canonical",
+        "direct",
+        "One PlannerPort selects both forward and recovery primitives.",
+    ),
+    CoverageItem(
+        "plan_validator",
+        "Primitive plan validator",
+        "src/runtime/plan_validator.py",
+        "canonical",
+        "direct",
+        "Planner output is checked against fresh offered affordances and allowed actions.",
+    ),
+    CoverageItem(
+        "dom_perception",
+        "DOM transducer and PAM",
+        "src/perception/dom_transducer.py",
+        "canonical",
+        "direct",
+        "Live HTML is reduced to normalized DOM affordances.",
+    ),
+    CoverageItem(
+        "td_discovery",
+        "Thing Directory and TD parsing",
+        "src/runtime/live_environment.py + src/perception/td_affordance_parser.py",
+        "canonical",
+        "direct",
+        "Live TDs, affordances and forms are fetched and parsed at runtime.",
+    ),
+    CoverageItem(
+        "cognitive_map",
+        "Cognitive map",
+        "src/runtime/cognitive_map.py",
+        "canonical",
+        "direct",
+        "Fresh source-attributed assertions form the planner-visible state.",
+    ),
+    CoverageItem(
+        "backend_router",
+        "Runtime backend routing",
+        "src/runtime/backend_router.py",
+        "canonical",
+        "direct",
+        "Each primitive is routed to an eligible DOM or WoT executor.",
+    ),
+    CoverageItem(
+        "dom_executor",
+        "DOM executor",
+        "src/effectors/dom_executor.py",
+        "canonical",
+        "direct",
+        "Booking fields and the protected commit use resolved DOM affordances.",
+    ),
+    CoverageItem(
+        "wot_executor",
+        "WoT executor",
+        "src/effectors/wot_executor.py",
+        "canonical",
+        "direct",
+        "Lights, projector and thermostat are changed through TD forms and read back.",
+    ),
+    CoverageItem(
+        "cim",
+        "Continuous Interaction Manager",
+        "src/runtime/continuous_interaction_manager.py",
+        "canonical",
+        "direct",
+        "The canonical observe-plan-act-verify-recover loop owns execution state.",
+    ),
+    CoverageItem(
+        "verification",
+        "Fresh postcondition verification",
+        "src/verification/postcondition_checker.py",
+        "canonical",
+        "direct",
+        "Executor success is never accepted without a fresh observation.",
+    ),
+    CoverageItem(
+        "safety",
+        "Safety and human confirmation",
+        "src/safety/unsafe_action_detector.py",
+        "canonical",
+        "direct",
+        "The high-safety final booking action pauses for operator authority.",
+    ),
+    CoverageItem(
+        "intervention",
+        "Intervention broker and ledger",
+        "src/runtime/intervention.py",
+        "canonical",
+        "direct",
+        "Approval/takeover decisions and re-observation are auditable.",
+    ),
+    CoverageItem(
+        "isolation",
+        "Browser/WoT episode isolation",
+        "src/isolation/episode.py",
+        "canonical",
+        "direct",
+        "A fresh session and room checkpoint are restored in finally.",
+    ),
+    CoverageItem(
+        "input_lease",
+        "Cooperative software input lease",
+        "src/isolation/input_lease.py",
+        "canonical",
+        "direct",
+        "Agent executors require the agent lease; OS input isolation is not claimed.",
+    ),
+    CoverageItem(
+        "typed_recovery",
+        "Typed failure and recovery handoff",
+        "src/runtime/action_context.py",
+        "canonical",
+        "direct",
+        "The injected booking obstruction is inferred from failed execution plus fresh observation.",
+    ),
+    CoverageItem(
+        "recovery_cascade",
+        "Four-tier recovery cascade",
+        "src/recovery/recovery_cascade.py",
+        "recovery",
+        "direct",
+        "Five controlled live scenes cover replan, active perception, rollback and safe handling.",
+    ),
+    CoverageItem(
+        "fusion",
+        "Epistemic fusion and conflict handling",
+        "src/verification/conflict_detector.py",
+        "recovery",
+        "direct",
+        "A dashboard/device disagreement triggers an active-perception resolution.",
+    ),
+    CoverageItem(
+        "active_perception",
+        "Active perception",
+        "src/verification/active_perception.py",
+        "recovery",
+        "direct",
+        "Runtime requests a bounded fresh scan when sources conflict.",
+    ),
+    CoverageItem(
+        "system1",
+        "System-1 reflex cache",
+        "src/effectors/system1_reflex_library.py",
+        "runtime_lab",
+        "direct",
+        "The complete profile includes a warm-up and verified cache-hit repeat.",
+    ),
+    CoverageItem(
+        "intent_model",
+        "Text-model value",
+        "src/planner/intent_planner.py",
+        "models",
+        "model_or_recorded",
+        "Rules and the configured model are compared on the same smart-room requests.",
+    ),
+    CoverageItem(
+        "vlm",
+        "Vision verification",
+        "src/perception/vlm_observer.py",
+        "models",
+        "model_or_recorded",
+        "A screenshot contradicts a DOM false success with explicit model provenance.",
+    ),
+    CoverageItem(
+        "visual_geometry",
+        "Measured visual geometry",
+        "src/perception/visual_geometry.py",
+        "visual",
+        "direct",
+        "Bounding boxes are measured in the live browser, not authored in fixtures.",
+    ),
+    CoverageItem(
+        "som",
+        "Set-of-Marks",
+        "src/perception/som_parser.py",
+        "visual",
+        "direct",
+        "Measured boxes become numbered marks.",
+    ),
+    CoverageItem(
+        "mark_selector",
+        "Mark selection",
+        "src/planner/mark_selector.py",
+        "visual",
+        "direct",
+        "The selector returns a current mark ID and records whether it was model or heuristic.",
+    ),
+    CoverageItem(
+        "visual_executor",
+        "Visual executor",
+        "src/effectors/visual_executor.py",
+        "visual",
+        "direct",
+        "The click is executed at the selected mark center without a selector.",
+    ),
+    CoverageItem(
+        "adaptation",
+        "Trace-driven adaptation",
+        "src/adaptation/pattern_miner.py",
+        "adaptation",
+        "synthetic_white_box",
+        "Repeated labelled failures produce a candidate proposal.",
+    ),
+    CoverageItem(
+        "release_gate",
+        "Human review release gate",
+        "src/adaptation/release_gate.py",
+        "adaptation",
+        "synthetic_white_box",
+        "The proposal remains unapproved, non-auto-applied, and review-gated.",
+    ),
+    CoverageItem(
+        "vam_boundary",
+        "End-to-end VAM adapter",
+        "src/vam/vam_adapter.py",
+        "visual",
+        "prototype_boundary",
+        "The visual chapter proves SoM-to-execution plumbing, not a canonical end-to-end VAM replacement.",
+    ),
 )
 
 
@@ -534,7 +751,11 @@ def requirement_status(name: str, capabilities: CapabilitySnapshot) -> tuple[boo
         "vision_model": (bool(capabilities.vision_model), capabilities.vision_model or "no vision model configured"),
         "recorded_models": (
             capabilities.recorded_model_evidence,
-            "checked-in report and video present" if capabilities.recorded_model_evidence else "recorded report/video missing",
+            (
+                "checked-in report and video present"
+                if capabilities.recorded_model_evidence
+                else "recorded report/video missing"
+            ),
         ),
     }
     return mapping.get(name, (False, f"unknown requirement {name}"))
@@ -886,9 +1107,7 @@ def run_final_demo(
                 reason="chapter disabled by configuration",
             )
         else:
-            display_command = (
-                ["python", *spec.command[1:]] if spec.command[0] == sys.executable else list(spec.command)
-            )
+            display_command = ["python", *spec.command[1:]] if spec.command[0] == sys.executable else list(spec.command)
             print("  $ " + " ".join(display_command) + "\n", flush=True)
             started_at = now_iso()
             started = time.monotonic()
@@ -944,16 +1163,18 @@ def run_final_demo(
         "skipped": sum(item.status == "skipped" for item in results),
         "failed": sum(item.status == "failed" for item in results),
         "required_failures": sorted(failed_required),
-        "coverage_items_run": sum(
-            item["status"] in {"passed", "recorded"} for item in manifest["coverage"]
-        ),
+        "coverage_items_run": sum(item["status"] in {"passed", "recorded"} for item in manifest["coverage"]),
         "coverage_items_total": len(manifest["coverage"]),
     }
     _write_json(config.output_dir / "component_coverage.json", manifest["coverage"])
     _write_json(manifest_path, manifest)
     print(f"\n{'=' * 78}\n  FINAL DEMO: {manifest['status'].upper()}")
-    print(f"  manifest : {manifest_path.relative_to(REPO_ROOT) if manifest_path.is_relative_to(REPO_ROOT) else manifest_path}")
-    print(f"  cues     : {(config.output_dir / 'presenter_cues.md').relative_to(REPO_ROOT) if config.output_dir.is_relative_to(REPO_ROOT) else config.output_dir / 'presenter_cues.md'}")
+    print(
+        f"  manifest : {manifest_path.relative_to(REPO_ROOT) if manifest_path.is_relative_to(REPO_ROOT) else manifest_path}"
+    )
+    print(
+        f"  cues     : {(config.output_dir / 'presenter_cues.md').relative_to(REPO_ROOT) if config.output_dir.is_relative_to(REPO_ROOT) else config.output_dir / 'presenter_cues.md'}"
+    )
     print(f"{'=' * 78}\n")
     return (0 if manifest["status"] == "passed" else 1), manifest
 

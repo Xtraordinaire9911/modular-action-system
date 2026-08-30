@@ -655,8 +655,10 @@ def main() -> int:
     from src.perception.browser_session import BrowserSession
 
     repo = Path(__file__).resolve().parents[1]
-    out = Path(args.out).expanduser().resolve() if args.out else (
-        repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S")
+    out = (
+        Path(args.out).expanduser().resolve()
+        if args.out
+        else (repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S"))
     )
     out.mkdir(parents=True, exist_ok=True)
 

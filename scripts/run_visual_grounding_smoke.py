@@ -127,9 +127,7 @@ def main() -> int:
         session.screenshot(str(out / "03_after_click.png"))
 
         body = (session.text_content("body") or "").lower()
-        effect_observed = (
-            args.expect_text.lower() in body if args.expect_text else ("added" in body or "cart" in body)
-        )
+        effect_observed = args.expect_text.lower() in body if args.expect_text else ("added" in body or "cart" in body)
         trace = {
             "url": url,
             "affordances": len(pam.affordances),

@@ -77,8 +77,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def config_from_args(args: argparse.Namespace) -> FinalDemoConfig:
-    output = Path(args.output_dir).expanduser() if args.output_dir else (
-        ROOT / "artifacts" / "final_presentation_demo" / datetime.now().strftime("%Y%m%d_%H%M%S")
+    output = (
+        Path(args.output_dir).expanduser()
+        if args.output_dir
+        else (ROOT / "artifacts" / "final_presentation_demo" / datetime.now().strftime("%Y%m%d_%H%M%S"))
     )
     only = tuple(item.strip() for item in args.only.split(",") if item.strip())
     return FinalDemoConfig(
