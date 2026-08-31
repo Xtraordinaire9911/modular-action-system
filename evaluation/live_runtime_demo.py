@@ -202,12 +202,16 @@ async def _run_ablation(
     }
 
 
-@dataclass(frozen=True)
+@dataclass
 class _ObservedConflict:
     """One perceptual disagreement, as the episode recorded resolving it.
 
     Both terms of CRR are observable: the conflict happened because the probe
     was triggered, and it is resolved or it is not. No oracle label is involved.
+
+    Not frozen, although nothing here mutates it: ``ConflictLike`` in the
+    aggregator declares its members as attributes rather than read-only
+    properties, and a frozen dataclass does not satisfy such a protocol.
     """
 
     conflict_type: str
