@@ -658,6 +658,11 @@ def main() -> int:
     parser.add_argument("--hold", type=float, default=3.0, help="Seconds to stay on the final summary.")
     parser.add_argument("--headless", dest="headed", action="store_false", default=True)
     parser.add_argument("--record", action="store_true", help="Capture the page and convert it to mp4.")
+    parser.add_argument(
+        "--out",
+        default="",
+        help="Write this run to an exact directory (default: timestamped eval_outputs/llm_demo/).",
+    )
     parser.add_argument("--dashboard", default=DASHBOARD_URL, help="Smart-room dashboard URL.")
     parser.add_argument("--directory", default=DIRECTORY_URL, help="Thing Directory base URL.")
     parser.add_argument(
@@ -681,7 +686,11 @@ def main() -> int:
     from src.perception.browser_session import BrowserSession
 
     repo = Path(__file__).resolve().parents[1]
-    out = repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S")
+    out = (
+        Path(args.out).expanduser().resolve()
+        if args.out
+        else (repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S"))
+    )
     out.mkdir(parents=True, exist_ok=True)
 
     # The declared use case: the dashboard is the page a person uses, and the

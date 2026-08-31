@@ -332,9 +332,7 @@ async def _run_suite(
             rollback.episode_id: 3,
         },
         expected_backends=_EXPECTED_BACKENDS,
-        conflicts_by_episode={
-            result.episode_id: _observed_conflicts(result) for result in results
-        },
+        conflicts_by_episode={result.episode_id: _observed_conflicts(result) for result in results},
     )
     metrics = aggregate_metrics(
         dataset,

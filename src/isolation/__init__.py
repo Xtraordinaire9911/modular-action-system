@@ -1,4 +1,4 @@
-"""Episode-scoped execution isolation for the Project PiP MVP."""
+"""Episode-scoped browser/WoT isolation and cooperative input ownership."""
 
 from src.isolation.episode import (
     BrowserWotIsolationProvider,
@@ -6,10 +6,15 @@ from src.isolation.episode import (
     EpisodeIsolationSession,
     IsolationState,
 )
+from src.isolation.input_lease import AgentInputGuardedExecutor, InputLease, InputLeaseDenied, InputOwner
 
 __all__ = [
     "BrowserWotIsolationProvider",
     "EpisodeIsolationProvider",
     "EpisodeIsolationSession",
     "IsolationState",
+    "InputLease",
+    "InputLeaseDenied",
+    "InputOwner",
+    "AgentInputGuardedExecutor",
 ]

@@ -160,8 +160,8 @@ BINDINGS: dict[str, EnvironmentBinding] = {
         # the room the model named makes the proof both unambiguous and
         # dependent on the model's own answer.
         success_template="booked: room {subject}",
-        state_entity="room",
-        state_attribute="booked",
+        state_entity="booking",
+        state_attribute="confirmed",
         # The room and the time are typed into the form before the button is
         # pressed, so what the model extracted is what actually gets booked. A
         # run that clicked Book Room without filling these would book whatever

@@ -128,6 +128,23 @@ def capability_report() -> dict[str, tuple[bool, str]]:
 
 DEMOS: list[Demo] = [
     Demo(
+        name="final-presentation",
+        title="Final presentation: complete evidence-backed smart-room demo",
+        summary="Runs the canonical room request, live Runtime/System-1 laboratory, five recovery "
+        "families, recorded model evidence, live Set-of-Marks execution and review-gated adaptation "
+        "under one validated manifest. See FINAL_PRESENTATION_DEMO.md for the 10-minute cut.",
+        command=(
+            "scripts/run_final_presentation_demo.py",
+            "--profile",
+            "complete",
+            "--model-mode",
+            "recorded",
+            "--pause-between-chapters",
+        ),
+        requires=("browser", "smart_room"),
+        duration_hint="~8min plus presenter pauses",
+    ),
+    Demo(
         name="agent-loop",
         title="The narrated agent loop, with realistic faults",
         summary="Seven scenes over shop, forum and a WoT device; six inject a different real-world "
@@ -274,6 +291,33 @@ DEMOS: list[Demo] = [
         requires=("browser", "miniwob"),
         headed_args=("--headed",),
         extra_args=("--step-delay", "1.2"),
+        duration_hint="~1min",
+    ),
+    Demo(
+        name="supervised-smartroom",
+        title="Shared supervised smart-room pipeline",
+        summary="One utterance drives the canonical runtime across the dashboard and WoT devices in one "
+        "checkpointed episode, pauses before the final booking, re-observes after takeover, and restores the room.",
+        command=("scripts/run_supervised_smartroom_demo.py",),
+        requires=("browser", "smart_room"),
+        duration_hint="~2min",
+    ),
+    Demo(
+        name="supervised-session-rehearsal",
+        title="GoalSpec-to-Skill and supervised takeover rehearsal",
+        summary="Runs the real action-system loop with deterministic in-memory browser/WoT adapters, "
+        "including isolation, a Tier-4 pause, human resume, fresh observation, and one evidence file.",
+        command=("scripts/run_supervised_session_demo.py", "--dry-run"),
+        duration_hint="~5s",
+    ),
+    Demo(
+        name="supervised-session-live",
+        title="Visible supervised session with human takeover",
+        summary="Shows a headed smart-room browser: the agent types booking details, pauses before "
+        "Book Room, lets a human complete it, then re-observes without repeating the click.",
+        command=("scripts/run_supervised_session_demo.py",),
+        requires=("browser", "smart_room"),
+        headed_args=("--headed",),
         duration_hint="~1min",
     ),
     Demo(

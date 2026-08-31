@@ -418,12 +418,8 @@ def test_routing_accuracy_scores_selected_backend_against_oracle():
     ledger = TransitionLedger()
     ledger.record(_wot_transition())
 
-    correct = dataset_from_runtime_results(
-        [_completed()], ledger, expected_backends={"ep-route": "wot"}
-    )
-    wrong = dataset_from_runtime_results(
-        [_completed()], ledger, expected_backends={"ep-route": "dom"}
-    )
+    correct = dataset_from_runtime_results([_completed()], ledger, expected_backends={"ep-route": "wot"})
+    wrong = dataset_from_runtime_results([_completed()], ledger, expected_backends={"ep-route": "dom"})
 
     assert aggregate_metrics(correct).values["BRA"] == 1.0
     assert aggregate_metrics(wrong).values["BRA"] == 0.0
@@ -440,13 +436,9 @@ def test_skill_label_beats_episode_label_so_rollback_is_not_a_misroute():
     """
     ledger = TransitionLedger()
     ledger.record(_wot_transition())
-    ledger.record(
-        _wot_transition(backend="restore", skill_id="restore_temperature", step=2)
-    )
+    ledger.record(_wot_transition(backend="restore", skill_id="restore_temperature", step=2))
 
-    episode_only = dataset_from_runtime_results(
-        [_completed()], ledger, expected_backends={"ep-route": "wot"}
-    )
+    episode_only = dataset_from_runtime_results([_completed()], ledger, expected_backends={"ep-route": "wot"})
     with_skill_label = dataset_from_runtime_results(
         [_completed()],
         ledger,
@@ -463,9 +455,7 @@ def test_unlabelled_skill_contributes_no_routing_case():
     ledger = TransitionLedger()
     ledger.record(_wot_transition())
 
-    dataset = dataset_from_runtime_results(
-        [_completed()], ledger, expected_backends={"some_other_skill": "dom"}
-    )
+    dataset = dataset_from_runtime_results([_completed()], ledger, expected_backends={"some_other_skill": "dom"})
 
     assert aggregate_metrics(dataset).denominators["BRA"] == 0
 

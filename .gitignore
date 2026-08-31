@@ -1,5 +1,6 @@
 __pycache__/
 *.py[cod]
+.DS_Store
 *.egg-info/
 .eggs/
 dist/
@@ -37,6 +38,9 @@ eval_outputs/
 # which a repository-relative link does not.
 demo_video/
 *.webm
+# Talk GIFs: 10 MB of frames cut from an mp4 that is already in history.
+# scripts/make_talk_gifs.py regenerates them in about a minute.
+artifacts/talk_gifs/*.gif
 .external_envs/
 
 # Local paper / presentation artifacts
@@ -78,6 +82,7 @@ artifacts/talk_gifs/
 # Runtime ledgers appended to on every run.
 artifacts/intent_planner/
 artifacts/vlm_observer/
+artifacts/final_presentation_demo/
 
 # B-113 Development artifacts - added to ignore list
 B113_Development_Summary_CN_EN.md
@@ -85,3 +90,4 @@ B113_Presentation_Script_10min.md
 B113_Presentation_Slides.html
 B113_Presentation_Slides.pdf
 presentation_build/
+presentation/

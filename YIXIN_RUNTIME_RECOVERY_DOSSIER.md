@@ -44,7 +44,7 @@ fail-closed escalation.
 | Surface | Authoritative owner | Yixin responsibility | Not Yixin's implementation obligation |
 |---|---|---|---|
 | User language -> `GoalSpec` | Ruiyao intent layer | Consume and validate typed `GoalSpec`; return typed insufficiency | Train/configure the NL/LLM planner |
-| `GoalSpec` -> Skill | Fadi skill layer | Execute a supplied Skill contract and expose runtime outcomes | Skill library content, Skill selection policy, PiP demo logic |
+| `GoalSpec` -> Skill | Shared goal-skill selection layer | Execute a supplied Skill contract and expose runtime outcomes | Skill library content, selection policy, supervised-session demo wiring |
 | Goal/Skill -> next semantic action | Existing Agent/Planner; owner depends on entry layer | Supply sanitized `ActionContext`, fresh failure evidence, budgets; validate planner output | Build a second RecoveryPlanner or embed benchmark answers in Runtime |
 | Screenshot/VLM/DOM/WoT perception | Ruiyao perception/environment | Fuse source-attributed assertions; reject stale/conflicting evidence | Implement or run the VLM; author environment recovery controls |
 | Primitive execution | Backend/environment adapter | Route validated affordance IDs, enforce safety/timeouts, record result | Invent a successful side effect absent from the environment |
@@ -111,7 +111,7 @@ or expected answer.
 15. Every verified terminal result names the transition whose fresh
     postcondition/oracle established success, so the recovery chain no longer
     relies on report-side inference.
-16. PiP/human intervention is integrated as Tier 4 after the Planner handoff:
+16. Supervised-session human intervention is integrated as Tier 4 after the Planner handoff:
     a recoverable semantic failure first returns through `PlannerPort`
     first; takeover resume re-observes and then re-enters that planner rather
     than becoming a second recovery authority.

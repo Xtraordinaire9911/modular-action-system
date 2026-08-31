@@ -29,6 +29,7 @@ from urllib.parse import urlsplit, urlunsplit
 import httpx
 
 from src.contracts.types import Affordance, ExecutionResult, Observation, ObservedAssertion, SkillCall
+from src.perception.browser_obstruction import BrowserObstructionObservation, observe_browser_obstruction
 from src.perception.browser_session import BrowserSession
 from src.perception.td_affordance_parser import ThingAffordanceModel, parse_things
 from src.runtime.episode import ObservationRequest
@@ -70,6 +71,10 @@ class AffordanceSemanticBinding:
     source: Literal["DOM", "WOT", "VISUAL"]
     entity_id: str = ""
     state_attribute: str = ""
+    # Optional semantic identity for a separately read WoT property. Actions
+    # such as ``setBrightness`` are verified from the ``brightness`` state
+    # source, so their names need not be identical.
+    state_source_property: str = ""
     affordance_id: str = ""
     selector: str = ""
     thing_id: str = ""
@@ -80,6 +85,7 @@ class AffordanceSemanticBinding:
     stable_key: str = ""
     idempotent: bool = False
     skill_id: str = ""
+    safety_level: Literal["low", "medium", "high"] | None = None
 
     def matches(self, affordance: Affordance) -> bool:
         if affordance.source != self.source:
@@ -126,10 +132,18 @@ class LiveEnvironmentError(RuntimeError):
 class ThreadedBrowserSession:
     """Serialize every sync Playwright operation on one dedicated thread."""
 
-    def __init__(self, url: str, *, headless: bool = True, action_timeout_ms: int = 8000) -> None:
+    def __init__(
+        self,
+        url: str,
+        *,
+        headless: bool = True,
+        action_timeout_ms: int = 8000,
+        record_video_dir: str | None = None,
+    ) -> None:
         self.url = url
         self.headless = headless
         self.action_timeout_ms = action_timeout_ms
+        self.record_video_dir = record_video_dir
         self._worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="live-browser")
         self._session: BrowserSession | None = None
         self._closed = False
@@ -142,11 +156,13 @@ class ThreadedBrowserSession:
             return
 
         def launch() -> BrowserSession:
-            return BrowserSession.launch(
-                self.url,
-                headless=self.headless,
-                action_timeout_ms=self.action_timeout_ms,
-            )
+            options: dict[str, Any] = {
+                "headless": self.headless,
+                "action_timeout_ms": self.action_timeout_ms,
+            }
+            if self.record_video_dir is not None:
+                options["record_video_dir"] = self.record_video_dir
+            return BrowserSession.launch(self.url, **options)
 
         self._session = await self._submit(launch)
         self.context_generation += 1
@@ -257,6 +273,7 @@ class SmartRoomLiveEnvironment:
         self.latest_affordances: dict[str, Affordance] = {}
         self._observation_index = 0
         self._episode_id = "preflight"
+        self._blocked_target: tuple[str, str] | None = None
 
     def begin_episode(self, episode_id: str) -> None:
         """Clear per-episode perception caches after a new context is provisioned."""
@@ -264,6 +281,7 @@ class SmartRoomLiveEnvironment:
         self._episode_id = episode_id
         self.latest_affordances.clear()
         self._observation_index = 0
+        self._blocked_target = None
 
     async def initialize(self) -> None:
         """Discover live TDs and rewrite container-local forms for the host runtime."""
@@ -290,6 +308,27 @@ class SmartRoomLiveEnvironment:
         if request.previous_result is not None and self.config.settle_after_action_s > 0:
             await asyncio.sleep(self.config.settle_after_action_s)
 
+        previous = request.previous_result
+        if previous is not None and not previous.success:
+            failed_id = str(previous.metadata.get("affordance_id") or "")
+            failed = self.latest_affordances.get(failed_id)
+            # DOM transducers may use an ordinal selector for an otherwise
+            # anonymous element.  A newly mounted modal can change those
+            # ordinals before the recovery observation, causing the probe to
+            # measure the modal button instead of the action that was blocked.
+            # Prefer the declarative selector from a matched semantic binding;
+            # it is runtime-owned grounding and is stripped at ActionContext.
+            selector = (
+                str(failed.locator.get("stable_selector") or failed.locator.get("selector") or "")
+                if failed is not None
+                else ""
+            )
+            if failed_id and selector:
+                # The current failed result is newer than any retained probe.
+                # Replace the old target now so this observation can discover
+                # recovery affordances for the new failure without replaying it.
+                self._blocked_target = (failed_id, selector)
+
         self._observation_index += 1
         captured_at_ms = int(time.time() * 1000)
         page = await self.session.state(page_id=request.task_id, captured_at_ms=captured_at_ms)
@@ -298,6 +337,11 @@ class SmartRoomLiveEnvironment:
             self._annotate(affordance) for model in self.thing_models for affordance in model.affordances
         ]
         affordances = [*page_affordances, *wot_affordances]
+        obstruction: BrowserObstructionObservation | None = None
+        if self._blocked_target is not None:
+            blocked_id, blocked_selector = self._blocked_target
+            obstruction = await observe_browser_obstruction(self.session, target_selector=blocked_selector)
+            affordances.extend(obstruction.recovery_affordances(target_affordance_id=blocked_id))
         if self.allowed_affordance_sources is not None:
             affordances = [
                 affordance for affordance in affordances if affordance.source in self.allowed_affordance_sources
@@ -311,6 +355,13 @@ class SmartRoomLiveEnvironment:
         screenshot = await self.session.screenshot(str(screenshot_path))
 
         assertions = await self._read_dom_assertions(captured_at_ms)
+        if obstruction is not None:
+            assertions.append(obstruction.assertion(timestamp_ms=captured_at_ms))
+            # A missing target ends this probe just as conclusively as an
+            # unblocked target. Retaining its selector would prevent the next
+            # failed DOM action from becoming the tracked obstruction target.
+            if not obstruction.target_exists or not obstruction.blocked:
+                self._blocked_target = None
         device_states: dict[str, Any] = {}
         if self.include_wot_state:
             wot_assertions, device_states = await self._read_wot_assertions(captured_at_ms)
@@ -368,6 +419,7 @@ class SmartRoomLiveEnvironment:
 
     def _annotate(self, affordance: Affordance) -> Affordance:
         locator = dict(affordance.locator)
+        safety_level = affordance.safety_level
         for binding in self.semantic_bindings:
             if not binding.matches(affordance):
                 continue
@@ -375,6 +427,8 @@ class SmartRoomLiveEnvironment:
                 locator["entity_id"] = binding.entity_id
             if binding.state_attribute:
                 locator["state_attribute"] = binding.state_attribute
+            if binding.source == "DOM" and binding.selector:
+                locator["stable_selector"] = binding.selector
             if binding.binds_parameter:
                 locator["binds_parameter"] = binding.binds_parameter
             if binding.completion_for:
@@ -387,7 +441,9 @@ class SmartRoomLiveEnvironment:
                 locator["idempotent"] = True
             if binding.skill_id:
                 locator["skill_id"] = binding.skill_id
-        return replace(affordance, locator=locator)
+            if binding.safety_level is not None:
+                safety_level = binding.safety_level
+        return replace(affordance, locator=locator, safety_level=safety_level)
 
     async def _read_dom_assertions(self, captured_at_ms: int) -> list[ObservedAssertion]:
         assertions: list[ObservedAssertion] = []
@@ -441,10 +497,20 @@ class SmartRoomLiveEnvironment:
             if error is not None:
                 continue
             device_states.setdefault(source.thing_id, {})[source.property] = value
+            entity_id = source.thing_id
+            attribute = source.property
+            for binding in self.semantic_bindings:
+                if binding.source != "WOT" or binding.state_source_property != source.property:
+                    continue
+                if binding.thing_id and binding.thing_id != source.thing_id:
+                    continue
+                entity_id = binding.entity_id or entity_id
+                attribute = binding.state_attribute or attribute
+                break
             assertions.append(
                 ObservedAssertion(
-                    entity_id=source.thing_id,
-                    attribute=source.property,
+                    entity_id=entity_id,
+                    attribute=attribute,
                     value=value,
                     source="wot",
                     confidence=1.0,

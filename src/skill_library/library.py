@@ -90,6 +90,7 @@ def _parse_skill(raw: dict) -> SkillTuple:
         safety_level=raw["safety_level"],
         irreversible=bool(raw["irreversible"]),
         idempotent=bool(raw.get("idempotent", False)),
+        goal_states=[str(value) for value in raw.get("goal_states", [])],
     )
 
 

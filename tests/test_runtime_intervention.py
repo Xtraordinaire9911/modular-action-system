@@ -1,4 +1,4 @@
-"""Runtime integration tests for Project PiP supervision and lifecycle ordering."""
+"""Runtime integration tests for supervised-session lifecycle ordering."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ import copy
 import pytest
 
 from src.contracts.types import Affordance, Condition, ExecutionResult, Observation, SkillCall, SkillTuple
+from src.isolation import AgentInputGuardedExecutor
 from src.isolation.episode import BrowserWotIsolationProvider
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, RuntimeStepResult
@@ -143,13 +144,13 @@ def test_high_risk_action_waits_for_explicit_approval_before_executor_runs():
 
         assert manager.state == RuntimeState.AWAITING_HUMAN
         assert executor.calls == []
-        broker.resolve(request.intervention_id, InterventionDecision(InterventionAction.APPROVE, actor="fadi"))
+        broker.resolve(request.intervention_id, InterventionDecision(InterventionAction.APPROVE, actor="operator"))
         result = await run
 
         assert result.state == RuntimeState.COMPLETED
         assert len(executor.calls) == 1
         assert broker.ledger.records[0].decision == "approve"
-        assert broker.ledger.records[0].actor == "fadi"
+        assert broker.ledger.records[0].actor == "operator"
 
     asyncio.run(scenario())
 
@@ -189,7 +190,7 @@ def test_takeover_resume_reobserves_and_replans_instead_of_executing_stale_plan(
             request.intervention_id,
             InterventionDecision(
                 InterventionAction.RESUME,
-                actor="fadi",
+                actor="operator",
                 note="made the missing control available",
                 correction_applied=True,
             ),
@@ -228,7 +229,7 @@ def test_takeover_resume_does_not_repeat_a_durable_action_the_human_completed():
             request.intervention_id,
             InterventionDecision(
                 InterventionAction.RESUME,
-                actor="fadi",
+                actor="operator",
                 correction_applied=True,
             ),
         )
@@ -265,7 +266,7 @@ def test_operator_cancel_is_scoped_to_one_episode_and_does_not_poison_the_next_r
         request = await broker.next_request(timeout_s=0.2)
         broker.resolve(
             request.intervention_id,
-            InterventionDecision(InterventionAction.CANCEL, actor="fadi", note="stop this task"),
+            InterventionDecision(InterventionAction.CANCEL, actor="operator", note="stop this task"),
         )
         cancelled = await cancelled_run
         assert cancelled.state == RuntimeState.ESCALATED
@@ -306,7 +307,7 @@ def test_post_action_skill_conflict_pauses_and_resume_verifies_before_any_repeat
         assert len(executor.calls) == 1
         broker.resolve(
             request.intervention_id,
-            InterventionDecision(InterventionAction.RESUME, actor="fadi", correction_applied=True),
+            InterventionDecision(InterventionAction.RESUME, actor="operator", correction_applied=True),
         )
         result = await run
 
@@ -353,7 +354,7 @@ def test_post_action_primitive_conflict_pauses_and_resume_replans_the_goal():
         assert len(executor.calls) == 1
         broker.resolve(
             request.intervention_id,
-            InterventionDecision(InterventionAction.RESUME, actor="fadi", correction_applied=True),
+            InterventionDecision(InterventionAction.RESUME, actor="operator", correction_applied=True),
         )
         result = await run
 
@@ -486,5 +487,254 @@ def test_isolated_entrypoint_disposes_when_episode_initialization_fails():
             "browser:stop",
             "wot:release",
         ]
+
+    asyncio.run(scenario())
+
+
+def test_takeover_keeps_agent_input_paused_until_replan_reaches_execution() -> None:
+    async def scenario() -> None:
+        events: list[str] = []
+        control = _ControlSurface(events)
+        broker = InMemoryInterventionBroker()
+
+        class RecordingIsolation(BrowserWotIsolationProvider):
+            manager: ContinuousInteractionManager | None = None
+
+            async def pause(self, session):
+                await super().pause(session)
+                events.append(f"input:paused:{session.input_owner}")
+
+            async def resume(self, session):
+                assert self.manager is not None
+                events.append(f"input:resume:{self.manager.state.value}")
+                await super().resume(session)
+
+        class Provider(_ObservationProvider):
+            async def observe(self, request: ObservationRequest) -> LiveRuntimeObservation | Observation:
+                events.append(f"observe:{request.reason}")
+                return await super().observe(request)
+
+        class Executor(_Executor):
+            async def execute(self, skill_call: SkillCall, observation: Observation) -> ExecutionResult:
+                active = isolation.active_session
+                assert active is not None and active.input_owner == "agent"
+                events.append("executor:start")
+                return await super().execute(skill_call, observation)
+
+        isolation = RecordingIsolation(_BrowserSurface(events), control)
+        raw_executor = Executor()
+        provider = Provider(
+            [
+                _booking_live(confirmed=False, include_confirm=False),
+                _booking_live(confirmed=False, include_confirm=True),
+                _booking_live(confirmed=True, include_confirm=True),
+            ]
+        )
+        manager = ContinuousInteractionManager(
+            {},
+            {"dom": AgentInputGuardedExecutor(isolation, raw_executor)},
+            CognitiveMap(task_id="deferred-resume"),
+            observation_provider=provider,
+            isolation_provider=isolation,
+            intervention_broker=broker,
+        )
+        isolation.manager = manager
+
+        run = asyncio.create_task(manager.run_isolated_goal(goal_id="reserve", goal_state="booking.confirmed == true"))
+        request = await broker.next_request(timeout_s=0.2)
+        assert isolation.active_session is not None
+        assert isolation.active_session.input_owner == "human"
+        broker.resolve(
+            request.intervention_id,
+            InterventionDecision(InterventionAction.RESUME, actor="operator", correction_applied=True),
+        )
+        result = await run
+
+        assert result.state == RuntimeState.COMPLETED
+        assert len(raw_executor.calls) == 1
+        assert events.index("observe:human_intervention_resume") < events.index("input:resume:executing")
+        assert events.index("input:resume:executing") < events.index("executor:start")
+        assert broker.ledger.records[0].reobserved
+        assert broker.ledger.records[0].replanned
+        assert isolation.active_session is None
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("action", [InterventionAction.REJECT, InterventionAction.CANCEL])
+def test_reject_and_cancel_never_return_the_agent_input_lease(action: InterventionAction) -> None:
+    async def scenario() -> None:
+        events: list[str] = []
+        isolation = BrowserWotIsolationProvider(_BrowserSurface(events), _ControlSurface(events))
+        broker = InMemoryInterventionBroker()
+        provider = _ObservationProvider([_booking_live(confirmed=False, include_confirm=False)])
+        manager = ContinuousInteractionManager(
+            {},
+            {},
+            CognitiveMap(task_id=f"no-agent-resume-{action.value}"),
+            observation_provider=provider,
+            isolation_provider=isolation,
+            intervention_broker=broker,
+        )
+
+        resume_calls = 0
+        original_resume = isolation.resume
+
+        async def counting_resume(session):
+            nonlocal resume_calls
+            resume_calls += 1
+            await original_resume(session)
+
+        isolation.resume = counting_resume  # type: ignore[method-assign]
+        run = asyncio.create_task(manager.run_isolated_goal(goal_id="reserve", goal_state="booking.confirmed == true"))
+        request = await broker.next_request(timeout_s=0.2)
+        assert isolation.active_session is not None
+        assert isolation.active_session.input_owner == "human"
+        broker.resolve(request.intervention_id, InterventionDecision(action, actor="operator"))
+        result = await run
+
+        assert result.state == RuntimeState.ESCALATED
+        assert resume_calls == 0
+        assert isolation.active_session is None
+
+    asyncio.run(scenario())
+
+
+def test_failed_precondition_after_takeover_never_returns_agent_input() -> None:
+    async def scenario() -> None:
+        events: list[str] = []
+        isolation = BrowserWotIsolationProvider(_BrowserSurface(events), _ControlSurface(events))
+        broker = InMemoryInterventionBroker()
+        resume_calls = 0
+        original_resume = isolation.resume
+
+        async def counting_resume(session):
+            nonlocal resume_calls
+            resume_calls += 1
+            await original_resume(session)
+
+        isolation.resume = counting_resume  # type: ignore[method-assign]
+
+        class FirstObservationConflict(ContinuousInteractionManager):
+            async def _run_fusion_gate(self, observation: Observation) -> RuntimeStepResult | None:
+                _ = observation
+                calls = getattr(self, "_test_fusion_calls", 0) + 1
+                self._test_fusion_calls = calls
+                self._last_active_perception_trace = []
+                self._last_fusion_decision = {}
+                if calls == 1:
+                    self.state = RuntimeState.ESCALATED
+                    return RuntimeStepResult(
+                        self.state,
+                        None,
+                        recovery_tier=4,
+                        reason="initial observations conflict",
+                        failure_boundary="recoverable_execution_failure",
+                        failure_type="sensory_conflict",
+                    )
+                return None
+
+        guarded_skill = SkillTuple(
+            skill_id="guarded_action",
+            description="Action with a precondition",
+            parameters_schema={},
+            preconditions=[Condition("page_state.door.allowed == true")],
+            postconditions=[Condition("page_state.door.done == true")],
+            allowed_backends=["dom"],
+            preferred_backends=["dom"],
+            rollback=None,
+            failure_modes={},
+            timeout_ms=500,
+            safety_level="low",
+            irreversible=False,
+        )
+        provider = _ObservationProvider(
+            [
+                observation_from_live_sources(page_state={"door": {"allowed": False, "done": False}}),
+                observation_from_live_sources(page_state={"door": {"allowed": False, "done": False}}),
+            ]
+        )
+        manager = FirstObservationConflict(
+            {guarded_skill.skill_id: guarded_skill},
+            {"dom": AgentInputGuardedExecutor(isolation, _Executor())},
+            CognitiveMap(task_id="takeover-precondition"),
+            observation_provider=provider,
+            isolation_provider=isolation,
+            intervention_broker=broker,
+        )
+
+        run = asyncio.create_task(manager.run_isolated_skill(SkillCall(guarded_skill.skill_id, {})))
+        request = await broker.next_request(timeout_s=0.2)
+        broker.resolve(request.intervention_id, InterventionDecision(InterventionAction.RESUME, actor="operator"))
+        result = await run
+
+        assert result.state == RuntimeState.FAILED
+        assert result.failure_type == "precondition_failed"
+        assert resume_calls == 0
+        assert isolation.active_session is None
+
+    asyncio.run(scenario())
+
+
+def test_goal_skill_precondition_is_rechecked_after_takeover_before_replanning() -> None:
+    async def scenario() -> None:
+        events: list[str] = []
+        isolation = BrowserWotIsolationProvider(_BrowserSurface(events), _ControlSurface(events))
+        broker = InMemoryInterventionBroker()
+        resume_calls = 0
+        original_resume = isolation.resume
+
+        async def counting_resume(session):
+            nonlocal resume_calls
+            resume_calls += 1
+            await original_resume(session)
+
+        isolation.resume = counting_resume  # type: ignore[method-assign]
+        guarded_skill = SkillTuple(
+            skill_id="guarded_goal",
+            description="Complete a goal only while the door is allowed",
+            parameters_schema={},
+            preconditions=[Condition("page_state.door.allowed == true")],
+            postconditions=[Condition("page_state.door.done == true")],
+            allowed_backends=["dom"],
+            preferred_backends=["dom"],
+            rollback=None,
+            failure_modes={},
+            timeout_ms=500,
+            safety_level="low",
+            irreversible=False,
+        )
+        provider = _ObservationProvider(
+            [
+                observation_from_live_sources(page_state={"door": {"allowed": True, "done": False}}),
+                observation_from_live_sources(page_state={"door": {"allowed": False, "done": False}}),
+            ]
+        )
+        raw_executor = _Executor()
+        manager = ContinuousInteractionManager(
+            {guarded_skill.skill_id: guarded_skill},
+            {"dom": AgentInputGuardedExecutor(isolation, raw_executor)},
+            CognitiveMap(task_id="goal-takeover-precondition"),
+            observation_provider=provider,
+            isolation_provider=isolation,
+            intervention_broker=broker,
+        )
+
+        run = asyncio.create_task(
+            manager.run_isolated_goal(
+                goal_id=guarded_skill.skill_id,
+                goal_state="page_state.door.done == true",
+            )
+        )
+        request = await broker.next_request(timeout_s=0.2)
+        broker.resolve(request.intervention_id, InterventionDecision(InterventionAction.RESUME, actor="operator"))
+        result = await run
+
+        assert result.state == RuntimeState.FAILED
+        assert result.failure_type == "precondition_failed"
+        assert result.reason == "selected Skill precondition failed after takeover"
+        assert resume_calls == 0
+        assert raw_executor.calls == []
+        assert isolation.active_session is None
 
     asyncio.run(scenario())

@@ -28,7 +28,6 @@
   "RerouteTransitionRate": 0.0,
   "RetryTransitionRate": 0.0,
   "RollbackTransitionRate": 0.0,
-  "SAR": 0.0,
   "SafetyNonRegression": 1.0,
   "TSR": 0.0,
   "UAR": 0.0,
