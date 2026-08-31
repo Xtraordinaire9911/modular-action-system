@@ -38,6 +38,10 @@ schemas, rate limits, and security metadata at runtime.
 
 ## Failure Injection
 
+The complete five-scene live campaign, including the Runtime entrypoint and
+independent acceptance oracles, is documented in
+[`SMART_ROOM_FIVE_RECOVERY_DEMO.md`](../SMART_ROOM_FIVE_RECOVERY_DEMO.md).
+
 WoT side, via the control plane on port 8081:
 
 ```bash

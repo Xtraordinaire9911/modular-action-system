@@ -38,13 +38,17 @@ _MARK = {
 
 
 def cmd_list(_args: argparse.Namespace) -> int:
-    print(f"\n{'DEMO':<18} {'STATUS':<12} {'TIME':<8} TITLE")
+    # Measured, not a constant: a name longer than the column silently shifts
+    # every field on its row out of alignment, and this table gets shown on a
+    # projector where a misaligned row reads as a broken tool.
+    width = max(len("DEMO"), *(len(d.name) for d in DEMOS))
+    print(f"\n{'DEMO':<{width}} {'STATUS':<12} {'TIME':<8} TITLE")
     print("-" * 78)
     ready = 0
     for demo in DEMOS:
         status = status_of(demo)
         ready += 1 if status.ready else 0
-        print(f"{demo.name:<18} {_MARK[status.state]:<12} {demo.duration_hint:<8} {demo.title}")
+        print(f"{demo.name:<{width}} {_MARK[status.state]:<12} {demo.duration_hint:<8} {demo.title}")
     print("-" * 78)
     print(f"{ready} of {len(DEMOS)} runnable on this machine.\n")
     print("  python scripts/demo.py run <name> --headed")

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -202,6 +202,45 @@ async def _run_ablation(
     }
 
 
+@dataclass
+class _ObservedConflict:
+    """One perceptual disagreement, as the episode recorded resolving it.
+
+    Both terms of CRR are observable: the conflict happened because the probe
+    was triggered, and it is resolved or it is not. No oracle label is involved.
+
+    Not frozen, although nothing here mutates it: ``ConflictLike`` in the
+    aggregator declares its members as attributes rather than read-only
+    properties, and a frozen dataclass does not satisfy such a protocol.
+    """
+
+    conflict_type: str
+    resolved: bool
+
+
+# The surface a skill targets is fixed by how the skill is defined, not by what
+# the router picked at run time. Scoring the router against its own choice would
+# yield 1.0 by construction, so these labels are written from the case
+# definitions above: book_room drives the dashboard form, the temperature skills
+# write a WoT property, and the rollback skill dispatches the restore effector.
+_EXPECTED_BACKENDS: dict[str, str] = {
+    "book_room": "dom",
+    "set_temperature_live": "wot",
+    "set_temperature_reflex": "wot",
+    "restore_temperature_live": "restore",
+}
+
+
+def _observed_conflicts(result: RuntimeStepResult) -> list[_ObservedConflict]:
+    return [
+        _ObservedConflict(
+            conflict_type=str(step.get("action") or "sensory_conflict"),
+            resolved=step.get("resolved") is True,
+        )
+        for step in result.active_perception_trace
+    ]
+
+
 async def _run_suite(
     session: ThreadedBrowserSession,
     config: LiveEnvironmentConfig,
@@ -296,6 +335,8 @@ async def _run_suite(
             timeout.episode_id: 1,
             rollback.episode_id: 3,
         },
+        expected_backends=_EXPECTED_BACKENDS,
+        conflicts_by_episode={result.episode_id: _observed_conflicts(result) for result in results},
     )
     metrics = aggregate_metrics(
         dataset,

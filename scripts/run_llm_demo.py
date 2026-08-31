@@ -43,8 +43,8 @@ Four scenes:
 
   1. a booking phrased the way the rules expect      both succeed - the model is
                                                      earning nothing here
-  2. the same booking phrased like a person          twelve patterns, no match;
-                                                     the model interprets it
+  2. the same booking phrased like a person          every pattern tried, none
+                                                     match; the model interprets it
   3. a goal no control on the page can reach         resolved from the room's own
                                                      Thing Descriptions, written
                                                      over WoT, read back
@@ -75,6 +75,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.run_room_prepared import reset_room  # noqa: E402
 from src.demos.model_panel import ModelPanel  # noqa: E402
+from src.demos.pointer_overlay import (  # noqa: E402
+    OK_COLOR,
+    clear_pointer,
+    point_at_selector,
+)
 from src.demos.realistic_faults import FAULTS  # noqa: E402
 from src.effectors.wot_executor import WotExecutor  # noqa: E402
 from src.perception.td_affordance_parser import TdAffordanceParser  # noqa: E402
@@ -126,7 +131,14 @@ SCENES: tuple[Scene, ...] = (
     Scene(
         title="SCENE 2/4 - phrased the way a person speaks",
         utterance="I need somewhere to present at 15:00, room B please",
-        why="Same intent, none of the twelve patterns match. Measured over nine such requests: rules 0, model 9.",
+        # The count is computed, not spelled out. It said "twelve" while the
+        # panel beside it counted thirteen, because a pattern was added and the
+        # prose was not - and a demo whose narration contradicts its own counter
+        # is the exact failure this demo exists to complain about.
+        why=(
+            f"Same intent, none of the {len(rule_trace(''))} patterns match. "
+            "Measured over nine such requests: rules 0, model 9."
+        ),
         expect_goal="room_booked",
         expect_rules_to_fail=True,
     ),
@@ -379,15 +391,24 @@ def act_on_page(
     # this the run would book whatever the form happened to be showing and still
     # report success, which is the same class of false success this demo exists
     # to catch - just committed by the runner instead of the page.
+    #
+    # The pointer moves to each control first. Values that change with no visible
+    # cause read as a page reloading with different defaults; a cursor that
+    # travels to the field and then to the button is the difference between
+    # watching an agent act and being told that it did.
     filled = binding.bindings_for(plan.goal.parameters)
     for name, control in filled.items():
         if exists(session, control):
+            point_at_selector(session, control, label=f"{name} <- {plan.goal.parameters[name]!r}")
+            time.sleep(pace * 0.45)
             session.fill(control, str(plan.goal.parameters[name]))
     if filled:
         entered = ", ".join(f"{n}={plan.goal.parameters[n]!r}" for n in filled)
         panel.conclude(f"entered from the model's own answer: {entered}", "ok")
         time.sleep(pace * 0.5)  # a short line, and the values are echoed on screen
 
+    point_at_selector(session, completion, label="click", color=OK_COLOR)
+    time.sleep(pace * 0.5)
     session.click(completion)
     return (
         binding.success_region(plan.goal.parameters),
@@ -434,6 +455,10 @@ def act_on_device(
         f"discovered {room.titles()}; resolved to {where} = {resolved.value} (from the Thing Descriptions)",
         "ok",
     )
+    # The pointer marks the panel that will change, labelled with the property
+    # being written rather than the widget being touched - there is no widget.
+    # This is the moment the action leaves the browser, so it is worth marking.
+    point_at_selector(session, view.region, label=f"{where} <- {resolved.value}")
     time.sleep(pace * 1.4)
 
     try:
@@ -571,6 +596,12 @@ def run_scene(
     time.sleep(pace * 1.6)
 
     # --- the second modality ---------------------------------------------------
+    # The pointer comes off the page first. It is drawn over the region that is
+    # about to be photographed, so leaving it there would put our own overlay
+    # into the image the model is asked to judge - and scene 4's whole claim is
+    # that the model reports what is actually visible. A ring around a blank
+    # confirmation is still something visible in a blank crop.
+    clear_pointer(session)
     image = session.screenshot_element(region) or session.screenshot()
     panel.looking(
         getattr(observer.client, "name", "") or "no vision model configured",
@@ -627,6 +658,11 @@ def main() -> int:
     parser.add_argument("--hold", type=float, default=3.0, help="Seconds to stay on the final summary.")
     parser.add_argument("--headless", dest="headed", action="store_false", default=True)
     parser.add_argument("--record", action="store_true", help="Capture the page and convert it to mp4.")
+    parser.add_argument(
+        "--out",
+        default="",
+        help="Write this run to an exact directory (default: timestamped eval_outputs/llm_demo/).",
+    )
     parser.add_argument("--dashboard", default=DASHBOARD_URL, help="Smart-room dashboard URL.")
     parser.add_argument("--directory", default=DIRECTORY_URL, help="Thing Directory base URL.")
     parser.add_argument(
@@ -650,7 +686,11 @@ def main() -> int:
     from src.perception.browser_session import BrowserSession
 
     repo = Path(__file__).resolve().parents[1]
-    out = repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S")
+    out = (
+        Path(args.out).expanduser().resolve()
+        if args.out
+        else (repo / "eval_outputs" / "llm_demo" / datetime.now().strftime("%Y%m%d_%H%M%S"))
+    )
     out.mkdir(parents=True, exist_ok=True)
 
     # The declared use case: the dashboard is the page a person uses, and the

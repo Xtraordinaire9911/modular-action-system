@@ -1,0 +1,60 @@
+{
+  "at": "2026-08-29T23:06:44",
+  "stages": {
+    "understand": {
+      "source": "llm",
+      "model": "qwen-plus",
+      "confidence": 1.0,
+      "latency_ms": 13653.9,
+      "goal_state": "temperature_set",
+      "parameters": {
+        "degrees": 24
+      },
+      "error": ""
+    },
+    "reach": {
+      "goal_state": "temperature_set",
+      "thing_id": "urn:uuid:2a7903a6-f5f2-490c-a7d8-2474ef2faf9a",
+      "thing_title": "thermostat",
+      "property": "targetTemperature",
+      "write": {
+        "href": "http://localhost:8080/thermostat/properties/targetTemperature",
+        "method": "GET"
+      },
+      "read": {
+        "href": "http://localhost:8080/thermostat/properties/targetTemperature",
+        "method": "GET"
+      },
+      "value": 24,
+      "discovered_things": [
+        "urn:uuid:2a7903a6-f5f2-490c-a7d8-2474ef2faf9a",
+        "urn:uuid:db332b5f-7f65-491b-b376-992cadcaf3f4",
+        "urn:uuid:d92b0e5c-1d74-47a0-bbd2-c0b648153439",
+        "urn:uuid:d80b4f8f-2187-4189-971b-594be3e14933",
+        "urn:uuid:8a0e2f05-d8d6-464d-9e39-ed19fe646be9"
+      ],
+      "resolved_from": "thing_directory"
+    },
+    "act": {
+      "commanded_read_back": 24,
+      "measured": 24,
+      "arrived": true,
+      "waited_s": 2.68
+    },
+    "fail": {
+      "commanded": 40,
+      "measured": 100,
+      "detected": true
+    },
+    "recover": {
+      "answered_by": "qwen-plus",
+      "actions": 1,
+      "escalated": true,
+      "reason": "recovery planning is owned by the injected Agent/Planner implementation"
+    },
+    "restore": {
+      "reset_ok": true,
+      "measured_after": 100
+    }
+  }
+}

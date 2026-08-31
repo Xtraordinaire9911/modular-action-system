@@ -55,6 +55,11 @@ class SkillTuple:
     safety_level: Literal["low", "medium", "high"]
     irreversible: bool
     idempotent: bool = False
+    # Stable semantic goals this reusable Skill can satisfy.  ``goal_id`` is
+    # still matched first for backward compatibility, while these aliases let
+    # an intent such as ``room_booked`` select ``confirm_booking`` without
+    # sharing a person- or utterance-specific identifier.
+    goal_states: list[str] = field(default_factory=list)
 
 
 @dataclass

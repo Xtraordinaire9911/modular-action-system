@@ -13,12 +13,14 @@ from evaluation.metrics_aggregator import MetricReport, aggregate_metrics, datas
 from src.adaptation.llm_judge import LLMJudge
 from src.adaptation.trace_ledger import TraceLedger
 from src.contracts.types import Observation, SkillCall, SkillTuple
+from src.isolation import AgentInputGuardedExecutor, EpisodeIsolationProvider
 from src.recovery.recovery_cascade import RecoveryCascade
 from src.runtime.backend_router import RuntimeBackendRouter
 from src.runtime.cognitive_map import CognitiveMap
 from src.runtime.continuous_interaction_manager import ContinuousInteractionManager, Executor, RuntimeStepResult
 from src.runtime.episode import EpisodePolicy, ObservationRequest, TransitionLedger
 from src.runtime.goal_spec import GoalSpec
+from src.runtime.intervention import InterventionBroker, InterventionLedger
 from src.runtime.live_observation import LiveRuntimeObservation, bind_live_observation_to_request
 from src.runtime.plan_validator import PlanValidator
 from src.runtime.planner_port import PlannerPort
@@ -43,6 +45,7 @@ class RuntimeEpisodeOutcome:
     transition_ledger: TransitionLedger
     failure_ledger: TraceLedger
     metrics: MetricReport
+    intervention_ledger: InterventionLedger = field(default_factory=InterventionLedger)
 
 
 class RuntimeEnvironmentAdapter(Protocol):
@@ -83,6 +86,24 @@ class StaticRuntimeEnvironmentAdapter:
         return self._executors
 
 
+def _guard_agent_executors(
+    executors: dict[str, Executor],
+    isolation_provider: EpisodeIsolationProvider | None,
+) -> dict[str, Executor]:
+    """Apply the provider's software input gate once to every executor."""
+
+    if isolation_provider is None or not callable(getattr(isolation_provider, "require_input", None)):
+        return executors
+    return {
+        backend: (
+            executor
+            if isinstance(executor, AgentInputGuardedExecutor)
+            else AgentInputGuardedExecutor(isolation_provider, executor)  # type: ignore[arg-type]
+        )
+        for backend, executor in executors.items()
+    }
+
+
 class RuntimeEpisodeRunner:
     """Run a structured goal episode through the canonical runtime loop."""
 
@@ -101,6 +122,9 @@ class RuntimeEpisodeRunner:
         active_perception_resolver: ActivePerceptionResolver | None = None,
         system2_planner: PlannerPort | None = None,
         plan_validator: PlanValidator | None = None,
+        isolation_provider: EpisodeIsolationProvider | None = None,
+        intervention_broker: InterventionBroker | None = None,
+        intervention_ledger: InterventionLedger | None = None,
     ) -> None:
         self.skill_library = dict(skill_library or {})
         self.episode_policy = episode_policy
@@ -114,17 +138,29 @@ class RuntimeEpisodeRunner:
         self.active_perception_resolver = active_perception_resolver
         self.system2_planner = system2_planner
         self.plan_validator = plan_validator
+        self.isolation_provider = isolation_provider
+        self.intervention_broker = intervention_broker
+        self.intervention_ledger = intervention_ledger
 
     async def run_goal_episode(
         self,
         adapter: RuntimeEnvironmentAdapter,
         spec: RuntimeEpisodeSpec,
+        *,
+        isolation_provider: EpisodeIsolationProvider | None = None,
+        intervention_broker: InterventionBroker | None = None,
+        intervention_ledger: InterventionLedger | None = None,
     ) -> RuntimeEpisodeOutcome:
-        await adapter.reset(spec)
+        isolation_provider = isolation_provider if isolation_provider is not None else self.isolation_provider
+        intervention_broker = intervention_broker if intervention_broker is not None else self.intervention_broker
+        intervention_ledger = intervention_ledger if intervention_ledger is not None else self.intervention_ledger
+        if isolation_provider is None:
+            await adapter.reset(spec)
         cognitive_map = CognitiveMap(task_id=spec.task_id)
+        executors = _guard_agent_executors(adapter.executors(), isolation_provider)
         manager = ContinuousInteractionManager(
             self.skill_library,
-            adapter.executors(),
+            executors,
             cognitive_map,
             backend_router=self.backend_router,
             epistemic_arbiter=self.epistemic_arbiter,
@@ -138,31 +174,42 @@ class RuntimeEpisodeRunner:
             episode_policy=self.episode_policy,
             transition_ledger=self.transition_ledger,
             failure_ledger=self.failure_ledger,
+            isolation_provider=isolation_provider,
+            intervention_broker=intervention_broker,
+            intervention_ledger=intervention_ledger,
         )
-        initial = await adapter.observe(
-            ObservationRequest(
-                task_id=spec.task_id,
-                episode_id="",
-                reason="initial_observation",
-                step=0,
-            )
-        )
-        if isinstance(initial, LiveRuntimeObservation):
-            result = await manager.run_observed_goal(
-                initial,
+        if isolation_provider is not None:
+            result = await manager.run_isolated_goal(
                 goal_id=spec.goal_id,
                 goal_state=spec.goal_state,
                 parameters=spec.parameters,
                 goal_spec=spec.goal_spec,
             )
         else:
-            result = await manager.run_goal(
-                goal_id=spec.goal_id,
-                goal_state=spec.goal_state,
-                parameters=spec.parameters,
-                observation=initial,
-                goal_spec=spec.goal_spec,
+            initial = await adapter.observe(
+                ObservationRequest(
+                    task_id=spec.task_id,
+                    episode_id="",
+                    reason="initial_observation",
+                    step=0,
+                )
             )
+            if isinstance(initial, LiveRuntimeObservation):
+                result = await manager.run_observed_goal(
+                    initial,
+                    goal_id=spec.goal_id,
+                    goal_state=spec.goal_state,
+                    parameters=spec.parameters,
+                    goal_spec=spec.goal_spec,
+                )
+            else:
+                result = await manager.run_goal(
+                    goal_id=spec.goal_id,
+                    goal_state=spec.goal_state,
+                    parameters=spec.parameters,
+                    observation=initial,
+                    goal_spec=spec.goal_spec,
+                )
         metrics = aggregate_metrics(
             dataset_from_runtime_results([result], self.transition_ledger),
             data_source=spec.data_source,
@@ -173,6 +220,7 @@ class RuntimeEpisodeRunner:
             cognitive_map=cognitive_map,
             transition_ledger=self.transition_ledger,
             failure_ledger=self.failure_ledger,
+            intervention_ledger=manager.intervention_ledger,
             metrics=metrics,
         )
 
@@ -181,12 +229,21 @@ class RuntimeEpisodeRunner:
         adapter: RuntimeEnvironmentAdapter,
         skill_call: SkillCall,
         spec: RuntimeEpisodeSpec,
+        *,
+        isolation_provider: EpisodeIsolationProvider | None = None,
+        intervention_broker: InterventionBroker | None = None,
+        intervention_ledger: InterventionLedger | None = None,
     ) -> RuntimeEpisodeOutcome:
-        await adapter.reset(spec)
+        isolation_provider = isolation_provider if isolation_provider is not None else self.isolation_provider
+        intervention_broker = intervention_broker if intervention_broker is not None else self.intervention_broker
+        intervention_ledger = intervention_ledger if intervention_ledger is not None else self.intervention_ledger
+        if isolation_provider is None:
+            await adapter.reset(spec)
         cognitive_map = CognitiveMap(task_id=spec.task_id)
+        executors = _guard_agent_executors(adapter.executors(), isolation_provider)
         manager = ContinuousInteractionManager(
             self.skill_library,
-            adapter.executors(),
+            executors,
             cognitive_map,
             backend_router=self.backend_router,
             epistemic_arbiter=self.epistemic_arbiter,
@@ -200,17 +257,23 @@ class RuntimeEpisodeRunner:
             episode_policy=self.episode_policy,
             transition_ledger=self.transition_ledger,
             failure_ledger=self.failure_ledger,
+            isolation_provider=isolation_provider,
+            intervention_broker=intervention_broker,
+            intervention_ledger=intervention_ledger,
         )
-        initial = await adapter.observe(
-            ObservationRequest(
-                task_id=spec.task_id,
-                episode_id="",
-                reason="initial_observation",
-                step=0,
+        if isolation_provider is not None:
+            result = await manager.run_isolated_skill(skill_call)
+        else:
+            initial = await adapter.observe(
+                ObservationRequest(
+                    task_id=spec.task_id,
+                    episode_id="",
+                    reason="initial_observation",
+                    step=0,
+                )
             )
-        )
-        observation = initial.apply_to(cognitive_map) if isinstance(initial, LiveRuntimeObservation) else initial
-        result = await manager.run_skill(skill_call, observation)
+            observation = initial.apply_to(cognitive_map) if isinstance(initial, LiveRuntimeObservation) else initial
+            result = await manager.run_skill(skill_call, observation)
         metrics = aggregate_metrics(
             dataset_from_runtime_results([result], self.transition_ledger),
             data_source=spec.data_source,
@@ -221,5 +284,6 @@ class RuntimeEpisodeRunner:
             cognitive_map=cognitive_map,
             transition_ledger=self.transition_ledger,
             failure_ledger=self.failure_ledger,
+            intervention_ledger=manager.intervention_ledger,
             metrics=metrics,
         )

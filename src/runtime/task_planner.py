@@ -207,6 +207,8 @@ def primitive_for_affordance(affordance: RuntimeAffordance) -> PrimitiveActionTy
         return "type"
     if action_type in {"select", "dropdown"} or action_name == "select":
         return "select"
+    if action_name in {"write_property", "writeproperty"}:
+        return "invoke"
     if action_type in {"property", "sensor", "read"}:
         return "read"
     if action_type in {"action", "invoke"} or action_name.startswith("set_"):

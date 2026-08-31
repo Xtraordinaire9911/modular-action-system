@@ -15,6 +15,23 @@ Around that contract sits a complete loop — observe, plan, act, verify,
 recover — with backend routing, pre/postcondition checks, a recovery cascade,
 and failure-injection evaluation.
 
+### Final presentation demo
+
+The presentation-grade runner combines the canonical smart-room request with
+bounded Runtime/System-1, five-family recovery, model/VLM, Set-of-Marks, and
+adaptation chapters. It validates outcomes and writes one evidence manifest:
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+.venv/bin/python scripts/run_final_presentation_demo.py --profile complete --model-mode recorded --check
+.venv/bin/python scripts/run_final_presentation_demo.py --profile complete --model-mode recorded --headless --auto-approve --fast
+```
+
+Use `--profile presentation --pause-between-chapters` for the headed team run.
+See [FINAL_PRESENTATION_DEMO.md](FINAL_PRESENTATION_DEMO.md) for the ten-minute
+three-presenter cut, exact operator choices, model setup, evidence contract,
+recording strategy, and truthful claim boundaries.
+
 
 ### What the language model actually changes
 
@@ -143,6 +160,23 @@ VLM feedback used by the DOM/visual scene are explicitly simulated; this video
 does not claim a production Planner, production VLM, or unrestricted open-web
 run.
 
+### Five-scene live Smart Room recovery demo
+
+The runnable counterpart uses the real React dashboard, Eclipse Thingweb
+node-wot devices, Playwright/WoT executors and production Runtime/CIM. It injects
+overlay obstruction, session expiry, optimistic rollback, DOM/WoT disagreement
+and an ineffective UI affordance, then verifies recovery and the original goal
+against fresh environment state.
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+python scripts/run_smart_room_five_recovery_demo.py
+```
+
+See [the five-scene runbook](SMART_ROOM_FIVE_RECOVERY_DEMO.md) for the exact
+pipeline, evidence files and claim boundary. This is source and a reproducible
+live run, not an uploaded recording.
+
 
 ## What is implemented, and what is not
 
@@ -161,7 +195,7 @@ matching its code.
 | Devices resolved from discovery, not from code | **Implemented, verified against the servient** | `src/planner/device_binding.py` names a *kind* of Thing and a property; the concrete write target comes from the Thing Descriptions fetched at runtime from the directory. No binding contains a URL or a port, and a test asserts that. A Thing the directory does not offer makes the goal unsupported rather than being approximated with the nearest device. `pytest -m smartroom` asserts this against the running servient. |
 | Composite device goal (`room_prepared`) | **Implemented, verified per property** | One sentence resolves to four writable properties across four Things. Each is written and then **read back**, and the goal is met only where the value that comes back is the value asked for — the servient answers a write that changed nothing with a success status, so the status is not the evidence. A part the room does not have is reported as skipped when the declaration marks it optional and fails the goal when it does not. `scripts/run_room_prepared.py --ignore lights.brightness` drops one write on purpose and the run reports NOT PREPARED. |
 | Failure diagnosis | **Implemented** | Four probes measure the live page after a failure (`src/demos/probes.py`); the conclusion is drawn from those measurements and nothing is told which fault was injected. |
-| Recovery | **Runtime boundary implemented; Planner integration pending** | Runtime returns typed `FailureContext` plus fresh observed capabilities through `PlannerPort`, validates any returned primitive, executes it, re-observes, verifies, and resumes. Runtime does not choose recovery semantics. The five capability fixtures are ready, but end-to-end autonomous recovery now waits for the Planner owner. Autocomplete remains outside Runtime recovery scope. |
+| Recovery | **Unified PlannerPort integration implemented** | `AgentPlanner` is the one action-selection authority for typed `forward` and `recovery` modes. Runtime returns `FailureContext` plus fresh observed capabilities, validates the selected primitive, executes it, re-observes, verifies the recovery effect, and resumes the original goal. The supervised smart-room composition injects this planner; `--use-model` enables model decisions in both modes, while an unavailable or disabled model is recorded with the effective deterministic primitive. A completion affordance is withheld until fresh state proves every effective required/default parameter binding. VLM/DOM/WoT remain perception sources and Runtime retains execution authority. Autocomplete remains outside Runtime recovery scope. |
 | Generalisation evidence (M1) | **Produced, and small** | `scripts/run_intent_episode.py --suite` runs seven spoken requests over two environments through the real runtime and writes the M1 table (`artifacts/intent_cross_env/`). Six tasks over two local mocks of similar shape: a working generalisation harness, not a generalisation result. |
 | Model confidence as a safety gate | **Weak, and calibrated rather than assumed** | `qwen-vl-plus` reports 1.00 on every clear observation and 0.90 on a region cut off mid-word; that is its whole range. The abstention threshold was 0.55 — a value no answer ever came near, so the gate could not fire. It is now 0.95, set from the measurement, and it is model-specific: another model needs `scripts/eval_model_value.py` re-run. **A confident wrong answer still passes the gate.** What makes a wrong answer safe is the arbiter turning a disagreement into a conflict, which does not consult confidence. |
 | Sample sizes behind the demo metrics | **At the bar, with a caveat** | `--repeat 30` gives 210 episodes, 30 per condition, saved in `artifacts/agent_loop_campaign_30x7/`. The faults and the diagnosis are deterministic, so 30 repetitions establish **reproducibility, not variance** — RTA/DA at 100% means 30 identical correct answers, not an estimated distribution. A default single run is n=1 per fault and must not be quoted. |
@@ -169,46 +203,25 @@ matching its code.
 | Two agent loops in the repository | **Known duplication** | `scripts/run_agent_loop_demo.py` implements its own observe/plan/act/verify/recover rather than driving `src/runtime/continuous_interaction_manager.py`. It is the narration surface and is honest about what it runs, but it is a second loop. `scripts/run_intent_episode.py` is the one that drives the integrated runtime; the demo has not been migrated onto it. |
 | MiniWoB++ 12/12 result | **Scripted, not agent-driven** | Those tasks are solved by hand-written solvers in `src/benchmarks/`. The number measures the solvers, not the agent, and must not be read as an agent benchmark. |
 | Real open-web validation | **Not implemented** | All evidence is local mock environments and controlled fixtures. |
-| Picture-in-Picture supervised interface | **Implemented for the web, not for Windows** | See Terminology below. `src/isolation/episode.py` and `src/runtime/intervention.py` give a serialized episode its own browser context, checkpoint/restore of WoT state, an input lease, and a supervised pause a person can take over from. That is a genuine supervised interface. What is **not** claimed is the UFO2 Windows form: no child desktop, no OS-level input or process boundary. Browser-context isolation on its own is still not PiP. |
+| Supervised session isolation | **Implemented for the shared web/WoT runtime** | `RuntimeEpisodeRunner` can provision a fresh browser/WoT episode, pause for an operator, re-observe after takeover and restore state. Guarded software executors enforce the input lease. This is not called PiP because ordinary OS mouse/keyboard input is not isolated. |
 
 Every runtime decision records whether it came from a model or a deterministic
 fallback, and both paths are written to a JSONL ledger under `artifacts/`, so
 the distinction can be audited rather than taken on trust.
 
-## Terminology: what Picture-in-Picture means here
+## Terminology: supervised sessions are not Windows PiP
 
-The review corrected this team on the term, and the correction is recorded here
-rather than only in a commit message, because the misreading had propagated into
-a module name, a docstring and a claims row.
-
-**Picture-in-Picture, in the referenced work, is a supervised interface.** The
-agent operates in a visibly separate session that a person can watch while it
-runs and take over from at any point. It is a human-oversight mechanism. It is
-not a window style, and it is not the same thing as giving each episode its own
-sandbox.
-
-Two properties in this repository were being described with that word and are
-not it:
+The UFO2 paper's PiP gives the agent a separate desktop/input session. This
+repository currently provides three smaller, useful properties:
 
 | what it is | what it gives you | what it is not |
 |---|---|---|
-| **Browser-context isolation** (`src/perception/browser_session.py`) | one episode cannot observe or disturb another: separate cookies, storage, cache | no human can watch or intervene; there is nothing to take over |
-| **Narration panel** (`src/demos/narration_console.py`) | a viewer can read what the agent is doing and why, while it happens | read-only; it displays, it does not hand control to anyone |
+| **Browser/WoT episode isolation** | fresh browser state plus checkpoint/reset/restore of the simulated room | not a separate OS desktop or security sandbox |
+| **Supervised takeover** | the runtime pauses, records the decision, then re-observes and replans | not independent physical mouse/keyboard queues |
+| **Software input lease** | guarded agent executors are blocked while the operator owns control | cooperative software enforcement; it cannot capture the OS mouse |
 
-Human oversight now exists in two places. `src/recovery/supervised_takeover.py`
-pauses a tier-4 episode, records what the supervisor decided and reports a
-correction rate. On top of that, `src/isolation/episode.py` and
-`src/runtime/intervention.py` give an episode its own browser context and WoT
-checkpoint, and hand the input lease to a person who can take over mid-episode -
-which does meet the definition above, for the web.
-
-What is still not claimed is the Windows form in the paper: a child desktop over
-RDP with an independent OS input and process boundary. Two properties in this
-repository were being described with the word "PiP" before any of that existed,
-and both are still not it on their own:
-
-The module formerly called `pip_console` is now `narration_console`, for the
-same reason.
+Accordingly, current code and demos use **supervised session isolation**. “Full
+UFO2 Windows PiP” is reserved for a future separate desktop/VM/RDP provider.
 
 ## Branch Discipline
 
@@ -258,8 +271,8 @@ dependency is installed. `--check` reports the environment and stops;
 ```bash
 uv run --with pytest pytest        # fast: contracts, perception, effectors,
                                     # router, recovery, runtime — a few seconds
-uv run --with pytest pytest -m live       # + 14 tests against a real Chromium
-uv run --with pytest pytest -m smartroom  # + 6 tests against the running servient
+uv run --with pytest pytest -m live       # + 15 tests against a real Chromium
+uv run --with pytest pytest -m smartroom  # + 16 tests against the running servient
 ```
 
 The fast suite never opens a browser or a socket, so it cannot corroborate a
@@ -269,7 +282,7 @@ needs the Docker services below running first.
 ### Start the smart room
 
 ```bash
-docker compose -f env/docker-compose.yml up --build
+docker compose -f env/docker-compose.yml up --build -d
 ```
 
 Dashboard on `:3000`; the Things and their Thing Descriptions on `:8080`; the
@@ -288,6 +301,18 @@ The sentence goes through `IntentPlanner`, the resulting `GoalSpec` into
 `RuntimeEpisodeRunner` on a live page, and a vision model verifies the region
 the goal names. `--suite` also prints which utterances the rule fallback could
 not have handled.
+
+The supervised smart-room entrypoint composes the unified action planner:
+
+```bash
+python scripts/run_supervised_smartroom_demo.py --auto-approve
+python scripts/run_supervised_smartroom_demo.py --auto-approve --use-model
+```
+
+Without `--use-model`, the same `AgentPlanner` owns both modes but delegates
+forward selection to the deterministic affordance controller and escalates when
+recovery has no model decision. With `--use-model`, one planner chooses one
+validated primitive per observe/act cycle in both forward and recovery modes.
 
 This one runs on the **local mock environments**, not the smart room: it serves
 them from its own static server, which is what lets it run with no Docker and no
@@ -317,6 +342,80 @@ python scripts/demo.py list      # every registered demo and its status
 python scripts/demo.py doctor    # why one is not runnable on this machine, and the fix
 ```
 
+### Shared supervised smart-room session
+
+The primary supervised demo now uses the same `RuntimeEpisodeRunner` as the
+rest of the action system. One structured request is grounded across both room
+surfaces inside one checkpointed episode:
+
+```text
+utterance -> GoalSpec -> reusable Skill -> DOM + WoT primitives
+          -> verification -> optional takeover -> fresh replan -> restore
+```
+
+Start the room and run the visual demo:
+
+```bash
+docker compose -f env/docker-compose.yml up --build -d
+.venv/bin/python scripts/run_supervised_smartroom_demo.py
+```
+
+The agent fills Room C / 15:30, sets the lights, projector and thermostat over
+WoT, then pauses before **Book Room**. Choose `t`, complete the click in the
+browser, return to the terminal and press Enter. The runtime takes a new
+observation, discards the old plan, verifies the result and restores the exact
+room state captured before the episode.
+
+For an unattended check:
+
+```bash
+.venv/bin/python scripts/run_supervised_smartroom_demo.py --auto-approve --headless --step-delay 0
+```
+
+Evidence is written to `artifacts/supervised_smartroom/`. The saved unattended
+artifact proves intent and Skill selection, DOM and WoT execution, explicit
+approval, final verification, and restoration of the original room state. Its
+intervention correctly has `reobserved: false` and `replanned: false`, because
+approval lets the agent execute the already-pending action. An interactive
+takeover with `t` is the path that proves fresh re-observation and replanning;
+that run records `resume`, `reobserved: true`, and `replanned: true`.
+
+The short weekly-meeting deck, including simple speaker notes, is at
+`output/presentations/Supervised_Smartroom_Session_Update.pptx`. The matching
+runbook and code talk track are in `SUPERVISED_SMARTROOM_WALKTHROUGH.md`.
+
+### What the isolation milestone does — and does not do
+
+`BrowserWotIsolationProvider` creates a fresh browser context, checkpoints and
+resets the simulated room before the first observation, requests a cooperative
+episode lease, and restores everything in `finally`. Other supervised sessions
+using this provider wait for that lease. A direct API client or other external
+writer does not use the lease and is not blocked by it. The canonical
+`RuntimeEpisodeRunner` activates this lifecycle whenever an isolation provider
+is configured.
+
+A typed software input lease allows guarded agent executors only while the
+agent owns control. During a pause the lease belongs to the operator; after
+cleanup it belongs to nobody. This prevents the action system's software paths
+from issuing agent actions during takeover.
+
+This is **supervised session isolation**, not UFO2 Windows PiP. It does not
+create a Windows child desktop and cannot block a physical OS mouse or keyboard
+from touching a visible browser. Genuine OS-level input/process independence
+still requires a separate desktop, VM, or remote session.
+
+### Focused component rehearsal
+
+The smaller booking-only rehearsal remains useful without Docker:
+
+```bash
+.venv/bin/python scripts/run_supervised_session_demo.py --dry-run
+```
+
+It writes `artifacts/supervised_session_demo/episode.json`. This artifact is
+synthetic contract evidence; use the shared smart-room command above for the
+live visual demonstration.
+
 ## Architecture Map
 
 | Requirement | Implementation |
@@ -326,8 +425,8 @@ python scripts/demo.py doctor    # why one is not runnable on this machine, and 
 | React dashboard / CUA surface | `env/react_dashboard/src/App.jsx` at port `3000`. |
 | External CUA benchmarks | `src/benchmarks/miniwob_tasks.py` (MiniwobController + MockEnvController + animated primitives), `src/benchmarks/mock_env_tasks.py` (six WebArena-style mock tasks), `scripts/run_fancy_demo.py` (unified cross-env runner). |
 | Session isolation | `src/perception/browser_session.py` creates an isolated Playwright context and exposes DOM/visual action protocols. This is browser-context isolation, **not** Picture-in-Picture — see Terminology below. |
-| Project PiP MVP | `src/isolation/episode.py` provisions a fresh browser context, checkpoints/resets/restores WoT state, serializes episodes, and transfers the input lease during human takeover. `src/runtime/intervention.py` records supervised Tier-4 decisions. |
-| Full UFO2 Windows PiP | Future Windows-specific provider; RDP child desktop and independent OS input/process isolation are not claimed by this MVP. |
+| Supervised session isolation | `RuntimeEpisodeRunner` activates `src/isolation/episode.py`, which provisions a fresh browser context, checkpoints/resets/restores WoT state, coordinates cooperating sessions through an episode lease, and transfers a software input lease during takeover. Direct or external writers are outside that lease. |
+| Full UFO2 Windows PiP | Future Windows-specific provider; RDP child desktop and independent OS input/process isolation are not claimed by the supervised-session milestone. |
 | DOM processing | `src/perception/dom_transducer.py` strips noisy tags, extracts interactables, derives selectors, labels, actions, state, and PAM metadata. |
 | PAM | `src/perception/page_affordance_model.py`. |
 | WoT TD parsing | `src/perception/td_affordance_parser.py`, including HATEOAS forms, methods, security, rate limits, state sources. |

@@ -8,7 +8,8 @@ as a predicate - each of which the runtime correctly refuses.
 
 from __future__ import annotations
 
-from src.planner.environment_binding import BINDINGS, binding_for
+from src.planner.device_binding import composite_goal_for
+from src.planner.environment_binding import BINDINGS, DEVICE_VIEWS, binding_for, device_view_for
 
 
 def test_a_phrase_resolves_to_the_hook_the_page_uses():
@@ -97,3 +98,68 @@ def test_every_binding_is_complete_enough_to_run():
 
 def test_a_goal_state_with_no_environment_is_reported_not_approximated():
     assert binding_for("projector_on") is None, "no entry must mean no attempt"
+
+
+# ── what the visual channel is pointed at ───────────────────────────────────────
+#
+# A DeviceView says which rectangle of the dashboard settles a device goal. The
+# choice of *which* reading to look at is the project's central argument, so it
+# is asserted here rather than left to a comment.
+
+
+def test_a_device_with_a_measured_reading_is_verified_against_the_measurement():
+    """Not against the setpoint, which is free.
+
+    Target changes the instant the write lands, so confirming it proves the
+    thermostat was told. A jammed blinds motor reports its commanded position
+    perfectly and never moves. Both views therefore read the slow half.
+    """
+    thermostat = device_view_for("temperature_set")
+    assert thermostat.value_selector == "[data-testid='current-temp']"
+    assert "target-temp" not in thermostat.value_selector
+
+    blinds = device_view_for("blinds_set")
+    assert blinds.value_selector == "[data-testid='blinds-measured']"
+    assert "blinds-position" not in blinds.value_selector
+
+
+def test_a_device_with_no_measured_counterpart_reads_the_only_value_it_has():
+    """A dimmer really is instant, so inventing a measured brightness would be
+    modelling a delay that does not exist."""
+    lighting = device_view_for("lighting_set")
+
+    assert lighting.value_selector == "[data-testid='brightness']"
+
+
+def test_every_view_is_addressed_by_test_id_rather_than_by_layout():
+    """The dashboard's styling is expected to change; its test ids are a contract.
+
+    A view pinned to a class name or a position would break on a redesign and
+    the failure would look like a planner bug.
+    """
+    for goal_state, view in DEVICE_VIEWS.items():
+        assert view.region.startswith("[data-testid="), goal_state
+        assert view.value_selector.startswith("[data-testid="), goal_state
+        # The value must live inside the region, or the crop handed to the model
+        # would not contain the reading the claim is about.
+        assert view.region != view.value_selector, goal_state
+
+
+def test_every_writable_part_of_a_prepared_room_can_also_be_seen():
+    """The visual channel has to cover what the composite goal writes.
+
+    Blinds were the gap: the room wrote a position that no panel displayed, so
+    the one device whose commanded and measured values can disagree the longest
+    was the one the vision model could not be asked about.
+    """
+    for part in composite_goal_for("room_prepared").parts:
+        assert device_view_for(part.goal_state) is not None, part.goal_state
+
+
+def test_a_claim_is_answerable_from_the_crop_alone():
+    """Each question names the reading and the value, so a model that cannot see
+    the panel has no way to answer it correctly by guessing context."""
+    for goal_state, view in DEVICE_VIEWS.items():
+        question = view.question_for(22)
+        assert "22" in question, goal_state
+        assert question.endswith("Answer from the image only."), goal_state

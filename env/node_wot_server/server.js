@@ -129,14 +129,17 @@ const faults = {};
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // The first four are transport and protocol failures: the call does not arrive,
-// does not return, or returns nonsense. The last two are physical, and a purely
-// digital environment cannot produce them - the call succeeds, the setpoint
-// updates, every status code is 2xx, and the room still does not do it.
+// does not return, or returns nonsense. `delayed_rollback` is an optimistic
+// transition: the command is briefly observable and the device then returns to
+// its previous state. The last two are physical, and a purely digital
+// environment cannot produce them - the call succeeds, the setpoint updates,
+// every status code is 2xx, and the room still does not do it.
 const FAILURE_TYPES = new Set([
   "timeout",
   "offline",
   "postcondition_mismatch",
   "malformed",
+  "delayed_rollback",
   "lamp_failure",
   "motor_jam",
 ]);
@@ -290,7 +293,31 @@ function assertCurrentGeneration(generation) {
 function applyWrite(thing, key, value) {
   // postcondition_mismatch: accept the call (HTTP 200) but do NOT change state.
   if (faults[thing] && faults[thing].type === "postcondition_mismatch") return;
+  const previous = state[thing][key];
+  const rollback = faults[thing] && faults[thing].type === "delayed_rollback" ? faults[thing] : null;
   state[thing][key] = value;
+
+  if (rollback) {
+    // One shot. The recovery action must see a normal environment after the
+    // rollback; otherwise every valid alternative would be rolled back too and
+    // the episode could only loop or escalate. The generation guard prevents a
+    // timer from an old episode mutating a reset/restored room.
+    const generation = stateGeneration;
+    const delayMs = rollback.delay_ms || 800;
+    delete faults[thing];
+    const timer = setTimeout(() => {
+      if (generation !== stateGeneration) return;
+      state[thing][key] = previous;
+      if (!physicsEnabled) {
+        const ramp = RAMPS[thing];
+        if (ramp && ramp.commanded === key) state[thing][ramp.measured] = previous;
+        if (thing === "projector" && key === "power") {
+          state.projector.lamp = previous === "on" ? "on" : "off";
+        }
+      }
+    }, delayMs);
+    timer.unref?.();
+  }
 
   // With physics off, a measured value has to follow its command here, because
   // the tick that would otherwise carry it is not running. Leaving it alone
@@ -643,18 +670,29 @@ function startControlPlane(port = 8081) {
   return srv;
 }
 
+// The address the servient puts into every form href.
+//
+// Without this, node-wot advertises the address it sees on itself, which inside
+// compose is the container's bridge IP (172.18.0.x). Discovery then looks
+// perfectly healthy while every href in the TD is unreachable from anywhere a
+// consumer actually runs, and each client has to guess a rewrite. A Thing
+// Description that advertises an address nobody can reach is not a usable TD, so
+// the base is declared here and overridable for a different deployment.
+const BASE_URI = process.env.WOT_BASE_URI || "http://localhost:8080";
+
 async function main() {
   const { Servient } = require("@node-wot/core");
   const { HttpServer } = require("@node-wot/binding-http");
   const servient = new Servient();
-  servient.addServer(new HttpServer({ port: 8080 }));
+  servient.addServer(new HttpServer({ port: 8080, baseUri: BASE_URI }));
   const defs = buildDefs();
   for (const def of defs) {
     await exposeThing(servient, def);
   }
   startControlPlane(8081);
   startThingDirectory(defs.map((d) => d.thing), 8082, 8080);
-  console.log("smart-room WoT servient ready on :8080 (TDs at /<thing>, directory at :8082/things)");
+  console.log(`smart-room WoT servient ready on :8080, forms advertise ${BASE_URI}`);
+  console.log("TDs at /<thing>, W3C WoT discovery at :8082/things");
 }
 
 if (require.main === module) {
@@ -664,4 +702,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { guard, isValidCheckpoint, processControlRequest, startControlPlane };
+module.exports = { applyWrite, guard, isValidCheckpoint, processControlRequest, startControlPlane };

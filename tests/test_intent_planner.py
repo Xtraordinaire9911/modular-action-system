@@ -11,12 +11,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from src.planner.goal_skill_selector import GoalSkillSelector
 from src.planner.intent_planner import (
     KNOWN_GOAL_STATES,
     GoalPlan,
     IntentPlanner,
     rule_fallback,
 )
+from src.skill_library import load_skill_library
 
 
 class FakeClient:
@@ -101,6 +103,7 @@ def test_goal_spec_carries_parameters_evidence_and_constraints(tmp_path):
     assert plan.goal.success_evidence == ["thermostat reports 22"]
     assert plan.goal.safety_constraints == ["do not exceed 26"]
     assert plan.confidence == 0.9
+    assert plan.goal.goal_id == "temperature_set"
 
 
 def test_fenced_json_is_accepted(tmp_path):
@@ -131,6 +134,22 @@ def test_unparseable_reply_does_not_raise(tmp_path):
     assert plan.error
 
 
+def test_model_room_session_drops_duplicate_target_and_selects_the_composite_skill(tmp_path):
+    reply = _reply(
+        goal_state="room_session_prepared",
+        parameters={"room": "C", "time": "15:30", "target": "Room C"},
+        description="Book and prepare Room C",
+    )
+
+    plan = _planner(FakeClient(reply), tmp_path).plan("book room C at 15:30 and prepare it")
+
+    assert plan.source == "llm" and plan.goal is not None
+    assert plan.goal.parameters == {"room": "C", "time": "15:30"}
+    library = load_skill_library(Path(__file__).resolve().parents[1] / "config" / "skills_seed.json")
+    selection = GoalSkillSelector(library).select(plan.goal)
+    assert selection.skill_tuple.skill_id == "prepare_and_confirm_room"
+
+
 # --- the deterministic fallback ------------------------------------------------
 
 
@@ -144,6 +163,15 @@ def test_fallback_recognises_a_few_phrasings():
 def test_fallback_extracts_the_room_and_the_value():
     goal = rule_fallback("set room B to 24 degrees").goal
     assert goal.parameters["degrees"] == 24 and goal.parameters["room"] == "B"
+
+
+def test_combined_room_request_has_a_stable_capability_and_visible_defaults():
+    goal = rule_fallback("book room C at 15:30 and prepare it for my presentation").goal
+
+    assert goal is not None
+    assert goal.goal_id == "room_session_prepared"
+    assert goal.goal_state == "room_session_prepared"
+    assert goal.parameters == {"room": "C", "time": "15:30"}
 
 
 def test_fallback_confidence_stays_low_because_it_is_not_understanding():

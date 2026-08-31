@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Literal
+from urllib.parse import urlsplit, urlunsplit
 
 from src.runtime.cognitive_map import CognitiveMap, Conflict, RuntimeAffordance
 
@@ -30,6 +31,7 @@ _SAFE_GROUNDING_KEYS = frozenset(
         "text",
         "mark_id",
         "thing_id",
+        "state_attribute",
         "parameter",
         "binds_parameter",
         "binds_parameters",
@@ -118,7 +120,7 @@ def build_action_context(
         task_id=cognitive_map.task_id,
         request_type=request_type,
         state={
-            "dom": dict(cognitive_map.page_state),
+            "dom": _planner_page_state(cognitive_map.page_state),
             "visual": dict(cognitive_map.visual_state),
             "wot": dict(cognitive_map.device_states),
         },
@@ -135,6 +137,29 @@ def build_action_context(
         remaining_steps=remaining_steps,
         remaining_retries=remaining_retries,
     )
+
+
+def _planner_page_state(page_state: dict) -> dict:
+    """Keep semantic DOM state while removing URL query/fragment control data.
+
+    A page URL is useful as page identity, but its query string is a transport
+    and fixture-control surface. Passing it to a model can reveal injected
+    fault labels or backend-only parameters that the agent did not observe in
+    the environment. Runtime retains the full URL in ``CognitiveMap``; only the
+    planner projection is reduced here.
+    """
+
+    def sanitize(value: object, key: str = "") -> object:
+        if key == "url" and isinstance(value, str):
+            parts = urlsplit(value)
+            return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+        if isinstance(value, dict):
+            return {child_key: sanitize(child, child_key) for child_key, child in value.items()}
+        if isinstance(value, list):
+            return [sanitize(child) for child in value]
+        return value
+
+    return sanitize(page_state)  # type: ignore[return-value]
 
 
 def _sanitize_affordance(affordance: RuntimeAffordance) -> RuntimeAffordance:

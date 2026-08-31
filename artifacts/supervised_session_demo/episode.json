@@ -1,0 +1,322 @@
+{
+  "agent_executor_calls": [
+    {
+      "params": {
+        "affordance_id": "dom_room",
+        "expected_effect": "room == 'C'",
+        "primitive_action": "type",
+        "room": "C",
+        "time": "15:30",
+        "value": "C"
+      },
+      "preferred_backends": [],
+      "priority": 0,
+      "required_postconditions": [],
+      "skill_id": "confirm_booking"
+    },
+    {
+      "params": {
+        "affordance_id": "dom_time",
+        "expected_effect": "time == '15:30'",
+        "primitive_action": "type",
+        "room": "C",
+        "time": "15:30",
+        "value": "15:30"
+      },
+      "preferred_backends": [],
+      "priority": 0,
+      "required_postconditions": [],
+      "skill_id": "confirm_booking"
+    }
+  ],
+  "failure_events": [],
+  "generated_primitive_plan": [
+    {
+      "action": "type",
+      "affordance_id": "dom_room",
+      "expected_effect": "room == 'C'",
+      "value": "C"
+    },
+    {
+      "action": "type",
+      "affordance_id": "dom_time",
+      "expected_effect": "time == '15:30'",
+      "value": "15:30"
+    },
+    {
+      "action": "click",
+      "affordance_id": "dom_confirm",
+      "expected_effect": "booking.confirmed == true",
+      "value": null
+    }
+  ],
+  "goal_spec": {
+    "description": "Confirm Room C for 15:30",
+    "goal_id": "confirm_booking",
+    "goal_state": "booking.confirmed == true",
+    "parameters": {
+      "room": "C",
+      "time": "15:30"
+    },
+    "safety_constraints": [
+      "A human must confirm the final booking action"
+    ],
+    "source": "demo",
+    "success_evidence": [
+      "Fresh DOM observation says booking.confirmed == true"
+    ]
+  },
+  "human_interventions": [
+    {
+      "actor": "operator",
+      "correction_applied": true,
+      "decision": "resume",
+      "episode_id": "episode-45e94a352a46",
+      "intervention_id": "intervention-073d091a5ec2",
+      "kind": "safety_confirmation",
+      "latency_ms": 0,
+      "metadata": {
+        "affordance_id": "dom_confirm",
+        "recovery_tier": 4
+      },
+      "note": "Dry-run human completed Book Room",
+      "pending_action_fingerprint": "{\"params\": {\"affordance_id\": \"dom_confirm\", \"expected_effect\": \"booking.confirmed == true\", \"primitive_action\": \"click\", \"room\": \"C\", \"time\": \"15:30\", \"value\": null}, \"skill_id\": \"confirm_booking\"}",
+      "reason": "high-risk action requires confirmation",
+      "reobserved": true,
+      "replanned": true,
+      "requested_at_ms": 1787297241147,
+      "resolved_at_ms": 1787297241147,
+      "state_id": "state-6299f078046982c0",
+      "task_id": "supervised-session-confirm-booking-dry-run"
+    }
+  ],
+  "instantiated_skill_call": {
+    "params": {
+      "room": "C",
+      "time": "15:30"
+    },
+    "preferred_backends": [
+      "dom"
+    ],
+    "priority": 0,
+    "required_postconditions": [
+      {
+        "description": "",
+        "predicate": "booking.confirmed == true"
+      }
+    ],
+    "skill_id": "confirm_booking"
+  },
+  "isolation": {
+    "browser_context_generation": 1,
+    "events": [
+      "wot:acquire",
+      "browser:recreate",
+      "wot:restore",
+      "browser:stop",
+      "wot:release"
+    ],
+    "provider_active_after_run": false,
+    "room_state_after": {
+      "faults": {
+        "thermostat": {
+          "type": "timeout"
+        }
+      },
+      "state": {
+        "thermostat": {
+          "targetTemperature": 19
+        }
+      }
+    },
+    "room_state_before": {
+      "faults": {
+        "thermostat": {
+          "type": "timeout"
+        }
+      },
+      "state": {
+        "thermostat": {
+          "targetTemperature": 19
+        }
+      }
+    },
+    "room_state_restored": true
+  },
+  "mode": "dry_run_simulated_takeover",
+  "result": {
+    "attempts": 2,
+    "episode_id": "episode-45e94a352a46",
+    "failure_type": "",
+    "final_outcome_verified": true,
+    "intervention_replan_count": 1,
+    "outcome": "verified_success",
+    "reason": "goal completed",
+    "state": "completed"
+  },
+  "runtime_evidence_trace": [
+    {
+      "allowed_backends": [
+        "dom",
+        "visual"
+      ],
+      "episode_id": "episode-45e94a352a46",
+      "event": "goal_skill_selection",
+      "goal_id": "confirm_booking",
+      "goal_states": [
+        "room_booked"
+      ],
+      "parameters": {
+        "room": "C",
+        "time": "15:30"
+      },
+      "postconditions": [
+        "booking.confirmed == true"
+      ],
+      "preconditions": [
+        "booking.confirmed == false"
+      ],
+      "preferred_backends": [
+        "dom"
+      ],
+      "safety_level": "high",
+      "skill_id": "confirm_booking",
+      "timeout_ms": 5000,
+      "transition_ids": [
+        "episode-45e94a352a46:transition-0001",
+        "episode-45e94a352a46:transition-0002"
+      ],
+      "validation_status": "passed"
+    }
+  ],
+  "runtime_skill_selection": {
+    "allowed_backends": [
+      "dom",
+      "visual"
+    ],
+    "goal_id": "confirm_booking",
+    "goal_states": [
+      "room_booked"
+    ],
+    "parameters": {
+      "room": "C",
+      "time": "15:30"
+    },
+    "postconditions": [
+      "booking.confirmed == true"
+    ],
+    "preconditions": [
+      "booking.confirmed == false"
+    ],
+    "preferred_backends": [
+      "dom"
+    ],
+    "safety_level": "high",
+    "skill_id": "confirm_booking",
+    "timeout_ms": 5000,
+    "validation_status": "passed"
+  },
+  "scope_note": "Project-level browser/WoT isolation; not the UFO2 Windows RDP child desktop",
+  "screenshots": [],
+  "selected_skill": {
+    "allowed_backends": [
+      "dom",
+      "visual"
+    ],
+    "description": "Confirm a room booking via the web dashboard",
+    "failure_modes": {},
+    "goal_states": [
+      "room_booked"
+    ],
+    "idempotent": false,
+    "irreversible": false,
+    "parameters_schema": {
+      "room": "str",
+      "time": "str"
+    },
+    "postconditions": [
+      {
+        "description": "",
+        "predicate": "booking.confirmed == true"
+      }
+    ],
+    "preconditions": [
+      {
+        "description": "",
+        "predicate": "booking.confirmed == false"
+      }
+    ],
+    "preferred_backends": [
+      "dom"
+    ],
+    "rollback": null,
+    "safety_level": "high",
+    "skill_id": "confirm_booking",
+    "timeout_ms": 5000
+  },
+  "title": "Supervised session isolation and human takeover",
+  "transitions": [
+    {
+      "affordance_key": "dom:booking.room",
+      "attempt": 1,
+      "backend": "dom",
+      "episode_id": "episode-45e94a352a46",
+      "execution_success": true,
+      "failure_reason": "",
+      "latency_ms": 1.0,
+      "observation_delta": {},
+      "params": {
+        "affordance_id": "dom_room",
+        "expected_effect": "room == 'C'",
+        "primitive_action": "type",
+        "room": "C",
+        "time": "15:30",
+        "value": "C"
+      },
+      "postcondition_passed": true,
+      "recovery_action": "",
+      "recovery_of_transition_id": "",
+      "recovery_tier": null,
+      "reversible_result": null,
+      "skill_id": "confirm_booking",
+      "state_id_after": "state-7f40cf200be0f60b",
+      "state_id_before": "state-bf168ae8128e33c3",
+      "step": 1,
+      "success": true,
+      "task_id": "supervised-session-confirm-booking-dry-run",
+      "timestamp_ms": 1787297241147,
+      "transition_id": "episode-45e94a352a46:transition-0001"
+    },
+    {
+      "affordance_key": "dom:booking.time",
+      "attempt": 2,
+      "backend": "dom",
+      "episode_id": "episode-45e94a352a46",
+      "execution_success": true,
+      "failure_reason": "",
+      "latency_ms": 1.0,
+      "observation_delta": {},
+      "params": {
+        "affordance_id": "dom_time",
+        "expected_effect": "time == '15:30'",
+        "primitive_action": "type",
+        "room": "C",
+        "time": "15:30",
+        "value": "15:30"
+      },
+      "postcondition_passed": true,
+      "recovery_action": "",
+      "recovery_of_transition_id": "",
+      "recovery_tier": null,
+      "reversible_result": null,
+      "skill_id": "confirm_booking",
+      "state_id_after": "state-6299f078046982c0",
+      "state_id_before": "state-7f40cf200be0f60b",
+      "step": 2,
+      "success": true,
+      "task_id": "supervised-session-confirm-booking-dry-run",
+      "timestamp_ms": 1787297241147,
+      "transition_id": "episode-45e94a352a46:transition-0002"
+    }
+  ]
+}

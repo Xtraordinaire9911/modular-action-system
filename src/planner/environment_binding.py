@@ -160,8 +160,8 @@ BINDINGS: dict[str, EnvironmentBinding] = {
         # the room the model named makes the proof both unambiguous and
         # dependent on the model's own answer.
         success_template="booked: room {subject}",
-        state_entity="room",
-        state_attribute="booked",
+        state_entity="booking",
+        state_attribute="confirmed",
         # The room and the time are typed into the form before the button is
         # pressed, so what the model extracted is what actually gets booked. A
         # run that clicked Book Room without filling these would book whatever
@@ -286,6 +286,17 @@ DEVICE_VIEWS: dict[str, DeviceView] = {
         value_selector="[data-testid='brightness']",
         suffix=" %",
         visual_claim="a lighting panel whose Brightness reads {value}",
+    ),
+    "blinds_set": DeviceView(
+        goal_state="blinds_set",
+        region="[data-testid='blinds-panel']",
+        # Measured, not Position, for the same reason the thermostat reads
+        # Current: Position is what the motor was told and updates instantly, so
+        # confirming it proves only that the command was accepted. A jammed
+        # motor reports the commanded position perfectly and never moves.
+        value_selector="[data-testid='blinds-measured']",
+        suffix=" %",
+        visual_claim="a blinds panel whose Measured reading has reached {value}",
     ),
     "projector_on": DeviceView(
         goal_state="projector_on",

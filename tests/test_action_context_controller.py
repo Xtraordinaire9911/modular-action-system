@@ -7,6 +7,10 @@ from src.runtime.primitive_action import PrimitiveAction
 
 def test_action_context_sanitizes_cognitive_map_for_planning():
     cmap = CognitiveMap(task_id="task_action_context")
+    cmap.page_state["page"] = {
+        "url": "https://room.test/presentation?fault=session_expiry#control",
+        "title": "Presentation room",
+    }
     cmap.add_state_assertion(StateAssertion("booking", "service_available", True, "dom"))
     cmap.add_affordance(
         RuntimeAffordance(
@@ -40,6 +44,10 @@ def test_action_context_sanitizes_cognitive_map_for_planning():
     assert context.task_id == "task_action_context"
     assert context.request_type == "goal_spec"
     assert context.state["dom"]["booking"]["service_available"] is True
+    assert context.state["dom"]["page"] == {
+        "url": "https://room.test/presentation",
+        "title": "Presentation room",
+    }
     assert context.affordances[0].id == "dom_room_input"
     assert context.affordances[0].grounding == {"label": "Room"}
     assert context.unresolved_conflicts[0].id == "booking.status"
@@ -82,6 +90,33 @@ def test_action_context_excludes_runtime_and_demo_overlay_affordances():
     context = build_action_context(cmap, request_type="goal_spec")
 
     assert [affordance.id for affordance in context.affordances] == ["dom_real_action"]
+
+
+def test_action_context_preserves_state_attribute_but_not_executor_handles():
+    cmap = CognitiveMap(task_id="task_safe_effect_binding")
+    cmap.add_affordance(
+        RuntimeAffordance(
+            id="wot_temperature",
+            source="wot",
+            entity_id="thermostat",
+            action_name="set_target",
+            action_type="invoke",
+            confidence=0.95,
+            grounding={
+                "binds_parameter": "target_temperature",
+                "state_attribute": "targetTemperature",
+                "href": "http://executor-only.invalid/target",
+            },
+        )
+    )
+
+    context = build_action_context(cmap, request_type="goal_spec")
+
+    assert context.affordances[0].grounding == {
+        "binds_parameter": "target_temperature",
+        "state_attribute": "targetTemperature",
+        "label": "set_target",
+    }
 
 
 def test_affordance_controller_builds_typed_plan_without_durable_skill():

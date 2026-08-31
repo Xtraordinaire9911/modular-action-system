@@ -1,0 +1,212 @@
+﻿{
+    "generated_at":  "2026-08-29",
+    "environment":  "docker: node-wot servient :8080, control plane :8081, Thing Directory :8082, React dashboard :3000; real Chromium",
+    "whole_system":  {
+                         "values":  {
+                                        "ATL":  56.34975,
+                                        "BRA":  1.0,
+                                        "BackwardRetention":  0.0,
+                                        "BoundaryClassificationRate":  0.16666666666666666,
+                                        "CER":  0.0,
+                                        "CRR":  1.0,
+                                        "CSR":  0.8333333333333334,
+                                        "CascadeTraceCoverage":  0.3333333333333333,
+                                        "ControlRecoveryRatio":  1.0,
+                                        "CounterfactualOutcomeDeviation":  0.0,
+                                        "ExpectedEffectSuccessRate":  0.875,
+                                        "FPR":  0.0,
+                                        "FalseSuccessDetectionRate":  0.0,
+                                        "FalseSuccessRate":  0.09090909090909091,
+                                        "HeldOutGain":  0.0,
+                                        "ImprovementEfficiency":  0.0,
+                                        "MTL":  112.6995,
+                                        "MeanTimeToRecovery":  0.0,
+                                        "OSR":  0.0,
+                                        "PCR":  1.0,
+                                        "PCS":  0.8333333333333334,
+                                        "PathAttributionCoverage":  0.16666666666666666,
+                                        "PolicyProposalRate":  0.0,
+                                        "RE":  0.25,
+                                        "RTA":  1.0,
+                                        "RecoverySuccessRate":  1.0,
+                                        "RecoveryTriggerRate":  0.3333333333333333,
+                                        "RerouteTransitionRate":  0.0,
+                                        "RetryTransitionRate":  0.16666666666666666,
+                                        "RollbackTransitionRate":  0.16666666666666666,
+                                        "SAR":  1.0,
+                                        "SafetyNonRegression":  1.0,
+                                        "TSR":  0.8333333333333334,
+                                        "UAR":  0.0,
+                                        "VGA":  0.0,
+                                        "WDSR":  1.0
+                                    },
+                         "counts":  {
+                                        "adaptation_cases":  6,
+                                        "conflict_cases":  1,
+                                        "oracle_cases":  0,
+                                        "primitive_actions":  12,
+                                        "recovery_cases":  2,
+                                        "routing_cases":  12,
+                                        "tasks":  6,
+                                        "verification_cases":  12,
+                                        "visual_grounding_cases":  0
+                                    },
+                         "not_measured":  [
+                                              "BackwardRetention",
+                                              "CER",
+                                              "CounterfactualOutcomeDeviation",
+                                              "FPR",
+                                              "FalseSuccessDetectionRate",
+                                              "HeldOutGain",
+                                              "MeanTimeToRecovery",
+                                              "OSR",
+                                              "VGA"
+                                          ],
+                         "episode_ids":  [
+                                             "episode-291a4ae90fb8",
+                                             "episode-758f253e2817",
+                                             "episode-894f3cc2c009",
+                                             "episode-b044fdaf29c1",
+                                             "episode-b2d6fe712b3e",
+                                             "episode-f46ca1a3f5b5"
+                                         ]
+                     },
+    "latency_repetitions_ms":  {
+                                   "all_runs":  [
+                                                    122.294,
+                                                    114.4898,
+                                                    110.4,
+                                                    111.5,
+                                                    107.7,
+                                                    112.7
+                                                ],
+                                   "warm_mean":  111.4,
+                                   "warm_sd":  2.5,
+                                   "warm_min":  107.7,
+                                   "warm_max":  114.5,
+                                   "note":  "first run after cold container start is the 122.3 outlier"
+                               },
+    "conflict_arbitration":  {
+                                 "protocol":  {
+                                                  "fine_grained_fault_api":  true,
+                                                  "fusion_strategy":  "bayesian_gate",
+                                                  "oracle_source":  "ambiguous-fault-profile-label",
+                                                  "production_gate_changed":  true,
+                                                  "profile_counts":  {
+                                                                         "delayed_wot_recovery":  30,
+                                                                         "low_reliability_dom":  30,
+                                                                         "partial_missing_wot":  30,
+                                                                         "weak_stale_signal":  30
+                                                                     },
+                                                  "reset_evidence_complete":  true,
+                                                  "trial_count":  120,
+                                                  "unique_episode_ids":  true,
+                                                  "unique_seeds":  true
+                                              },
+                                 "rule_first":  {
+                                                    "balanced_accuracy":  0.8333333333333333,
+                                                    "false_halt_rate":  0.0,
+                                                    "false_negative":  30,
+                                                    "false_positive":  0,
+                                                    "mean_detection_latency_ms":  0.18413250024120012,
+                                                    "miss_rate":  0.3333333333333333,
+                                                    "precision":  1.0,
+                                                    "recall":  0.6666666666666666,
+                                                    "true_negative":  30,
+                                                    "true_positive":  60
+                                                },
+                                 "bayesian_gate":  {
+                                                       "balanced_accuracy":  1.0,
+                                                       "false_halt_rate":  0.0,
+                                                       "false_negative":  0,
+                                                       "false_positive":  0,
+                                                       "mean_detection_latency_ms":  0.18413250024120012,
+                                                       "miss_rate":  0.0,
+                                                       "precision":  1.0,
+                                                       "recall":  1.0,
+                                                       "true_negative":  30,
+                                                       "true_positive":  90
+                                                   },
+                                 "comparison":  {
+                                                    "balanced_accuracy_delta":  0.166667,
+                                                    "bayesian_outperforms_rule_first":  true,
+                                                    "production_gate_changed":  true,
+                                                    "recommendation":  "gate_enabled_evaluation_passed"
+                                                }
+                             },
+    "understanding_20_cases":  {
+                                   "needs_interpretation":  {
+                                                                "cases":  12,
+                                                                "rules_correct":  0,
+                                                                "model_correct":  12
+                                                            },
+                                   "rules_already_handle":  {
+                                                                "cases":  3,
+                                                                "rules_correct":  3,
+                                                                "model_correct":  3
+                                                            },
+                                   "out_of_scope":  {
+                                                        "cases":  5,
+                                                        "rules_correct":  5,
+                                                        "model_correct":  5
+                                                    }
+                               },
+    "looking_24_trials":  {
+                              "trials":  24,
+                              "accuracy":  1.0,
+                              "detection_rate":  1.0,
+                              "false_alarm_rate":  0.0,
+                              "dom_wrong_trials":  12,
+                              "dom_right_trials":  8,
+                              "mean_confidence_clear":  1.0,
+                              "mean_confidence_ambiguous":  0.9,
+                              "no_answer":  4,
+                              "transport_errors":  0,
+                              "stability":  {
+                                                "clean":  1.0,
+                                                "invisible_confirmation":  1.0,
+                                                "transparent_text":  1.0,
+                                                "offscreen_confirmation":  1.0,
+                                                "wrong_item":  1.0
+                                            }
+                          },
+    "test_tiers":  {
+                       "fast":  775,
+                       "live":  15,
+                       "smartroom":  15,
+                       "total_collected":  805,
+                       "all_passed":  true
+                   },
+    "agent_loop_campaign":  [
+                                {
+                                    "metric":  "goal reached",
+                                    "working":  "goals met 120 / episodes 210",
+                                    "value":  0.5714
+                                },
+                                {
+                                    "metric":  "failure detected",
+                                    "working":  "failures detected 180 / episodes 210",
+                                    "value":  0.8571
+                                },
+                                {
+                                    "metric":  "recovery attempted",
+                                    "working":  "recoveries applied 90 / failures detected 180",
+                                    "value":  0.5
+                                },
+                                {
+                                    "metric":  "handed over",
+                                    "working":  "escalations 90 / failures detected 180",
+                                    "value":  0.5
+                                },
+                                {
+                                    "metric":  "verify pass rate",
+                                    "working":  "passed 120 / verifications 300",
+                                    "value":  0.4
+                                },
+                                {
+                                    "metric":  "measurement coverage",
+                                    "working":  "measured 1380 / seen 1380",
+                                    "value":  1.0
+                                }
+                            ]
+}

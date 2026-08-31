@@ -165,3 +165,77 @@ def test_every_device_binding_is_checkable_and_names_no_endpoint():
 
 def test_an_unknown_goal_state_has_no_device_binding():
     assert device_binding_for("item_in_cart") is None
+
+
+# --- the measured property is a different property ---------------------------------
+#
+# This is the distinction the project rests on, and it was silently broken. The
+# alias matcher is substring based, so "temperature" matches "targetTemperature"
+# as readily as "currentTemperature", and the measured source resolved to the
+# setpoint itself. Callers then read back the value they had just written, arrival
+# was instant, and nothing failed.
+#
+# The existing fixture hid it by listing the sensor first, which is not the order
+# the real servient publishes. These tests use the servient's order.
+
+
+def _thermostat_setpoint_first() -> _Model:
+    """The order the running servient actually publishes: setpoint, then sensor."""
+    return _Model(
+        thing_id="thermostat",
+        state_sources=[
+            _Source("thermostat", "targetTemperature", "http://d:8080/thermostat/target", "PUT", False),
+            _Source("thermostat", "currentTemperature", "http://d:8080/thermostat/current", "GET", True),
+        ],
+    )
+
+
+def test_the_measured_property_is_never_the_property_being_written():
+    resolved = resolve_device_target(
+        device_binding_for("temperature_set"), [_thermostat_setpoint_first()], {"degrees": 22}
+    )
+
+    assert resolved.property == "targetTemperature"
+    assert resolved.measured_property == "currentTemperature", (
+        "the measured reading resolved to the setpoint, so verification would confirm " "the value it just wrote"
+    )
+
+
+def test_the_measured_property_does_not_depend_on_the_order_the_thing_publishes():
+    """Sensor first and setpoint first have to give the same answer.
+
+    Resolution that depends on TD ordering passes on one servient and fails on
+    another, which is the worst version of this bug: it looks fixed.
+    """
+    sensor_first = resolve_device_target(device_binding_for("temperature_set"), [_thermostat()], {"degrees": 22})
+    setpoint_first = resolve_device_target(
+        device_binding_for("temperature_set"), [_thermostat_setpoint_first()], {"degrees": 22}
+    )
+
+    assert sensor_first.measured_property == setpoint_first.measured_property == "currentTemperature"
+
+
+def test_a_device_with_no_measured_counterpart_reports_none_rather_than_the_setpoint():
+    """A dimmer really is instant. Inventing a second reading of the same property
+    would report a physical delay that does not exist."""
+    resolved = resolve_device_target(device_binding_for("lighting_set"), [_lights()], {"percent": 30})
+
+    assert resolved.property == "brightness"
+    assert resolved.measured_property == ""
+    assert resolved.measured_source is None
+
+
+def test_the_blinds_measurement_is_the_travelled_position_not_the_commanded_one():
+    """The demo that answers "where is the physical part" turns on exactly this."""
+    blinds = _Model(
+        thing_id="blinds",
+        state_sources=[
+            _Source("blinds", "position", "http://d:8080/blinds/position", "PUT", False),
+            _Source("blinds", "measuredPosition", "http://d:8080/blinds/measured", "GET", True),
+        ],
+    )
+
+    resolved = resolve_device_target(device_binding_for("blinds_set"), [blinds], {"percent": 30})
+
+    assert resolved.property == "position"
+    assert resolved.measured_property == "measuredPosition"

@@ -34,6 +34,10 @@ KNOWN_KEYS = (
     "VLM_API_KEY",
     "VLM_MODEL",
     "VLM_BASE_URL",
+    "LLM_API_KEY",
+    "LLM_MODEL",
+    "LLM_MODEL_ID",
+    "LLM_BASE_URL",
     "OPENAI_BASE_URL",
 )
 
