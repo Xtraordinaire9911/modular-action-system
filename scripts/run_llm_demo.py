@@ -106,6 +106,26 @@ DIRECTORY_URL = "http://localhost:8082"
 _LINE = "=" * 78
 
 
+def _measured_intent_gap() -> str:
+    """The rules-versus-model sample size, read from the evaluation that produced it.
+
+    Spelled out in prose this drifted: the caption said nine while the report
+    had grown to twelve, so the recording contradicted the slide quoting the
+    same evaluation. Reading it here means the caption cannot be wrong without
+    the artifact being wrong too.
+    """
+    report = Path(__file__).resolve().parents[1] / "artifacts" / "model_value" / "model_value_report.json"
+    try:
+        group = json.loads(report.read_text(encoding="utf-8"))["intent"]["summary"]["needs_interpretation"]
+        return (
+            f"Measured over {group['cases']} such requests: "
+            f"rules {group['rules_correct']}, model {group['model_correct']}."
+        )
+    except Exception:
+        # No evaluation on disk is not a reason to invent a number.
+        return "Measured separately, in the evaluation this demo does not run."
+
+
 @dataclass
 class Scene:
     """One thing to show, and the reason it is worth showing."""
@@ -131,14 +151,12 @@ SCENES: tuple[Scene, ...] = (
     Scene(
         title="SCENE 2/4 - phrased the way a person speaks",
         utterance="I need somewhere to present at 15:00, room B please",
-        # The count is computed, not spelled out. It said "twelve" while the
-        # panel beside it counted thirteen, because a pattern was added and the
-        # prose was not - and a demo whose narration contradicts its own counter
-        # is the exact failure this demo exists to complain about.
-        why=(
-            f"Same intent, none of the {len(rule_trace(''))} patterns match. "
-            "Measured over nine such requests: rules 0, model 9."
-        ),
+        # Both counts are computed, not spelled out. The pattern count said
+        # "twelve" while the panel beside it counted thirteen; the sample size
+        # said "nine" while the evaluation had grown to twelve. A demo whose
+        # narration contradicts its own counter - or the slide quoting the same
+        # evaluation - is the exact failure this demo exists to complain about.
+        why=(f"Same intent, none of the {len(rule_trace(''))} patterns match. " f"{_measured_intent_gap()}"),
         expect_goal="room_booked",
         expect_rules_to_fail=True,
     ),
