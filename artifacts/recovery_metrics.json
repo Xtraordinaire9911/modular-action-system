@@ -1,6 +1,43 @@
 {
   "metadata": {
     "data_source": "unspecified",
+    "denominators": {
+      "ATL": 3,
+      "BRA": 0,
+      "BackwardRetention": 0,
+      "BoundaryClassificationRate": 0,
+      "CER": 0,
+      "CRR": 0,
+      "CSR": 2,
+      "CascadeTraceCoverage": 0,
+      "ControlRecoveryRatio": 0,
+      "CounterfactualOutcomeDeviation": 0,
+      "ExpectedEffectSuccessRate": 0,
+      "FPR": 0,
+      "FalseSuccessDetectionRate": 0,
+      "FalseSuccessRate": 0,
+      "HeldOutGain": 0,
+      "MTL": 2,
+      "MeanTimeToRecovery": 0,
+      "OSR": 0,
+      "PCR": 0,
+      "PCS": 0,
+      "PathAttributionCoverage": 0,
+      "PolicyProposalRate": 0,
+      "RE": 1,
+      "RTA": 1,
+      "RecoverySuccessRate": 1,
+      "RecoveryTriggerRate": 2,
+      "RerouteTransitionRate": 3,
+      "RetryTransitionRate": 3,
+      "RollbackTransitionRate": 3,
+      "SAR": 2,
+      "SafetyNonRegression": 0,
+      "TSR": 2,
+      "UAR": 2,
+      "VGA": 0,
+      "WDSR": 0
+    },
     "episode_ids": [],
     "measurement_counts": {
       "adaptation_cases": 0,
@@ -12,7 +49,31 @@
       "tasks": 2,
       "verification_cases": 0,
       "visual_grounding_cases": 0
-    }
+    },
+    "not_measured": [
+      "BRA",
+      "BackwardRetention",
+      "BoundaryClassificationRate",
+      "CER",
+      "CRR",
+      "CascadeTraceCoverage",
+      "ControlRecoveryRatio",
+      "CounterfactualOutcomeDeviation",
+      "ExpectedEffectSuccessRate",
+      "FPR",
+      "FalseSuccessDetectionRate",
+      "FalseSuccessRate",
+      "HeldOutGain",
+      "MeanTimeToRecovery",
+      "OSR",
+      "PCR",
+      "PCS",
+      "PathAttributionCoverage",
+      "PolicyProposalRate",
+      "SafetyNonRegression",
+      "VGA",
+      "WDSR"
+    ]
   },
   "rows": [
     {
@@ -166,6 +227,11 @@
       "value": 0.0
     },
     {
+      "definition": "Safe Action Rate = tasks completing with no unsafe action executed / total tasks (= 1 - UAR)",
+      "metric": "SAR",
+      "value": 1.0
+    },
+    {
       "definition": "Adaptation cases without safety regression / total adaptation cases",
       "metric": "SafetyNonRegression",
       "value": 0.0
@@ -222,6 +288,7 @@
     "RerouteTransitionRate": 0.0,
     "RetryTransitionRate": 0.0,
     "RollbackTransitionRate": 0.0,
+    "SAR": 1.0,
     "SafetyNonRegression": 0.0,
     "TSR": 1.0,
     "UAR": 0.0,

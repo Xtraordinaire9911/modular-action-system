@@ -56,6 +56,25 @@ docs/
 # thing being submitted.
 reports/
 
+# Supervision meeting recordings and their auto-transcripts. These carry a named
+# third party's speech, so they stay out of a repository the supervisor reviews and
+# the course may redistribute. The reconstructed summaries live under reports/.
+*.m4a
+*.wav
+[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*.txt
+
+# Assistant/tool session logs written into the working tree.
+claude_out.log
+*.log
+!reports/**/*.log
+
+# Per-run presentation clips cut from a recording; regenerated from the source
+# capture, and none of them belong in history.
+artifacts/talk_gifs/
+*.gif
+!artifacts/llm_demo/**/*.gif
+!demo_video/demo_preview.gif
+
 # API keys live here and nowhere else. Never commit this file.
 .env.local
 .env

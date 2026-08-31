@@ -13,13 +13,13 @@
         "active_perception_trace": [],
         "attempts": 3,
         "conflict_ids": [],
-        "episode_id": "episode-eec434cd0517",
+        "episode_id": "episode-5bb2250552b6",
         "execution_result": {
           "attempt": 3,
           "backend_used": "dom",
           "confidence": 0.97,
           "failure_reason": null,
-          "latency_ms": 37.719,
+          "latency_ms": 56.32,
           "metadata": {
             "affordance_id": "dom_button_1",
             "affordance_source": "DOM",
@@ -28,11 +28,12 @@
           "observation_source": "dom",
           "skill_id": "book_room",
           "success": true,
-          "transition_id": "episode-eec434cd0517:transition-0003"
+          "transition_id": "episode-5bb2250552b6:transition-0003"
         },
         "failure_boundary": "",
         "failure_type": "",
         "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-5bb2250552b6:transition-0003",
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -47,9 +48,9 @@
                 "dom"
               ],
               "support": {
-                "'http://127.0.0.1:13000/'": 0.8
+                "'http://127.0.0.1:3000/'": 0.8
               },
-              "value": "http://127.0.0.1:13000/"
+              "value": "http://127.0.0.1:3000/"
             },
             {
               "attribute": "page_id",
@@ -138,9 +139,9 @@
                 "wot"
               ],
               "support": {
-                "19": 1.0
+                "20": 1.0
               },
-              "value": 19
+              "value": 20
             },
             {
               "attribute": "brightness",
@@ -169,7 +170,33 @@
               "value": "off"
             },
             {
+              "attribute": "lamp",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
               "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "measured_position",
               "confidence": 1.0,
               "entity_id": "blinds",
               "selected_support": 1.0,
@@ -246,10 +273,11 @@
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-eec434cd0517:transition-0001",
-          "episode-eec434cd0517:transition-0002",
-          "episode-eec434cd0517:transition-0003"
-        ]
+          "episode-5bb2250552b6:transition-0001",
+          "episode-5bb2250552b6:transition-0002",
+          "episode-5bb2250552b6:transition-0003"
+        ],
+        "user_action_required": false
       }
     },
     {
@@ -264,13 +292,13 @@
         "active_perception_trace": [],
         "attempts": 2,
         "conflict_ids": [],
-        "episode_id": "episode-db4c148e7056",
+        "episode_id": "episode-ff5487ea63b1",
         "execution_result": {
           "attempt": 2,
           "backend_used": "wot",
           "confidence": 1.0,
           "failure_reason": null,
-          "latency_ms": 5.126,
+          "latency_ms": 35.549,
           "metadata": {
             "affordance_id": "wot_thermostat_setTargetTemperature",
             "affordance_source": "WOT",
@@ -279,11 +307,12 @@
           "observation_source": "wot",
           "skill_id": "set_temperature_live",
           "success": true,
-          "transition_id": "episode-db4c148e7056:transition-0002"
+          "transition_id": "episode-ff5487ea63b1:transition-0002"
         },
         "failure_boundary": "",
         "failure_type": "",
         "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-ff5487ea63b1:transition-0002",
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -298,9 +327,9 @@
                 "dom"
               ],
               "support": {
-                "'http://127.0.0.1:13000/'": 0.8
+                "'http://127.0.0.1:3000/'": 0.8
               },
-              "value": "http://127.0.0.1:13000/"
+              "value": "http://127.0.0.1:3000/"
             },
             {
               "attribute": "page_id",
@@ -350,9 +379,9 @@
                 "wot"
               ],
               "support": {
-                "22": 1.0
+                "20.3": 1.0
               },
-              "value": 22
+              "value": 20.3
             },
             {
               "attribute": "brightness",
@@ -381,7 +410,33 @@
               "value": "off"
             },
             {
+              "attribute": "lamp",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
               "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "measured_position",
               "confidence": 1.0,
               "entity_id": "blinds",
               "selected_support": 1.0,
@@ -445,7 +500,7 @@
             "considered": true,
             "policy": "retry",
             "reason": "transient failure",
-            "recovery_of_transition_id": "episode-db4c148e7056:transition-0001",
+            "recovery_of_transition_id": "episode-ff5487ea63b1:transition-0001",
             "selected": true,
             "selected_action": "retry",
             "tier": 1
@@ -458,9 +513,10 @@
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-db4c148e7056:transition-0001",
-          "episode-db4c148e7056:transition-0002"
-        ]
+          "episode-ff5487ea63b1:transition-0001",
+          "episode-ff5487ea63b1:transition-0002"
+        ],
+        "user_action_required": false
       }
     },
     {
@@ -476,13 +532,13 @@
         "active_perception_trace": [],
         "attempts": 2,
         "conflict_ids": [],
-        "episode_id": "episode-d9fe5eff4c10",
+        "episode_id": "episode-e3ce1c966501",
         "execution_result": {
           "attempt": 1,
           "backend_used": "restore",
           "confidence": 1.0,
           "failure_reason": null,
-          "latency_ms": 4.268,
+          "latency_ms": 26.056,
           "metadata": {
             "affordance_id": "wot_thermostat_setTargetTemperature",
             "affordance_source": "WOT",
@@ -493,11 +549,12 @@
           "observation_source": "wot",
           "skill_id": "restore_temperature_live",
           "success": true,
-          "transition_id": "episode-d9fe5eff4c10:transition-0002"
+          "transition_id": "episode-e3ce1c966501:transition-0002"
         },
         "failure_boundary": "recoverable_execution_failure",
         "failure_type": "postcondition_failed",
         "final_outcome_verified": false,
+        "final_verification_transition_id": "",
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -512,9 +569,9 @@
                 "dom"
               ],
               "support": {
-                "'http://127.0.0.1:13000/'": 0.8
+                "'http://127.0.0.1:3000/'": 0.8
               },
-              "value": "http://127.0.0.1:13000/"
+              "value": "http://127.0.0.1:3000/"
             },
             {
               "attribute": "page_id",
@@ -595,7 +652,33 @@
               "value": "off"
             },
             {
+              "attribute": "lamp",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
               "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "measured_position",
               "confidence": 1.0,
               "entity_id": "blinds",
               "selected_support": 1.0,
@@ -674,7 +757,7 @@
             "considered": true,
             "policy": "rollback",
             "reason": "rollback spec available",
-            "recovery_of_transition_id": "episode-d9fe5eff4c10:transition-0001",
+            "recovery_of_transition_id": "episode-e3ce1c966501:transition-0001",
             "selected": true,
             "selected_action": "rollback",
             "tier": 3
@@ -687,9 +770,10 @@
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-d9fe5eff4c10:transition-0001",
-          "episode-d9fe5eff4c10:transition-0002"
-        ]
+          "episode-e3ce1c966501:transition-0001",
+          "episode-e3ce1c966501:transition-0002"
+        ],
+        "user_action_required": false
       }
     },
     {
@@ -711,13 +795,13 @@
         ],
         "attempts": 3,
         "conflict_ids": [],
-        "episode_id": "episode-5f262c973ca1",
+        "episode_id": "episode-4d854bae6bb6",
         "execution_result": {
           "attempt": 3,
           "backend_used": "dom",
           "confidence": 0.97,
           "failure_reason": null,
-          "latency_ms": 30.178,
+          "latency_ms": 43.997,
           "metadata": {
             "affordance_id": "dom_button_1",
             "affordance_source": "DOM",
@@ -726,11 +810,12 @@
           "observation_source": "dom",
           "skill_id": "book_room",
           "success": true,
-          "transition_id": "episode-5f262c973ca1:transition-0003"
+          "transition_id": "episode-4d854bae6bb6:transition-0003"
         },
         "failure_boundary": "",
         "failure_type": "",
         "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-4d854bae6bb6:transition-0003",
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -745,9 +830,9 @@
                 "dom"
               ],
               "support": {
-                "'http://127.0.0.1:13000/?fault=stale_temperature'": 0.8
+                "'http://127.0.0.1:3000/?fault=stale_temperature'": 0.8
               },
-              "value": "http://127.0.0.1:13000/?fault=stale_temperature"
+              "value": "http://127.0.0.1:3000/?fault=stale_temperature"
             },
             {
               "attribute": "page_id",
@@ -837,9 +922,9 @@
                 "wot"
               ],
               "support": {
-                "19": 1.0
+                "20": 1.0
               },
-              "value": 19
+              "value": 20
             },
             {
               "attribute": "brightness",
@@ -868,7 +953,33 @@
               "value": "off"
             },
             {
+              "attribute": "lamp",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
               "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "measured_position",
               "confidence": 1.0,
               "entity_id": "blinds",
               "selected_support": 1.0,
@@ -945,15 +1056,17 @@
         "system1_fast_path": false,
         "system1_routing_latency_ms": 0.0,
         "transition_ids": [
-          "episode-5f262c973ca1:transition-0001",
-          "episode-5f262c973ca1:transition-0002",
-          "episode-5f262c973ca1:transition-0003"
-        ]
+          "episode-4d854bae6bb6:transition-0001",
+          "episode-4d854bae6bb6:transition-0002",
+          "episode-4d854bae6bb6:transition-0003"
+        ],
+        "user_action_required": false
       }
     },
     {
       "case": "system1_reflex_repeat",
       "evidence_checks": {
+        "latency_report_links_both_episodes": true,
         "repeat_cache_hit": true,
         "repeat_still_verified": true,
         "repeat_used_system1_fast_path": true,
@@ -965,13 +1078,13 @@
         "active_perception_trace": [],
         "attempts": 1,
         "conflict_ids": [],
-        "episode_id": "episode-8d58ef434d7d",
+        "episode_id": "episode-78df7fe88d57",
         "execution_result": {
           "attempt": 1,
           "backend_used": "wot",
           "confidence": 1.0,
           "failure_reason": null,
-          "latency_ms": 4.906,
+          "latency_ms": 23.614,
           "metadata": {
             "affordance_id": "wot_thermostat_setTargetTemperature",
             "affordance_source": "WOT",
@@ -980,11 +1093,12 @@
           "observation_source": "wot",
           "skill_id": "set_temperature_reflex",
           "success": true,
-          "transition_id": "episode-8d58ef434d7d:transition-0001"
+          "transition_id": "episode-78df7fe88d57:transition-0001"
         },
         "failure_boundary": "",
         "failure_type": "",
         "final_outcome_verified": true,
+        "final_verification_transition_id": "episode-78df7fe88d57:transition-0001",
         "fusion_decision": {
           "active_perception_required": false,
           "allow_system1": true,
@@ -999,9 +1113,9 @@
                 "dom"
               ],
               "support": {
-                "'http://127.0.0.1:13000/'": 0.8
+                "'http://127.0.0.1:3000/'": 0.8
               },
-              "value": "http://127.0.0.1:13000/"
+              "value": "http://127.0.0.1:3000/"
             },
             {
               "attribute": "page_id",
@@ -1082,7 +1196,33 @@
               "value": "off"
             },
             {
+              "attribute": "lamp",
+              "confidence": 1.0,
+              "entity_id": "projector",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "'off'": 1.0
+              },
+              "value": "off"
+            },
+            {
               "attribute": "position",
+              "confidence": 1.0,
+              "entity_id": "blinds",
+              "selected_support": 1.0,
+              "sources": [
+                "wot"
+              ],
+              "support": {
+                "100": 1.0
+              },
+              "value": 100
+            },
+            {
+              "attribute": "measured_position",
               "confidence": 1.0,
               "entity_id": "blinds",
               "selected_support": 1.0,
@@ -1138,19 +1278,49 @@
         "state": "completed",
         "system1_cache_hit": true,
         "system1_fast_path": true,
-        "system1_routing_latency_ms": 0.008356757462024689,
+        "system1_routing_latency_ms": 0.024300010409206152,
         "transition_ids": [
-          "episode-8d58ef434d7d:transition-0001"
-        ]
+          "episode-78df7fe88d57:transition-0001"
+        ],
+        "user_action_required": false
       },
-      "warmup_episode_id": "episode-69e31a5a1221"
+      "system1_latency_report": {
+        "amortized_transition_latency_ms": 24.822,
+        "cache_hit_rate": 0.5,
+        "episode_ids": [
+          "episode-04fc4e222abf",
+          "episode-78df7fe88d57"
+        ],
+        "repeat": {
+          "cache_hit": true,
+          "episode_id": "episode-78df7fe88d57",
+          "fast_path": true,
+          "routing_latency_ms": 0.024,
+          "total_episode_latency_ms": 23.614,
+          "transition_count": 1,
+          "transition_latency_ms": 23.614,
+          "verified": true
+        },
+        "total_transition_latency_ms": 49.644,
+        "warmup": {
+          "cache_hit": false,
+          "episode_id": "episode-04fc4e222abf",
+          "fast_path": false,
+          "routing_latency_ms": 0.069,
+          "total_episode_latency_ms": 26.03,
+          "transition_count": 1,
+          "transition_latency_ms": 26.03,
+          "verified": true
+        }
+      },
+      "warmup_episode_id": "episode-04fc4e222abf"
     }
   ],
   "data_source": "live",
   "environment": {
-    "control_url": "http://127.0.0.1:18081",
-    "dashboard_url": "http://127.0.0.1:13000",
-    "thing_directory_url": "http://127.0.0.1:18082/things",
-    "wot_public_base_url": "http://127.0.0.1:18080"
+    "control_url": "http://127.0.0.1:8081",
+    "dashboard_url": "http://127.0.0.1:3000",
+    "thing_directory_url": "http://127.0.0.1:8082/things",
+    "wot_public_base_url": "http://127.0.0.1:8080"
   }
 }

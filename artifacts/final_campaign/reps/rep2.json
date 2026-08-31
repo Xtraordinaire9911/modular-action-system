@@ -39,12 +39,12 @@
       "WDSR": 1
     },
     "episode_ids": [
-      "episode-04fc4e222abf",
-      "episode-4d854bae6bb6",
-      "episode-5bb2250552b6",
-      "episode-78df7fe88d57",
-      "episode-e3ce1c966501",
-      "episode-ff5487ea63b1"
+      "episode-0f2b79332769",
+      "episode-192453b5d0ec",
+      "episode-3208f733d759",
+      "episode-3390a0ef2cb5",
+      "episode-a13981c5c7ad",
+      "episode-a234025e54d0"
     ],
     "measurement_counts": {
       "adaptation_cases": 6,
@@ -70,7 +70,7 @@
     ]
   },
   "values": {
-    "ATL": 53.0256666667,
+    "ATL": 55.7445,
     "BRA": 1.0,
     "BackwardRetention": 0.0,
     "BoundaryClassificationRate": 0.16666666666666666,
@@ -86,7 +86,7 @@
     "FalseSuccessRate": 0.09090909090909091,
     "HeldOutGain": 0.0,
     "ImprovementEfficiency": 0.0,
-    "MTL": 106.0513333333,
+    "MTL": 111.489,
     "MeanTimeToRecovery": 0.0,
     "OSR": 0.0,
     "PCR": 1.0,

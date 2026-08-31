@@ -437,7 +437,12 @@ def main() -> int:
         action="store_true",
         help="Run every utterance across both environments and write the M1 report.",
     )
-    parser.add_argument("--headed", dest="headed", action="store_true", default=False)
+    # Headed by default, like every other demo script here. A demo whose window
+    # has to be asked for is a demo that gets presented as a wall of terminal
+    # text, and the point of this one is that the runtime acts on a real page.
+    # CI and the live tests call run_episode directly with headed=False, so the
+    # default costs them nothing.
+    parser.add_argument("--headed", dest="headed", action="store_true", default=True)
     parser.add_argument("--headless", dest="headed", action="store_false")
     args = parser.parse_args()
 

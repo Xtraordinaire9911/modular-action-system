@@ -3,7 +3,7 @@
   "episodes": [
     {
       "attempts": 3,
-      "episode_id": "episode-eec434cd0517",
+      "episode_id": "episode-5bb2250552b6",
       "failure_type": "",
       "final_outcome_verified": true,
       "recovery_attempted": false,
@@ -13,7 +13,7 @@
     },
     {
       "attempts": 2,
-      "episode_id": "episode-db4c148e7056",
+      "episode_id": "episode-ff5487ea63b1",
       "failure_type": "",
       "final_outcome_verified": true,
       "recovery_attempted": true,
@@ -25,7 +25,7 @@
           "considered": true,
           "policy": "retry",
           "reason": "transient failure",
-          "recovery_of_transition_id": "episode-db4c148e7056:transition-0001",
+          "recovery_of_transition_id": "episode-ff5487ea63b1:transition-0001",
           "selected": true,
           "selected_action": "retry",
           "tier": 1
@@ -35,7 +35,7 @@
     },
     {
       "attempts": 2,
-      "episode_id": "episode-d9fe5eff4c10",
+      "episode_id": "episode-e3ce1c966501",
       "failure_type": "postcondition_failed",
       "final_outcome_verified": false,
       "recovery_attempted": true,
@@ -69,7 +69,7 @@
           "considered": true,
           "policy": "rollback",
           "reason": "rollback spec available",
-          "recovery_of_transition_id": "episode-d9fe5eff4c10:transition-0001",
+          "recovery_of_transition_id": "episode-e3ce1c966501:transition-0001",
           "selected": true,
           "selected_action": "rollback",
           "tier": 3
@@ -79,7 +79,7 @@
     },
     {
       "attempts": 3,
-      "episode_id": "episode-5f262c973ca1",
+      "episode_id": "episode-4d854bae6bb6",
       "failure_type": "",
       "final_outcome_verified": true,
       "recovery_attempted": false,
@@ -89,7 +89,7 @@
     },
     {
       "attempts": 1,
-      "episode_id": "episode-69e31a5a1221",
+      "episode_id": "episode-04fc4e222abf",
       "failure_type": "",
       "final_outcome_verified": true,
       "recovery_attempted": false,
@@ -99,7 +99,7 @@
     },
     {
       "attempts": 1,
-      "episode_id": "episode-8d58ef434d7d",
+      "episode_id": "episode-78df7fe88d57",
       "failure_type": "",
       "final_outcome_verified": true,
       "recovery_attempted": false,

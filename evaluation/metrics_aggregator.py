@@ -106,12 +106,30 @@ class AdaptationCase:
 class MetricReport:
     values: dict[str, float] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    denominators: dict[str, float] = field(default_factory=dict)
 
     def add(self, name: str, numerator: float, denominator: float) -> None:
         self.values[name] = safe_divide(numerator, denominator)
+        self.denominators[name] = denominator
 
     def add_mean(self, name: str, values: list[float]) -> None:
         self.values[name] = round(sum(values) / len(values), 10) if values else 0.0
+        self.denominators[name] = len(values)
+
+    def not_measured(self) -> list[str]:
+        """Metrics whose denominator was zero, so their 0.0 means nothing.
+
+        A rate over no cases is not a rate. Reporting `BRA: 0.0` when no routing
+        decision was ever exercised reads as "the router got everything wrong",
+        which is the opposite of what happened, so these names are listed rather
+        than published as a value.
+        """
+        return sorted(name for name, total in self.denominators.items() if not total)
+
+    def measured_values(self) -> dict[str, float]:
+        """Only the metrics that actually have evidence behind them."""
+        empty = set(self.not_measured())
+        return {name: value for name, value in self.values.items() if name not in empty}
 
 
 @dataclass
@@ -131,6 +149,18 @@ def safe_divide(numerator: float, denominator: float) -> float:
     return numerator / denominator if denominator else 0.0
 
 
+class ConflictLike(Protocol):
+    """A perceptual disagreement as the cognitive map records it.
+
+    Both terms of CRR are observable here, so unlike routing this needs no
+    oracle label: a conflict exists because sources disagreed, and it is
+    resolved or it is not.
+    """
+
+    conflict_type: str
+    resolved: bool
+
+
 class RuntimeResultLike(Protocol):
     episode_id: str
     attempts: int
@@ -147,11 +177,23 @@ def dataset_from_runtime_results(
     transition_ledger: TransitionLedger,
     *,
     expected_recovery_tiers: Mapping[str, int] | None = None,
+    expected_backends: Mapping[str, str] | None = None,
+    conflicts_by_episode: Mapping[str, Sequence[ConflictLike]] | None = None,
 ) -> EvaluationDataset:
     """Derive evaluation rows from executed episodes.
 
     Expected tiers are evaluation-oracle labels keyed by episode ID (preferred)
-    or task ID. They must not be inferred from the runtime-selected tier.
+    or task ID. Expected backends are looked up by skill ID first, then episode
+    ID, then task ID: a skill's target surface is fixed by how the skill is
+    defined, so it is the level at which a routing decision can be right or
+    wrong. An episode-level label would score a rollback effector against the
+    goal's backend and call a correct dispatch a mis-route.
+
+    Neither oracle may be inferred from what the runtime selected: comparing the
+    router against its own choice scores 1.0 by construction, which is a worse
+    failure than reporting nothing. A record whose skill carries no label
+    contributes no routing case, so BRA stays unmeasured rather than becoming
+    trivially perfect.
     """
 
     dataset = EvaluationDataset()
@@ -211,6 +253,34 @@ def dataset_from_runtime_results(
                     final_success=final_success,
                 )
             )
+        if expected_backends is not None:
+            episode_backend = expected_backends.get(
+                result.episode_id,
+                expected_backends.get(task_id),
+            )
+            for record in records:
+                if not record.backend:
+                    continue
+                expected_backend = expected_backends.get(record.skill_id, episode_backend)
+                if expected_backend is None:
+                    continue
+                dataset.routing_cases.append(
+                    RoutingCase(
+                        task_id=record.task_id,
+                        selected_backend=record.backend,
+                        expected_backend=expected_backend,
+                    )
+                )
+        if conflicts_by_episode is not None:
+            for conflict in conflicts_by_episode.get(result.episode_id, ()):
+                dataset.conflict_cases.append(
+                    ConflictCase(
+                        task_id=task_id,
+                        conflict_type=conflict.conflict_type,
+                        detected=True,
+                        resolved=bool(conflict.resolved),
+                    )
+                )
         dataset.adaptation_cases.append(
             AdaptationCase(
                 task_id=task_id,
@@ -269,11 +339,13 @@ def aggregate_metrics(
     )
     report.add_mean("MTL", [task.latency_ms for task in dataset.tasks])
     report.add_mean("ATL", [action.latency_ms for action in dataset.primitive_actions])
-    report.add(
-        "UAR",
-        sum(1 for task in dataset.tasks if task.unsafe_executed),
-        len(dataset.tasks),
-    )
+    unsafe_tasks = sum(1 for task in dataset.tasks if task.unsafe_executed)
+    report.add("UAR", unsafe_tasks, len(dataset.tasks))
+    # SAR is UAR stated the other way up. Both are reported: UAR is what the
+    # runtime evidence counts, SAR is the name the supervisor asked for, and
+    # deriving one silently from the other in a slide is how a denominator gets
+    # lost. Same denominator, so a run with no tasks leaves both unmeasured.
+    report.add("SAR", len(dataset.tasks) - unsafe_tasks, len(dataset.tasks))
     report.add(
         "PCR",
         sum(1 for case in dataset.verification_cases if case.required and case.checked),
@@ -425,6 +497,11 @@ def aggregate_metrics(
         len(dataset.adaptation_cases),
     )
 
+    # Carried in the artifact so a reader of the JSON sees which zeros are
+    # measurements and which are absences, without having to know the schema.
+    report.metadata["not_measured"] = report.not_measured()
+    report.metadata["denominators"] = dict(report.denominators)
+
     return report
 
 
@@ -460,6 +537,7 @@ def metric_definitions() -> dict[str, str]:
         "MTL": "Mean Task Latency in milliseconds",
         "ATL": "Average primitive action latency in milliseconds",
         "UAR": "Unsafe Action Rate = unsafe executed actions / attempted task actions",
+        "SAR": "Safe Action Rate = tasks completing with no unsafe action executed / total tasks (= 1 - UAR)",
         "PCR": "Postcondition Check Rate = checked required postconditions / required postconditions",
         "PCS": "Postcondition Success Rate = passed postcondition checks / checked postconditions",
         "ExpectedEffectSuccessRate": "Passed primitive expected-effect checks / checked required expected effects",

@@ -670,18 +670,29 @@ function startControlPlane(port = 8081) {
   return srv;
 }
 
+// The address the servient puts into every form href.
+//
+// Without this, node-wot advertises the address it sees on itself, which inside
+// compose is the container's bridge IP (172.18.0.x). Discovery then looks
+// perfectly healthy while every href in the TD is unreachable from anywhere a
+// consumer actually runs, and each client has to guess a rewrite. A Thing
+// Description that advertises an address nobody can reach is not a usable TD, so
+// the base is declared here and overridable for a different deployment.
+const BASE_URI = process.env.WOT_BASE_URI || "http://localhost:8080";
+
 async function main() {
   const { Servient } = require("@node-wot/core");
   const { HttpServer } = require("@node-wot/binding-http");
   const servient = new Servient();
-  servient.addServer(new HttpServer({ port: 8080 }));
+  servient.addServer(new HttpServer({ port: 8080, baseUri: BASE_URI }));
   const defs = buildDefs();
   for (const def of defs) {
     await exposeThing(servient, def);
   }
   startControlPlane(8081);
   startThingDirectory(defs.map((d) => d.thing), 8082, 8080);
-  console.log("smart-room WoT servient ready on :8080 (TDs at /<thing>, directory at :8082/things)");
+  console.log(`smart-room WoT servient ready on :8080, forms advertise ${BASE_URI}`);
+  console.log("TDs at /<thing>, W3C WoT discovery at :8082/things");
 }
 
 if (require.main === module) {

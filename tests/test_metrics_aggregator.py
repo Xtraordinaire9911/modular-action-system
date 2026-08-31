@@ -266,6 +266,43 @@ def test_runtime_dataset_derives_primitive_and_recovery_rows_from_transition_led
     assert report.metadata["measurement_counts"]["routing_cases"] == 0
 
 
+def test_safe_action_rate_is_reported_alongside_its_inverse():
+    """SAR is one of the two metrics the supervisor named, so it is reported
+    under that name rather than left for a reader to derive from UAR."""
+    dataset = EvaluationDataset(
+        tasks=[
+            TaskOutcome("t1", final_success=True),
+            TaskOutcome("t2", final_success=True),
+            TaskOutcome("t3", final_success=False, unsafe_executed=True),
+        ]
+    )
+    report = aggregate_metrics(dataset)
+
+    assert report.values["UAR"] == 1 / 3
+    assert report.values["SAR"] == 2 / 3
+    assert report.values["SAR"] + report.values["UAR"] == 1.0
+    # Same denominator, so neither can be measured while the other is not.
+    assert report.denominators["SAR"] == report.denominators["UAR"] == 3
+    assert "SAR" in metric_definitions()
+
+
+def test_a_rate_over_no_cases_is_not_measured_rather_than_zero():
+    """A zero denominator makes 0.0 meaningless: `BRA: 0.0` over no routing
+    decision reads as "the router got everything wrong", which is not what
+    happened."""
+    dataset = EvaluationDataset(tasks=[TaskOutcome("t1", final_success=True)])
+    report = aggregate_metrics(dataset)
+
+    assert report.denominators["BRA"] == 0
+    assert "BRA" in report.not_measured()
+    assert "BRA" not in report.measured_values()
+    assert "BRA" in report.metadata["not_measured"]
+
+    # TSR has a real denominator here, so it stays a published measurement.
+    assert report.measured_values()["TSR"] == 1.0
+    assert "TSR" not in report.not_measured()
+
+
 def test_verified_rollback_counts_as_recovery_but_not_task_success():
     result = RuntimeStepResult(
         RuntimeState.FAILED,
@@ -326,3 +363,128 @@ def test_runtime_recovery_tier_accuracy_uses_oracle_not_selected_tier():
     )
 
     assert aggregate_metrics(dataset).values["RTA"] == 0.0
+
+
+def _wot_transition(
+    episode_id: str = "ep-route",
+    backend: str = "wot",
+    skill_id: str = "set_temperature",
+    step: int = 1,
+) -> TransitionRecord:
+    return TransitionRecord(
+        task_id="task-route",
+        episode_id=episode_id,
+        transition_id=f"{episode_id}:t{step}",
+        step=step,
+        state_id_before="s1",
+        state_id_after="s2",
+        skill_id=skill_id,
+        affordance_key="wot:set_temperature",
+        backend=backend,
+        params={},
+        success=True,
+        execution_success=True,
+        postcondition_passed=True,
+        latency_ms=10,
+        attempt=1,
+        observation_delta={},
+    )
+
+
+def _completed(episode_id: str = "ep-route") -> RuntimeStepResult:
+    return RuntimeStepResult(
+        RuntimeState.COMPLETED,
+        None,
+        episode_id=episode_id,
+        final_outcome_verified=True,
+    )
+
+
+def test_routing_cases_absent_without_oracle_labels():
+    """No label means no case: BRA must stay unmeasured, not become 1.0.
+
+    Scoring the router against its own selection would pass by construction.
+    """
+    ledger = TransitionLedger()
+    ledger.record(_wot_transition())
+
+    report = aggregate_metrics(dataset_from_runtime_results([_completed()], ledger))
+
+    assert report.denominators["BRA"] == 0
+    assert "BRA" in report.not_measured()
+
+
+def test_routing_accuracy_scores_selected_backend_against_oracle():
+    ledger = TransitionLedger()
+    ledger.record(_wot_transition())
+
+    correct = dataset_from_runtime_results([_completed()], ledger, expected_backends={"ep-route": "wot"})
+    wrong = dataset_from_runtime_results([_completed()], ledger, expected_backends={"ep-route": "dom"})
+
+    assert aggregate_metrics(correct).values["BRA"] == 1.0
+    assert aggregate_metrics(wrong).values["BRA"] == 0.0
+    assert aggregate_metrics(wrong).denominators["BRA"] == 1
+
+
+def test_skill_label_beats_episode_label_so_rollback_is_not_a_misroute():
+    """A rollback dispatch is not a wrong routing decision.
+
+    The rollback episode writes a WoT property and then dispatches the restore
+    effector. Scoring both records against one episode-level backend calls the
+    restore a mis-route and reports 0.5 for a router that made no mistake, so
+    the skill's own label has to win.
+    """
+    ledger = TransitionLedger()
+    ledger.record(_wot_transition())
+    ledger.record(_wot_transition(backend="restore", skill_id="restore_temperature", step=2))
+
+    episode_only = dataset_from_runtime_results([_completed()], ledger, expected_backends={"ep-route": "wot"})
+    with_skill_label = dataset_from_runtime_results(
+        [_completed()],
+        ledger,
+        expected_backends={"ep-route": "wot", "restore_temperature": "restore"},
+    )
+
+    assert aggregate_metrics(episode_only).values["BRA"] == 0.5
+    assert aggregate_metrics(with_skill_label).values["BRA"] == 1.0
+    assert aggregate_metrics(with_skill_label).denominators["BRA"] == 2
+
+
+def test_unlabelled_skill_contributes_no_routing_case():
+    """A record the oracle says nothing about must not be scored either way."""
+    ledger = TransitionLedger()
+    ledger.record(_wot_transition())
+
+    dataset = dataset_from_runtime_results([_completed()], ledger, expected_backends={"some_other_skill": "dom"})
+
+    assert aggregate_metrics(dataset).denominators["BRA"] == 0
+
+
+class _Conflict:
+    def __init__(self, conflict_type: str, resolved: bool) -> None:
+        self.conflict_type = conflict_type
+        self.resolved = resolved
+
+
+def test_conflict_cases_derived_without_an_oracle():
+    """CRR needs no label: both terms are recorded facts."""
+    dataset = dataset_from_runtime_results(
+        [_completed("ep-conflict")],
+        TransitionLedger(),
+        conflicts_by_episode={
+            "ep-conflict": [
+                _Conflict("page_vs_device", resolved=True),
+                _Conflict("screen_vs_page", resolved=False),
+            ]
+        },
+    )
+    report = aggregate_metrics(dataset)
+
+    assert report.values["CRR"] == 0.5
+    assert report.denominators["CRR"] == 2
+
+
+def test_conflict_metrics_unmeasured_when_no_conflicts_supplied():
+    report = aggregate_metrics(dataset_from_runtime_results([_completed()], TransitionLedger()))
+
+    assert "CRR" in report.not_measured()

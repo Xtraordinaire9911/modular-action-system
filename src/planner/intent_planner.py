@@ -73,7 +73,12 @@ What each goal_state means, so a request phrased differently still lands:
                     reserve a room and prepare its devices in the same supervised
                     session. Put room and time in parameters, plus brightness,
                     power and target_temperature when the user gives them.
-  room_prepared     get a room ready for use
+  room_prepared     get a room ready for use. Name each value with its own key:
+                    parameters.degrees for the temperature, parameters.lighting
+                    for the lights, parameters.blinds for the blinds. Do not use
+                    "percent" for this goal: it sets two devices that can be
+                    asked for two different percentages, and one shared key
+                    cannot carry both.
   room_booked       reserve one of the rooms this building's dashboard shows,
                     for a time - book it, hold it, I need somewhere to meet or
                     to present. Put the room in parameters.room and the time in

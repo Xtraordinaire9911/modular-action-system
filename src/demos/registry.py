@@ -211,6 +211,43 @@ DEMOS: list[Demo] = [
         duration_hint="~15s",
     ),
     Demo(
+        name="joint-pipeline",
+        title="One sentence, one episode, three components",
+        summary="A single episode where every stage names whose component owns it: intent, WoT reach "
+        "and read-back verification from the action system, a real fault injected into the room, "
+        "recovery asked for through the PlannerPort the recovery component owns, and the room "
+        "restored at the end. A jammed motor is not recoverable, so the run ends in a handover that "
+        "is reported as handled correctly and never counted as a success. Where a stage stands in for "
+        "code that is not wired in yet, the run says so on the line.",
+        command=("scripts/run_joint_pipeline.py",),
+        requires=("smart_room",),
+        duration_hint="~30s",
+    ),
+    Demo(
+        name="wot-conformance",
+        title="Standard W3C WoT Thing Descriptions, and how the agent finds them",
+        summary="Reads the running room and prints four things: what the Thing Directory returns, the "
+        "TD's @context and security definitions, one property's complete forms array with its op values "
+        "and readOnly flag, and the binding table entry beside the href resolved from it. The entry names "
+        "a kind of Thing and a property and contains no URL, which is the difference between discovery "
+        "and a typed-in endpoint. Read only.",
+        command=("scripts/show_wot_conformance.py",),
+        requires=("smart_room",),
+        duration_hint="~5s",
+    ),
+    Demo(
+        name="commanded-vs-measured",
+        title="The command succeeded and the room did not comply",
+        summary="Jams a blinds motor, then shows three verification strategies disagreeing about the same "
+        "write: transport says 204, the commanded property reads back exactly what was asked, and the "
+        "device's own measurement never moved. No model and no API key, so it cannot fail on the network. "
+        "Opens the dashboard when a browser is available; --headless prints the same readings without one, "
+        "which is why only the room is listed as required.",
+        command=("scripts/run_commanded_vs_measured.py",),
+        requires=("smart_room",),
+        duration_hint="~50s",
+    ),
+    Demo(
         name="offline",
         title="Deterministic offline trace",
         summary="Runtime trace, postcondition checks and recovery metrics. No browser, no Docker.",
@@ -286,10 +323,15 @@ DEMOS: list[Demo] = [
     Demo(
         name="live-runtime",
         title="Live runtime tracer bullet",
-        summary="Observe-plan-act-verify-recover against the running smart-room environment.",
+        summary="Observe-plan-act-verify-recover against the running smart-room environment. "
+        "Six episodes, headless by default; add --headed to watch the dashboard being driven.",
         command=("-m", "src.pipeline", "--live-demo"),
         requires=("smart_room",),
-        duration_hint="~2min",
+        headed_args=("--headed",),
+        # Timed three times against the running room: 16, 17 and 20 seconds. The
+        # previous "~2min" was a guess, and it is why a 14-second recording of this
+        # demo looked like a truncated one.
+        duration_hint="~20s",
     ),
     Demo(
         name="adaptation",
