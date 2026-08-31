@@ -68,7 +68,12 @@ Reply with JSON only, no prose, using exactly these keys:
   confidence   number between 0 and 1
 
 What each goal_state means, so a request phrased differently still lands:
-  room_prepared     get a room ready for use
+  room_prepared     get a room ready for use. Name each value with its own key:
+                    parameters.degrees for the temperature, parameters.lighting
+                    for the lights, parameters.blinds for the blinds. Do not use
+                    "percent" for this goal: it sets two devices that can be
+                    asked for two different percentages, and one shared key
+                    cannot carry both.
   room_booked       reserve one of the rooms this building's dashboard shows,
                     for a time - book it, hold it, I need somewhere to meet or
                     to present. Put the room in parameters.room and the time in

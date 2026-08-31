@@ -15,7 +15,10 @@ Every step here refuses to use a fact that is not in evidence:
    recorded, never blurred.
 3. **resolution** - "prepare the room" resolves to several writable properties.
    A Thing the directory did not offer is reported, not approximated with the
-   nearest device that happens to exist.
+   nearest device that happens to exist. A value the sentence named that no part
+   of the goal writes is printed as a warning: understood and then not done is
+   the same divergence as accepted and then not done, and it is invisible unless
+   something says it.
 4. **verification** - each property is read back after it is written, and the
    goal is met only where the value that comes back is the value asked for. The
    servient answers 204 to a write that changed nothing; that is exactly the
@@ -31,6 +34,7 @@ import argparse
 import json
 import socket
 import sys
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime
@@ -39,6 +43,14 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from src.demos.device_panel import DevicePanel  # noqa: E402
+from src.demos.pointer_overlay import (  # noqa: E402
+    AGENT_COLOR,
+    FAIL_COLOR,
+    OK_COLOR,
+    clear_pointer,
+    point_at_selector,
+)
 from src.effectors.wot_executor import WotExecutor  # noqa: E402
 from src.perception.td_affordance_parser import TdAffordanceParser  # noqa: E402
 from src.perception.thing_directory import (  # noqa: E402
@@ -47,8 +59,11 @@ from src.perception.thing_directory import (  # noqa: E402
     ThingDirectoryError,
 )
 from src.planner.device_binding import composite_goal_for  # noqa: E402
+from src.planner.environment_binding import device_view_for  # noqa: E402
 from src.planner.intent_planner import IntentPlanner, available_client  # noqa: E402
-from src.runtime.device_goal import pursue_composite_goal  # noqa: E402
+from src.runtime.device_goal import pursue_composite_goal, values_match  # noqa: E402
+
+DEFAULT_DASHBOARD_URL = "http://localhost:3000"
 
 _LINE = "=" * 78
 
@@ -105,6 +120,101 @@ def rewrite_base(tds: list[dict[str, Any]], old: str, new: str) -> list[dict[str
     return list(json.loads(json.dumps(tds).replace(old, new)))
 
 
+def open_dashboard(url: str, *, headed: bool) -> Any:
+    """Bring up the dashboard so the room can be watched rather than described.
+
+    Returns ``None`` on any failure. The browser is a viewing aid: this script's
+    result is the read-back table, and a machine with no Chromium must still be
+    able to produce it. Reporting why it could not open is better than a
+    traceback that looks like the room is broken.
+    """
+    if not headed:
+        return None
+    if not reachable(url):
+        print(f"  dashboard    : nothing answers at {url}; running without it")
+        return None
+    try:
+        from src.perception.browser_session import BrowserSession
+
+        session = BrowserSession.launch(url, headless=False)
+    except Exception as exc:  # noqa: BLE001 - optional viewing aid
+        print(f"  dashboard    : could not open a browser ({type(exc).__name__}); running without it")
+        return None
+    print(f"  dashboard    : {url} - it polls the Things, so it changes on its own")
+    # One poll interval, so the audience sees the room before it is touched
+    # rather than a blank page that fills in during the first write.
+    time.sleep(1.8)
+    return session
+
+
+def _panel_for(session: Any, *, utterance: str, source: str, things: list[str]) -> Any:
+    """The right-hand half: the wire, the predicate, and the running tally.
+
+    The dashboard alone cannot distinguish "an agent wrote to four Things" from
+    "the page was reloaded with different defaults", so the requests and their
+    status codes have to be on screen next to it. Same panel as the
+    commanded-versus-measured demo, deliberately: two device demos that look like
+    two systems teach the audience that there are two systems.
+    """
+    if session is None:
+        return None
+    panel = DevicePanel(session)
+    panel.open()
+    panel.begin_act(
+        f"ONE SENTENCE  ->  {len(things)} THINGS DISCOVERED",
+        utterance,
+        f"understood by {source}; every property written is read back separately",
+    )
+    panel.show_source(
+        values_match,
+        highlight="NUMERIC_TOLERANCE",
+        title="src/runtime/device_goal.py  -  the read-back predicate",
+    )
+    return panel
+
+
+def _announce(panel: Any, part: Any) -> None:
+    """Put one settled property on the wire and in the tally."""
+    if panel is None:
+        return
+    where = f"{part.thing_title or part.thing_id}.{part.property}" if part.thing_id else "(not in this room)"
+    if part.skipped_reason:
+        # A skipped part never reached the wire, so it is recorded as what it is
+        # rather than as a write that happened to change nothing.
+        panel.sent("SKIP", where, part.skipped_reason)
+        panel.answered(0)
+        return
+    panel.sent("PUT", f"/{where.replace('.', '/properties/')}", part.wanted)
+    panel.answered(204 if part.written else 500)
+    panel.show_readings(
+        [(0.0, part.wanted, part.observed)],
+        commanded="wanted",
+        measured="read back",
+    )
+    panel.settled(converged=bool(part.verified))
+
+
+def _highlight(session: Any, part: Any, *, hold: float) -> None:
+    """Mark the panel a part just settled on, labelled with the property.
+
+    The label names ``thing.property`` and the value, because that is the content
+    of this project. "Clicked the lighting card" would be a claim about a widget.
+    """
+    view = device_view_for(part.goal_state)
+    if session is None or view is None:
+        return
+    where = f"{part.thing_title or part.thing_id}.{part.property}"
+    read_back = "-" if part.observed is None else part.observed
+    colour = OK_COLOR if part.verified else (AGENT_COLOR if part.skipped_reason else FAIL_COLOR)
+    point_at_selector(
+        session,
+        view.region,
+        label=f"{where} <- {part.wanted}   read back {read_back}",
+        color=colour,
+    )
+    time.sleep(hold)
+
+
 class _IgnoringExecutor:
     """A servient that accepts a write to one property and changes nothing.
 
@@ -151,6 +261,20 @@ def main() -> int:
         action="store_false",
         default=True,
         help="Keep whatever the last run left in the room instead of resetting first.",
+    )
+    parser.add_argument("--dashboard", default=DEFAULT_DASHBOARD_URL, help="Dashboard URL to open and watch.")
+    parser.add_argument(
+        "--headless",
+        dest="headed",
+        action="store_false",
+        default=True,
+        help="Do not open a browser; print the read-back table only.",
+    )
+    parser.add_argument(
+        "--hold",
+        type=float,
+        default=2.0,
+        help="Seconds to dwell on each property once it has been read back.",
     )
     args = parser.parse_args()
 
@@ -212,20 +336,69 @@ def main() -> int:
         executor = _IgnoringExecutor(executor, args.ignore, {m.thing_id: m.title for m in models})
         print(f"  fault        : writes to {args.ignore} will be dropped after being accepted")
 
-    outcome = pursue_composite_goal(goal, models, plan.goal.parameters, executor)
+    session = open_dashboard(args.dashboard, headed=args.headed)
+    panel = _panel_for(
+        session,
+        utterance=args.utterance,
+        source=plan.source,
+        things=[m.title or m.thing_id for m in models],
+    )
 
+    # The table is printed row by row from the callback rather than after the
+    # fact, so the terminal and the dashboard advance together. Replaying a
+    # finished list next to a page that already changed reads as a recording.
     print(f"\n  {'part':<16}{'thing.property':<32}{'wanted':>10}{'read back':>12}  verified")
     print(f"  {'-' * 74}")
-    for part in outcome.parts:
+
+    def narrate(part: Any) -> None:
         # The title, not the UUID: the id is in the artifact, and a table nobody
         # can read is a table nobody checks.
         where = f"{part.thing_title or part.thing_id}.{part.property}" if part.thing_id else "-"
         wanted = "-" if part.wanted is None else str(part.wanted)
         observed = "-" if part.observed is None else str(part.observed)
         mark = "yes" if part.verified else ("skipped" if part.skipped_reason else "NO")
-        print(f"  {part.goal_state:<16}{where:<32}{wanted:>10}{observed:>12}  {mark}")
+        print(f"  {part.goal_state:<16}{where:<32}{wanted:>10}{observed:>12}  {mark}", flush=True)
         if part.error:
-            print(f"  {'':<16}{part.error}")
+            print(f"  {'':<16}{part.error}", flush=True)
+        _announce(panel, part)
+        _highlight(session, part, hold=args.hold)
+
+    try:
+        outcome = pursue_composite_goal(goal, models, plan.goal.parameters, executor, on_part=narrate)
+        if panel is not None:
+            panel.show_verdicts(
+                [
+                    (
+                        f"{p.goal_state} ({p.thing_title or p.thing_id}.{p.property})",
+                        f"asked {p.wanted}, reads {p.observed}",
+                        bool(p.verified),
+                        p.skipped_reason or "",
+                    )
+                    for p in outcome.parts
+                ]
+            )
+            panel.conclude(
+                f"{'PREPARED' if outcome.verified else 'NOT PREPARED'}  -  {outcome.summary()}",
+                kind="ok" if outcome.verified else "no",
+            )
+        if session is not None:
+            # Clear the overlay before the last look at the room: the pointer is
+            # not part of the page, and the final frame should be the dashboard.
+            clear_pointer(session)
+            time.sleep(max(args.hold, 1.5) * 2)
+    finally:
+        if panel is not None:
+            panel.close()
+        if session is not None:
+            session.close()
+
+    if outcome.unconsumed_parameters:
+        # Above the verdict, not below it: the verdict can read PREPARED while a
+        # number in the sentence went nowhere, and the reader stops at the first
+        # line that answers the question they asked.
+        named = ", ".join(f"{k}={v!r}" for k, v in sorted(outcome.unconsumed_parameters.items()))
+        print(f"\n  WARNING      : understood but not written: {named}")
+        print("                 no part of this goal claims that parameter, so nothing above reflects it.")
 
     print(f"\n  goal         : {'PREPARED' if outcome.verified else 'NOT PREPARED'}")
     print(f"  why          : {outcome.summary()}")

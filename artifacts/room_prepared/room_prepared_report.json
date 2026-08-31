@@ -1,44 +1,39 @@
 {
-  "at": "2026-08-14T11:06:27",
+  "at": "2026-08-29T22:28:07",
   "utterance": "prepare the room for my presentation",
   "intent": {
     "source": "llm",
     "model": "qwen-plus",
-    "confidence": 0.95,
-    "latency_ms": 5029.1,
+    "confidence": 0.9,
+    "latency_ms": 5304.0,
     "goal_state": "room_prepared",
-    "parameters": {
-      "room": "my presentation"
-    },
+    "parameters": {},
     "error": ""
   },
   "directory_url": "http://localhost:8082",
   "discovered_things": [
     {
-      "id": "urn:uuid:f437823f-5d86-4111-bcd1-cf4993307a75",
+      "id": "urn:uuid:2a7903a6-f5f2-490c-a7d8-2474ef2faf9a",
       "title": "thermostat"
     },
     {
-      "id": "urn:uuid:f3c4a5a7-65df-4c52-a12b-f773a65247ad",
+      "id": "urn:uuid:db332b5f-7f65-491b-b376-992cadcaf3f4",
       "title": "lights"
     },
     {
-      "id": "urn:uuid:735f1c65-b017-4631-ba1e-a12fa494bdde",
+      "id": "urn:uuid:d92b0e5c-1d74-47a0-bbd2-c0b648153439",
       "title": "projector"
     },
     {
-      "id": "urn:uuid:dd2ccbaf-618d-4635-97d6-c37e93395178",
+      "id": "urn:uuid:d80b4f8f-2187-4189-971b-594be3e14933",
       "title": "blinds"
     },
     {
-      "id": "urn:uuid:eaf9a398-0dd1-45c9-b0d3-447108d9d82d",
+      "id": "urn:uuid:8a0e2f05-d8d6-464d-9e39-ed19fe646be9",
       "title": "occupancy"
     }
   ],
-  "href_rewrite": {
-    "advertised": "http://172.18.0.2:8080",
-    "used": "http://localhost:8080"
-  },
+  "href_rewrite": {},
   "reset_before_run": {
     "requested": true,
     "error": ""
@@ -49,17 +44,18 @@
     "verified": true,
     "summary": "4/4 properties confirmed by reading them back",
     "discovered_things": [
-      "urn:uuid:f437823f-5d86-4111-bcd1-cf4993307a75",
-      "urn:uuid:f3c4a5a7-65df-4c52-a12b-f773a65247ad",
-      "urn:uuid:735f1c65-b017-4631-ba1e-a12fa494bdde",
-      "urn:uuid:dd2ccbaf-618d-4635-97d6-c37e93395178",
-      "urn:uuid:eaf9a398-0dd1-45c9-b0d3-447108d9d82d"
+      "urn:uuid:2a7903a6-f5f2-490c-a7d8-2474ef2faf9a",
+      "urn:uuid:db332b5f-7f65-491b-b376-992cadcaf3f4",
+      "urn:uuid:d92b0e5c-1d74-47a0-bbd2-c0b648153439",
+      "urn:uuid:d80b4f8f-2187-4189-971b-594be3e14933",
+      "urn:uuid:8a0e2f05-d8d6-464d-9e39-ed19fe646be9"
     ],
+    "unconsumed_parameters": {},
     "parts": [
       {
         "goal_state": "projector_on",
         "required": true,
-        "thing_id": "urn:uuid:735f1c65-b017-4631-ba1e-a12fa494bdde",
+        "thing_id": "urn:uuid:d92b0e5c-1d74-47a0-bbd2-c0b648153439",
         "thing_title": "projector",
         "property": "power",
         "wanted": "on",
@@ -72,7 +68,7 @@
       {
         "goal_state": "lighting_set",
         "required": true,
-        "thing_id": "urn:uuid:f3c4a5a7-65df-4c52-a12b-f773a65247ad",
+        "thing_id": "urn:uuid:db332b5f-7f65-491b-b376-992cadcaf3f4",
         "thing_title": "lights",
         "property": "brightness",
         "wanted": 30,
@@ -85,7 +81,7 @@
       {
         "goal_state": "blinds_set",
         "required": false,
-        "thing_id": "urn:uuid:dd2ccbaf-618d-4635-97d6-c37e93395178",
+        "thing_id": "urn:uuid:d80b4f8f-2187-4189-971b-594be3e14933",
         "thing_title": "blinds",
         "property": "position",
         "wanted": 20,
@@ -98,7 +94,7 @@
       {
         "goal_state": "temperature_set",
         "required": false,
-        "thing_id": "urn:uuid:f437823f-5d86-4111-bcd1-cf4993307a75",
+        "thing_id": "urn:uuid:2a7903a6-f5f2-490c-a7d8-2474ef2faf9a",
         "thing_title": "thermostat",
         "property": "targetTemperature",
         "wanted": 21,

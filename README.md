@@ -258,8 +258,8 @@ dependency is installed. `--check` reports the environment and stops;
 ```bash
 uv run --with pytest pytest        # fast: contracts, perception, effectors,
                                     # router, recovery, runtime — a few seconds
-uv run --with pytest pytest -m live       # + 14 tests against a real Chromium
-uv run --with pytest pytest -m smartroom  # + 6 tests against the running servient
+uv run --with pytest pytest -m live       # + 15 tests against a real Chromium
+uv run --with pytest pytest -m smartroom  # + 15 tests against the running servient
 ```
 
 The fast suite never opens a browser or a socket, so it cannot corroborate a
@@ -300,8 +300,8 @@ that does serve it.
 
 ```bash
 python scripts/run_room_prepared.py
-python scripts/run_room_prepared.py --utterance "get the room ready, lights at 15"
 python scripts/run_room_prepared.py --ignore lights.brightness   # drop one write on purpose
+python scripts/run_room_prepared.py --headless                   # no browser, table only
 ```
 
 Resolves against whatever the Thing Directory actually reports — no device
@@ -309,6 +309,58 @@ endpoint is named anywhere in the code — writes each property, and reads every
 one back before calling the goal met. `--ignore` reproduces the servient
 answering 204 to a write that changed nothing, which is exactly the failure
 the read-back step exists to catch.
+
+It opens the dashboard and marks each panel as its property is confirmed, with
+the requests and the read-backs listed beside it. What it verifies is the
+**setpoint read back** — position 20 reads 20 — which is a weaker claim than the
+room having arrived; that one is the demo below.
+
+Values named in the sentence are honoured, and two devices can be given two
+different percentages:
+
+```bash
+python scripts/run_room_prepared.py --headless --utterance "prepare the room, blinds at 50, lights at 15"
+#   understood   : room_prepared {'blinds': 50, 'lighting': 15}  (by llm)
+#   lighting_set    lights.brightness      15   15   yes
+#   blinds_set      blinds.position        50   50   yes
+```
+
+That used to be impossible. Both parts read one shared `percent` parameter, so
+one of the two percentages in a sentence had nowhere to go, and a value the model
+extracted correctly was dropped without a word. The fix was in two places: the
+prompt now names a separate key per device for this goal, because a single shared
+key genuinely cannot carry two answers, and each part accepts a small set of
+synonyms as a net behind that. A value the sentence named that **no** part writes
+is now reported rather than dropped:
+
+```
+WARNING      : understood but not written: volume=60
+               no part of this goal claims that parameter, so nothing above reflects it.
+```
+
+It does not fail the goal, because "at 3pm" is not a property and refusing the
+whole request over it would make the agent less useful rather than more honest.
+It is on the report because understood-and-then-not-done is the same divergence
+as accepted-and-then-not-done, one layer earlier.
+
+### The command succeeded and the room did not comply
+
+```bash
+python scripts/run_commanded_vs_measured.py
+python scripts/run_commanded_vs_measured.py --headless   # readings only
+```
+
+Jams a blinds motor, commands the blinds to 30%, and shows three verification
+strategies disagreeing about the same event: transport returns **204**, the
+commanded property reads back **exactly 30**, and the device's own measurement
+never leaves **100**. A DOM-only agent calls that a success; so does an agent
+that verifies the property it wrote, which is what this project did until the
+device layer gained timing and compliance.
+
+Needs no model and no API key, so it is also the demo that cannot be broken by a
+network problem. It runs at 30× real time and says so; act one first shows an
+ordinary write arriving *late but arriving*, so the divergence in act three has
+something to contrast with.
 
 ### What else is runnable, and why something isn't
 

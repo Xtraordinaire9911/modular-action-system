@@ -206,7 +206,15 @@ def _match(candidate: str, aliases: tuple[str, ...]) -> bool:
     lowered = candidate.strip().lower()
     if not lowered:
         return False
-    return any(alias in lowered or lowered in alias for alias in aliases)
+    # Both sides are lowered. This used to lower only the candidate, which meant
+    # every alias containing a capital letter was dead: "measuredPosition" never
+    # matched the property measuredPosition, and "currentTemperature" never matched
+    # currentTemperature. Resolution still appeared to work because the short
+    # lowercase aliases beside them ("target", "temperature") matched instead - and
+    # "temperature" matches targetTemperature just as well as currentTemperature,
+    # so the measured reading resolved to the setpoint. A dead alias is worse than
+    # a missing one: it looks like coverage.
+    return any(alias.strip().lower() in lowered or lowered in alias.strip().lower() for alias in aliases)
 
 
 def resolve_device_target(
@@ -269,8 +277,24 @@ def resolve_device_target(
             # Resolved from the same discovered sources, so a Thing that does not
             # publish one simply has no measurement and the caller can say so
             # rather than inventing a second reading of the setpoint.
+            #
+            # The property being written is excluded, and that guard is load
+            # bearing rather than defensive. `_match` is substring based, so
+            # "temperature" matches "targetTemperature" as readily as
+            # "currentTemperature", and without this the measured source resolved
+            # to the setpoint itself. Every caller then read back the value it had
+            # just written, arrival was instant, and the one distinction this
+            # project rests on was silently gone - inside the demo that exists to
+            # show it. A measured counterpart is by definition a different
+            # property, so say that here instead of trusting the alias lists to
+            # stay disjoint.
             measured = next(
-                (s for s in sources if _match(str(getattr(s, "property", "")), binding.measured_property_aliases)),
+                (
+                    s
+                    for s in sources
+                    if str(getattr(s, "property", "")) != str(source.property)
+                    and _match(str(getattr(s, "property", "")), binding.measured_property_aliases)
+                ),
                 None,
             )
             return ResolvedDeviceTarget(
@@ -323,12 +347,33 @@ class CompositePart:
     # offer are reported as skipped - never dropped quietly, because a goal that
     # silently did less than it claimed is the failure this project is about.
     required: bool = True
-    value_parameter: str = ""  # lets the utterance override the default
+    # Every parameter name that carries this part's value, in the order they are
+    # tried. A tuple rather than one name because the layer that fills the dict is
+    # a model: asked for a temperature it answers "temperature" as readily as
+    # "degrees", and a part that recognised only "degrees" fell through to its
+    # default while the run printed the number it had understood. The write was
+    # confirmed, the report said PREPARED, and 22 had become 21 with nothing
+    # anywhere saying so.
+    #
+    # The sets have to stay disjoint across parts, and there is a test for it.
+    # Every part reads one shared dict, so a name two parts accept is a name that
+    # cannot carry two values: with both lights and blinds on "percent", "blinds
+    # at 50, lights at 15" was not an expressible request. "percent" is kept for
+    # lighting alone, because the rule fallback and the script's own examples
+    # already write it; blinds gives it up rather than the two sharing it.
+    value_parameters: tuple[str, ...] = ()
+
+    def consumed_parameter(self, parameters: dict[str, Any]) -> str:
+        """Which name in ``parameters`` supplied this part's value, or empty.
+
+        Returned separately from the value so a caller can tell a request that
+        was carried out from one that was merely understood.
+        """
+        return next((name for name in self.value_parameters if parameters.get(name) is not None), "")
 
     def value_from(self, parameters: dict[str, Any]) -> Any:
-        if self.value_parameter and parameters.get(self.value_parameter) is not None:
-            return parameters[self.value_parameter]
-        return self.value
+        name = self.consumed_parameter(parameters)
+        return parameters[name] if name else self.value
 
 
 @dataclass(frozen=True)
@@ -336,6 +381,27 @@ class CompositeDeviceGoal:
     goal_state: str
     parts: tuple[CompositePart, ...]
     description: str = ""
+    # Parameters that say what the goal is about rather than what to write. The
+    # intent prompt requires a "target" on every goal, so counting these as
+    # ignored would fire the warning on every run ever made, and a warning that
+    # always fires is one nobody reads by the second week.
+    context_parameters: tuple[str, ...] = ("target", "room", "time")
+
+    def unconsumed_parameters(self, parameters: dict[str, Any]) -> dict[str, Any]:
+        """The values this request named that no part of this goal will write.
+
+        This is the same divergence as a write that returns 204 and changes
+        nothing, moved one layer earlier: the sentence asked for something, the
+        agent parsed it, and then nothing was done about it. Returned so the
+        caller can say so out loud instead of the value disappearing between the
+        parse and the table.
+        """
+        consumed = {part.consumed_parameter(parameters) for part in self.parts}
+        consumed.discard("")
+        consumed.update(self.context_parameters)
+        # A key whose value is None named nothing, so reporting it as ignored
+        # would be a false alarm rather than a caught one.
+        return {name: value for name, value in parameters.items() if name not in consumed and value is not None}
 
 
 COMPOSITE_GOALS: dict[str, CompositeDeviceGoal] = {
@@ -343,9 +409,31 @@ COMPOSITE_GOALS: dict[str, CompositeDeviceGoal] = {
         goal_state="room_prepared",
         parts=(
             CompositePart(goal_state="projector_on", value="on"),
-            CompositePart(goal_state="lighting_set", value=30, value_parameter="percent"),
-            CompositePart(goal_state="blinds_set", value=20, required=False, value_parameter="percent"),
-            CompositePart(goal_state="temperature_set", value=21, required=False, value_parameter="degrees"),
+            CompositePart(
+                goal_state="lighting_set",
+                value=30,
+                # "lights" and "light" are here because the model actually emits
+                # them. The prompt now names `lighting` for this part, so these
+                # are a net rather than the mechanism: a model that answers with
+                # a reasonable synonym should be understood, not reported as
+                # having named something nobody writes.
+                value_parameters=("lighting", "lights", "light", "brightness", "lights_percent", "percent"),
+            ),
+            CompositePart(
+                goal_state="blinds_set",
+                value=20,
+                required=False,
+                # No "percent" here: see CompositePart.value_parameters. Two parts
+                # sharing it is what made one of the two percentages in a sentence
+                # unsayable.
+                value_parameters=("blinds", "blinds_percent", "position"),
+            ),
+            CompositePart(
+                goal_state="temperature_set",
+                value=21,
+                required=False,
+                value_parameters=("degrees", "temperature", "temp"),
+            ),
         ),
         description="projector on and lights down for a presentation, blinds and temperature if the room has them",
     ),

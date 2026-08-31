@@ -16,10 +16,16 @@ For a composite goal such as ``room_prepared`` the parts are verified
 not two thirds met; it is not met, and the report says which part failed. Parts
 the environment cannot offer at all are reported as skipped when the declaration
 marks them optional, and fail the goal when it does not.
+
+The outcome also carries the values the request named that no part writes. Those
+are not failed writes, but they are the same divergence one layer earlier: asked
+for, understood, and then not done. A report that omitted them would agree with
+a sentence it had not carried out.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
@@ -124,6 +130,13 @@ class GoalOutcome:
     goal_state: str
     parts: list[PartOutcome] = field(default_factory=list)
     discovered_things: list[str] = field(default_factory=list)
+    # Values the request named that no part of this goal writes. Deliberately not
+    # a reason to fail: "at 3pm" is not a property, and refusing the whole goal
+    # over it would make the agent less useful, not more honest. Carried here so
+    # the gap between what was asked and what was done is on the report, because
+    # a value that is understood and then quietly discarded is the same failure
+    # as a write that is accepted and quietly ignored.
+    unconsumed_parameters: dict[str, Any] = field(default_factory=dict)
 
     @property
     def verified(self) -> bool:
@@ -143,6 +156,13 @@ class GoalOutcome:
             text += f"; skipped (not in this room): {', '.join(skipped)}"
         if self.unmet:
             text += f"; failed: {', '.join(p.goal_state for p in self.unmet)}"
+        if self.unconsumed_parameters:
+            # In the summary and not only in the parts list, because the summary
+            # is the line a reader believes: every part can be confirmed, the
+            # goal can read "PREPARED", and a number from the sentence can still
+            # have gone nowhere.
+            named = ", ".join(f"{k}={v}" for k, v in sorted(self.unconsumed_parameters.items()))
+            text += f"; named but not written: {named}"
         return text
 
     def to_dict(self) -> dict[str, Any]:
@@ -151,6 +171,7 @@ class GoalOutcome:
             "verified": self.verified,
             "summary": self.summary(),
             "discovered_things": list(self.discovered_things),
+            "unconsumed_parameters": dict(self.unconsumed_parameters),
             "parts": [p.to_dict() for p in self.parts],
         }
 
@@ -192,24 +213,50 @@ def pursue_composite_goal(
     models: list[Any],
     parameters: dict[str, Any],
     io: DeviceIO,
+    on_part: Callable[[PartOutcome], None] | None = None,
 ) -> GoalOutcome:
-    """Write every part of ``goal`` and verify each one independently."""
+    """Write every part of ``goal`` and verify each one independently.
+
+    ``on_part`` is called with each part's outcome as soon as that part settles,
+    before the next one is attempted. It exists so a demo can narrate a property
+    at the moment it is verified rather than replaying a finished list, which is
+    the difference between watching the room change and being told it changed.
+
+    A raising callback must not be able to fail the goal: presentation code sits
+    on this path and a broken highlight is not a broken write. Exceptions from it
+    are therefore swallowed, and the outcome is exactly what it would have been
+    with no callback at all.
+    """
     resolved = resolve_composite_goal(goal, models, parameters)
-    outcome = GoalOutcome(goal_state=goal.goal_state)
+    outcome = GoalOutcome(
+        goal_state=goal.goal_state,
+        unconsumed_parameters=goal.unconsumed_parameters(parameters),
+    )
+
+    def announce(part_outcome: PartOutcome) -> None:
+        if on_part is None:
+            return
+        try:
+            on_part(part_outcome)
+        except Exception:  # noqa: BLE001 - a narrator must never fail the run
+            pass
+
     for part, resolution in resolved:
         if isinstance(resolution, DeviceResolutionError):
             outcome.discovered_things = outcome.discovered_things or list(resolution.discovered_things)
-            outcome.parts.append(
-                PartOutcome(
-                    goal_state=part.goal_state,
-                    required=part.required,
-                    skipped_reason=resolution.reason,
-                    error=resolution.detail,
-                )
+            skipped = PartOutcome(
+                goal_state=part.goal_state,
+                required=part.required,
+                skipped_reason=resolution.reason,
+                error=resolution.detail,
             )
+            outcome.parts.append(skipped)
+            announce(skipped)
             continue
         outcome.discovered_things = outcome.discovered_things or list(resolution.discovered_things)
-        outcome.parts.append(_attempt(io, part, resolution))
+        attempted = _attempt(io, part, resolution)
+        outcome.parts.append(attempted)
+        announce(attempted)
     return outcome
 
 

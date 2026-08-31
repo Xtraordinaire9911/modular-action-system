@@ -6,14 +6,14 @@
         "tasks": 2,
         "solved": 2,
         "success_rate": 1.0,
-        "mean_latency_ms": 1957.664
+        "mean_latency_ms": 2636.108
       },
       {
         "env": "shopping.html",
         "tasks": 4,
         "solved": 4,
         "success_rate": 1.0,
-        "mean_latency_ms": 2222.996
+        "mean_latency_ms": 2661.669
       }
     ],
     "overall_success_rate": 1.0,
@@ -41,12 +41,12 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-3e6e40beb14f",
+      "episode_id": "episode-97b60a540668",
       "transitions": [
         {
-          "transition_id": "episode-3e6e40beb14f:transition-0001",
+          "transition_id": "episode-97b60a540668:transition-0001",
           "step": 1,
-          "skill_id": "intent_66318488",
+          "skill_id": "intent_1752250",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Wireless Headphones to cart",
           "params": {
@@ -58,7 +58,7 @@
           "success": true,
           "execution_success": true,
           "postcondition_passed": true,
-          "latency_ms": 95.3,
+          "latency_ms": 116.84,
           "attempt": 1,
           "recovery_action": "",
           "recovery_tier": null,
@@ -104,16 +104,16 @@
           "confidence": 1.0,
           "evidence": "The text 'Wireless Headphones x1' is visible in the image.",
           "model": "qwen-vl-plus",
-          "screenshot_sha256": "58594aec6e0501c0",
+          "screenshot_sha256": "6db89a92ac1319a8",
           "region": "#cart-items",
           "question": "Does this image show an entry for wireless headphones? Answer from the image only.",
-          "latency_ms": 1149.4,
+          "latency_ms": 1143.3,
           "is_model_derived": true,
           "retries": 0,
           "error": ""
         }
       ],
-      "latency_ms": 1929.4
+      "latency_ms": 2723.5
     },
     {
       "utterance": "put the pro laptop in my cart",
@@ -130,12 +130,12 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-433e15873ee6",
+      "episode_id": "episode-38d506b63563",
       "transitions": [
         {
-          "transition_id": "episode-433e15873ee6:transition-0001",
+          "transition_id": "episode-38d506b63563:transition-0001",
           "step": 1,
-          "skill_id": "intent_30719681",
+          "skill_id": "intent_34525796",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Pro Laptop to cart",
           "params": {
@@ -147,7 +147,7 @@
           "success": true,
           "execution_success": true,
           "postcondition_passed": true,
-          "latency_ms": 100.15,
+          "latency_ms": 125.1,
           "attempt": 1,
           "recovery_action": "",
           "recovery_tier": null,
@@ -193,16 +193,16 @@
           "confidence": 1.0,
           "evidence": "The text 'Pro Laptop 15\" x1' is visible in the image.",
           "model": "qwen-vl-plus",
-          "screenshot_sha256": "dd225e70d2581701",
+          "screenshot_sha256": "5332a12604375a98",
           "region": "#cart-items",
           "question": "Does this image show an entry for pro laptop? Answer from the image only.",
-          "latency_ms": 1420.8,
+          "latency_ms": 1403.1,
           "is_model_derived": true,
           "retries": 0,
           "error": ""
         }
       ],
-      "latency_ms": 2440.4
+      "latency_ms": 2716.5
     },
     {
       "utterance": "add the mechanical keyboard to my cart please",
@@ -219,12 +219,12 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-fd3e59a8fb7b",
+      "episode_id": "episode-9e1921f6842b",
       "transitions": [
         {
-          "transition_id": "episode-fd3e59a8fb7b:transition-0001",
+          "transition_id": "episode-9e1921f6842b:transition-0001",
           "step": 1,
-          "skill_id": "intent_36345294",
+          "skill_id": "intent_75645679",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add Mechanical Keyboard to cart",
           "params": {
@@ -236,7 +236,7 @@
           "success": true,
           "execution_success": true,
           "postcondition_passed": true,
-          "latency_ms": 84.61,
+          "latency_ms": 129.49,
           "attempt": 1,
           "recovery_action": "",
           "recovery_tier": null,
@@ -282,16 +282,16 @@
           "confidence": 1.0,
           "evidence": "The text 'Mechanical Keyboard x1' is visible in the image.",
           "model": "qwen-vl-plus",
-          "screenshot_sha256": "b9520aae8395fe82",
+          "screenshot_sha256": "b982a74a9cf1bf5f",
           "region": "#cart-items",
           "question": "Does this image show an entry for mechanical keyboard? Answer from the image only.",
-          "latency_ms": 1417.3,
+          "latency_ms": 1357.2,
           "is_model_derived": true,
           "retries": 0,
           "error": ""
         }
       ],
-      "latency_ms": 2513.2
+      "latency_ms": 2661.7
     },
     {
       "utterance": "add the 4k monitor to my cart",
@@ -308,12 +308,12 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-bb5b831f0cb4",
+      "episode_id": "episode-7ae917a8b860",
       "transitions": [
         {
-          "transition_id": "episode-bb5b831f0cb4:transition-0001",
+          "transition_id": "episode-7ae917a8b860:transition-0001",
           "step": 1,
-          "skill_id": "intent_65790188",
+          "skill_id": "intent_55613181",
           "backend": "dom",
           "affordance_key": "dom:semantic::Add 4K Monitor to cart",
           "params": {
@@ -325,7 +325,7 @@
           "success": true,
           "execution_success": true,
           "postcondition_passed": true,
-          "latency_ms": 89.42,
+          "latency_ms": 120.14,
           "attempt": 1,
           "recovery_action": "",
           "recovery_tier": null,
@@ -371,16 +371,16 @@
           "confidence": 1.0,
           "evidence": "The text '4K Monitor' is visible in the image.",
           "model": "qwen-vl-plus",
-          "screenshot_sha256": "a8d8763e2a7224bc",
+          "screenshot_sha256": "b18e3bd20a3eeba3",
           "region": "#cart-items",
           "question": "Does this image show an entry for 4k monitor? Answer from the image only.",
-          "latency_ms": 1057.6,
+          "latency_ms": 1421.3,
           "is_model_derived": true,
           "retries": 0,
           "error": ""
         }
       ],
-      "latency_ms": 2009.0
+      "latency_ms": 2545.0
     },
     {
       "utterance": "upvote the top post",
@@ -397,12 +397,12 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-a5388889d0ec",
+      "episode_id": "episode-7e00ef1c99dd",
       "transitions": [
         {
-          "transition_id": "episode-a5388889d0ec:transition-0001",
+          "transition_id": "episode-7e00ef1c99dd:transition-0001",
           "step": 1,
-          "skill_id": "intent_5106348",
+          "skill_id": "intent_36984625",
           "backend": "dom",
           "affordance_key": "dom:semantic::Upvote post: AI agents are changing everything",
           "params": {
@@ -414,7 +414,7 @@
           "success": true,
           "execution_success": true,
           "postcondition_passed": true,
-          "latency_ms": 72.78,
+          "latency_ms": 121.41,
           "attempt": 1,
           "recovery_action": "",
           "recovery_tier": null,
@@ -457,19 +457,19 @@
         {
           "source": "vlm",
           "answer": true,
-          "confidence": 1.0,
+          "confidence": 0.95,
           "evidence": "The triangle is filled with a solid blue color.",
           "model": "qwen-vl-plus",
-          "screenshot_sha256": "4f6dd61da0fdce84",
+          "screenshot_sha256": "dfc56a35dd9c91df",
           "region": "button.upvote-btn[data-post='1'].voted",
           "question": "Does this image show a small triangular vote button that is filled in with a solid colour rather than plain or outlined? Answer from the image only.",
-          "latency_ms": 1343.3,
+          "latency_ms": 1332.5,
           "is_model_derived": true,
           "retries": 0,
           "error": ""
         }
       ],
-      "latency_ms": 1901.1
+      "latency_ms": 3041.3
     },
     {
       "utterance": "upvote the browser automation post",
@@ -486,12 +486,12 @@
       "runtime_state": "completed",
       "verified": true,
       "reason": "goal completed",
-      "episode_id": "episode-05143c860bf5",
+      "episode_id": "episode-e3686debab8d",
       "transitions": [
         {
-          "transition_id": "episode-05143c860bf5:transition-0001",
+          "transition_id": "episode-e3686debab8d:transition-0001",
           "step": 1,
-          "skill_id": "intent_32337679",
+          "skill_id": "intent_25172839",
           "backend": "dom",
           "affordance_key": "dom:semantic::Upvote post: Best practices for browser automation",
           "params": {
@@ -503,7 +503,7 @@
           "success": true,
           "execution_success": true,
           "postcondition_passed": true,
-          "latency_ms": 69.13,
+          "latency_ms": 88.53,
           "attempt": 1,
           "recovery_action": "",
           "recovery_tier": null,
@@ -546,19 +546,19 @@
         {
           "source": "vlm",
           "answer": true,
-          "confidence": 0.95,
+          "confidence": 1.0,
           "evidence": "The triangle is filled with a solid blue color.",
           "model": "qwen-vl-plus",
-          "screenshot_sha256": "4f6dd61da0fdce84",
+          "screenshot_sha256": "aa2a561ea7f9edd5",
           "region": "button.upvote-btn[data-post='2'].voted",
           "question": "Does this image show a small triangular vote button that is filled in with a solid colour rather than plain or outlined? Answer from the image only.",
-          "latency_ms": 1134.6,
+          "latency_ms": 1061.1,
           "is_model_derived": true,
           "retries": 0,
           "error": ""
         }
       ],
-      "latency_ms": 2014.2
+      "latency_ms": 2230.9
     },
     {
       "utterance": "make me a sandwich",

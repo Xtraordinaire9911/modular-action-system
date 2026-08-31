@@ -287,6 +287,17 @@ DEVICE_VIEWS: dict[str, DeviceView] = {
         suffix=" %",
         visual_claim="a lighting panel whose Brightness reads {value}",
     ),
+    "blinds_set": DeviceView(
+        goal_state="blinds_set",
+        region="[data-testid='blinds-panel']",
+        # Measured, not Position, for the same reason the thermostat reads
+        # Current: Position is what the motor was told and updates instantly, so
+        # confirming it proves only that the command was accepted. A jammed
+        # motor reports the commanded position perfectly and never moves.
+        value_selector="[data-testid='blinds-measured']",
+        suffix=" %",
+        visual_claim="a blinds panel whose Measured reading has reached {value}",
+    ),
     "projector_on": DeviceView(
         goal_state="projector_on",
         region="[data-testid='projector-panel']",
