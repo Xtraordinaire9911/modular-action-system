@@ -1,0 +1,10 @@
+# Unifies the git identities used across this project so `git shortlog`,
+# `git log --author` and any contribution audit report one person once.
+# Format: <canonical name> <canonical email> <other email seen in history>
+# This changes reporting only; it does not rewrite history.
+
+Ruiyao Jiang <ruiyao.jiang@tum.de> <ruiyao.jiang@alumni.polytechnique.org>
+Yixin Yang <christine.yixin@gmail.com> <147456494+Garrulus21yyx@users.noreply.github.com>
+Fadi Ferjani <fadi.ferjani@siemens.com> <134283838+fferjani099@users.noreply.github.com>
+Fadi Ferjani <fadi.ferjani@siemens.com> <fadiferjani@Fadis-MacBook-Pro.local>
+Fadi Ferjani <fadi.ferjani@siemens.com> Ferjani <fadi.ferjani@siemens.com>
